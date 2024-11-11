@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    .container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem;
+      font-family: sans-serif;
+    }
+    .canvas-row {
+      display: flex;
+      flex-direction: row;
+      gap: 1rem;
+    }
+    canvas {
+      border: 1px solid #ccc;
+    }
+    button {
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="canvas-row">
+      <canvas id="canvas" width="600" height="600"></canvas>
+      <canvas id="canvas2" width="600" height="600"></canvas>
+      <canvas id="canvas3" width="600" height="600"></canvas>
+    </div>
+    <button onclick="drawShapes()">Draw Random Shapes</button>
+    <button onclick="flipCanvas()">Flip Canvas</button>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    const canvas2 = document.getElementById('canvas2');
+    const ctx2 = canvas2.getContext('2d');
+    // Offset to make all shapes sharp
+    // When you draw shapes at integer coordinates like (100, 100),
+    // the canvas actually places them at coordinates that fall between
+    // physical pixels. This is because the canvas coordinate system is
+    // designed to have pixels centered at their coordinates rather than aligned to them.
+    // For example, if you draw a 1-pixel line at y=1, the canvas tries to draw it
+    // halfway between the physical pixels at y=0.5 and y=1.5, resulting in anti-aliasing
+    // that makes it look blurry.
+    // The solution is to offset your coordinates by 0.5 pixels. 
+    ctx2.translate(0.5, 0.5);
+
+    const canvas3 = document.getElementById('canvas3');
+    const ctx3 = canvas3.getContext('2d');
+
+    const width = canvas.width;
+    const height = canvas.height;
+    const frameBuffer = new Uint8ClampedArray(width * height * 4);
+    var shapes = [];
+    var flipState = true;
+
+    function setPixel(x, y, r, g, b, a) {
+      if (x < 0 || x >= width || y < 0 || y >= height) return;
+      const index = (y * width + x) * 4;
+      
+      const alpha = a / 255;
+      const oldAlpha = frameBuffer[index + 3] / 255;
+      const newAlpha = alpha + oldAlpha * (1 - alpha);
+      
+      if (newAlpha > 0) {
+        frameBuffer[index] = (r * alpha + frameBuffer[index] * oldAlpha * (1 - alpha)) / newAlpha;
+        frameBuffer[index + 1] = (g * alpha + frameBuffer[index + 1] * oldAlpha * (1 - alpha)) / newAlpha;
+        frameBuffer[index + 2] = (b * alpha + frameBuffer[index + 2] * oldAlpha * (1 - alpha)) / newAlpha;
+        frameBuffer[index + 3] = newAlpha * 255;
+      }
+    }
+
+    function drawLine(x1, y1, x2, y2, thickness, r, g, b, a) {
+      // if thickness is 1, use the faster 1px line drawing algorithm
+      // else use the slower thick line drawing algorithm
+      if (thickness === 1) {
+        drawLine1px(x1, y1, x2, y2, r, g, b, a);
+      } else {
+        drawThickLine(x1, y1, x2, y2, thickness, r, g, b, a);
+      }
+    }
+
+    function drawLine1px(x1, y1, x2, y2, r, g, b, a) {
+      x1 = Math.round(x1);
+      y1 = Math.round(y1);
+      x2 = Math.round(x2);
+      y2 = Math.round(y2);
+      
+      const dx = Math.abs(x2 - x1);
+      const dy = Math.abs(y2 - y1);
+      const sx = x1 < x2 ? 1 : -1;
+      const sy = y1 < y2 ? 1 : -1;
+      let err = dx - dy;
+
+      while (true) {
+        setPixel(x1, y1, r, g, b, a);
+        if (x1 === x2 && y1 === y2) break;
+        const e2 = 2 * err;
+        if (e2 > -dy) { err -= dy; x1 += sx; }
+        if (e2 < dx) { err += dx; y1 += sy; }
+      }
+    }
+
+    function drawThickLine(x1, y1, x2, y2, thickness, r, g, b, a) {
+      const dx = x2 - x1;
+      const dy = y2 - y1;
+      const length = Math.sqrt(dx * dx + dy * dy);
+      
+      if (length === 0) return;
+      
+      const perpX = -dy / length;
+      const perpY = dx / length;
+      
+      const halfThickness = thickness / 2;
+      const corners = [
+        [x1 + perpX * halfThickness, y1 + perpY * halfThickness],
+        [x1 - perpX * halfThickness, y1 - perpY * halfThickness],
+        [x2 + perpX * halfThickness, y2 + perpY * halfThickness],
+        [x2 - perpX * halfThickness, y2 - perpY * halfThickness]
+      ];
+      
+      const minX = Math.floor(Math.min(...corners.map(c => c[0])));
+      const maxX = Math.ceil(Math.max(...corners.map(c => c[0])));
+      const minY = Math.floor(Math.min(...corners.map(c => c[1])));
+      const maxY = Math.ceil(Math.max(...corners.map(c => c[1])));
+      
+      for (let y = minY; y <= maxY; y++) {
+        for (let x = minX; x <= maxX; x++) {
+          const px = x - x1;
+          const py = y - y1;
+          const dot = (px * dx + py * dy) / length;
+          const projX = (dx / length) * dot;
+          const projY = (dy / length) * dot;
+          const distX = px - projX;
+          const distY = py - projY;
+          const dist = Math.sqrt(distX * distX + distY * distY);
+          
+          if (dot >= 0 && dot <= length && dist <= halfThickness) {
+            setPixel(x, y, r, g, b, a);
+          }
+        }
+      }
+    }
+
+    function pointInPolygon(x, y, points) {
+      let inside = false;
+      for (let i = 0, j = points.length - 1; i < points.length; j = i++) {
+        const xi = points[i].x, yi = points[i].y;
+        const xj = points[j].x, yj = points[j].y;
+        
+        const intersect = ((yi > y) !== (yj > y))
+            && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+        if (intersect) inside = !inside;
+      }
+      return inside;
+    }
+
+    function extendLine(p1, p2, amount) {
+      const dx = p2.x - p1.x;
+      const dy = p2.y - p1.y;
+      const len = Math.sqrt(dx * dx + dy * dy);
+      
+      if (len === 0) return { start: p1, end: p2 };
+      
+      const dirX = dx / len;
+      const dirY = dy / len;
+      
+      return {
+        start: {
+          x: p1.x - dirX * amount,
+          y: p1.y - dirY * amount
+        },
+        end: {
+          x: p2.x + dirX * amount,
+          y: p2.y + dirY * amount
+        }
+      };
+    }
+
+    function shortenLine(p1, p2, amount) {
+      const dx = p2.x - p1.x;
+      const dy = p2.y - p1.y;
+      const len = Math.sqrt(dx * dx + dy * dy);
+      
+      if (len === 0) return { start: p1, end: p2 };
+      
+      const dirX = dx / len;
+      const dirY = dy / len;
+      
+      return {
+        start: {
+          x: p1.x + dirX * amount,
+          y: p1.y + dirY * amount
+        },
+        end: {
+          x: p2.x - dirX * amount,
+          y: p2.y - dirY * amount
+        }
+      };
+    }
+
+    function drawRotatedRect(centerX, centerY, width, height, rotation, 
+                             strokeR, strokeG, strokeB, strokeA, 
+                             fillR, fillG, fillB, fillA, strokeWidth) {
+      const cos = Math.cos(rotation);
+      const sin = Math.sin(rotation);
+      
+      // Calculate corner points
+      const points = [
+        [-width/2, -height/2],
+        [width/2, -height/2],
+        [width/2, height/2],
+        [-width/2, height/2]
+      ].map(([x, y]) => ({
+        x: centerX + x * cos - y * sin,
+        y: centerY + x * sin + y * cos
+      }));
+
+      // Draw fill
+      if (fillA > 0) {
+        const minX = Math.floor(Math.min(...points.map(p => p.x)));
+        const maxX = Math.ceil(Math.max(...points.map(p => p.x)));
+        const minY = Math.floor(Math.min(...points.map(p => p.y)));
+        const maxY = Math.ceil(Math.max(...points.map(p => p.y)));
+
+        for (let y = minY; y <= maxY; y++) {
+          for (let x = minX; x <= maxX; x++) {
+            if (pointInPolygon(x, y, points)) {
+              setPixel(x, y, fillR, fillG, fillB, fillA);
+            }
+          }
+        }
+      }
+
+      // Draw stroke
+      if (strokeA > 0) {
+        if (strokeWidth === 1) {
+          // Use 1px lines for efficiency when possible
+          for (let i = 0; i < 4; i++) {
+            const p1 = points[i];
+            const p2 = points[(i + 1) % 4];
+            drawLine1px(
+              p1.x, p1.y,
+              p2.x, p2.y,
+              strokeR, strokeG, strokeB, strokeA
+            );
+          }
+        } else {
+          const halfStroke = strokeWidth / 2;
+
+          // Draw horizontal lines (extended)
+          for (let i = 0; i < 4; i += 2) {
+            const p1 = points[i];
+            const p2 = points[(i + 1) % 4];
+            const line = extendLine(p1, p2, halfStroke);
+            
+            drawThickLine(
+              line.start.x, line.start.y,
+              line.end.x, line.end.y,
+              strokeWidth,
+              strokeR, strokeG, strokeB, strokeA
+            );
+          }
+
+          // Draw vertical lines (shortened)
+          for (let i = 1; i < 4; i += 2) {
+            const p1 = points[i];
+            const p2 = points[(i + 1) % 4];
+            const line = shortenLine(p1, p2, halfStroke);
+            
+            drawThickLine(
+              line.start.x, line.start.y,
+              line.end.x, line.end.y,
+              strokeWidth,
+              strokeR, strokeG, strokeB, strokeA
+            );
+          }
+        }
+      }
+    }
+    
+
+    function drawAxisAlignedRect(centerX, centerY, rectWidth, rectHeight,
+                           strokeR, strokeG, strokeB, strokeA,
+                           fillR, fillG, fillB, fillA,
+                           strokeWidth) {
+      // Convert to integer coordinates
+      centerX = Math.round(centerX);
+      centerY = Math.round(centerY);
+      rectWidth = Math.round(rectWidth);
+      rectHeight = Math.round(rectHeight);
+      strokeWidth = Math.round(strokeWidth);
+
+      // Calculate boundaries
+      const halfWidth = Math.floor(rectWidth / 2);
+      const halfHeight = Math.floor(rectHeight / 2);
+      
+      const left = centerX - halfWidth;
+      const right = left + rectWidth - 1;
+      const top = centerY - halfHeight;
+      const bottom = top + rectHeight - 1;
+
+      // Draw fill first
+      if (fillA > 0) {
+        for (let y = top; y <= bottom; y++) {
+          for (let x = left; x <= right; x++) {
+            setPixel(x, y, fillR, fillG, fillB, fillA);
+          }
+        }
+      }
+
+      // Draw stroke on top if thickness > 0
+      if (strokeA > 0 && strokeWidth > 0) {
+        const halfStroke = Math.floor(strokeWidth / 2);
+        
+        // Draw horizontal strokes (top and bottom)
+        for (let y = top - halfStroke; y <= bottom + halfStroke; y++) {
+          for (let x = left - halfStroke; x <= right + halfStroke; x++) {
+            if (y >= top - halfStroke && y <= top + halfStroke) { // Top stroke
+              setPixel(x, y, strokeR, strokeG, strokeB, strokeA);
+            }
+            else if (y >= bottom - halfStroke && y <= bottom + halfStroke) { // Bottom stroke
+              setPixel(x, y, strokeR, strokeG, strokeB, strokeA);
+            }
+            else if (x >= left - halfStroke && x <= left + halfStroke) { // Left stroke
+              setPixel(x, y, strokeR, strokeG, strokeB, strokeA);
+            }
+            else if (x >= right - halfStroke && x <= right + halfStroke) { // Right stroke
+              setPixel(x, y, strokeR, strokeG, strokeB, strokeA);
+            }
+          }
+        }
+      }
+    }
+
+    function clearFrameBuffer() {
+      frameBuffer.fill(0);
+    }
+
+    function updateCanvas() {
+      const imageData = new ImageData(frameBuffer, width, height);
+      ctx.putImageData(imageData, 0, 0);
+    }
+
+    function getRandomColor(minAlpha = 100, maxAlpha = 255) {
+      return {
+        r: Math.random() * 255,
+        g: Math.random() * 255,
+        b: Math.random() * 255,
+        a: Math.random() * (maxAlpha - minAlpha) + minAlpha
+      };
+    }
+
+    function getRandomPoint() {
+      const margin = 100;
+      return {
+        x: margin + Math.random() * (width - 2 * margin),
+        y: margin + Math.random() * (height - 2 * margin)
+      };
+    }
+
+    function toIntegerPoint(point) {
+      return {
+        x: Math.floor(point.x),
+        y: Math.floor(point.y)
+      };
+    }
+
+    function drawShapes() {
+      clearFrameBuffer();
+      shapes = [];
+      
+      // Draw some random lines with varying thicknesses
+      for (let i = 0; i < 15; i++) {
+        const start = toIntegerPoint(getRandomPoint());
+        const end = toIntegerPoint(getRandomPoint());
+        const thickness = Math.floor(Math.random() * 10) + 1;
+        const color = getRandomColor(150, 255);
+
+        shapes.push({
+          type: 'line',
+          start: start,
+          end: end,
+          thickness: thickness,
+          color: color
+        });
+        
+        drawLine(
+          start.x, start.y,
+          end.x, end.y,
+          thickness,
+          color.r, color.g, color.b, color.a
+        );
+      }
+
+      // Draw axis-aligned rectangles
+      for (let i = 0; i < 5; i++) {
+        const center = toIntegerPoint(getRandomPoint());
+        const rectWidth = Math.floor(30 + Math.random() * 100);
+        const rectHeight = Math.floor(30 + Math.random() * 100);
+        const strokeWidth = Math.floor(Math.random() * 10) + 1;
+        const strokeColor = getRandomColor(200, 255);
+        const fillColor = getRandomColor(100, 200);
+        
+        shapes.push({
+          type: 'rect',
+          center: center,
+          width: rectWidth,
+          height: rectHeight,
+          rotation: 0,
+          strokeWidth: strokeWidth,
+          strokeColor: strokeColor,
+          fillColor: fillColor
+        });
+        
+        drawAxisAlignedRect(
+          center.x, center.y, rectWidth, rectHeight,
+          strokeColor.r, strokeColor.g, strokeColor.b, strokeColor.a,
+          fillColor.r, fillColor.g, fillColor.b, fillColor.a,
+          strokeWidth
+        );
+      }
+
+      // Draw rotated rectangles
+      for (let i = 0; i < 5; i++) {
+        const center = toIntegerPoint(getRandomPoint());
+        const rectWidth = Math.floor(30 + Math.random() * 100);
+        const rectHeight = Math.floor(30 + Math.random() * 100);
+        const rotation = Math.random() * Math.PI * 2;
+        const strokeWidth = Math.floor(Math.random() * 10) + 1;
+        const strokeColor = getRandomColor(200, 255);
+        const fillColor = getRandomColor(100, 200);
+        
+        shapes.push({
+          type: 'rect',
+          center: center,
+          width: rectWidth,
+          height: rectHeight,
+          rotation: rotation,
+          strokeWidth: strokeWidth,
+          strokeColor: strokeColor,
+          fillColor: fillColor
+        });
+        
+        drawRotatedRect(
+          center.x, center.y, rectWidth, rectHeight, rotation,
+          strokeColor.r, strokeColor.g, strokeColor.b, strokeColor.a,
+          fillColor.r, fillColor.g, fillColor.b, fillColor.a,
+          strokeWidth
+        );
+      }
+      
+      updateCanvas();
+      drawShapesCanvas();
+      updateCanvas3();
+    }
+
+    function drawShapesCanvas() {
+      ctx2.clearRect(0, 0, canvas2.width, canvas2.height);
+
+      for (let shape of shapes) {
+        if (shape.type === 'line') {
+          drawLineCanvas(ctx2, shape);
+        } else if (shape.type === 'rect') {
+          drawRectCanvas(ctx2, shape);
+        }
+      }
+    }
+
+    function drawLineCanvas(ctx, shape) {
+      const { start, end, thickness, color } = shape;
+      ctx.beginPath();
+      ctx.moveTo(start.x, start.y);
+      ctx.lineTo(end.x, end.y);
+      ctx.lineWidth = thickness;
+      ctx.strokeStyle = `rgba(${color.r}, ${color.g}, ${color.b}, ${color.a / 255})`;
+      ctx.stroke();
+    }
+
+    function drawRectCanvas(ctx, shape) {
+      let { center, width, height, rotation, strokeWidth, strokeColor, fillColor } = shape;
+
+
+      ctx.save();
+      ctx.translate(center.x, center.y);
+
+      ctx.rotate(rotation);
+
+      // Draw fill
+      if (fillColor.a > 0) {
+        ctx.fillStyle = `rgba(${fillColor.r}, ${fillColor.g}, ${fillColor.b}, ${fillColor.a / 255})`;
+        ctx.fillRect(-width / 2, -height / 2, width, height);
+      }
+
+      // Draw stroke
+      if (strokeColor.a > 0 && strokeWidth > 0) {
+        ctx.lineWidth = strokeWidth;
+        ctx.strokeStyle = `rgba(${strokeColor.r}, ${strokeColor.g}, ${strokeColor.b}, ${strokeColor.a / 255})`;
+        ctx.strokeRect(-width / 2, -height / 2, width, height);
+      }
+
+      ctx.restore();
+    }
+
+    function flipCanvas() {
+      flipState = !flipState;
+      updateCanvas3();
+    }
+
+    function updateCanvas3() {
+      if (flipState) {
+        ctx3.clearRect(0, 0, canvas3.width, canvas3.height);
+        ctx3.drawImage(canvas, 0, 0);
+      } else {
+        ctx3.clearRect(0, 0, canvas3.width, canvas3.height);
+        ctx3.drawImage(canvas2, 0, 0);
+      }
+    }
+
+    // Initial draw
+    drawShapes();
+  </script>
+</body>
+</html>
