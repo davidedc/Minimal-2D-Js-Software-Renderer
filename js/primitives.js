@@ -190,3 +190,55 @@ function drawAxisAlignedRect(centerX, centerY, rectWidth, rectHeight,
     }
   }
 }
+
+function plotThickPoint(x, y, r, g, b, a, thickness) {
+  const halfThick = Math.floor(thickness / 2);
+  for (let dy = -halfThick; dy < thickness - halfThick; dy++) {
+    for (let dx = -halfThick; dx < thickness - halfThick; dx++) {
+      setPixel(x + dx, y + dy, r, g, b, a);
+    }
+  }
+}
+
+function circlePlotPoints(xc, yc, x, y, r, g, b, a, thickness) {
+  // Plot all octants
+  plotThickPoint(xc + x, yc + y, r, g, b, a, thickness);
+  plotThickPoint(xc - x, yc + y, r, g, b, a, thickness);
+  plotThickPoint(xc + x, yc - y, r, g, b, a, thickness);
+  plotThickPoint(xc - x, yc - y, r, g, b, a, thickness);
+  plotThickPoint(xc + y, yc + x, r, g, b, a, thickness);
+  plotThickPoint(xc - y, yc + x, r, g, b, a, thickness);
+  plotThickPoint(xc + y, yc - x, r, g, b, a, thickness);
+  plotThickPoint(xc - y, yc - x, r, g, b, a, thickness);
+}
+
+function drawCircle(xc, yc, radius, r, g, b, a, fill = false, thickness = 1) {
+  if (fill) {
+    const radiusSquared = (radius - 0.5) * (radius - 0.5);
+    for (let y = -radius; y <= radius; y++) {
+      for (let x = -radius; x <= radius; x++) {
+        if (x * x + y * y <= radiusSquared) {
+          setPixel(xc + x, yc + y, r, g, b, a);
+        }
+      }
+    }
+  }
+
+  if (!fill || thickness > 0) {
+    let x = 0;
+    let y = radius;
+    let d = 3 - 2 * radius;
+
+    while (y >= x) {
+      circlePlotPoints(xc, yc, x, y, r, g, b, a, thickness);
+      x++;
+
+      if (d > 0) {
+        y--;
+        d = d + 4 * (x - y) + 10;
+      } else {
+        d = d + 4 * x + 6;
+      }
+    }
+  }
+}

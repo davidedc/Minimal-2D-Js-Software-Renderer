@@ -28,6 +28,8 @@ function drawShapesCanvas() {
       drawLineCanvas(ctx2, shape);
     } else if (shape.type === 'rect') {
       drawRectCanvas(ctx2, shape);
+    } else if (shape.type === 'circle') {
+      drawCircleCanvas(ctx2, shape);
     }
   }
 }

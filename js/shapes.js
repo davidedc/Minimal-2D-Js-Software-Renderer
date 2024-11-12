@@ -55,3 +55,21 @@ function drawRectCanvas(ctx, shape) {
 
   ctx.restore();
 }
+
+function drawCircleCanvas(ctx, shape) {
+  const { center, radius, strokeWidth, strokeColor, fillColor } = shape;
+  
+  ctx.beginPath();
+  ctx.arc(center.x, center.y, radius, 0, Math.PI * 2);
+  
+  if (fillColor.a > 0) {
+    ctx.fillStyle = `rgba(${fillColor.r}, ${fillColor.g}, ${fillColor.b}, ${fillColor.a / 255})`;
+    ctx.fill();
+  }
+  
+  if (strokeColor.a > 0 && strokeWidth > 0) {
+    ctx.lineWidth = strokeWidth;
+    ctx.strokeStyle = `rgba(${strokeColor.r}, ${strokeColor.g}, ${strokeColor.b}, ${strokeColor.a / 255})`;
+    ctx.stroke();
+  }
+}

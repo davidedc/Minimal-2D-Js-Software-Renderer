@@ -82,7 +82,44 @@ function drawShapes() {
       strokeWidth
     );
   }
-  
+
+  // Draw circles
+  for (let i = 0; i < 5; i++) {
+    const center = toIntegerPoint(getRandomPoint());
+    const radius = Math.floor(15 + Math.random() * 50);
+    const strokeWidth = Math.floor(Math.random() * 10) + 1;
+    const strokeColor = getRandomColor(200, 255);
+    const fillColor = getRandomColor(100, 200);
+    
+    shapes.push({
+      type: 'circle',
+      center: center,
+      radius: radius,
+      strokeWidth: strokeWidth,
+      strokeColor: strokeColor,
+      fillColor: fillColor
+    });
+    
+    // Draw filled circle first if there's a fill color
+    if (fillColor.a > 0) {
+      drawCircle(
+        center.x, center.y, radius,
+        fillColor.r, fillColor.g, fillColor.b, fillColor.a,
+        true
+      );
+    }
+    
+    // Draw stroke if there's a stroke width and color
+    if (strokeColor.a > 0 && strokeWidth > 0) {
+      drawCircle(
+        center.x, center.y, radius,
+        strokeColor.r, strokeColor.g, strokeColor.b, strokeColor.a,
+        false, strokeWidth
+      );
+    }
+  }
+
+
   updateCanvas();
   drawShapesCanvas();
   updateCanvas3();
