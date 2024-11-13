@@ -5,8 +5,8 @@ function drawShapes() {
   
   // Draw random lines
   for (let i = 0; i < 15; i++) {
-    const start = toIntegerPoint(getRandomPoint());
-    const end = toIntegerPoint(getRandomPoint());
+    const start = getRandomPoint();
+    const end = getRandomPoint();
     const thickness = Math.floor(Math.random() * 10) + 1;
     const color = getRandomColor(150, 255);
 
@@ -28,10 +28,10 @@ function drawShapes() {
 
   // Draw axis-aligned rectangles
   for (let i = 0; i < 5; i++) {
-    const center = toIntegerPoint(getRandomPoint());
-    const rectWidth = Math.floor(30 + Math.random() * 100);
-    const rectHeight = Math.floor(30 + Math.random() * 100);
-    const strokeWidth = Math.floor(Math.random() * 10) + 1;
+    const center = getRandomPoint();
+    const rectWidth = 30 + Math.random() * 100;
+    const rectHeight = 30 + Math.random() * 100;
+    const strokeWidth = Math.random() * 10 + 1;
     const strokeColor = getRandomColor(200, 255);
     const fillColor = getRandomColor(100, 200);
     
@@ -46,7 +46,7 @@ function drawShapes() {
       fillColor: fillColor
     });
     
-    drawAxisAlignedRect(
+    drawAxisAlignedRectSW(
       center.x, center.y, rectWidth, rectHeight,
       strokeColor.r, strokeColor.g, strokeColor.b, strokeColor.a,
       fillColor.r, fillColor.g, fillColor.b, fillColor.a,
@@ -56,11 +56,11 @@ function drawShapes() {
 
   // Draw rotated rectangles
   for (let i = 0; i < 5; i++) {
-    const center = toIntegerPoint(getRandomPoint());
-    const rectWidth = Math.floor(30 + Math.random() * 100);
-    const rectHeight = Math.floor(30 + Math.random() * 100);
+    const center = getRandomPoint();
+    const rectWidth = 30 + Math.random() * 100;
+    const rectHeight = 30 + Math.random() * 100;
     const rotation = Math.random() * Math.PI * 2;
-    const strokeWidth = Math.floor(Math.random() * 10) + 1;
+    const strokeWidth = Math.random() * 10 + 1;
     const strokeColor = getRandomColor(200, 255);
     const fillColor = getRandomColor(100, 200);
     
@@ -85,9 +85,9 @@ function drawShapes() {
 
   // Draw circles
   for (let i = 0; i < 5; i++) {
-    const center = toIntegerPoint(getRandomPoint());
-    const radius = Math.floor(15 + Math.random() * 50);
-    const strokeWidth = Math.floor(Math.random() * 10) + 1;
+    const center = getRandomPoint();
+    const radius = 15 + Math.random() * 50;
+    const strokeWidth = Math.random() * 10 + 1;
     const strokeColor = getRandomColor(200, 255);
     const fillColor = getRandomColor(100, 200);
     

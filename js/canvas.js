@@ -4,7 +4,6 @@ const ctx = canvas.getContext('2d');
 
 const canvas2 = document.getElementById('canvas2');
 const ctx2 = canvas2.getContext('2d');
-ctx2.translate(0.5, 0.5);
 
 const canvas3 = document.getElementById('canvas3');
 const ctx3 = canvas3.getContext('2d');
