@@ -10,11 +10,44 @@ function getRandomColor(minAlpha = 100, maxAlpha = 255) {
   };
 }
 
+
+function getRandomCircle() {
+  return {
+      ...getRandomArc(),
+      type: 'circle',
+      startAngle: 0,
+      endAngle: 360
+  };
+}
+
+
 function getRandomPoint() {
   const margin = 100;
   return {
     x: margin + Math.random() * (width - 2 * margin),
     y: margin + Math.random() * (height - 2 * margin)
+  };
+}
+
+
+function getRandomArc() {
+  const center = getRandomPoint();
+  const radius = 15 + Math.random() * 50;
+  const startAngle = Math.random() * 360;
+  const endAngle = startAngle + Math.random() * 270 + 90; // At least 90 degrees
+  const strokeWidth = Math.random() * 10 + 1;
+  const strokeColor = getRandomColor(200, 255);
+  const fillColor = getRandomColor(100, 200);
+  
+  return {
+      type: 'arc',
+      center,
+      radius,
+      startAngle,
+      endAngle,
+      strokeWidth,
+      strokeColor,
+      fillColor
   };
 }
 
@@ -73,6 +106,42 @@ function drawRectCanvas(ctx, shape) {
   }
 }
 
+
+function drawArcCanvas(ctx, shape) {
+  const { center, radius, startAngle, endAngle, strokeWidth, strokeColor, fillColor } = shape;
+  // Convert angles to radians
+  const startRad = (startAngle % 360) * Math.PI / 180;
+  const endRad = (endAngle % 360) * Math.PI / 180;
+  
+  // Draw the filled portion first
+  if (fillColor.a > 0) {
+      ctx.beginPath();
+      // Start from the center
+      ctx.moveTo(center.x, center.y);
+      // Draw line to start of arc
+      ctx.lineTo(
+          center.x + radius * Math.cos(startRad),
+          center.y + radius * Math.sin(startRad)
+      );
+      // Draw the arc
+      ctx.arc(center.x, center.y, radius, startRad, endRad);
+      // Draw line back to center
+      ctx.lineTo(center.x, center.y);
+      
+      // Fill without stroke
+      ctx.fillStyle = `rgba(${fillColor.r}, ${fillColor.g}, ${fillColor.b}, ${fillColor.a / 255})`;
+      ctx.fill();
+  }
+  
+  // Draw the stroke separately
+  if (strokeColor.a > 0 && strokeWidth > 0) {
+      ctx.beginPath();
+      ctx.arc(center.x, center.y, radius, startRad, endRad);
+      ctx.lineWidth = strokeWidth;
+      ctx.strokeStyle = `rgba(${strokeColor.r}, ${strokeColor.g}, ${strokeColor.b}, ${strokeColor.a / 255})`;
+      ctx.stroke();
+  }
+}
 
 function drawCircleCanvas(ctx, shape) {
   const { center, radius, strokeWidth, strokeColor, fillColor } = shape;

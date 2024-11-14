@@ -297,27 +297,124 @@ function drawAxisAlignedRectSW(centerX, centerY, rectWidth, rectHeight,
 }
 
 
-function plotThickPoint(x, y, r, g, b, a, thickness) {
+function addThickPoint(strokePixels, x, y, thickness) {
   const halfThick = Math.floor(thickness / 2);
   for (let dy = -halfThick; dy < thickness - halfThick; dy++) {
-    for (let dx = -halfThick; dx < thickness - halfThick; dx++) {
-      setPixel(Math.round(x + dx), Math.round(y + dy), Math.round(r), g, b, a);
-    }
+      for (let dx = -halfThick; dx < thickness - halfThick; dx++) {
+          addStrokePixel(strokePixels, Math.round(x + dx), Math.round(y + dy));
+      }
   }
 }
 
-function circlePlotPoints(xc, yc, x, y, r, g, b, a, thickness) {
-  // Plot all octants
-  plotThickPoint(xc + x, yc + y, r, g, b, a, thickness);
-  plotThickPoint(xc - x, yc + y, r, g, b, a, thickness);
-  plotThickPoint(xc + x, yc - y, r, g, b, a, thickness);
-  plotThickPoint(xc - x, yc - y, r, g, b, a, thickness);
-  plotThickPoint(xc + y, yc + x, r, g, b, a, thickness);
-  plotThickPoint(xc - y, yc + x, r, g, b, a, thickness);
-  plotThickPoint(xc + y, yc - x, r, g, b, a, thickness);
-  plotThickPoint(xc - y, yc - x, r, g, b, a, thickness);
+function addThickArcPoint(strokePixels, xc, yc, x, y, thickness, startAngle, endAngle) {
+  const halfThick = Math.floor(thickness / 2);
+  for (let dy = -halfThick; dy < thickness - halfThick; dy++) {
+      for (let dx = -halfThick; dx < thickness - halfThick; dx++) {
+          // Check if this thick point pixel is within the arc's angle range
+          const strokeX = x + dx;
+          const strokeY = y + dy;
+          let angle = Math.atan2(strokeY - yc, strokeX - xc);
+          if (angle < 0) angle += 2 * Math.PI;
+          if (angle < startAngle) angle += 2 * Math.PI;
+          if (angle >= startAngle && angle <= endAngle) {
+              strokePixels.add(`${Math.round(strokeX)},${Math.round(strokeY)}`);
+          }
+      }
+  }
 }
 
+// TODO note that if the stroke is fully opaque, then it can be drawn with a single pass
+// rather than the current two-pass approach (collect all stroke pixels, then draw them).
+function drawArcSW(xc, yc, radius, startAngle, endAngle, r, g, b, a, fill = false, thickness = 1) {
+  // Convert angles from degrees to radians
+  startAngle = (startAngle % 360) * Math.PI / 180;
+  endAngle = (endAngle % 360) * Math.PI / 180;
+  
+  // Ensure endAngle is greater than startAngle
+  if (endAngle < startAngle) {
+      endAngle += 2 * Math.PI;
+  }
+  
+  // Apply the same tweaks as in circle drawing
+  if (thickness > 1)
+    thickness *= 0.75;
+  xc -= 1;
+  yc -= 1;
+  //radius *= 1.015;
+
+  // Helper function to check if an angle is within the specified range
+  function isAngleInRange(px, py) {
+      let angle = Math.atan2(py, px);
+      if (angle < 0) angle += 2 * Math.PI;
+      if (angle < startAngle) angle += 2 * Math.PI;
+      return angle >= startAngle && angle <= endAngle;
+  }
+
+  if (fill) {
+      const radiusSquared = (radius - 0.5) * (radius - 0.5);
+      for (let y = -radius; y <= radius; y++) {
+          for (let x = -radius; x <= radius; x++) {
+              if (x * x + y * y <= radiusSquared && isAngleInRange(x, y)) {
+                  setPixel(Math.round(xc + x), Math.round(yc + y), Math.round(r), g, b, a);
+              }
+          }
+      }
+  }
+
+  if (!fill || thickness > 0) {
+      // Collect all stroke pixels first
+      const strokePixels = new Set();
+      let x = 0;
+      let y = radius;
+      let d = 3 - 2 * radius;
+      
+      while (y >= x) {
+          const points = [
+              [x, y], [-x, y], [x, -y], [-x, -y],
+              [y, x], [-y, x], [y, -x], [-y, -x]
+          ];
+          
+          points.forEach(([px, py]) => {
+              if (isAngleInRange(px, py)) {
+                  // Pass center coordinates and angles to addThickArcPoint
+                  addThickArcPoint(strokePixels, xc, yc, xc + px, yc + py, thickness, startAngle, endAngle);
+              }
+          });
+          
+          x++;
+          if (d > 0) {
+              y--;
+              d = d + 4 * (x - y) + 10;
+          } else {
+              d = d + 4 * x + 6;
+          }
+      }
+
+      // Now render each pixel exactly once
+      for (let pixel of strokePixels) {
+          const [x, y] = pixel.split(',').map(Number);
+          setPixel(x, y, r, g, b, a);
+      }
+  }
+}
+
+function addStrokePixel(strokePixels, x, y) {
+  strokePixels.add(`${x},${y}`);
+}
+
+function circlePlotPoints(strokePixels, xc, yc, x, y, thickness) {
+  addThickPoint(strokePixels, xc + x, yc + y, thickness);
+  addThickPoint(strokePixels, xc - x, yc + y, thickness);
+  addThickPoint(strokePixels, xc + x, yc - y, thickness);
+  addThickPoint(strokePixels, xc - x, yc - y, thickness);
+  addThickPoint(strokePixels, xc + y, yc + x, thickness);
+  addThickPoint(strokePixels, xc - y, yc + x, thickness);
+  addThickPoint(strokePixels, xc + y, yc - x, thickness);
+  addThickPoint(strokePixels, xc - y, yc - x, thickness);
+}
+
+// TODO note that if the stroke is fully opaque, then it can be drawn with a single pass
+// rather than the current two-pass approach (collect all stroke pixels, then draw them).
 function drawCircleBresenham(xc, yc, radius, r, g, b, a, fill = false, thickness = 1) {
 
   // tweaks to make the sw render more closely match the canvas render
@@ -325,7 +422,7 @@ function drawCircleBresenham(xc, yc, radius, r, g, b, a, fill = false, thickness
     thickness *= 0.75;
   xc-= 1;
   yc-= 1;
-  radius*=1.015;
+  //radius *= 1.015;
 
   if (fill) {
     const radiusSquared = (radius - 0.5) * (radius - 0.5);
@@ -339,12 +436,14 @@ function drawCircleBresenham(xc, yc, radius, r, g, b, a, fill = false, thickness
   }
 
   if (!fill || thickness > 0) {
+    // Collect all stroke pixels first
+    const strokePixels = new Set();
     let x = 0;
     let y = radius;
     let d = 3 - 2 * radius;
 
     while (y >= x) {
-      circlePlotPoints(xc, yc, x, y, r, g, b, a, thickness);
+      circlePlotPoints(strokePixels, xc, yc, x, y, thickness);
       x++;
 
       if (d > 0) {
@@ -354,62 +453,78 @@ function drawCircleBresenham(xc, yc, radius, r, g, b, a, fill = false, thickness
         d = d + 4 * x + 6;
       }
     }
+
+    // Now render each pixel exactly once
+    for (let pixel of strokePixels) {
+        const [x, y] = pixel.split(',').map(Number);
+        setPixel(x, y, r, g, b, a);
+    }
   }
 }
 
 function drawCircleHQ(xc, yc, radius, r, g, b, a, fill = false, thickness = 1) {
+  drawArcHQ(xc, yc, radius, 0, 360, r, g, b, a, fill, thickness);
+}
 
-  // For consistent rendering with canvas, apply the same adjustments
+// Add a high-quality arc drawing function
+function drawArcHQ(xc, yc, radius, startAngle, endAngle, r, g, b, a, fill = false, thickness = 1) {
+  // Convert angles to radians
+  startAngle = (startAngle % 360) * Math.PI / 180;
+  endAngle = (endAngle % 360) * Math.PI / 180;
+  
+  if (endAngle < startAngle) {
+      endAngle += 2 * Math.PI;
+  }
+
+  // Apply the same adjustments as original HQ circle
   thickness *= 0.5;
   xc -= 0.5;
   yc -= 0.5;
-  //radius *= 1.015;
   radius = Math.floor(radius) + 0.5;
-  // if the radios is even, increment it by 1
-  //if (radius % 2 == 0) radius += 0.5;
   
-  // Convert inputs to integers
   xc = Math.round(xc);
   yc = Math.round(yc);
   
-  // Determine the bounding box of the circle
   const minX = Math.floor(xc - radius - thickness);
   const maxX = Math.ceil(xc + radius + thickness);
   const minY = Math.floor(yc - radius - thickness);
   const maxY = Math.ceil(yc + radius + thickness);
   
-  const radiusSquared = radius * radius;
-  const outerRadiusSquared = (radius + thickness) * (radius + thickness);
-  
-  // Draw fill first
-  if (fill) {
-    for (let y = minY; y <= maxY; y++) {
-      for (let x = minX; x <= maxX; x++) {
-        const dx = x - xc;
-        const dy = y - yc;
-        const distSquared = dx * dx + dy * dy;
-        
-        if (distSquared <= radiusSquared) {
-          setPixel(x, y, r, g, b, a);
-        }
-      }
-    }
+  function isAngleInRange(px, py) {
+      let angle = Math.atan2(py, px);
+      if (angle < 0) angle += 2 * Math.PI;
+      if (angle < startAngle) angle += 2 * Math.PI;
+      return angle >= startAngle && angle <= endAngle;
   }
   
-  // Draw stroke on top
-  if (thickness > 0) {
-    for (let y = minY; y <= maxY; y++) {
-      for (let x = minX; x <= maxX; x++) {
-        const dx = x - xc;
-        const dy = y - yc;
-        const distSquared = dx * dx + dy * dy;
-        
-        // Check if pixel is within stroke distance of the circle's path
-        const distFromPath = Math.abs(Math.sqrt(distSquared) - radius);
-        if (distFromPath <= thickness) {
-          setPixel(x, y, r, g, b, a);
-        }
+  const radiusSquared = radius * radius;
+  
+  if (fill) {
+      for (let y = minY; y <= maxY; y++) {
+          for (let x = minX; x <= maxX; x++) {
+              const dx = x - xc;
+              const dy = y - yc;
+              const distSquared = dx * dx + dy * dy;
+              
+              if (distSquared <= radiusSquared && isAngleInRange(dx, dy)) {
+                  setPixel(x, y, r, g, b, a);
+              }
+          }
       }
-    }
+  }
+  
+  if (thickness > 0) {
+      for (let y = minY; y <= maxY; y++) {
+          for (let x = minX; x <= maxX; x++) {
+              const dx = x - xc;
+              const dy = y - yc;
+              const distSquared = dx * dx + dy * dy;
+              
+              const distFromPath = Math.abs(Math.sqrt(distSquared) - radius);
+              if (distFromPath <= thickness && isAngleInRange(dx, dy)) {
+                  setPixel(x, y, r, g, b, a);
+              }
+          }
+      }
   }
 }

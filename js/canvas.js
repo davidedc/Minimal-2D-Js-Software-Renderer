@@ -29,6 +29,8 @@ function drawShapesCanvas() {
       drawRectCanvas(ctx2, shape);
     } else if (shape.type === 'circle') {
       drawCircleCanvas(ctx2, shape);
+    } else if (shape.type === 'arc') {
+      drawArcCanvas(ctx2, shape);
     }
   }
 }

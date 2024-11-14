@@ -83,41 +83,103 @@ function drawShapes() {
     );
   }
 
-  // Draw circles
-  for (let i = 0; i < 5; i++) {
-    const center = getRandomPoint();
-    const radius = 15 + Math.random() * 50;
-    const strokeWidth = Math.random() * 10 + 1;
-    const strokeColor = getRandomColor(200, 255);
-    const fillColor = getRandomColor(100, 200);
-    
-    shapes.push({
-      type: 'circle',
-      center: center,
-      radius: radius,
-      strokeWidth: strokeWidth,
-      strokeColor: strokeColor,
-      fillColor: fillColor
-    });
-    
-    // Draw filled circle first if there's a fill color
-    if (fillColor.a > 0) {
-      drawCircleBresenham(
-        center.x, center.y, radius,
-        fillColor.r, fillColor.g, fillColor.b, fillColor.a,
-        true
-      );
-    }
-    
-    // Draw stroke if there's a stroke width and color
-    if (strokeColor.a > 0 && strokeWidth > 0) {
-      drawCircleBresenham(
-        center.x, center.y, radius,
-        strokeColor.r, strokeColor.g, strokeColor.b, strokeColor.a,
-        false, strokeWidth
-      );
-    }
+  // Draw 90-degree arcs with different stroke sizes and radii
+  const strokeSizes = [1, 2, 3, 4];
+  const radii = [20, 40, 60];
+  let xOffset = 150;
+  
+  for (const strokeSize of strokeSizes) {
+      let yOffset = 150;
+      for (const radius of radii) {
+          const shape = {
+              type: 'arc',
+              center: { x: xOffset, y: yOffset },
+              radius: radius,
+              startAngle: 0,
+              endAngle: 90,
+              strokeWidth: strokeSize,
+              strokeColor: { r: 200, g: 100, b: 100, a: 255 },
+              fillColor: { r: 0, g: 0, b: 0, a: 0 }
+          };
+          
+          shapes.push(shape);
+          drawArcSW(
+              shape.center.x, shape.center.y,
+              shape.radius,
+              shape.startAngle, shape.endAngle,
+              shape.strokeColor.r, shape.strokeColor.g, shape.strokeColor.b, shape.strokeColor.a,
+              false, shape.strokeWidth
+          );
+          
+          yOffset += radius * 2 + 20;
+      }
+      xOffset += 120;
   }
+
+  // Add some random filled arcs
+  for (let i = 0; i < 3; i++) {
+      const arc = getRandomArc();
+      shapes.push(arc);
+      
+      if (arc.fillColor.a > 0) {
+          drawArcSW(
+              arc.center.x, arc.center.y,
+              arc.radius,
+              arc.startAngle, arc.endAngle,
+              arc.fillColor.r, arc.fillColor.g, arc.fillColor.b, arc.fillColor.a,
+              true
+          );
+      }
+      
+      if (arc.strokeColor.a > 0 && arc.strokeWidth > 0) {
+          drawArcSW(
+              arc.center.x, arc.center.y,
+              arc.radius,
+              arc.startAngle, arc.endAngle,
+              arc.strokeColor.r, arc.strokeColor.g, arc.strokeColor.b, arc.strokeColor.a,
+              false, arc.strokeWidth
+          );
+      }
+  }
+
+// Draw circles
+for (let i = 0; i < 5; i++) {
+  const center = getRandomPoint();
+  const radius = 15 + Math.random() * 50;
+  const strokeWidth = Math.random() * 10 + 1;
+  const strokeColor = getRandomColor(200, 255);
+  const fillColor = getRandomColor(100, 200);
+  
+  shapes.push({
+    type: 'circle',
+    center: center,
+    radius: radius,
+    strokeWidth: strokeWidth,
+    strokeColor: strokeColor,
+    fillColor: fillColor
+  });
+  
+  // Draw filled circle first if there's a fill color
+  if (fillColor.a > 0) {
+    drawCircleBresenham(
+      center.x, center.y,
+      radius,
+      fillColor.r, fillColor.g, fillColor.b, fillColor.a,
+      true  // fill = true
+    );
+  }
+  
+  // Draw stroke if there's a stroke width and color
+  if (strokeColor.a > 0 && strokeWidth > 0) {
+    drawCircleBresenham(
+      center.x, center.y,
+      radius,
+      strokeColor.r, strokeColor.g, strokeColor.b, strokeColor.a,
+      false,  // fill = false
+      strokeWidth
+    );
+  }
+}
 
 
   updateCanvas();
