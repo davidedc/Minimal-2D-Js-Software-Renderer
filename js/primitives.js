@@ -415,6 +415,19 @@ function circlePlotPoints(strokePixels, xc, yc, x, y, thickness) {
 
 // TODO note that if the stroke is fully opaque, then it can be drawn with a single pass
 // rather than the current two-pass approach (collect all stroke pixels, then draw them).
+
+// Advantages -----------------------------------
+// 
+// O(r) complexity for unfilled circles, where r is radius
+// Integer-only arithmetic is faster per operation
+// Minimal overdraw due to Set-based pixel collection
+// Efficient memory use for unfilled circles
+//
+// Disadvantages --------------------------------
+// Two-pass approach requires extra memory
+// Square-based thickness can cause irregular appearance
+// O(r²) complexity when filling
+
 function drawCircleBresenham(xc, yc, radius, r, g, b, a, fill = false, thickness = 1) {
 
   // tweaks to make the sw render more closely match the canvas render
@@ -467,6 +480,21 @@ function drawCircleHQ(xc, yc, radius, r, g, b, a, fill = false, thickness = 1) {
 }
 
 // Add a high-quality arc drawing function
+//
+// High-quality arc drawing function
+//
+// Advantages -----------------------------------
+// Single pass - no intermediate storage
+// More accurate anti-aliasing potential
+// Better handling of sub-pixel positioning
+// Uniform thickness appearance
+//
+// Disadvantages --------------------------------
+// O(r²) complexity always (scans full bounding box)
+// Floating-point arithmetic is slower per operation
+// More complex distance and angle calculations
+// Higher memory bandwidth due to potential overdraw
+
 function drawArcHQ(xc, yc, radius, startAngle, endAngle, r, g, b, a, fill = false, thickness = 1) {
   // Convert angles to radians
   startAngle = (startAngle % 360) * Math.PI / 180;
