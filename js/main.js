@@ -102,7 +102,7 @@ function drawShapes() {
     
     // Draw filled circle first if there's a fill color
     if (fillColor.a > 0) {
-      drawCircle(
+      drawCircleBresenham(
         center.x, center.y, radius,
         fillColor.r, fillColor.g, fillColor.b, fillColor.a,
         true
@@ -111,7 +111,7 @@ function drawShapes() {
     
     // Draw stroke if there's a stroke width and color
     if (strokeColor.a > 0 && strokeWidth > 0) {
-      drawCircle(
+      drawCircleBresenham(
         center.x, center.y, radius,
         strokeColor.r, strokeColor.g, strokeColor.b, strokeColor.a,
         false, strokeWidth

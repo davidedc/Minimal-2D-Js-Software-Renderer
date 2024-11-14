@@ -318,7 +318,7 @@ function circlePlotPoints(xc, yc, x, y, r, g, b, a, thickness) {
   plotThickPoint(xc - y, yc - x, r, g, b, a, thickness);
 }
 
-function drawCircle(xc, yc, radius, r, g, b, a, fill = false, thickness = 1) {
+function drawCircleBresenham(xc, yc, radius, r, g, b, a, fill = false, thickness = 1) {
 
   // tweaks to make the sw render more closely match the canvas render
   if (thickness > 1)
