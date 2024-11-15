@@ -17,13 +17,6 @@ function drawShapes() {
       thickness: thickness,
       color: color
     });
-    
-    drawLineSW(
-      start.x, start.y,
-      end.x, end.y,
-      thickness,
-      color.r, color.g, color.b, color.a
-    );
   }
 
   // Draw axis-aligned rectangles
@@ -45,13 +38,6 @@ function drawShapes() {
       strokeColor: strokeColor,
       fillColor: fillColor
     });
-    
-    drawAxisAlignedRectSW(
-      center.x, center.y, rectWidth, rectHeight,
-      strokeColor.r, strokeColor.g, strokeColor.b, strokeColor.a,
-      fillColor.r, fillColor.g, fillColor.b, fillColor.a,
-      strokeWidth
-    );
   }
 
   // Draw rotated rectangles
@@ -74,13 +60,6 @@ function drawShapes() {
       strokeColor: strokeColor,
       fillColor: fillColor
     });
-    
-    drawRectSW(
-      center.x, center.y, rectWidth, rectHeight, rotation,
-      strokeColor.r, strokeColor.g, strokeColor.b, strokeColor.a,
-      fillColor.r, fillColor.g, fillColor.b, fillColor.a,
-      strokeWidth
-    );
   }
 
   // Draw 90-degree arcs with different stroke sizes and radii
@@ -103,13 +82,6 @@ function drawShapes() {
           };
           
           shapes.push(shape);
-          drawArcSW(
-              shape.center.x, shape.center.y,
-              shape.radius,
-              shape.startAngle, shape.endAngle,
-              shape.strokeColor.r, shape.strokeColor.g, shape.strokeColor.b, shape.strokeColor.a,
-              false, shape.strokeWidth
-          );
           
           yOffset += radius * 2 + 20;
       }
@@ -120,71 +92,96 @@ function drawShapes() {
   for (let i = 0; i < 3; i++) {
       const arc = getRandomArc();
       shapes.push(arc);
-      
-      if (arc.fillColor.a > 0) {
-          drawArcSW(
-              arc.center.x, arc.center.y,
-              arc.radius,
-              arc.startAngle, arc.endAngle,
-              arc.fillColor.r, arc.fillColor.g, arc.fillColor.b, arc.fillColor.a,
-              true
-          );
-      }
-      
-      if (arc.strokeColor.a > 0 && arc.strokeWidth > 0) {
-          drawArcSW(
-              arc.center.x, arc.center.y,
-              arc.radius,
-              arc.startAngle, arc.endAngle,
-              arc.strokeColor.r, arc.strokeColor.g, arc.strokeColor.b, arc.strokeColor.a,
-              false, arc.strokeWidth
-          );
-      }
   }
 
-// Draw circles
-for (let i = 0; i < 5; i++) {
-  const center = getRandomPoint();
-  const radius = 15 + Math.random() * 50;
-  const strokeWidth = Math.random() * 10 + 1;
-  const strokeColor = getRandomColor(200, 255);
-  const fillColor = getRandomColor(100, 200);
-  
-  shapes.push({
-    type: 'circle',
-    center: center,
-    radius: radius,
-    strokeWidth: strokeWidth,
-    strokeColor: strokeColor,
-    fillColor: fillColor
-  });
-  
-  // Draw filled circle first if there's a fill color
-  if (fillColor.a > 0) {
-    drawCircleSW(
-      center.x, center.y,
-      radius,
-      fillColor.r, fillColor.g, fillColor.b, fillColor.a,
-      true  // fill = true
-    );
+  // Draw circles
+  for (let i = 0; i < 5; i++) {
+    const center = getRandomPoint();
+    const radius = 15 + Math.random() * 50;
+    const strokeWidth = Math.random() * 10 + 1;
+    const strokeColor = getRandomColor(200, 255);
+    const fillColor = getRandomColor(100, 200);
+    
+    shapes.push({
+      type: 'circle',
+      center: center,
+      radius: radius,
+      strokeWidth: strokeWidth,
+      strokeColor: strokeColor,
+      fillColor: fillColor
+    });
   }
-  
-  // Draw stroke if there's a stroke width and color
-  if (strokeColor.a > 0 && strokeWidth > 0) {
-    drawCircleSW(
-      center.x, center.y,
-      radius,
-      strokeColor.r, strokeColor.g, strokeColor.b, strokeColor.a,
-      false,  // fill = false
-      strokeWidth
-    );
-  }
-}
 
-
+  drawShapesSW();
   updateCanvas();
   drawShapesCanvas();
   updateCanvas3();
+}
+
+function drawShapesSW() {
+  for (let shape of shapes) {
+    if (shape.type === 'line') {
+      drawLineSW(
+        shape.start.x, shape.start.y,
+        shape.end.x, shape.end.y,
+        shape.thickness,
+        shape.color.r, shape.color.g, shape.color.b, shape.color.a
+      );
+    } else if (shape.type === 'rect' && shape.rotation === 0) {
+      drawAxisAlignedRectSW(
+        shape.center.x, shape.center.y, shape.width, shape.height,
+        shape.strokeColor.r, shape.strokeColor.g, shape.strokeColor.b, shape.strokeColor.a,
+        shape.fillColor.r, shape.fillColor.g, shape.fillColor.b, shape.fillColor.a,
+        shape.strokeWidth
+      );
+    } else if (shape.type === 'rect') {
+      drawRectSW(
+        shape.center.x, shape.center.y, shape.width, shape.height, shape.rotation,
+        shape.strokeColor.r, shape.strokeColor.g, shape.strokeColor.b, shape.strokeColor.a,
+        shape.fillColor.r, shape.fillColor.g, shape.fillColor.b, shape.fillColor.a,
+        shape.strokeWidth
+      );
+    } else if (shape.type === 'arc') {
+      if (shape.fillColor.a > 0) {
+        drawArcSW(
+          shape.center.x, shape.center.y,
+          shape.radius,
+          shape.startAngle, shape.endAngle,
+          shape.fillColor.r, shape.fillColor.g, shape.fillColor.b, shape.fillColor.a,
+          true
+        );
+      }
+      
+      if (shape.strokeColor.a > 0 && shape.strokeWidth > 0) {
+        drawArcSW(
+          shape.center.x, shape.center.y,
+          shape.radius,
+          shape.startAngle, shape.endAngle,
+          shape.strokeColor.r, shape.strokeColor.g, shape.strokeColor.b, shape.strokeColor.a,
+          false, shape.strokeWidth
+        );
+      }
+    } else if (shape.type === 'circle') {
+      if (shape.fillColor.a > 0) {
+        drawCircleSW(
+          shape.center.x, shape.center.y,
+          shape.radius,
+          shape.fillColor.r, shape.fillColor.g, shape.fillColor.b, shape.fillColor.a,
+          true  // fill = true
+        );
+      }
+      
+      if (shape.strokeColor.a > 0 && shape.strokeWidth > 0) {
+        drawCircleSW(
+          shape.center.x, shape.center.y,
+          shape.radius,
+          shape.strokeColor.r, shape.strokeColor.g, shape.strokeColor.b, shape.strokeColor.a,
+          false,  // fill = false
+          shape.strokeWidth
+        );
+      }
+    }
+  }
 }
 
 function flipCanvas() {
