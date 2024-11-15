@@ -1,13 +1,13 @@
 // Basic drawing primitives (lines and rectangles)
-function drawLine(x1, y1, x2, y2, thickness, r, g, b, a) {
+function drawLineSW(x1, y1, x2, y2, thickness, r, g, b, a) {
   if (thickness === 1) {
-    drawLine1px(x1, y1, x2, y2, r, g, b, a);
+    drawLineSW1px(x1, y1, x2, y2, r, g, b, a);
   } else {
-    drawThickLine(x1, y1, x2, y2, thickness, r, g, b, a);
+    drawLineSWThick(x1, y1, x2, y2, thickness, r, g, b, a);
   }
 }
 
-function drawLine1px(x1, y1, x2, y2, r, g, b, a) {
+function drawLineSW1px(x1, y1, x2, y2, r, g, b, a) {
 
   // tweaks to make the sw render more closely match the canvas render
   x1 -= 0.5;
@@ -35,7 +35,7 @@ function drawLine1px(x1, y1, x2, y2, r, g, b, a) {
   }
 }
 
-function drawThickLine(x1, y1, x2, y2, thickness, r, g, b, a) {
+function drawLineSWThick(x1, y1, x2, y2, thickness, r, g, b, a) {
 
   // tweaks to make the sw render more closely match the canvas render
   x1 -= 0.5;
@@ -83,7 +83,7 @@ function drawThickLine(x1, y1, x2, y2, thickness, r, g, b, a) {
   }
 }
 
-function drawRotatedRect(centerX, centerY, width, height, rotation,
+function drawRectSW(centerX, centerY, width, height, rotation,
   strokeR, strokeG, strokeB, strokeA,
   fillR, fillG, fillB, fillA, strokeWidth) {
   
@@ -103,17 +103,27 @@ function drawRotatedRect(centerX, centerY, width, height, rotation,
       fillR, fillG, fillB, fillA,
       strokeWidth
       );
-    return;
   }
+  else {
+    drawRotatedRectSW(
+      rotation,
+      width, height, centerX, centerY,
+      fillA, fillR, fillG, fillB,
+      strokeA, strokeWidth, strokeR, strokeG, strokeB);
+  }
+}
 
+
+
+function drawRotatedRectSW(rotation, width, height, centerX, centerY, fillA, fillR, fillG, fillB, strokeA, strokeWidth, strokeR, strokeG, strokeB) {
   const cos = Math.cos(rotation);
   const sin = Math.sin(rotation);
 
   const points = [
-    [-width/2, -height/2],
-    [width/2, -height/2],
-    [width/2, height/2],
-    [-width/2, height/2]
+    [-width / 2, -height / 2],
+    [width / 2, -height / 2],
+    [width / 2, height / 2],
+    [-width / 2, height / 2]
   ].map(([x, y]) => ({
     x: centerX + x * cos - y * sin,
     y: centerY + x * sin + y * cos
@@ -139,7 +149,7 @@ function drawRotatedRect(centerX, centerY, width, height, rotation,
       for (let i = 0; i < 4; i++) {
         const p1 = points[i];
         const p2 = points[(i + 1) % 4];
-        drawLine1px(
+        drawLineSW1px(
           p1.x, p1.y,
           p2.x, p2.y,
           strokeR, strokeG, strokeB, strokeA
@@ -152,8 +162,8 @@ function drawRotatedRect(centerX, centerY, width, height, rotation,
         const p1 = points[i];
         const p2 = points[(i + 1) % 4];
         const line = extendLine(p1, p2, halfStroke);
-        
-        drawThickLine(
+
+        drawLineSWThick(
           line.start.x, line.start.y,
           line.end.x, line.end.y,
           strokeWidth,
@@ -165,8 +175,8 @@ function drawRotatedRect(centerX, centerY, width, height, rotation,
         const p1 = points[i];
         const p2 = points[(i + 1) % 4];
         const line = shortenLine(p1, p2, halfStroke);
-        
-        drawThickLine(
+
+        drawLineSWThick(
           line.start.x, line.start.y,
           line.end.x, line.end.y,
           strokeWidth,
@@ -176,8 +186,6 @@ function drawRotatedRect(centerX, centerY, width, height, rotation,
     }
   }
 }
-
-
 
 // Helper function for consistent rounding behavior
 function roundPoint(x, y) {
@@ -428,7 +436,7 @@ function circlePlotPoints(strokePixels, xc, yc, x, y, thickness) {
 // Square-based thickness can cause irregular appearance
 // O(r²) complexity when filling
 
-function drawCircleBresenham(xc, yc, radius, r, g, b, a, fill = false, thickness = 1) {
+function drawCircleSW(xc, yc, radius, r, g, b, a, fill = false, thickness = 1) {
 
   // tweaks to make the sw render more closely match the canvas render
   if (thickness > 1)
@@ -475,8 +483,8 @@ function drawCircleBresenham(xc, yc, radius, r, g, b, a, fill = false, thickness
   }
 }
 
-function drawCircleHQ(xc, yc, radius, r, g, b, a, fill = false, thickness = 1) {
-  drawArcHQ(xc, yc, radius, 0, 360, r, g, b, a, fill, thickness);
+function drawCircleSWHQ(xc, yc, radius, r, g, b, a, fill = false, thickness = 1) {
+  drawArcSWHQ(xc, yc, radius, 0, 360, r, g, b, a, fill, thickness);
 }
 
 // Add a high-quality arc drawing function
@@ -495,7 +503,7 @@ function drawCircleHQ(xc, yc, radius, r, g, b, a, fill = false, thickness = 1) {
 // More complex distance and angle calculations
 // Higher memory bandwidth due to potential overdraw
 
-function drawArcHQ(xc, yc, radius, startAngle, endAngle, r, g, b, a, fill = false, thickness = 1) {
+function drawArcSWHQ(xc, yc, radius, startAngle, endAngle, r, g, b, a, fill = false, thickness = 1) {
   // Convert angles to radians
   startAngle = (startAngle % 360) * Math.PI / 180;
   endAngle = (endAngle % 360) * Math.PI / 180;

@@ -18,7 +18,7 @@ function drawShapes() {
       color: color
     });
     
-    drawLine(
+    drawLineSW(
       start.x, start.y,
       end.x, end.y,
       thickness,
@@ -75,7 +75,7 @@ function drawShapes() {
       fillColor: fillColor
     });
     
-    drawRotatedRect(
+    drawRectSW(
       center.x, center.y, rectWidth, rectHeight, rotation,
       strokeColor.r, strokeColor.g, strokeColor.b, strokeColor.a,
       fillColor.r, fillColor.g, fillColor.b, fillColor.a,
@@ -161,7 +161,7 @@ for (let i = 0; i < 5; i++) {
   
   // Draw filled circle first if there's a fill color
   if (fillColor.a > 0) {
-    drawCircleBresenham(
+    drawCircleSW(
       center.x, center.y,
       radius,
       fillColor.r, fillColor.g, fillColor.b, fillColor.a,
@@ -171,7 +171,7 @@ for (let i = 0; i < 5; i++) {
   
   // Draw stroke if there's a stroke width and color
   if (strokeColor.a > 0 && strokeWidth > 0) {
-    drawCircleBresenham(
+    drawCircleSW(
       center.x, center.y,
       radius,
       strokeColor.r, strokeColor.g, strokeColor.b, strokeColor.a,
