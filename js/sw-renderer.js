@@ -447,50 +447,6 @@ function drawArcSWHelper(centerX, centerY, radius, startAngle, endAngle, r, g, b
   }
 }
 
-function addThickPoint(strokePixels, x, y, thickness) {
-  const halfThick = Math.floor(thickness / 2);
-  for (let dy = -halfThick; dy < thickness - halfThick; dy++) {
-      for (let dx = -halfThick; dx < thickness - halfThick; dx++) {
-          addStrokePixel(strokePixels, Math.round(x + dx), Math.round(y + dy));
-      }
-  }
-}
-
-function addThickArcPoint(strokePixels, xc, yc, x, y, thickness, startAngle, endAngle) {
-  const halfThick = Math.floor(thickness / 2);
-  for (let dy = -halfThick; dy < thickness - halfThick; dy++) {
-      for (let dx = -halfThick; dx < thickness - halfThick; dx++) {
-          // Check if this thick point pixel is within the arc's angle range
-          const strokeX = x + dx;
-          const strokeY = y + dy;
-          let angle = Math.atan2(strokeY - yc, strokeX - xc);
-          if (angle < 0) angle += 2 * Math.PI;
-          if (angle < startAngle) angle += 2 * Math.PI;
-          if (angle >= startAngle && angle <= endAngle) {
-              strokePixels.add(`${Math.round(strokeX)},${Math.round(strokeY)}`);
-          }
-      }
-  }
-}
-
-// TODO note that if the stroke is fully opaque, then it can be drawn with a single pass
-// rather than the current two-pass approach (collect all stroke pixels, then draw them).
-
-function addStrokePixel(strokePixels, x, y) {
-  strokePixels.add(`${x},${y}`);
-}
-
-function circlePlotPoints(strokePixels, xc, yc, x, y, thickness) {
-  addThickPoint(strokePixels, xc + x, yc + y, thickness);
-  addThickPoint(strokePixels, xc - x, yc + y, thickness);
-  addThickPoint(strokePixels, xc + x, yc - y, thickness);
-  addThickPoint(strokePixels, xc - x, yc - y, thickness);
-  addThickPoint(strokePixels, xc + y, yc + x, thickness);
-  addThickPoint(strokePixels, xc - y, yc + x, thickness);
-  addThickPoint(strokePixels, xc + y, yc - x, thickness);
-  addThickPoint(strokePixels, xc - y, yc - x, thickness);
-}
-
 // TODO note that if the stroke is fully opaque, then it can be drawn with a single pass
 // rather than the current two-pass approach (collect all stroke pixels, then draw them).
 
@@ -521,8 +477,29 @@ function circlePlotPoints(strokePixels, xc, yc, x, y, thickness) {
 // Floating-point arithmetic is slower per operation
 // More complex distance and angle calculations
 // Higher memory bandwidth due to potential overdraw
+function drawArcSWHQ(shape) {
+  const {
+    center, radius, startAngle, endAngle,
+    strokeWidth, strokeColor: { r: strokeR, g: strokeG, b: strokeB, a: strokeA },
+    fillColor: { r: fillR, g: fillG, b: fillB, a: fillA }
+  } = shape;
 
-function drawArcSWHQ(xc, yc, radius, startAngle, endAngle, r, g, b, a, fill = false, thickness = 1) {
+  // tweaks to make the sw render more closely match the canvas render
+  center.x -= 0.5;
+  center.y -= 0.5;
+
+  
+  if (fillA > 0) {
+    drawArcSWHQHelper(center.x, center.y, radius, startAngle, endAngle,
+      fillR, fillG, fillB, fillA, true);
+  }
+  if (strokeA > 0 && strokeWidth > 0) {
+    drawArcSWHQHelper(center.x, center.y, radius, startAngle, endAngle,
+      strokeR, strokeG, strokeB, strokeA, false, strokeWidth);
+  }
+}
+
+function drawArcSWHQHelper(xc, yc, radius, startAngle, endAngle, r, g, b, a, fill = false, thickness = 1) {
   // Convert angles to radians
   startAngle = (startAngle % 360) * Math.PI / 180;
   endAngle = (endAngle % 360) * Math.PI / 180;
@@ -582,4 +559,48 @@ function drawArcSWHQ(xc, yc, radius, startAngle, endAngle, r, g, b, a, fill = fa
           }
       }
   }
+}
+
+function addThickPoint(strokePixels, x, y, thickness) {
+  const halfThick = Math.floor(thickness / 2);
+  for (let dy = -halfThick; dy < thickness - halfThick; dy++) {
+      for (let dx = -halfThick; dx < thickness - halfThick; dx++) {
+          addStrokePixel(strokePixels, Math.round(x + dx), Math.round(y + dy));
+      }
+  }
+}
+
+function addThickArcPoint(strokePixels, xc, yc, x, y, thickness, startAngle, endAngle) {
+  const halfThick = Math.floor(thickness / 2);
+  for (let dy = -halfThick; dy < thickness - halfThick; dy++) {
+      for (let dx = -halfThick; dx < thickness - halfThick; dx++) {
+          // Check if this thick point pixel is within the arc's angle range
+          const strokeX = x + dx;
+          const strokeY = y + dy;
+          let angle = Math.atan2(strokeY - yc, strokeX - xc);
+          if (angle < 0) angle += 2 * Math.PI;
+          if (angle < startAngle) angle += 2 * Math.PI;
+          if (angle >= startAngle && angle <= endAngle) {
+              strokePixels.add(`${Math.round(strokeX)},${Math.round(strokeY)}`);
+          }
+      }
+  }
+}
+
+// TODO note that if the stroke is fully opaque, then it can be drawn with a single pass
+// rather than the current two-pass approach (collect all stroke pixels, then draw them).
+
+function addStrokePixel(strokePixels, x, y) {
+  strokePixels.add(`${x},${y}`);
+}
+
+function circlePlotPoints(strokePixels, xc, yc, x, y, thickness) {
+  addThickPoint(strokePixels, xc + x, yc + y, thickness);
+  addThickPoint(strokePixels, xc - x, yc + y, thickness);
+  addThickPoint(strokePixels, xc + x, yc - y, thickness);
+  addThickPoint(strokePixels, xc - x, yc - y, thickness);
+  addThickPoint(strokePixels, xc + y, yc + x, thickness);
+  addThickPoint(strokePixels, xc - y, yc + x, thickness);
+  addThickPoint(strokePixels, xc + y, yc - x, thickness);
+  addThickPoint(strokePixels, xc - y, yc - x, thickness);
 }
