@@ -88,15 +88,20 @@ function drawCircleCanvas(ctx, shape) {
 function drawAxisAlignedRectCanvas(ctx, centerX, centerY, width, height,
     strokeWidth, strokeR, strokeG, strokeB, strokeA,
     fillR, fillG, fillB, fillA) {
+
     const roundedWidth = Math.round(width);
     const roundedHeight = Math.round(height);
+
+    const roundedCenterX = Math.round(centerX);
+    const roundedCenterY = Math.round(centerY);
+
     const roundedStrokeWidth = Math.round(strokeWidth);
 
     const halfWidth = Math.floor(roundedWidth / 2);
     const halfHeight = Math.floor(roundedHeight / 2);
     
-    const pathLeft = centerX - halfWidth;
-    const pathTop = centerY - halfHeight;
+    const pathLeft = roundedCenterX - halfWidth;
+    const pathTop = roundedCenterY - halfHeight;
 
     if (fillA > 0) {
         ctx.fillStyle = `rgba(${fillR}, ${fillG}, ${fillB}, ${fillA / 255})`;
