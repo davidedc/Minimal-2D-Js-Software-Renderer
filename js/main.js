@@ -16,33 +16,46 @@ function clearFrameBuffer() {
   frameBuffer.fill(0);
 }
 
-function updateCanvas() {
+function updateSWRenderOutput() {
   const imageData = new ImageData(frameBuffer, width, height);
   ctx.putImageData(imageData, 0, 0);
 }
 
 function drawShapesCanvas() {
   ctx2.clearRect(0, 0, canvas2.width, canvas2.height);
+  drawShapesImpl(shapes, true);
+}
 
+function drawShapesSW() {
+  clearFrameBuffer();
+  drawShapesImpl(shapes, false);
+}
+
+function drawShapesImpl(shapes, isCanvas) {
   for (let shape of shapes) {
     if (shape.type === 'line') {
-      drawLineCanvas(ctx2, 
+      const draw = isCanvas ? drawLineCanvas : drawLineSW;
+      const args = [
         shape.start.x, shape.start.y,
         shape.end.x, shape.end.y,
         shape.thickness,
         shape.color.r, shape.color.g, shape.color.b, shape.color.a
-      );
+      ];
+      isCanvas ? draw(ctx2, ...args) : draw(...args);
     } else if (shape.type === 'rect') {
-      drawRectCanvas(ctx2, shape);
+      const draw = isCanvas ? drawRectCanvas : drawRectSW;
+      isCanvas ? draw(ctx2, shape) : draw(shape);
     } else if (shape.type === 'circle') {
-      drawCircleCanvas(ctx2, shape);
+      const draw = isCanvas ? drawCircleCanvas : drawCircleSW;
+      isCanvas ? draw(ctx2, shape) : draw(shape);
     } else if (shape.type === 'arc') {
-      drawArcCanvas(ctx2, shape);
+      const draw = isCanvas ? drawArcCanvas : drawArcSW;
+      isCanvas ? draw(ctx2, shape) : draw(shape);
     }
   }
 }
 
-function updateCanvas3() {
+function updateFlipOutput() {
   if (flipState) {
     ctx3.clearRect(0, 0, canvas3.width, canvas3.height);
     ctx3.drawImage(canvas, 0, 0);
@@ -53,7 +66,6 @@ function updateCanvas3() {
 }
 
 function drawShapes() {
-  clearFrameBuffer();
   shapes = [];
   
   // Draw random lines
@@ -166,33 +178,16 @@ function drawShapes() {
   }
 
   drawShapesSW();
-  updateCanvas();
-  drawShapesCanvas();
-  updateCanvas3();
-}
+  updateSWRenderOutput();
 
-function drawShapesSW() {
-  for (let shape of shapes) {
-    if (shape.type === 'line') {
-      drawLineSW(
-        shape.start.x, shape.start.y,
-        shape.end.x, shape.end.y,
-        shape.thickness,
-        shape.color.r, shape.color.g, shape.color.b, shape.color.a
-      );
-    } else if (shape.type === 'rect') {
-      drawRectSW(shape);
-    } else if (shape.type === 'circle') {
-      drawCircleSW(shape);
-    } else if (shape.type === 'arc') {
-      drawArcSW(shape);
-    }
-  }
+  drawShapesCanvas();
+
+  updateFlipOutput();
 }
 
 function flipCanvas() {
   flipState = !flipState;
-  updateCanvas3();
+  updateFlipOutput();
 }
 
 // Initial draw on page load
