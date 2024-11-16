@@ -26,7 +26,12 @@ function drawShapesCanvas() {
 
   for (let shape of shapes) {
     if (shape.type === 'line') {
-      drawLineCanvas(ctx2, shape);
+      drawLineCanvas(ctx2, 
+        shape.start.x, shape.start.y,
+        shape.end.x, shape.end.y,
+        shape.thickness,
+        shape.color.r, shape.color.g, shape.color.b, shape.color.a
+      );
     } else if (shape.type === 'rect') {
       drawRectCanvas(ctx2, shape);
     } else if (shape.type === 'circle') {
@@ -175,59 +180,12 @@ function drawShapesSW() {
         shape.thickness,
         shape.color.r, shape.color.g, shape.color.b, shape.color.a
       );
-    } else if (shape.type === 'rect' && shape.rotation === 0) {
-      drawAxisAlignedRectSW(
-        shape.center.x, shape.center.y, shape.width, shape.height,
-        shape.strokeColor.r, shape.strokeColor.g, shape.strokeColor.b, shape.strokeColor.a,
-        shape.fillColor.r, shape.fillColor.g, shape.fillColor.b, shape.fillColor.a,
-        shape.strokeWidth
-      );
     } else if (shape.type === 'rect') {
-      drawRectSW(
-        shape.center.x, shape.center.y, shape.width, shape.height, shape.rotation,
-        shape.strokeColor.r, shape.strokeColor.g, shape.strokeColor.b, shape.strokeColor.a,
-        shape.fillColor.r, shape.fillColor.g, shape.fillColor.b, shape.fillColor.a,
-        shape.strokeWidth
-      );
-    } else if (shape.type === 'arc') {
-      if (shape.fillColor.a > 0) {
-        drawArcSW(
-          shape.center.x, shape.center.y,
-          shape.radius,
-          shape.startAngle, shape.endAngle,
-          shape.fillColor.r, shape.fillColor.g, shape.fillColor.b, shape.fillColor.a,
-          true
-        );
-      }
-      
-      if (shape.strokeColor.a > 0 && shape.strokeWidth > 0) {
-        drawArcSW(
-          shape.center.x, shape.center.y,
-          shape.radius,
-          shape.startAngle, shape.endAngle,
-          shape.strokeColor.r, shape.strokeColor.g, shape.strokeColor.b, shape.strokeColor.a,
-          false, shape.strokeWidth
-        );
-      }
+      drawRectSW(shape);
     } else if (shape.type === 'circle') {
-      if (shape.fillColor.a > 0) {
-        drawCircleSW(
-          shape.center.x, shape.center.y,
-          shape.radius,
-          shape.fillColor.r, shape.fillColor.g, shape.fillColor.b, shape.fillColor.a,
-          true  // fill = true
-        );
-      }
-      
-      if (shape.strokeColor.a > 0 && shape.strokeWidth > 0) {
-        drawCircleSW(
-          shape.center.x, shape.center.y,
-          shape.radius,
-          shape.strokeColor.r, shape.strokeColor.g, shape.strokeColor.b, shape.strokeColor.a,
-          false,  // fill = false
-          shape.strokeWidth
-        );
-      }
+      drawCircleSW(shape);
+    } else if (shape.type === 'arc') {
+      drawArcSW(shape);
     }
   }
 }
