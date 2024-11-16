@@ -21,12 +21,12 @@ function updateSWRenderOutput() {
   ctx.putImageData(imageData, 0, 0);
 }
 
-function drawShapesCanvas() {
+function drawSceneCanvas() {
   ctx2.clearRect(0, 0, canvas2.width, canvas2.height);
   drawShapesImpl(shapes, true);
 }
 
-function drawShapesSW() {
+function drawSceneSW() {
   clearFrameBuffer();
   drawShapesImpl(shapes, false);
 }
@@ -65,9 +65,20 @@ function updateFlipOutput() {
   }
 }
 
-function drawShapes() {
+function buildSceneAndDraw() {
+  buildScene();
+
+  drawSceneSW();
+  updateSWRenderOutput();
+
+  drawSceneCanvas();
+
+  updateFlipOutput();
+}
+
+function buildScene() {
   shapes = [];
-  
+
   // Draw random lines
   for (let i = 0; i < 15; i++) {
     const start = getRandomPoint();
@@ -92,7 +103,7 @@ function drawShapes() {
     const strokeWidth = Math.random() * 10 + 1;
     const strokeColor = getRandomColor(200, 255);
     const fillColor = getRandomColor(100, 200);
-    
+
     shapes.push({
       type: 'rect',
       center: center,
@@ -114,7 +125,7 @@ function drawShapes() {
     const strokeWidth = Math.random() * 10 + 1;
     const strokeColor = getRandomColor(200, 255);
     const fillColor = getRandomColor(100, 200);
-    
+
     shapes.push({
       type: 'rect',
       center: center,
@@ -131,32 +142,32 @@ function drawShapes() {
   const strokeSizes = [1, 2, 3, 4];
   const radii = [20, 40, 60];
   let xOffset = 150;
-  
+
   for (const strokeSize of strokeSizes) {
-      let yOffset = 150;
-      for (const radius of radii) {
-          const shape = {
-              type: 'arc',
-              center: { x: xOffset, y: yOffset },
-              radius: radius,
-              startAngle: 0,
-              endAngle: 90,
-              strokeWidth: strokeSize,
-              strokeColor: { r: 200, g: 100, b: 100, a: 255 },
-              fillColor: { r: 0, g: 0, b: 0, a: 0 }
-          };
-          
-          shapes.push(shape);
-          
-          yOffset += radius * 2 + 20;
-      }
-      xOffset += 120;
+    let yOffset = 150;
+    for (const radius of radii) {
+      const shape = {
+        type: 'arc',
+        center: { x: xOffset, y: yOffset },
+        radius: radius,
+        startAngle: 0,
+        endAngle: 90,
+        strokeWidth: strokeSize,
+        strokeColor: { r: 200, g: 100, b: 100, a: 255 },
+        fillColor: { r: 0, g: 0, b: 0, a: 0 }
+      };
+
+      shapes.push(shape);
+
+      yOffset += radius * 2 + 20;
+    }
+    xOffset += 120;
   }
 
   // Add some random filled arcs
   for (let i = 0; i < 3; i++) {
-      const arc = getRandomArc();
-      shapes.push(arc);
+    const arc = getRandomArc();
+    shapes.push(arc);
   }
 
   // Draw circles
@@ -166,7 +177,7 @@ function drawShapes() {
     const strokeWidth = Math.random() * 10 + 1;
     const strokeColor = getRandomColor(200, 255);
     const fillColor = getRandomColor(100, 200);
-    
+
     shapes.push({
       type: 'circle',
       center: center,
@@ -176,13 +187,6 @@ function drawShapes() {
       fillColor: fillColor
     });
   }
-
-  drawShapesSW();
-  updateSWRenderOutput();
-
-  drawShapesCanvas();
-
-  updateFlipOutput();
 }
 
 function flipCanvas() {
@@ -191,4 +195,4 @@ function flipCanvas() {
 }
 
 // Initial draw on page load
-drawShapes();
+buildSceneAndDraw();
