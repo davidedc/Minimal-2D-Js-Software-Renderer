@@ -604,3 +604,291 @@ function circlePlotPoints(strokePixels, xc, yc, x, y, thickness) {
   addThickPoint(strokePixels, xc + y, yc - x, thickness);
   addThickPoint(strokePixels, xc - y, yc - x, thickness);
 }
+
+function drawRoundedRectSW(shape) {
+  const {
+    center, width, height, radius, rotation,
+    strokeWidth, strokeColor: { r: strokeR, g: strokeG, b: strokeB, a: strokeA },
+    fillColor: { r: fillR, g: fillG, b: fillB, a: fillA }
+  } = shape;
+
+  if (rotation === 0) {
+    drawAxisAlignedRoundedRectSW(center.x, center.y, width, height, radius,
+      strokeWidth, strokeR, strokeG, strokeB, strokeA,
+      fillR, fillG, fillB, fillA);
+  } else {
+    drawRotatedRoundedRectSW(center.x, center.y, width, height, radius, rotation,
+      strokeWidth, strokeR, strokeG, strokeB, strokeA,
+      fillR, fillG, fillB, fillA);
+  }
+}
+
+function getAlignedPosition(centerX, centerY, width, height, strokeWidth) {
+  const offset = strokeWidth % 2 ? 0.5 : 0;
+  const x = Math.floor(centerX - width/2) + offset;
+  const y = Math.floor(centerY - height/2) + offset;
+  return { x, y, w: Math.floor(width), h: Math.floor(height) };
+}
+
+function drawAxisAlignedRoundedRectSW(centerX, centerY, rectWidth, rectHeight, cornerRadius,
+  strokeWidth, strokeR, strokeG, strokeB, strokeA, fillR, fillG, fillB, fillA) {
+  
+  const pos = getAlignedPosition(centerX, centerY, rectWidth, rectHeight, strokeWidth);
+  const r = Math.min(cornerRadius, Math.min(pos.w, pos.h) / 2);
+  const halfStroke = strokeWidth / 2;
+
+  function isInsideRoundedRect(px, py) {
+    // Test if point is inside main rectangle
+    if (px >= pos.x + r && px <= pos.x + pos.w - r && 
+        py >= pos.y && py <= pos.y + pos.h) {
+      return true;
+    }
+    if (px >= pos.x && px <= pos.x + pos.w && 
+        py >= pos.y + r && py <= pos.y + pos.h - r) {
+      return true;
+    }
+
+    // Test corners
+    const corners = [
+      { x: pos.x + r, y: pos.y + r },
+      { x: pos.x + pos.w - r, y: pos.y + r },
+      { x: pos.x + pos.w - r, y: pos.y + pos.h - r },
+      { x: pos.x + r, y: pos.y + pos.h - r }
+    ];
+    
+    for (const corner of corners) {
+      const dx = px - corner.x;
+      const dy = py - corner.y;
+      if (dx * dx + dy * dy <= r * r) {
+        return true;
+      }
+    }
+    
+    return false;
+  }
+
+  if (fillA > 0) {
+    for (let yy = Math.floor(pos.y); yy <= Math.ceil(pos.y + pos.h); yy++) {
+      for (let xx = Math.floor(pos.x); xx <= Math.ceil(pos.x + pos.w); xx++) {
+        if (isInsideRoundedRect(xx, yy)) {
+          setPixel(xx, yy, fillR, fillG, fillB, fillA);
+        }
+      }
+    }
+  }
+
+  if (strokeA > 0) {
+    // Horizontal strokes
+    for (let xx = Math.floor(pos.x + r); xx < pos.x + pos.w - r; xx++)
+      for (let t = -halfStroke; t < halfStroke; t++) {
+        setPixel(xx, pos.y + t, strokeR, strokeG, strokeB, strokeA);
+        setPixel(xx, pos.y + pos.h + t, strokeR, strokeG, strokeB, strokeA);
+      }
+    
+    // Vertical strokes
+    for (let yy = Math.floor(pos.y + r); yy < pos.y + pos.h - r; yy++)
+      for (let t = -halfStroke; t < halfStroke; t++) {
+        setPixel(pos.x + t, yy, strokeR, strokeG, strokeB, strokeA);
+        setPixel(pos.x + pos.w + t, yy, strokeR, strokeG, strokeB, strokeA);
+      }
+
+    // Draw corner strokes
+    const drawCorner = (cx, cy, startAngle, endAngle) => {
+      for (let angle = startAngle; angle <= endAngle; angle += Math.PI/180) {
+        for (let t = -halfStroke; t < halfStroke; t++) {
+          const sr = r + t;
+          const px = cx + sr * Math.cos(angle);
+          const py = cy + sr * Math.sin(angle);
+          setPixel(Math.round(px), Math.round(py), strokeR, strokeG, strokeB, strokeA);
+        }
+      }
+    };
+
+    drawCorner(pos.x + r, pos.y + r, Math.PI, Math.PI * 3/2);
+    drawCorner(pos.x + pos.w - r, pos.y + r, Math.PI * 3/2, Math.PI * 2);
+    drawCorner(pos.x + pos.w - r, pos.y + pos.h - r, 0, Math.PI/2);
+    drawCorner(pos.x + r, pos.y + pos.h - r, Math.PI/2, Math.PI);
+  }
+}
+
+
+// Doesn't really work very well yet, some artifacts remaining.
+function drawRotatedRoundedRectSW(centerX, centerY, width, height, radius, rotation,
+  strokeWidth, strokeR, strokeG, strokeB, strokeA,
+  fillR, fillG, fillB, fillA) {
+  
+  const cos = Math.cos(rotation);
+  const sin = Math.sin(rotation);
+  
+  const halfWidth = width / 2;
+  const halfHeight = height / 2;
+
+  // Calculate corner centers (these stay fixed)
+  const cornerCenters = [
+      [-halfWidth + radius, -halfHeight + radius], // Top-left
+      [halfWidth - radius, -halfHeight + radius],  // Top-right
+      [halfWidth - radius, halfHeight - radius],   // Bottom-right
+      [-halfWidth + radius, halfHeight - radius]   // Bottom-left
+  ].map(([x, y]) => ({
+      x: centerX + x * cos - y * sin,
+      y: centerY + x * sin + y * cos
+  }));
+
+  // Calculate edge directions
+  const edges = cornerCenters.map((start, i) => {
+      const end = cornerCenters[(i + 1) % 4];
+      const dx = end.x - start.x;
+      const dy = end.y - start.y;
+      const len = Math.sqrt(dx * dx + dy * dy);
+      return {
+          dx: dx / len,
+          dy: dy / len
+      };
+  });
+
+  // Calculate stroke endpoints with proper perpendicular offset
+  const strokePoints = cornerCenters.map((center, i) => {
+      const prevEdge = edges[(i + 3) % 4];
+      const nextEdge = edges[i];
+      
+      // Perpendicular vectors to edges
+      const prev = { x: -prevEdge.dy, y: prevEdge.dx };
+      const next = { x: -nextEdge.dy, y: nextEdge.dx };
+      
+      return {
+          start: {
+              x: center.x - radius * prev.x,
+              y: center.y - radius * prev.y
+          },
+          end: {
+              x: center.x - radius * next.x,
+              y: center.y - radius * next.y
+          }
+      };
+  });
+
+  // Draw fill if needed with the new approach
+  if (fillA > 0) {
+      // 1. Draw the central rectangle
+      const centralPoints = [
+          [-halfWidth + radius, -halfHeight + radius], // Top-left
+          [halfWidth - radius, -halfHeight + radius],  // Top-right
+          [halfWidth - radius, halfHeight - radius],   // Bottom-right
+          [-halfWidth + radius, halfHeight - radius]   // Bottom-left
+      ].map(([x, y]) => ({
+          x: centerX + x * cos - y * sin,
+          y: centerY + x * sin + y * cos
+      }));
+
+      fillPolygon(centralPoints, fillR, fillG, fillB, fillA);
+
+      // 2. Draw the four side rectangles
+      const sideRects = [
+          // Top rectangle
+          [
+              [-halfWidth + radius, -halfHeight],
+              [halfWidth - radius, -halfHeight],
+              [halfWidth - radius, -halfHeight + radius],
+              [-halfWidth + radius, -halfHeight + radius]
+          ],
+          // Right rectangle
+          [
+              [halfWidth - radius, -halfHeight + radius],
+              [halfWidth, -halfHeight + radius],
+              [halfWidth, halfHeight - radius],
+              [halfWidth - radius, halfHeight - radius]
+          ],
+          // Bottom rectangle
+          [
+              [-halfWidth + radius, halfHeight - radius],
+              [halfWidth - radius, halfHeight - radius],
+              [halfWidth - radius, halfHeight],
+              [-halfWidth + radius, halfHeight]
+          ],
+          // Left rectangle
+          [
+              [-halfWidth, -halfHeight + radius],
+              [-halfWidth + radius, -halfHeight + radius],
+              [-halfWidth + radius, halfHeight - radius],
+              [-halfWidth, halfHeight - radius]
+          ]
+      ];
+
+      // Draw each side rectangle
+      sideRects.forEach(points => {
+          const transformedPoints = points.map(([x, y]) => ({
+              x: centerX + x * cos - y * sin,
+              y: centerY + x * sin + y * cos
+          }));
+          fillPolygon(transformedPoints, fillR, fillG, fillB, fillA);
+      });
+
+      // 3. Fill corner arcs
+      const rotationDegrees = rotation * 180 / Math.PI;
+      cornerCenters.forEach((center, i) => {
+          const baseAngles = [
+              [180, 270], // Top-left
+              [270, 360], // Top-right
+              [0, 90],    // Bottom-right
+              [90, 180]   // Bottom-left
+          ][i];
+          
+          const startAngle = (baseAngles[0] + rotationDegrees) % 360;
+          const endAngle = (baseAngles[1] + rotationDegrees) % 360;
+          
+          drawArcSWHelper(center.x, center.y, radius,
+              startAngle, endAngle,
+              fillR, fillG, fillB, fillA, true);
+      });
+  }
+
+  // Draw stroke if needed (stroke implementation remains unchanged)
+  if (strokeA > 0) {
+      // Draw straight edges between the correct points
+      for (let i = 0; i < 4; i++) {
+          const currentPoint = strokePoints[i];
+          const nextPoint = strokePoints[(i + 1) % 4];
+          
+          drawLineSWThick(
+              currentPoint.end.x, currentPoint.end.y,
+              nextPoint.start.x, nextPoint.start.y,
+              strokeWidth, strokeR, strokeG, strokeB, strokeA
+          );
+      }
+
+      // Draw corner arcs
+      const rotationDegrees = rotation * 180 / Math.PI;
+      cornerCenters.forEach((center, i) => {
+          const baseAngles = [
+              [180, 270], // Top-left
+              [270, 360], // Top-right
+              [0, 90],    // Bottom-right
+              [90, 180]   // Bottom-left
+          ][i];
+          
+          const startAngle = (baseAngles[0] + rotationDegrees) % 360;
+          const endAngle = (baseAngles[1] + rotationDegrees) % 360;
+          
+          drawArcSWHelper(center.x, center.y, radius,
+              startAngle, endAngle,
+              strokeR, strokeG, strokeB, strokeA, false, strokeWidth);
+      });
+  }
+}
+
+// Helper function to fill a polygon
+function fillPolygon(points, r, g, b, a) {
+    const minX = Math.floor(Math.min(...points.map(p => p.x)));
+    const maxX = Math.ceil(Math.max(...points.map(p => p.x)));
+    const minY = Math.floor(Math.min(...points.map(p => p.y)));
+    const maxY = Math.ceil(Math.max(...points.map(p => p.y)));
+
+    for (let y = minY; y <= maxY; y++) {
+        for (let x = minX; x <= maxX; x++) {
+            if (pointInPolygon(x, y, points)) {
+                setPixel(x, y, r, g, b, a);
+            }
+        }
+    }
+}
+

@@ -51,6 +51,9 @@ function drawShapesImpl(shapes, isCanvas) {
     } else if (shape.type === 'arc') {
       const draw = isCanvas ? drawArcCanvas : drawArcSW;
       isCanvas ? draw(ctx2, shape) : draw(shape);
+    } else if (shape.type === 'roundedRect') {
+      const draw = isCanvas ? drawRoundedRectCanvas : drawRoundedRectSW;
+      isCanvas ? draw(ctx2, shape) : draw(shape);
     }
   }
 }
@@ -137,6 +140,81 @@ function buildScene() {
       fillColor: fillColor
     });
   }
+
+  // Draw axis-aligned rounded rectangles
+  for (let i = 0; i < 10; i++) {
+    const center = getRandomPoint();
+    const rectWidth = Math.round(50 + Math.random() * 100);
+    const rectHeight = Math.round(50 + Math.random() * 100);
+    // radius is a random number between 0 and the smallest dimension of the rectangle
+    const radius = Math.round(Math.random() * Math.min(rectWidth, rectHeight) * 0.2);
+    const strokeWidth = Math.round(Math.random() * 10 + 1);
+    const strokeColor = getRandomColor(200, 255);
+    const fillColor = getRandomColor(100, 200);
+
+    shapes.push({
+      type: 'roundedRect',
+      center: center,
+      width: rectWidth,
+      height: rectHeight,
+      radius: radius,
+      rotation: 0,
+      strokeWidth: strokeWidth,
+      strokeColor: strokeColor,
+      fillColor: fillColor
+    });
+  }
+  
+  // Draw axis-aligned rounded rectangles of stroke size 1
+  for (let i = 0; i < 10; i++) {
+    const center = getRandomPoint();
+    const rectWidth = Math.round(50 + Math.random() * 100);
+    const rectHeight = Math.round(50 + Math.random() * 100);
+    // radius is a random number between 0 and the smallest dimension of the rectangle
+    const radius = Math.round(Math.random() * Math.min(rectWidth, rectHeight) * 0.2);
+    const strokeWidth = 1;
+    const strokeColor = getRandomColor(200, 255);
+    const fillColor = getRandomColor(100, 200);
+
+    shapes.push({
+      type: 'roundedRect',
+      center: center,
+      width: rectWidth,
+      height: rectHeight,
+      radius: radius,
+      rotation: 0,
+      strokeWidth: strokeWidth,
+      strokeColor: strokeColor,
+      fillColor: fillColor
+    });
+  }
+
+
+  /*
+  // Draw rotated rounded rectangles
+  for (let i = 0; i < 3; i++) {
+    const center = getRandomPoint();
+    const rectWidth = 50 + Math.random() * 100;
+    const rectHeight = 50 + Math.random() * 100;
+    const radius = Math.min(rectWidth, rectHeight) * 0.2;
+    const rotation = Math.random() * Math.PI * 2;
+    const strokeWidth = Math.random() * 10 + 1;
+    const strokeColor = getRandomColor(200, 255);
+    const fillColor = getRandomColor(100, 200);
+
+    shapes.push({
+      type: 'roundedRect',
+      center: center,
+      width: rectWidth,
+      height: rectHeight,
+      radius: radius,
+      rotation: rotation,
+      strokeWidth: strokeWidth,
+      strokeColor: strokeColor,
+      fillColor: fillColor
+    });
+  }
+  */
 
   // Draw 90-degree arcs with different stroke sizes and radii
   const strokeSizes = [1, 2, 3, 4];

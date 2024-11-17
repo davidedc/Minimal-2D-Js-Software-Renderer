@@ -127,3 +127,100 @@ function drawAxisAlignedRectCanvas(ctx, centerX, centerY, width, height,
         );
     }
 }
+
+function drawRoundedRectCanvas(ctx, shape) {
+    const {
+        center, width, height, radius, rotation,
+        strokeWidth, strokeColor: { r: strokeR, g: strokeG, b: strokeB, a: strokeA },
+        fillColor: { r: fillR, g: fillG, b: fillB, a: fillA }
+    } = shape;
+
+    if (rotation === 0) {
+        drawAxisAlignedRoundedRectCanvas(ctx, shape);
+    } else {
+        ctx.save();
+        ctx.translate(center.x, center.y);
+        ctx.rotate(rotation);
+
+        ctx.beginPath();
+        roundedRectPath(ctx, -width/2, -height/2, width, height, radius);
+
+        if (fillA > 0) {
+            ctx.fillStyle = `rgba(${fillR}, ${fillG}, ${fillB}, ${fillA / 255})`;
+            ctx.fill();
+        }
+        if (strokeA > 0 && strokeWidth > 0) {
+            ctx.lineWidth = strokeWidth;
+            ctx.strokeStyle = `rgba(${strokeR}, ${strokeG}, ${strokeB}, ${strokeA / 255})`;
+            ctx.stroke();
+        }
+        ctx.restore();
+    }
+}
+
+// Note that this code draws the rounded rect in such a way that
+// the stroke path always begins and ends at the half-pixel boundary
+// so that the stroke is drawn crisply.
+// That depends on what both width/height and strokeWidth are!
+
+function drawAxisAlignedRoundedRectCanvas(ctx, shape) {
+    const {
+      center,
+      width,
+      height,
+      radius,
+      strokeWidth,
+      strokeColor: { r: strokeR, g: strokeG, b: strokeB, a: strokeA },
+      fillColor: { r: fillR, g: fillG, b: fillB, a: fillA }
+    } = shape;
+  
+    // Calculate the half stroke width to align to pixel boundaries
+    const halfStroke = strokeWidth / 2;
+    
+    // Calculate the actual drawing coordinates
+    // We add 0.5 to align with pixel boundaries when the total is odd
+    const x = Math.floor(center.x - width / 2) + (strokeWidth % 2 ? 0.5 : 0);
+    const y = Math.floor(center.y - height / 2) + (strokeWidth % 2 ? 0.5 : 0);
+    const w = Math.floor(width);
+    const h = Math.floor(height);
+    
+    // Ensure radius doesn't exceed half of the smaller dimension
+    const r = Math.min(radius, Math.min(w, h) / 2);
+  
+    ctx.beginPath();
+    
+    // Start from top-left corner, after the radius
+    ctx.moveTo(x + r, y);
+    
+    // Top edge and top-right corner
+    ctx.lineTo(x + w - r, y);
+    ctx.arcTo(x + w, y, x + w, y + r, r);
+    
+    // Right edge and bottom-right corner
+    ctx.lineTo(x + w, y + h - r);
+    ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+    
+    // Bottom edge and bottom-left corner
+    ctx.lineTo(x + r, y + h);
+    ctx.arcTo(x, y + h, x, y + h - r, r);
+    
+    // Left edge and top-left corner
+    ctx.lineTo(x, y + r);
+    ctx.arcTo(x, y, x + r, y, r);
+    
+    // Close the path
+    ctx.closePath();
+  
+    // Fill if alpha > 0
+    if (fillA > 0) {
+      ctx.fillStyle = `rgba(${fillR}, ${fillG}, ${fillB}, ${fillA/255})`;
+      ctx.fill();
+    }
+  
+    // Stroke if alpha > 0
+    if (strokeA > 0) {
+      ctx.strokeStyle = `rgba(${strokeR}, ${strokeG}, ${strokeB}, ${strokeA/255})`;
+      ctx.lineWidth = strokeWidth;
+      ctx.stroke();
+    }
+  }
