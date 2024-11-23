@@ -613,10 +613,11 @@ function drawRoundedRectSW(shape) {
   } = shape;
 
   if (rotation === 0) {
-    // if the stroke is thin and opaque then use drawAxisAlignedRoundedRectThinOpaqueStrokeSW
-    // otherwise use drawAxisAlignedRoundedRectThickTrasparentStrokeSW
+    // if the stroke is a) invisible (size zero or trasparent) OR b) opaque and thin,
+    //  then use drawAxisAlignedRoundedRectThinOpaqueStrokeSW
+    //  otherwise use drawAxisAlignedRoundedRectThickTrasparentStrokeSW
     const correctedRadius = radius > 2 ? radius - 1 : radius;
-    if (strokeWidth < 5 && strokeA === 255) {
+    if (strokeWidth == 0 || strokeA === 255 || (strokeWidth < 5 && strokeA === 255)) {
       drawAxisAlignedRoundedRectThinOpaqueStrokeSW(center.x, center.y, width, height, correctedRadius,
         strokeWidth, strokeR, strokeG, strokeB, strokeA, fillR, fillG, fillB, fillA);
     } else {
@@ -640,19 +641,20 @@ function getAlignedPosition(centerX, centerY, width, height, strokeWidth) {
 
 function drawAxisAlignedRoundedRectThinOpaqueStrokeSW(centerX, centerY, rectWidth, rectHeight, cornerRadius,
   strokeWidth, strokeR, strokeG, strokeB, strokeA, fillR, fillG, fillB, fillA) {
-  
+
   const pos = getAlignedPosition(centerX, centerY, rectWidth, rectHeight, strokeWidth);
   const r = Math.min(cornerRadius, Math.min(pos.w, pos.h) / 2);
   const halfStroke = strokeWidth / 2;
 
+
   function isInsideRoundedRect(px, py) {
     // Test if point is inside main rectangle
-    if (px >= pos.x + r && px <= pos.x + pos.w - r && 
-        py >= pos.y && py <= pos.y + pos.h) {
+    if (px >= pos.x + r && px < pos.x + pos.w - r && 
+        py >= pos.y && py < pos.y + pos.h) {
       return true;
     }
-    if (px >= pos.x && px <= pos.x + pos.w && 
-        py >= pos.y + r && py <= pos.y + pos.h - r) {
+    if (px >= pos.x && px < pos.x + pos.w && 
+        py >= pos.y + r && py < pos.y + pos.h - r) {
       return true;
     }
 
@@ -734,13 +736,17 @@ function drawAxisAlignedRoundedRectThickTrasparentStrokeSW(centerX, centerY, rec
   const halfStroke = strokeWidth / 2;
 
   function isInsideRoundedRect(px, py) {
-    if (px >= pos.x + r && px <= pos.x + pos.w - r && py >= pos.y && py <= pos.y + pos.h) {
+    // Test if point is inside main rectangle
+    if (px >= pos.x + r && px < pos.x + pos.w - r && 
+        py >= pos.y && py < pos.y + pos.h) {
       return true;
     }
-    if (px >= pos.x && px <= pos.x + pos.w && py >= pos.y + r && py <= pos.y + pos.h - r) {
+    if (px >= pos.x && px < pos.x + pos.w && 
+        py >= pos.y + r && py < pos.y + pos.h - r) {
       return true;
     }
-    
+
+    // Test corners
     const corners = [
       { x: pos.x + r, y: pos.y + r },
       { x: pos.x + pos.w - r, y: pos.y + r },
@@ -755,6 +761,7 @@ function drawAxisAlignedRoundedRectThickTrasparentStrokeSW(centerX, centerY, rec
         return true;
       }
     }
+    
     return false;
   }
 

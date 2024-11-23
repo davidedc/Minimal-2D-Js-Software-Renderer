@@ -221,7 +221,7 @@ function buildScene() {
       const rectHeight = 200;
       const radius = Math.round(Math.min(rectWidth, rectHeight) * 0.2);
       const strokeWidth =  0;
-      const strokeColor = { r: 0, g: 0, b: 0, a: 50 };
+      const strokeColor = { r: 0, g: 0, b: 0, a: 0 };
       const fillColor = getRandomColor(100, 200);
   
       shapes.push({
