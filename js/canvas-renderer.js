@@ -218,7 +218,7 @@ function drawAxisAlignedRoundedRectCanvas(ctx, shape) {
     }
   
     // Stroke if alpha > 0
-    if (strokeA > 0) {
+    if (strokeWidth > 0 && strokeA > 0) {
       ctx.strokeStyle = `rgba(${strokeR}, ${strokeG}, ${strokeB}, ${strokeA/255})`;
       ctx.lineWidth = strokeWidth;
       ctx.stroke();

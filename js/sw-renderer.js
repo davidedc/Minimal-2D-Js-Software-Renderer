@@ -613,9 +613,16 @@ function drawRoundedRectSW(shape) {
   } = shape;
 
   if (rotation === 0) {
-    drawAxisAlignedRoundedRectSW(center.x, center.y, width, height, radius,
-      strokeWidth, strokeR, strokeG, strokeB, strokeA,
-      fillR, fillG, fillB, fillA);
+    // if the stroke is thin and opaque then use drawAxisAlignedRoundedRectThinOpaqueStrokeSW
+    // otherwise use drawAxisAlignedRoundedRectThickTrasparentStrokeSW
+    const correctedRadius = radius > 2 ? radius - 1 : radius;
+    if (strokeWidth < 5 && strokeA === 255) {
+      drawAxisAlignedRoundedRectThinOpaqueStrokeSW(center.x, center.y, width, height, correctedRadius,
+        strokeWidth, strokeR, strokeG, strokeB, strokeA, fillR, fillG, fillB, fillA);
+    } else {
+      drawAxisAlignedRoundedRectThickTrasparentStrokeSW(center.x, center.y, width, height, correctedRadius,
+        strokeWidth, strokeR, strokeG, strokeB, strokeA, fillR, fillG, fillB, fillA);
+    }
   } else {
     drawRotatedRoundedRectSW(center.x, center.y, width, height, radius, rotation,
       strokeWidth, strokeR, strokeG, strokeB, strokeA,
@@ -630,7 +637,8 @@ function getAlignedPosition(centerX, centerY, width, height, strokeWidth) {
   return { x, y, w: Math.floor(width), h: Math.floor(height) };
 }
 
-function drawAxisAlignedRoundedRectSW(centerX, centerY, rectWidth, rectHeight, cornerRadius,
+
+function drawAxisAlignedRoundedRectThinOpaqueStrokeSW(centerX, centerY, rectWidth, rectHeight, cornerRadius,
   strokeWidth, strokeR, strokeG, strokeB, strokeA, fillR, fillG, fillB, fillA) {
   
   const pos = getAlignedPosition(centerX, centerY, rectWidth, rectHeight, strokeWidth);
@@ -711,6 +719,126 @@ function drawAxisAlignedRoundedRectSW(centerX, centerY, rectWidth, rectHeight, c
   }
 }
 
+
+// this function is rather more complicated. This is because the version for thin/opaque stroke can ignore the
+// overdraw that happens when drawing the stroke at the corners. Simply, if the stoke is thin or opaque, then
+// you don't see the overdraw. However, if the stroke is thick and/or transparent, then you do see the overdraw,
+// so there is a complex system where the pixels of the stroke are first collected in a set, and then drawn to the
+// screen. Not only that, but the stoke of the corners is actually kept in a set of scanlines, this is to avoid
+// internal gaps that one can see using the current algorithm. Using scanlines, the internal gaps are filled in.
+function drawAxisAlignedRoundedRectThickTrasparentStrokeSW(centerX, centerY, rectWidth, rectHeight, cornerRadius, 
+                                    strokeWidth, strokeR, strokeG, strokeB, strokeA, 
+                                    fillR, fillG, fillB, fillA) {
+  const pos = getAlignedPosition(centerX, centerY, rectWidth, rectHeight, strokeWidth);
+  const r = Math.min(cornerRadius, Math.min(pos.w, pos.h) / 2);
+  const halfStroke = strokeWidth / 2;
+
+  function isInsideRoundedRect(px, py) {
+    if (px >= pos.x + r && px <= pos.x + pos.w - r && py >= pos.y && py <= pos.y + pos.h) {
+      return true;
+    }
+    if (px >= pos.x && px <= pos.x + pos.w && py >= pos.y + r && py <= pos.y + pos.h - r) {
+      return true;
+    }
+    
+    const corners = [
+      { x: pos.x + r, y: pos.y + r },
+      { x: pos.x + pos.w - r, y: pos.y + r },
+      { x: pos.x + pos.w - r, y: pos.y + pos.h - r },
+      { x: pos.x + r, y: pos.y + pos.h - r }
+    ];
+    
+    for (const corner of corners) {
+      const dx = px - corner.x;
+      const dy = py - corner.y;
+      if (dx * dx + dy * dy <= r * r) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  // Fill - direct to buffer
+  if (fillA > 0) {
+    for (let yy = Math.floor(pos.y); yy <= Math.ceil(pos.y + pos.h); yy++) {
+      for (let xx = Math.floor(pos.x); xx <= Math.ceil(pos.x + pos.w); xx++) {
+        if (isInsideRoundedRect(xx, yy)) {
+          setPixel(xx, yy, fillR, fillG, fillB, fillA);
+        }
+      }
+    }
+  }
+
+  // Stroke - using PixelSet to handle overdraw
+  if (strokeA > 0) {
+    const strokePixels = new PixelSet();
+    
+    // Horizontal strokes
+    const horizontalStrokes = new ScanlineSpans();
+    for (let y = pos.y - halfStroke; y < pos.y + halfStroke; y++) {
+      //for (let x = pos.x + r; x <= pos.x + pos.w - r; x++) {
+      //  horizontalStrokes.addPixel(x, y);
+      //}
+      // instead of using addPixel, use addSpan as it's quicker
+      horizontalStrokes.addSpan(y, pos.x + r, pos.x + pos.w - r);
+    }
+    for (let y = pos.y + pos.h - halfStroke; y < pos.y + pos.h + halfStroke; y++) {
+      //for (let x = pos.x + r; x <= pos.x + pos.w - r; x++) {
+      //  horizontalStrokes.addPixel(x, y);
+      //}
+      // instead of using addPixel, use addSpan as it's quicker
+      horizontalStrokes.addSpan(y, pos.x + r, pos.x + pos.w - r);
+    }
+    horizontalStrokes.addToPixelSet(strokePixels, strokeR, strokeG, strokeB, strokeA);
+
+    // Vertical strokes - separate ScanlineSpans for left and right
+    const leftVerticalStrokes = new ScanlineSpans();
+    const rightVerticalStrokes = new ScanlineSpans();
+    
+    for (let y = pos.y + r; y < pos.y + pos.h - r; y++) {
+      // Left vertical stroke
+      for (let x = pos.x - halfStroke; x < pos.x + halfStroke; x++) {
+        leftVerticalStrokes.addPixel(x, y);
+      }
+      // Right vertical stroke
+      for (let x = pos.x + pos.w - halfStroke; x < pos.x + pos.w + halfStroke; x++) {
+        rightVerticalStrokes.addPixel(x, y);
+      }
+    }
+    leftVerticalStrokes.addToPixelSet(strokePixels, strokeR, strokeG, strokeB, strokeA);
+    rightVerticalStrokes.addToPixelSet(strokePixels, strokeR, strokeG, strokeB, strokeA);
+
+    // Corner strokes
+    const drawCornerSpans = (cx, cy, startAngle, endAngle) => {
+      const cornerSpans = new ScanlineSpans();
+      const innerRadius = r - halfStroke;
+
+      // Use small enough angle step. Note that any internal gaps will be filled by how
+      // we keep the scanlines in the ScanlineSpans object.
+      // However you could still see jagged borders of the stroke if the angle step is too large.
+      const angleStep = Math.PI / 180;     
+      for (let angle = startAngle; angle <= endAngle; angle += angleStep) {
+        // Sample points across stroke width
+        for (let t = -halfStroke; t < halfStroke; t ++) {
+          const sr = r + t;
+          const px = cx + sr * Math.cos(angle);
+          const py = cy + sr * Math.sin(angle);
+          cornerSpans.addPixel(px, py);
+        }
+      }
+      cornerSpans.addToPixelSet(strokePixels, strokeR, strokeG, strokeB, strokeA);
+    };
+
+    // Draw all corners
+    drawCornerSpans(pos.x + r, pos.y + r, Math.PI , Math.PI * 3/2 );
+    drawCornerSpans(pos.x + pos.w - r, pos.y + r, Math.PI * 3/2 , Math.PI * 2);
+    drawCornerSpans(pos.x + pos.w - r, pos.y + pos.h - r, 0 , Math.PI/2 );
+    drawCornerSpans(pos.x + r, pos.y + pos.h - r, Math.PI/2 , Math.PI );
+
+    // Paint all stroke pixels after collecting them
+    strokePixels.paint();
+  }
+}
 
 // Doesn't really work very well yet, some artifacts remaining.
 function drawRotatedRoundedRectSW(centerX, centerY, width, height, radius, rotation,
