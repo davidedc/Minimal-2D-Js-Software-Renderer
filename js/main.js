@@ -214,6 +214,30 @@ function buildScene() {
   }
 
 
+    // Draw two big axis-aligned rounded rectangles with no stroke
+    for (let i = 0; i < 10; i++) {
+      const center = getRandomPoint();
+      const rectWidth = 200;
+      const rectHeight = 200;
+      const radius = Math.round(Math.min(rectWidth, rectHeight) * 0.2);
+      const strokeWidth =  0;
+      const strokeColor = { r: 0, g: 0, b: 0, a: 50 };
+      const fillColor = getRandomColor(100, 200);
+  
+      shapes.push({
+        type: 'roundedRect',
+        center: center,
+        width: rectWidth,
+        height: rectHeight,
+        radius: radius,
+        rotation: 0,
+        strokeWidth: strokeWidth,
+        strokeColor: strokeColor,
+        fillColor: fillColor
+      });
+    }
+  
+
 
   /*
   // Draw rotated rounded rectangles
