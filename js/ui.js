@@ -22,6 +22,8 @@ function updateSWRenderOutput() {
 }
 
 function drawSceneCanvas() {
+  // Clear and reset canvas state completely
+  ctx2.setTransform(1, 0, 0, 1, 0, 0); // Reset any transforms
   ctx2.clearRect(0, 0, canvas2.width, canvas2.height);
   drawShapesImpl(shapes, true);
 }
@@ -58,13 +60,19 @@ function drawShapesImpl(shapes, isCanvas) {
   }
 }
 
+function flipCanvas() {
+  flipState = !flipState;
+  updateFlipOutput();
+}
+
 function updateFlipOutput() {
+  ctx3.setTransform(1, 0, 0, 1, 0, 0); // Reset transform
+  ctx3.clearRect(0, 0, canvas3.width, canvas3.height);
+  
   if (flipState) {
-    ctx3.clearRect(0, 0, canvas3.width, canvas3.height);
-    ctx3.drawImage(canvas, 0, 0);
+    ctx3.drawImage(canvas, 0, 0, canvas3.width, canvas3.height);
   } else {
-    ctx3.clearRect(0, 0, canvas3.width, canvas3.height);
-    ctx3.drawImage(canvas2, 0, 0);
+    ctx3.drawImage(canvas2, 0, 0, canvas3.width, canvas3.height);
   }
 }
 
@@ -76,13 +84,22 @@ function buildSceneAndDraw() {
 
   drawSceneCanvas();
 
-  updateFlipOutput();
+  flipState = true; // Ensure initial state is set
+  updateFlipOutput(); // Show software renderer output initially
 }
 
-function flipCanvas() {
-  flipState = !flipState;
-  updateFlipOutput();
-}
+// Remove or comment out the initial buildSceneAndDraw() call since it's called by the DOMContentLoaded handler
 
-// Initial draw on page load
-buildSceneAndDraw();
+// Add DOM ready handler
+document.addEventListener('DOMContentLoaded', () => {
+  // Ensure all canvases have the same size as the frame buffer
+  [canvas, canvas2, canvas3].forEach(c => {
+    c.width = width;
+    c.height = height;
+    // Make canvases visible with different background colors for debugging
+    c.style.border = '1px solid black';
+  });
+  
+  buildSceneAndDraw();
+
+});

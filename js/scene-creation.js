@@ -31,187 +31,135 @@ function getRandomArc() {
   };
 }
 
-function buildScene() {
-  shapes = [];
-
-  // Draw random lines
-  for (let i = 0; i < 15; i++) {
-    const start = getRandomPoint();
-    const end = getRandomPoint();
-    const thickness = Math.floor(Math.random() * 10) + 1;
-    const color = getRandomColor(150, 255);
-
+function addRandomLines(count = 15) {
+  for (let i = 0; i < count; i++) {
     shapes.push({
       type: 'line',
-      start: start,
-      end: end,
-      thickness: thickness,
-      color: color
+      start: getRandomPoint(),
+      end: getRandomPoint(),
+      thickness: Math.floor(Math.random() * 10) + 1,
+      color: getRandomColor(150, 255)
     });
   }
+}
 
-  // Draw axis-aligned rectangles
-  for (let i = 0; i < 5; i++) {
-    const center = getRandomPoint();
-    const rectWidth = 30 + Math.random() * 100;
-    const rectHeight = 30 + Math.random() * 100;
-    const strokeWidth = Math.random() * 10 + 1;
-    const strokeColor = getRandomColor(200, 255);
-    const fillColor = getRandomColor(100, 200);
-
+function addAxisAlignedRectangles(count = 5) {
+  for (let i = 0; i < count; i++) {
     shapes.push({
       type: 'rect',
-      center: center,
-      width: rectWidth,
-      height: rectHeight,
+      center: getRandomPoint(),
+      width: 30 + Math.random() * 100,
+      height: 30 + Math.random() * 100,
       rotation: 0,
-      strokeWidth: strokeWidth,
-      strokeColor: strokeColor,
-      fillColor: fillColor
+      strokeWidth: Math.random() * 10 + 1,
+      strokeColor: getRandomColor(200, 255),
+      fillColor: getRandomColor(100, 200)
     });
   }
+}
 
-  // Draw rotated rectangles
-  for (let i = 0; i < 5; i++) {
-    const center = getRandomPoint();
-    const rectWidth = 30 + Math.random() * 100;
-    const rectHeight = 30 + Math.random() * 100;
-    const rotation = Math.random() * Math.PI * 2;
-    const strokeWidth = Math.random() * 10 + 1;
-    const strokeColor = getRandomColor(200, 255);
-    const fillColor = getRandomColor(100, 200);
-
+function addRotatedRectangles(count = 5) {
+  for (let i = 0; i < count; i++) {
     shapes.push({
       type: 'rect',
-      center: center,
-      width: rectWidth,
-      height: rectHeight,
-      rotation: rotation,
-      strokeWidth: strokeWidth,
-      strokeColor: strokeColor,
-      fillColor: fillColor
+      center: getRandomPoint(),
+      width: 30 + Math.random() * 100,
+      height: 30 + Math.random() * 100,
+      rotation: Math.random() * Math.PI * 2,
+      strokeWidth: Math.random() * 10 + 1,
+      strokeColor: getRandomColor(200, 255),
+      fillColor: getRandomColor(100, 200)
     });
   }
+}
 
-  // Draw axis-aligned rounded rectangles
-  for (let i = 0; i < 10; i++) {
-    const center = getRandomPoint();
-    const rectWidth = Math.round(50 + Math.random() * 100);
-    const rectHeight = Math.round(50 + Math.random() * 100);
-    const radius = Math.round(Math.random() * Math.min(rectWidth, rectHeight) * 0.2);
-    const strokeWidth = Math.round(Math.random() * 10 + 1);
-    const strokeColor = getRandomColor(200, 255);
-    const fillColor = getRandomColor(100, 200);
-
+function addAxisAlignedRoundedRectangles(count = 10) {
+  for (let i = 0; i < count; i++) {
+    const width = Math.round(50 + Math.random() * 100);
+    const height = Math.round(50 + Math.random() * 100);
     shapes.push({
       type: 'roundedRect',
-      center: center,
-      width: rectWidth,
-      height: rectHeight,
-      radius: radius,
+      center: getRandomPoint(),
+      width,
+      height,
+      radius: Math.round(Math.random() * Math.min(width, height) * 0.2),
       rotation: 0,
-      strokeWidth: strokeWidth,
-      strokeColor: strokeColor,
-      fillColor: fillColor
+      strokeWidth: Math.round(Math.random() * 10 + 1),
+      strokeColor: getRandomColor(200, 255),
+      fillColor: getRandomColor(100, 200)
     });
   }
-  
-  // Draw axis-aligned rounded rectangles of stroke size 1
-  for (let i = 0; i < 10; i++) {
-    const center = getRandomPoint();
-    const rectWidth = Math.round(50 + Math.random() * 100);
-    const rectHeight = Math.round(50 + Math.random() * 100);
-    const radius = Math.round(Math.random() * Math.min(rectWidth, rectHeight) * 0.2);
-    const strokeWidth = 1;
-    const strokeColor = getRandomColor(200, 255);
-    const fillColor = getRandomColor(100, 200);
+}
 
+function addThinStrokeRoundedRectangles(count = 10) {
+  for (let i = 0; i < count; i++) {
+    const width = Math.round(50 + Math.random() * 100);
+    const height = Math.round(50 + Math.random() * 100);
     shapes.push({
       type: 'roundedRect',
-      center: center,
-      width: rectWidth,
-      height: rectHeight,
-      radius: radius,
+      center: getRandomPoint(),
+      width,
+      height,
+      radius: Math.round(Math.random() * Math.min(width, height) * 0.2),
       rotation: 0,
-      strokeWidth: strokeWidth,
-      strokeColor: strokeColor,
-      fillColor: fillColor
+      strokeWidth: 1,
+      strokeColor: getRandomColor(200, 255),
+      fillColor: getRandomColor(100, 200)
     });
   }
+}
 
-  // Draw two big axis-aligned rounded rectangles with a very thick border with high transparency
-  for (let i = 0; i < 10; i++) {
-    const center = getRandomPoint();
-    const rectWidth = 200;
-    const rectHeight = 200;
-    const radius = Math.round(Math.min(rectWidth, rectHeight) * 0.2);
-    const strokeWidth =  Math.round(10 + Math.random() * 30);
-    const strokeColor = { r: 0, g: 0, b: 0, a: 50 };
-    const fillColor = getRandomColor(100, 200);
-
+function addLargeTransparentRoundedRectangles(count = 10) {
+  for (let i = 0; i < count; i++) {
     shapes.push({
       type: 'roundedRect',
-      center: center,
-      width: rectWidth,
-      height: rectHeight,
-      radius: radius,
+      center: getRandomPoint(),
+      width: 200,
+      height: 200,
+      radius: 40,
       rotation: 0,
-      strokeWidth: strokeWidth,
-      strokeColor: strokeColor,
-      fillColor: fillColor
+      strokeWidth: Math.round(10 + Math.random() * 30),
+      strokeColor: { r: 0, g: 0, b: 0, a: 50 },
+      fillColor: getRandomColor(100, 200)
     });
   }
+}
 
-  // Draw two big axis-aligned rounded rectangles with no stroke
-  for (let i = 0; i < 10; i++) {
-    const center = getRandomPoint();
-    const rectWidth = 200;
-    const rectHeight = 200;
-    const radius = Math.round(Math.min(rectWidth, rectHeight) * 0.2);
-    const strokeWidth =  0;
-    const strokeColor = { r: 0, g: 0, b: 0, a: 0 };
-    const fillColor = getRandomColor(100, 200);
-
+function addNoStrokeRoundedRectangles(count = 10) {
+  for (let i = 0; i < count; i++) {
     shapes.push({
       type: 'roundedRect',
-      center: center,
-      width: rectWidth,
-      height: rectHeight,
-      radius: radius,
+      center: getRandomPoint(),
+      width: 200,
+      height: 200,
+      radius: 40,
       rotation: 0,
-      strokeWidth: strokeWidth,
-      strokeColor: strokeColor,
-      fillColor: fillColor
+      strokeWidth: 0,
+      strokeColor: { r: 0, g: 0, b: 0, a: 0 },
+      fillColor: getRandomColor(100, 200)
     });
   }
+}
 
-  /*
-  // Draw rotated rounded rectangles
-  for (let i = 0; i < 3; i++) {
-    const center = getRandomPoint();
-    const rectWidth = 50 + Math.random() * 100;
-    const rectHeight = 50 + Math.random() * 100;
-    const radius = Math.min(rectWidth, rectHeight) * 0.2;
-    const rotation = Math.random() * Math.PI * 2;
-    const strokeWidth = Math.random() * 10 + 1;
-    const strokeColor = getRandomColor(200, 255);
-    const fillColor = getRandomColor(100, 200);
-
+function addRotatedRoundedRectangles(count = 3) {
+  for (let i = 0; i < count; i++) {
+    const width = 50 + Math.random() * 100;
+    const height = 50 + Math.random() * 100;
     shapes.push({
       type: 'roundedRect',
-      center: center,
-      width: rectWidth,
-      height: rectHeight,
-      radius: radius,
-      rotation: rotation,
-      strokeWidth: strokeWidth,
-      strokeColor: strokeColor,
-      fillColor: fillColor
+      center: getRandomPoint(),
+      width,
+      height,
+      radius: Math.min(width, height) * 0.2,
+      rotation: Math.random() * Math.PI * 2,
+      strokeWidth: Math.random() * 10 + 1,
+      strokeColor: getRandomColor(200, 255),
+      fillColor: getRandomColor(100, 200)
     });
   }
-  */
+}
 
-  // Draw 90-degree arcs with different stroke sizes and radii
+function addNinetyDegreeArcs() {
   const strokeSizes = [1, 2, 3, 4];
   const radii = [20, 40, 60];
   let xOffset = 150;
@@ -219,7 +167,7 @@ function buildScene() {
   for (const strokeSize of strokeSizes) {
     let yOffset = 150;
     for (const radius of radii) {
-      const shape = {
+      shapes.push({
         type: 'arc',
         center: { x: xOffset, y: yOffset },
         radius: radius,
@@ -228,37 +176,37 @@ function buildScene() {
         strokeWidth: strokeSize,
         strokeColor: { r: 200, g: 100, b: 100, a: 255 },
         fillColor: { r: 0, g: 0, b: 0, a: 0 }
-      };
-
-      shapes.push(shape);
-
+      });
       yOffset += radius * 2 + 20;
     }
     xOffset += 120;
   }
+}
 
-  // Add some random filled arcs
-  for (let i = 0; i < 3; i++) {
-    const arc = getRandomArc();
-    shapes.push(arc);
-  }
-
-  // Draw circles
-  for (let i = 0; i < 5; i++) {
-    const center = getRandomPoint();
-    const radius = 15 + Math.random() * 50;
-    const strokeWidth = Math.random() * 10 + 1;
-    const strokeColor = getRandomColor(200, 255);
-    const fillColor = getRandomColor(100, 200);
-
-    shapes.push({
-      type: 'circle',
-      center: center,
-      radius: radius,
-      strokeWidth: strokeWidth,
-      strokeColor: strokeColor,
-      fillColor: fillColor
-    });
+function addRandomCircles(count = 5) {
+  for (let i = 0; i < count; i++) {
+    shapes.push(getRandomCircle());
   }
 }
 
+function addRandomArcs(count = 3) {
+  for (let i = 0; i < count; i++) {
+    shapes.push(getRandomArc());
+  }
+}
+
+function buildScene() {
+  shapes = [];
+  
+  addRandomLines();
+  addAxisAlignedRectangles();
+  addRotatedRectangles();
+  addAxisAlignedRoundedRectangles();
+  addThinStrokeRoundedRectangles();
+  addLargeTransparentRoundedRectangles();
+  addNoStrokeRoundedRectangles();
+  // addRotatedRoundedRectangles();
+  addNinetyDegreeArcs();
+  addRandomArcs();
+  addRandomCircles();
+}
