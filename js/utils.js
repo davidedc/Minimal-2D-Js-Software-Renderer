@@ -134,3 +134,44 @@ class PixelSet {
     }
   }
 }
+
+// currently unused
+function alignToPixelBoundary(point) {
+  return {
+    x: Math.round(point.x) + 0.5,
+    y: Math.round(point.y) + 0.5
+  };
+}
+
+
+function toIntegerPoint(point) {
+  return {
+    x: Math.round(point.x),
+    y: Math.round(point.y)
+  };
+}
+
+function roundPoint(x, y) {
+  return {
+    x: Math.round(x),
+    y: Math.round(y)
+  };
+}
+
+
+function getRandomPoint() {
+  const margin = 100;
+  return {
+    x: margin + Math.random() * (width - 2 * margin),
+    y: margin + Math.random() * (height - 2 * margin)
+  };
+}
+
+function getRandomColor(minAlpha = 100, maxAlpha = 255) {
+  return {
+    r: Math.random() * 255,
+    g: Math.random() * 255,
+    b: Math.random() * 255,
+    a: Math.random() * (maxAlpha - minAlpha) + minAlpha
+  };
+}
