@@ -159,68 +159,77 @@ function drawRoundedRectCanvas(ctx, shape) {
 }
 
 // Note that this code draws the rounded rect in such a way that
-// the stroke path always begins and ends at the half-pixel boundary
-// so that the stroke is drawn crisply.
+// the stroke path and the fill always begin and end at the half-pixel boundary
+// so that their borders are drawn crisply.
 // That depends on what both width/height and strokeWidth are!
+// Also note that this draws the fill and stroke *exactly* aligned
+// with the sw renderer (not the arcs of the rounded corners, those are
+// slightly different, but the borrders of the fill and stroke are the same apart
+// from those arcs).
 
 function drawAxisAlignedRoundedRectCanvas(ctx, shape) {
-    const {
-      center,
-      width,
-      height,
-      radius,
-      strokeWidth,
-      strokeColor: { r: strokeR, g: strokeG, b: strokeB, a: strokeA },
-      fillColor: { r: fillR, g: fillG, b: fillB, a: fillA }
+    const { 
+        center: {x: centerX, y: centerY}, 
+        width: rectWidth, 
+        height: rectHeight, 
+        radius, 
+        strokeWidth, 
+        strokeColor: { r: strokeR, g: strokeG, b: strokeB, a: strokeA },
+        fillColor: { r: fillR, g: fillG, b: fillB, a: fillA }
     } = shape;
-  
-    // Calculate the half stroke width to align to pixel boundaries
-    const halfStroke = strokeWidth / 2;
-    
-    // Calculate the actual drawing coordinates
-    // We add 0.5 to align with pixel boundaries when the total is odd
-    const x = Math.floor(center.x - width / 2) + (strokeWidth % 2 ? 0.5 : 0);
-    const y = Math.floor(center.y - height / 2) + (strokeWidth % 2 ? 0.5 : 0);
-    const w = Math.floor(width);
-    const h = Math.floor(height);
-    
-    // Ensure radius doesn't exceed half of the smaller dimension
-    const r = Math.min(radius, Math.min(w, h) / 2);
-  
-    ctx.beginPath();
-    
-    // Start from top-left corner, after the radius
-    ctx.moveTo(x + r, y);
-    
-    // Top edge and top-right corner
-    ctx.lineTo(x + w - r, y);
-    ctx.arcTo(x + w, y, x + w, y + r, r);
-    
-    // Right edge and bottom-right corner
-    ctx.lineTo(x + w, y + h - r);
-    ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
-    
-    // Bottom edge and bottom-left corner
-    ctx.lineTo(x + r, y + h);
-    ctx.arcTo(x, y + h, x, y + h - r, r);
-    
-    // Left edge and top-left corner
-    ctx.lineTo(x, y + r);
-    ctx.arcTo(x, y, x + r, y, r);
-    
-    // Close the path
-    ctx.closePath();
-  
-    // Fill if alpha > 0
+
+    const pos = getAlignedPosition(centerX, centerY, rectWidth, rectHeight, strokeWidth);
+    const r = Math.min(radius, Math.min(pos.w, pos.h) / 2);
+
+    // Create fill path aligned strictly to whole pixels
+    const createFillPath = () => {
+        ctx.beginPath();
+        // Round all coordinates for fill to ensure pixel-perfect alignment
+        const fx = Math.ceil(pos.x);
+        const fy = Math.ceil(pos.y);
+        const fw = pos.w;
+        const fh = pos.h;
+        const fr = Math.round(r);  // Round radius too for consistency
+
+        ctx.moveTo(fx + fr, fy);
+        ctx.lineTo(fx + fw - fr, fy);
+        ctx.arcTo(fx + fw, fy, fx + fw, fy + fr, fr);
+        ctx.lineTo(fx + fw, fy + fh - fr);
+        ctx.arcTo(fx + fw, fy + fh, fx + fw - fr, fy + fh, fr);
+        ctx.lineTo(fx + fr, fy + fh);
+        ctx.arcTo(fx, fy + fh, fx, fy + fh - fr, fr);
+        ctx.lineTo(fx, fy + fr);
+        ctx.arcTo(fx, fy, fx + fr, fy, fr);
+        ctx.closePath();
+    };
+
+    // Create stroke path using original aligned positions
+    const createStrokePath = () => {
+        ctx.beginPath();
+        ctx.moveTo(pos.x + r, pos.y);
+        ctx.lineTo(pos.x + pos.w - r, pos.y);
+        ctx.arcTo(pos.x + pos.w, pos.y, pos.x + pos.w, pos.y + r, r);
+        ctx.lineTo(pos.x + pos.w, pos.y + pos.h - r);
+        ctx.arcTo(pos.x + pos.w, pos.y + pos.h, pos.x + pos.w - r, pos.y + pos.h, r);
+        ctx.lineTo(pos.x + r, pos.y + pos.h);
+        ctx.arcTo(pos.x, pos.y + pos.h, pos.x, pos.y + pos.h - r, r);
+        ctx.lineTo(pos.x, pos.y + r);
+        ctx.arcTo(pos.x, pos.y, pos.x + r, pos.y, r);
+        ctx.closePath();
+    };
+
+    // Draw fill first (if needed)
     if (fillA > 0) {
-      ctx.fillStyle = `rgba(${fillR}, ${fillG}, ${fillB}, ${fillA/255})`;
-      ctx.fill();
+        createFillPath();
+        ctx.fillStyle = `rgba(${fillR}, ${fillG}, ${fillB}, ${fillA/255})`;
+        ctx.fill();
     }
-  
-    // Stroke if alpha > 0
+
+    // Draw stroke (if needed)
     if (strokeWidth > 0 && strokeA > 0) {
-      ctx.strokeStyle = `rgba(${strokeR}, ${strokeG}, ${strokeB}, ${strokeA/255})`;
-      ctx.lineWidth = strokeWidth;
-      ctx.stroke();
+        createStrokePath();
+        ctx.strokeStyle = `rgba(${strokeR}, ${strokeG}, ${strokeB}, ${strokeA/255})`;
+        ctx.lineWidth = strokeWidth;
+        ctx.stroke();
     }
-  }
+}
