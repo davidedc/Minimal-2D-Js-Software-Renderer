@@ -631,13 +631,6 @@ function drawRoundedRectSW(shape) {
   }
 }
 
-function getAlignedPosition(centerX, centerY, width, height, strokeWidth) {
-  const offset = strokeWidth % 2 ? 0.5 : 0;
-  const x = Math.floor(centerX - width/2) + offset;
-  const y = Math.floor(centerY - height/2) + offset;
-  return { x, y, w: Math.floor(width), h: Math.floor(height) };
-}
-
 
 function drawAxisAlignedRoundedRectThinOpaqueStrokeSW(centerX, centerY, rectWidth, rectHeight, cornerRadius,
   strokeWidth, strokeR, strokeG, strokeB, strokeA, fillR, fillG, fillB, fillA) {

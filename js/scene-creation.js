@@ -202,11 +202,11 @@ function buildScene() {
   addAxisAlignedRectangles();
   addRotatedRectangles();
   addAxisAlignedRoundedRectangles();
-  addThinStrokeRoundedRectangles();
   addLargeTransparentRoundedRectangles();
   addNoStrokeRoundedRectangles();
   // addRotatedRoundedRectangles();
   addNinetyDegreeArcs();
   addRandomArcs();
   addRandomCircles();
+  addThinStrokeRoundedRectangles();
 }

@@ -175,3 +175,10 @@ function getRandomColor(minAlpha = 100, maxAlpha = 255) {
     a: Math.random() * (maxAlpha - minAlpha) + minAlpha
   };
 }
+
+function getAlignedPosition(centerX, centerY, width, height, strokeWidth) {
+  const offset = strokeWidth % 2 ? 0.5 : 0;
+  const x = Math.floor(centerX - width/2) + offset;
+  const y = Math.floor(centerY - height/2) + offset;
+  return { x, y, w: Math.floor(width), h: Math.floor(height) };
+}
