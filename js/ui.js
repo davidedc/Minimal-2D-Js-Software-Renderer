@@ -179,7 +179,6 @@ class RenderComparison {
     const nav = document.createElement('div');
     nav.style.textAlign = 'center';
     nav.style.padding = '10px';
-    nav.style.borderBottom = '2px solid #ccc';
     nav.style.whiteSpace = 'nowrap';
     
     RenderComparison.sections.forEach((section, index) => {
