@@ -1,5 +1,5 @@
 class RenderComparison {
-  constructor(id) {
+  constructor(id, title) {
     this.id = id;
     this.flipState = true;
     this.shapes = [];
@@ -7,6 +7,20 @@ class RenderComparison {
     // Create container
     this.container = document.createElement('div');
     this.container.style.marginBottom = '20px';
+    
+    // Add divider
+    const divider = document.createElement('hr');
+    divider.style.width = '100%';
+    divider.style.margin = '30px 0 20px 0';
+    this.container.appendChild(divider);
+    
+    // Add title
+    const titleElement = document.createElement('h2');
+    titleElement.textContent = title;
+    titleElement.style.textAlign = 'center';
+    titleElement.style.marginBottom = '20px';
+    titleElement.style.fontFamily = 'sans-serif';
+    this.container.appendChild(titleElement);
     
     // Create canvases
     this.swCanvas = this.createCanvas('sw');
@@ -172,8 +186,8 @@ function drawShapesImpl(shapes, isCanvas, ctx = null) {
   }
 }
 
-function addRenderComparison(id, buildShapesFn, metricsFunction = null) {
-  const comparison = new RenderComparison(id);
+function addRenderComparison(title, id, buildShapesFn, metricsFunction = null) {
+  const comparison = new RenderComparison(id, title);
   comparison.metricsFunction = metricsFunction;
   comparison.render(buildShapesFn);
   return comparison;
@@ -181,8 +195,10 @@ function addRenderComparison(id, buildShapesFn, metricsFunction = null) {
 
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-  // Add centered rounded rect comparison with metrics
-  addRenderComparison('centered-rounded-rect', 
+  // Add centered rounded rect comparison
+  addRenderComparison(
+    "Single Centered Rounded Rectangle",
+    'centered-rounded-rect', 
     (shapes) => {
       addCenteredRoundedRect(shapes);
     },
@@ -194,14 +210,18 @@ document.addEventListener('DOMContentLoaded', () => {
   );
   
   // Add thin rounded rects comparison
-  addRenderComparison('thin-rounded-rects', 
+  addRenderComparison(
+    "Multiple Thin-Stroke Rounded Rectangles",
+    'thin-rounded-rects', 
     (shapes) => {
       addThinStrokeRoundedRectangles(10, shapes);
     }
   );
   
   // Add main comparison with all shapes
-  addRenderComparison('all-shapes', 
+  addRenderComparison(
+    "All Shape Types Combined",
+    'all-shapes', 
     (shapes) => {
       buildScene(shapes);
     }
