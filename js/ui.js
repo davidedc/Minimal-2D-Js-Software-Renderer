@@ -10,34 +10,27 @@ class RenderComparison {
     
     // Create container with anchor
     this.container = document.createElement('div');
-    this.container.style.marginBottom = '20px';
+    this.container.className = 'comparison-container';
     this.container.id = id;
     
     // Add divider
     const divider = document.createElement('hr');
-    divider.style.width = '100%';
-    divider.style.margin = '30px 0 20px 0';
     this.container.appendChild(divider);
     
     // Add top link
     const topLink = document.createElement('div');
-    topLink.style.textAlign = 'center';
-    topLink.style.marginBottom = '10px';
+    topLink.className = 'top-link-container';
     const link = document.createElement('a');
     link.href = '#';
     link.textContent = '\u2191 top';  // Unicode escape for ↑
-    link.style.color = '#666';
-    link.style.textDecoration = 'none';
-    link.style.fontSize = '14px';
+    link.className = 'top-link';
     topLink.appendChild(link);
     this.container.appendChild(topLink);
     
     // Add title
     const titleElement = document.createElement('h2');
     titleElement.textContent = title;
-    titleElement.style.textAlign = 'center';
-    titleElement.style.marginBottom = '20px';
-    titleElement.style.fontFamily = 'sans-serif';
+    titleElement.className = 'comparison-title';
     this.container.appendChild(titleElement);
     
     // Create canvases
@@ -56,30 +49,27 @@ class RenderComparison {
     
     // Create button container
     const buttonContainer = document.createElement('div');
-    buttonContainer.style.textAlign = 'center';
-    buttonContainer.style.marginTop = '10px';
+    buttonContainer.className = 'button-container';
     
-    // Add flip button
-    const flipButton = document.createElement('button');
-    flipButton.textContent = 'Flip View';
-    flipButton.onclick = () => this.flip();
-    flipButton.style.margin = '0 5px';
-    
-    // Add new random button
+    // Add new random button first
     const randomButton = document.createElement('button');
     randomButton.textContent = 'New Random Examples';
     randomButton.onclick = () => this.render(this.buildShapesFn);
-    randomButton.style.margin = '0 5px';
+    randomButton.className = 'action-button';
     
-    buttonContainer.appendChild(flipButton);
+    // Add flip button second
+    const flipButton = document.createElement('button');
+    flipButton.textContent = 'Flip alternating view';
+    flipButton.onclick = () => this.flip();
+    flipButton.className = 'action-button';
+    
     buttonContainer.appendChild(randomButton);
+    buttonContainer.appendChild(flipButton);
     this.container.appendChild(buttonContainer);
     
     // Add metrics container
     this.metricsContainer = document.createElement('div');
-    this.metricsContainer.style.textAlign = 'center';
-    this.metricsContainer.style.marginTop = '5px';
-    this.metricsContainer.style.fontFamily = 'monospace';
+    this.metricsContainer.className = 'metrics-container';
     
     this.container.appendChild(this.metricsContainer);
     
@@ -90,7 +80,7 @@ class RenderComparison {
     const canvas = document.createElement('canvas');
     canvas.width = width;
     canvas.height = height;
-    canvas.style.border = '1px solid black';
+    canvas.className = 'comparison-canvas';
     canvas.title = `${this.id}-${name}`;
     return canvas;
   }
@@ -177,9 +167,12 @@ class RenderComparison {
 
   static createNavigation() {
     const nav = document.createElement('div');
-    nav.style.textAlign = 'center';
-    nav.style.padding = '10px';
-    nav.style.whiteSpace = 'nowrap';
+    nav.className = 'nav-container';
+    
+    const title = document.createElement('h1');
+    title.textContent = 'All Tests';
+    title.className = 'nav-title';
+    nav.appendChild(title);
     
     RenderComparison.sections.forEach((section, index) => {
       if (index > 0) {
@@ -189,8 +182,7 @@ class RenderComparison {
       const link = document.createElement('a');
       link.href = `#${section.id}`;
       link.textContent = section.title;
-      link.style.color = '#0066cc';
-      link.style.textDecoration = 'none';
+      link.className = 'nav-link';
       nav.appendChild(link);
     });
     
