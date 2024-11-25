@@ -194,6 +194,27 @@ function addRandomArcs(count = 3, shapes) {
   }
 }
 
+function addCenteredRoundedRect(shapes) {
+  // Leave 20% margin from canvas edges
+  const maxWidth = width * 0.6;
+  const maxHeight = height * 0.6;
+  
+  const rectWidth = Math.round(50 + Math.random() * maxWidth);
+  const rectHeight = Math.round(50 + Math.random() * maxHeight);
+  
+  shapes.push({
+    type: 'roundedRect',
+    center: { x: width/2, y: height/2 },
+    width: rectWidth,
+    height: rectHeight,
+    radius: Math.round(Math.random() * Math.min(rectWidth, rectHeight) * 0.2),
+    rotation: 0,
+    strokeWidth: Math.round(Math.random() * 10 + 1),
+    strokeColor: getRandomColor(200, 255),
+    fillColor: getRandomColor(100, 200)
+  });
+}
+
 function buildScene(shapes) {
   addRandomLines(15, shapes);
   addAxisAlignedRectangles(5, shapes);

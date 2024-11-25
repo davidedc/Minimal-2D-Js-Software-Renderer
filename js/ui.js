@@ -142,6 +142,11 @@ function addRenderComparison(id, buildShapesFn) {
 
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
+  // Add centered rounded rect comparison
+  addRenderComparison('centered-rounded-rect', (shapes) => {
+    addCenteredRoundedRect(shapes);
+  });
+  
   // Add thin rounded rects comparison
   addRenderComparison('thin-rounded-rects', (shapes) => {
     addThinStrokeRoundedRectangles(10, shapes);
