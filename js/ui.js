@@ -1,12 +1,17 @@
 class RenderComparison {
+  static sections = [];
+
   constructor(id, title) {
+    RenderComparison.sections.push({ id, title });
+    
     this.id = id;
     this.flipState = true;
     this.shapes = [];
     
-    // Create container
+    // Create container with anchor
     this.container = document.createElement('div');
     this.container.style.marginBottom = '20px';
+    this.container.id = id;
     
     // Add divider
     const divider = document.createElement('hr');
@@ -156,6 +161,29 @@ class RenderComparison {
     
     this.showMetrics(this.metricsFunction);
   }
+
+  static createNavigation() {
+    const nav = document.createElement('div');
+    nav.style.textAlign = 'center';
+    nav.style.padding = '10px';
+    nav.style.borderBottom = '2px solid #ccc';
+    nav.style.whiteSpace = 'nowrap';
+    
+    RenderComparison.sections.forEach((section, index) => {
+      if (index > 0) {
+        nav.appendChild(document.createTextNode(' - '));
+      }
+      
+      const link = document.createElement('a');
+      link.href = `#${section.id}`;
+      link.textContent = section.title;
+      link.style.color = '#0066cc';
+      link.style.textDecoration = 'none';
+      nav.appendChild(link);
+    });
+    
+    document.body.insertBefore(nav, document.body.firstChild);
+  }
 }
 
 // Modified drawShapesImpl to accept ctx as parameter
@@ -226,4 +254,7 @@ document.addEventListener('DOMContentLoaded', () => {
       buildScene(shapes);
     }
   );
+
+  // Create navigation after all sections are added
+  RenderComparison.createNavigation();
 });
