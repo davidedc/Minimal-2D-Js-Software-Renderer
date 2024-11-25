@@ -19,6 +19,19 @@ class RenderComparison {
     divider.style.margin = '30px 0 20px 0';
     this.container.appendChild(divider);
     
+    // Add top link
+    const topLink = document.createElement('div');
+    topLink.style.textAlign = 'center';
+    topLink.style.marginBottom = '10px';
+    const link = document.createElement('a');
+    link.href = '#';
+    link.textContent = '\u2191 top';  // Unicode escape for ↑
+    link.style.color = '#666';
+    link.style.textDecoration = 'none';
+    link.style.fontSize = '14px';
+    topLink.appendChild(link);
+    this.container.appendChild(topLink);
+    
     // Add title
     const titleElement = document.createElement('h2');
     titleElement.textContent = title;
