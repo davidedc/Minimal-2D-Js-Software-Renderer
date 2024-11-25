@@ -210,7 +210,7 @@ function addCenteredRoundedRect(shapes) {
     radius: Math.round(Math.random() * Math.min(rectWidth, rectHeight) * 0.2),
     rotation: 0,
     strokeWidth: Math.round(Math.random() * 10 + 1),
-    strokeColor: getRandomColor(200, 255),
+    strokeColor: getRandomColor(255, 255),
     fillColor: getRandomColor(100, 200)
   });
 }

@@ -43,6 +43,14 @@ class RenderComparison {
     buttonContainer.appendChild(randomButton);
     this.container.appendChild(buttonContainer);
     
+    // Add metrics container
+    this.metricsContainer = document.createElement('div');
+    this.metricsContainer.style.textAlign = 'center';
+    this.metricsContainer.style.marginTop = '5px';
+    this.metricsContainer.style.fontFamily = 'monospace';
+    
+    this.container.appendChild(this.metricsContainer);
+    
     document.body.appendChild(this.container);
   }
 
@@ -91,6 +99,34 @@ class RenderComparison {
     }
   }
 
+  countUniqueColors(ctx) {
+    const imageData = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
+    const data = imageData.data;
+    const middleY = Math.floor(ctx.canvas.height / 2);
+    const uniqueColors = new Set();
+    
+    // Scan middle row
+    for(let x = 0; x < ctx.canvas.width; x++) {
+      const i = (middleY * ctx.canvas.width + x) * 4;
+      // Skip white pixels (255,255,255)
+      if(data[i] === 255 && data[i+1] === 255 && data[i+2] === 255) continue;
+      // Create color key
+      const colorKey = `${data[i]},${data[i+1]},${data[i+2]},${data[i+3]}`;
+      uniqueColors.add(colorKey);
+    }
+    
+    return uniqueColors.size;
+  }
+
+  showMetrics(metricsFunction) {
+    if (metricsFunction) {
+      const result = metricsFunction(this);
+      this.metricsContainer.textContent = result;
+    } else {
+      this.metricsContainer.textContent = '';
+    }
+  }
+
   render(buildShapesFn) {
     this.buildShapesFn = buildShapesFn; // Store the function for later use
     this.shapes = [];
@@ -103,6 +139,8 @@ class RenderComparison {
     
     this.flipState = true;
     this.updateFlipOutput();
+    
+    this.showMetrics(this.metricsFunction);
   }
 }
 
@@ -134,26 +172,38 @@ function drawShapesImpl(shapes, isCanvas, ctx = null) {
   }
 }
 
-function addRenderComparison(id, buildShapesFn) {
+function addRenderComparison(id, buildShapesFn, metricsFunction = null) {
   const comparison = new RenderComparison(id);
+  comparison.metricsFunction = metricsFunction;
   comparison.render(buildShapesFn);
   return comparison;
 }
 
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-  // Add centered rounded rect comparison
-  addRenderComparison('centered-rounded-rect', (shapes) => {
-    addCenteredRoundedRect(shapes);
-  });
+  // Add centered rounded rect comparison with metrics
+  addRenderComparison('centered-rounded-rect', 
+    (shapes) => {
+      addCenteredRoundedRect(shapes);
+    },
+    (comparison) => {
+      const swColors = comparison.countUniqueColors(comparison.swCtx);
+      const canvasColors = comparison.countUniqueColors(comparison.canvasCtx);
+      return `Unique colors in middle row: SW: ${swColors}, Canvas: ${canvasColors}`;
+    }
+  );
   
   // Add thin rounded rects comparison
-  addRenderComparison('thin-rounded-rects', (shapes) => {
-    addThinStrokeRoundedRectangles(10, shapes);
-  });
+  addRenderComparison('thin-rounded-rects', 
+    (shapes) => {
+      addThinStrokeRoundedRectangles(10, shapes);
+    }
+  );
   
   // Add main comparison with all shapes
-  addRenderComparison('all-shapes', (shapes) => {
-    buildScene(shapes);
-  });
+  addRenderComparison('all-shapes', 
+    (shapes) => {
+      buildScene(shapes);
+    }
+  );
 });
