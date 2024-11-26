@@ -51,19 +51,33 @@ class RenderComparison {
     const buttonContainer = document.createElement('div');
     buttonContainer.className = 'button-container';
     
-    // Add new random button first
-    const randomButton = document.createElement('button');
-    randomButton.textContent = 'New Random Examples';
-    randomButton.onclick = () => this.render(this.buildShapesFn);
-    randomButton.className = 'action-button';
+    // Add New Example button first
+    const runButton = document.createElement('button');
+    runButton.textContent = 'New Example';
+    runButton.onclick = () => this.render(this.buildShapesFn);
+    runButton.className = 'action-button';
     
-    // Add flip button second
+    // Add run 10 examples button
+    const run10Button = document.createElement('button');
+    run10Button.textContent = 'Run 10 Examples';
+    run10Button.onclick = () => this.runMultipleExamples(10);
+    run10Button.className = 'action-button';
+
+    // Add run 100 examples button
+    const run100Button = document.createElement('button');
+    run100Button.textContent = 'Run 100 Examples';
+    run100Button.onclick = () => this.runMultipleExamples(100);
+    run100Button.className = 'action-button';
+    
+    // Add flip button last
     const flipButton = document.createElement('button');
     flipButton.textContent = 'Flip alternating view';
     flipButton.onclick = () => this.flip();
     flipButton.className = 'action-button';
     
-    buttonContainer.appendChild(randomButton);
+    buttonContainer.appendChild(runButton);
+    buttonContainer.appendChild(run10Button);
+    buttonContainer.appendChild(run100Button);
     buttonContainer.appendChild(flipButton);
     this.container.appendChild(buttonContainer);
     
@@ -198,6 +212,17 @@ class RenderComparison {
     this.updateFlipOutput();
     
     this.showMetrics(this.metricsFunction);
+  }
+
+  runMultipleExamples(count) {
+    let current = 0;
+    const intervalId = setInterval(() => {
+      this.render(this.buildShapesFn);
+      current++;
+      if (current >= count) {
+        clearInterval(intervalId);
+      }
+    }, 100); // Run a new example every 100ms
   }
 
   static createNavigation() {
