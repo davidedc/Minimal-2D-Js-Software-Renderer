@@ -70,8 +70,13 @@ class RenderComparison {
     // Add metrics container
     this.metricsContainer = document.createElement('div');
     this.metricsContainer.className = 'metrics-container';
-    
     this.container.appendChild(this.metricsContainer);
+    
+    // Add errors container
+    this.errorsContainer = document.createElement('div');
+    this.errorsContainer.className = 'errors-container';
+    this.errorsContainer.style.color = 'red';
+    this.container.appendChild(this.errorsContainer);
     
     document.body.appendChild(this.container);
   }
@@ -121,7 +126,7 @@ class RenderComparison {
     }
   }
 
-  countUniqueColors(ctx) {
+  countUniqueColors(ctx, expectedColors = null) {
     const imageData = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
     const data = imageData.data;
     const middleY = Math.floor(ctx.canvas.height / 2);
@@ -130,14 +135,44 @@ class RenderComparison {
     // Scan middle row
     for(let x = 0; x < ctx.canvas.width; x++) {
       const i = (middleY * ctx.canvas.width + x) * 4;
-      // Skip white pixels (255,255,255)
-      if(data[i] === 255 && data[i+1] === 255 && data[i+2] === 255) continue;
+      // Skip background pixels - those are fully transparent
+      if(data[i+3] === 255) continue;
       // Create color key
       const colorKey = `${data[i]},${data[i+1]},${data[i+2]},${data[i+3]}`;
       uniqueColors.add(colorKey);
     }
     
-    return uniqueColors.size;
+    const count = uniqueColors.size;
+    if (expectedColors !== null && count !== expectedColors) {
+      this.showError(`Expected ${expectedColors} colors but found ${count} colors in ${ctx.canvas.title}`);
+    }
+    
+    return count;
+  }
+
+  showError(message) {
+    // Create and add clear errors button if not already present
+    if (!this.clearErrorsButton) {
+      this.clearErrorsButton = document.createElement('button');
+      this.clearErrorsButton.textContent = 'Clear Errors';
+      this.clearErrorsButton.className = 'action-button';
+      this.clearErrorsButton.onclick = () => this.clearErrors();
+      this.errorsContainer.appendChild(document.createElement('br'));
+      this.errorsContainer.appendChild(this.clearErrorsButton);
+    }
+
+    const errorMessage = document.createElement('div');
+    errorMessage.textContent = message;
+    this.errorsContainer.insertBefore(errorMessage, this.clearErrorsButton);
+    
+  }
+
+  clearErrors() {
+    this.errorsContainer.textContent = '';
+    if (this.clearErrorsButton) {
+      this.clearErrorsButton.remove();
+      this.clearErrorsButton = null;
+    }
   }
 
   showMetrics(metricsFunction) {
@@ -227,38 +262,49 @@ function addRenderComparison(title, id, buildShapesFn, metricsFunction = null) {
 
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-  // Add centered rounded rect comparison
-  addRenderComparison(
-    "Single Centered Rounded Rectangle",
-    'centered-rounded-rect', 
-    (shapes) => {
-      addCenteredRoundedRect(shapes);
-    },
-    (comparison) => {
-      const swColors = comparison.countUniqueColors(comparison.swCtx);
-      const canvasColors = comparison.countUniqueColors(comparison.canvasCtx);
-      return `Unique colors in middle row: SW: ${swColors}, Canvas: ${canvasColors}`;
-    }
-  );
-  
-  // Add thin rounded rects comparison
-  addRenderComparison(
-    "Multiple Thin-Stroke Rounded Rectangles",
-    'thin-rounded-rects', 
-    (shapes) => {
-      addThinStrokeRoundedRectangles(10, shapes);
-    }
-  );
-  
-  // Add main comparison with all shapes
-  addRenderComparison(
-    "All Shape Types Combined",
-    'all-shapes', 
-    (shapes) => {
-      buildScene(shapes);
-    }
-  );
+  addRenderComparisons();
 
   // Create navigation after all sections are added
   RenderComparison.createNavigation();
 });
+
+function addRenderComparisons() {
+  addCenteredRoundedRectComparison();
+  addThinRoundedRectsComparison();
+  addEverythingTogetherComparison();
+}
+function addEverythingTogetherComparison() {
+  addRenderComparison(
+    "All Shape Types Combined",
+    'all-shapes',
+    (shapes) => {
+      buildScene(shapes);
+    }
+  );
+}
+
+function addThinRoundedRectsComparison() {
+  addRenderComparison(
+    "Multiple Thin-Stroke Rounded Rectangles",
+    'thin-rounded-rects',
+    (shapes) => {
+      addThinStrokeRoundedRectangles(10, shapes);
+    }
+  );
+}
+
+function addCenteredRoundedRectComparison() {
+  addRenderComparison(
+    "Single Centered Rounded Rectangle",
+    'centered-rounded-rect',
+    (shapes) => {
+      addCenteredRoundedRect(shapes);
+    },
+    (comparison) => {
+      const swColors = comparison.countUniqueColors(comparison.swCtx, 2);
+      const canvasColors = comparison.countUniqueColors(comparison.canvasCtx, 2);
+      return `Unique colors in middle row: SW: ${swColors}, Canvas: ${canvasColors}`;
+    }
+  );
+}
+
