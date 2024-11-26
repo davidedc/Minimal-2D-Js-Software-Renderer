@@ -164,6 +164,30 @@ class RenderComparison {
     return count;
   }
 
+  countUniqueColorsInMiddleColumn(ctx, expectedColors = null) {
+    const imageData = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
+    const data = imageData.data;
+    const middleX = Math.floor(ctx.canvas.width / 2);
+    const uniqueColors = new Set();
+    
+    // Scan middle column
+    for(let y = 0; y < ctx.canvas.height; y++) {
+      const i = (y * ctx.canvas.width + middleX) * 4;
+      // Skip background pixels - those are fully transparent
+      if(data[i+3] === 255) continue;
+      // Create color key
+      const colorKey = `${data[i]},${data[i+1]},${data[i+2]},${data[i+3]}`;
+      uniqueColors.add(colorKey);
+    }
+    
+    const count = uniqueColors.size;
+    if (expectedColors !== null && count !== expectedColors) {
+      this.showError(`Expected ${expectedColors} colors but found ${count} colors in middle column of ${ctx.canvas.title}`);
+    }
+    
+    return count;
+  }
+
   showError(message) {
     // Create and add clear errors button if not already present
     if (!this.clearErrorsButton) {
@@ -192,9 +216,9 @@ class RenderComparison {
   showMetrics(metricsFunction) {
     if (metricsFunction) {
       const result = metricsFunction(this);
-      this.metricsContainer.textContent = result;
+      this.metricsContainer.innerHTML = result;
     } else {
-      this.metricsContainer.textContent = '';
+      this.metricsContainer.innerHTML = '';
     }
   }
 
@@ -326,9 +350,14 @@ function addCenteredRoundedRectComparison() {
       addCenteredRoundedRect(shapes);
     },
     (comparison) => {
-      const swColors = comparison.countUniqueColorsInMiddleRow(comparison.swCtx, 2);
-      const canvasColors = comparison.countUniqueColorsInMiddleRow(comparison.canvasCtx, 2);
-      return `Unique colors in middle row: SW: ${swColors}, Canvas: ${canvasColors}`;
+      const swColorsMiddleRow = comparison.countUniqueColorsInMiddleRow(comparison.swCtx, 2);
+      const canvasColorsMiddleRow = comparison.countUniqueColorsInMiddleRow(comparison.canvasCtx, 2);
+      const swColorsMiddleColumn = comparison.countUniqueColorsInMiddleColumn(comparison.swCtx, 2);
+      const canvasColorsMiddleColumn = comparison.countUniqueColorsInMiddleColumn(comparison.canvasCtx, 2);
+      
+      const row = `Unique colors in middle row: SW: ${swColorsMiddleRow}, Canvas: ${canvasColorsMiddleRow}`;
+      const column = `Unique colors in middle column: SW: ${swColorsMiddleColumn}, Canvas: ${canvasColorsMiddleColumn}`;
+      return row + '<br>' + column;
     }
   );
 }
