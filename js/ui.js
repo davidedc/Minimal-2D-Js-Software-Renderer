@@ -140,7 +140,7 @@ class RenderComparison {
     }
   }
 
-  countUniqueColors(ctx, expectedColors = null) {
+  countUniqueColorsInMiddleRow(ctx, expectedColors = null) {
     const imageData = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
     const data = imageData.data;
     const middleY = Math.floor(ctx.canvas.height / 2);
@@ -158,7 +158,7 @@ class RenderComparison {
     
     const count = uniqueColors.size;
     if (expectedColors !== null && count !== expectedColors) {
-      this.showError(`Expected ${expectedColors} colors but found ${count} colors in ${ctx.canvas.title}`);
+      this.showError(`Expected ${expectedColors} colors but found ${count} colors in middle row of ${ctx.canvas.title}`);
     }
     
     return count;
@@ -326,8 +326,8 @@ function addCenteredRoundedRectComparison() {
       addCenteredRoundedRect(shapes);
     },
     (comparison) => {
-      const swColors = comparison.countUniqueColors(comparison.swCtx, 2);
-      const canvasColors = comparison.countUniqueColors(comparison.canvasCtx, 2);
+      const swColors = comparison.countUniqueColorsInMiddleRow(comparison.swCtx, 2);
+      const canvasColors = comparison.countUniqueColorsInMiddleRow(comparison.canvasCtx, 2);
       return `Unique colors in middle row: SW: ${swColors}, Canvas: ${canvasColors}`;
     }
   );
