@@ -1,3 +1,8 @@
+// Ray Casting algorithm (also known as the Even-Odd Rule algorithm) for
+// determining if a point lies inside a polygon
+// conceptually draws a ray from the test point (x,y) extending infinitely
+// in one direction (in this case, horizontally to the right) and counts
+// how many times this ray intersects the polygon's edges.
 function pointInPolygon(x, y, points) {
   let inside = false;
   for (let i = 0, j = points.length - 1; i < points.length; j = i++) {
