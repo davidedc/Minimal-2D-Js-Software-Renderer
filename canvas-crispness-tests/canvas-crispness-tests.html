@@ -53,34 +53,34 @@
 
     <h2>Preamble</h2>
     <!-- now the body -->
-    The coordinate system of Canvas is not quite like in the plain raster model where (0,0) is the 2-dimensions square lit by the top left pixel.
-    Rather, (0,0) rapresents a zero-dimensions abstract point at the very top left corner of the canvas i.e. the top left corner of the top left pixel.
+    The coordinate system of Canvas is not quite like in the plain raster model where (0,0) is the two-dimensional square lit by the top left pixel.
+    Rather, (0,0) represents a zero-dimensions abstract point at the very top left corner of the canvas i.e. the top left corner of the top left pixel.
 
     </br>
     </br>
-    <img src="canvas-coordinates-system.svg" alt="Grid with points" style="max-width: 400px; height: auto;">
+    <img src="canvas-coordinates-system.svg" alt="Canvas coordinates system" style="max-width: 400px; height: auto;">
     </br>
     </br>
     so if you draw a rect like rect(4,4,15,10), Canvas will set a path, which runs along the grid <i>in between</i> pixels. fill() will then fill the
-    inside of the path, and the fill with have crisp borders, as all pixels inside of it are fully covered and fully on.
+    inside of the path, and the fill will have crisp borders, as all pixels inside of it are fully covered and fully on.
     </br>
     </br>
-    <img src="canvas-rect-fill.svg" alt="Grid with points" style="max-width: 400px; height: auto;">
+    <img src="canvas-rect-fill.svg" alt="Canvas rect fill diagram" style="max-width: 400px; height: auto;">
     </br>
     </br>
     if you then do a stroke() (with default lineWidth of 1), the stroke will be of width 1 and will be centered on the path. So it <b>won't be crisp</b>,
     as it will cover 2 half-pixels all along the path. The two half-pixels are of course rendered as two 50% opacity (and hence grey) pixels. So while
-    the border of the fill is crisp, <b>the border of the stroke is blurry</b> - and it will be crisp for all odd lineWidths.
+    the border of the fill is crisp, <b>the border of the stroke is blurry</b> - and with the specified coordinates it will be blurry for all odd lineWidths.
     </br>
     </br>
-    <img src="canvas-rect-with-stroke-1px.svg" alt="Grid with points" style="max-width: 400px; height: auto;">
+    <img src="canvas-rect-with-stroke-1px.svg" alt="Canvas rect with 1px stroke diagram" style="max-width: 400px; height: auto;">
     </br>
     </br>
     if you instead do a stroke() with lineWidth of 2, the stroke will cover 2 full pixels <i>completely</i>, all along the path. The two half-pixels are
-    completely covered and opaque, hence <b>the stroke will be crisp</b> - and it will be crisp for all even lineWidths.
+    completely covered and opaque, hence <b>the stroke will be crisp</b> - and with the specified coordinates it will be crisp for all even lineWidths.
     </br>
     </br>
-    <img src="canvas-rect-with-stroke-2px.svg" alt="Grid with points" style="max-width: 400px; height: auto;">
+    <img src="canvas-rect-with-stroke-2px.svg" alt="Canvas rect with 2px stroke diagram" style="max-width: 400px; height: auto;">
     </br>
     </br>
 
