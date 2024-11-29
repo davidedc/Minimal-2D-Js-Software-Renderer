@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        .container { 
+            margin: 20px; 
+            max-width: 800px;
+        }
+        .example {
+            margin-bottom: 30px;
+        }
+        canvas { 
+            border: 1px dotted #666; 
+            margin: 5px 0;
+            background: white;
+        }
+        .main-canvas-container canvas {
+            cursor: crosshair;
+        }
+        .results { 
+            font-family: monospace; 
+            margin: 5px 0; 
+            font-size: 12px;
+        }
+        h3 { 
+            margin: 0;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .canvas-pair {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            margin: 5px 0;
+        }
+        .zoom-canvas {
+            image-rendering: pixelated;
+        }
+        .label {
+            font-style: italic;
+            color: #666;
+            margin: 5px 0;
+        }
+        .main-canvas-container {
+            position: relative;
+        }
+    </style>
+</head>
+<body>
+    
+    <!--  a header with the title of the document which is Canvas crispness tests-->
+    <h1>Canvas crispness tests</h1>
+
+    <h2>Preamble</h2>
+    <!-- now the body -->
+    The coordinate system of Canvas is not quite like in the plain raster model where (0,0) is the 2-dimensions square lit by the top left pixel.
+    Rather, (0,0) rapresents a zero-dimensions abstract point at the very top left corner of the canvas i.e. the top left corner of the top left pixel.
+
+    </br>
+    </br>
+    <img src="canvas-coordinates-system.svg" alt="Grid with points" style="max-width: 400px; height: auto;">
+    </br>
+    </br>
+    so if you draw a rect like rect(4,4,15,10), Canvas will set a path, which runs along the grid <i>in between</i> pixels. fill() will then fill the
+    inside of the path, and the fill with have crisp borders, as all pixels inside of it are fully covered and fully on.
+    </br>
+    </br>
+    <img src="canvas-rect-fill.svg" alt="Grid with points" style="max-width: 400px; height: auto;">
+    </br>
+    </br>
+    if you then do a stroke() (with default lineWidth of 1), the stroke will be of width 1 and will be centered on the path. So it <b>won't be crisp</b>,
+    as it will cover 2 half-pixels all along the path. The two half-pixels are of course rendered as two 50% opacity (and hence grey) pixels. So while
+    the border of the fill is crisp, <b>the border of the stroke is blurry</b> - and it will be crisp for all odd lineWidths.
+    </br>
+    </br>
+    <img src="canvas-rect-with-stroke-1px.svg" alt="Grid with points" style="max-width: 400px; height: auto;">
+    </br>
+    </br>
+    if you instead do a stroke() with lineWidth of 2, the stroke will cover 2 full pixels <i>completely</i>, all along the path. The two half-pixels are
+    completely covered and opaque, hence <b>the stroke will be crisp</b> - and it will be crisp for all even lineWidths.
+    </br>
+    </br>
+    <img src="canvas-rect-with-stroke-2px.svg" alt="Grid with points" style="max-width: 400px; height: auto;">
+    </br>
+    </br>
+
+    <h2>Examples</h2>
+
+    The following examples flesh out the same situation for more cases and using different commands. It turns out that (with great relief) all the
+    different commands for drawing rectangle fills and strokes all produce the same results.
+
+    <div class="container" id="container"></div>
+
+    <script>
+        function countUniqueColors(ctx, width, height) {
+            const imageData = ctx.getImageData(0, 0, width, height);
+            const colors = new Set();
+            for (let i = 0; i < imageData.data.length; i += 4) {
+                const color = `rgba(${imageData.data[i]},${imageData.data[i+1]},${imageData.data[i+2]},${imageData.data[i+3]})`;
+                colors.add(color);
+            }
+            return colors;
+        }
+
+        function setupZoom(mainCanvasContainer, mainCanvas, zoomCanvas, scale = 20) {
+            const zoomCtx = zoomCanvas.getContext('2d');
+            const zoomSize = 9;
+            let isHovering = false;
+
+            function drawZoom(x, y) {
+                const mainCtx = mainCanvas.getContext('2d');
+                
+                const pixelX = Math.max(4, Math.min(mainCanvas.width - 5, x));
+                const pixelY = Math.max(4, Math.min(mainCanvas.height - 5, y));
+                
+                const imageData = mainCtx.getImageData(
+                    pixelX - 4,
+                    pixelY - 4,
+                    zoomSize,
+                    zoomSize
+                );
+                
+                zoomCtx.fillStyle = 'white';
+                zoomCtx.fillRect(0, 0, zoomCanvas.width, zoomCanvas.height);
+                
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = zoomSize;
+                tempCanvas.height = zoomSize;
+                const tempCtx = tempCanvas.getContext('2d');
+                tempCtx.putImageData(imageData, 0, 0);
+                
+                zoomCtx.imageSmoothingEnabled = false;
+                zoomCtx.drawImage(tempCanvas, 0, 0, zoomCanvas.width, zoomCanvas.height);
+                
+                zoomCtx.strokeStyle = '#ccc';
+                zoomCtx.lineWidth = 0.5;
+                for(let i = 0; i <= zoomSize; i++) {
+                    const pos = (i * scale);
+                    zoomCtx.beginPath();
+                    zoomCtx.moveTo(pos, 0);
+                    zoomCtx.lineTo(pos, zoomCanvas.height);
+                    zoomCtx.moveTo(0, pos);
+                    zoomCtx.lineTo(zoomCanvas.width, pos);
+                    zoomCtx.stroke();
+                }
+            }
+
+            mainCanvas.addEventListener('mousemove', (e) => {
+                if (!isHovering) return;
+                const rect = mainCanvas.getBoundingClientRect();
+                const x = Math.round(e.clientX - rect.left);
+                const y = Math.round(e.clientY - rect.top);
+                drawZoom(x, y);
+            });
+
+            mainCanvas.addEventListener('mouseenter', () => {
+                isHovering = true;
+            });
+
+            mainCanvas.addEventListener('mouseleave', () => {
+                isHovering = false;
+                zoomCtx.fillStyle = 'white';
+                zoomCtx.fillRect(0, 0, zoomCanvas.width, zoomCanvas.height);
+            });
+        }
+
+        function createTestCase(title, drawFn, label = "", params = {}) {
+            const div = document.createElement('div');
+            div.className = 'example';
+
+            const h3 = document.createElement('h3');
+            h3.textContent = title;
+            div.appendChild(h3);
+
+            const labelDiv = document.createElement('div');
+            labelDiv.className = 'label';
+            labelDiv.textContent = label;
+            div.appendChild(labelDiv);
+
+            const canvasPairDiv = document.createElement('div');
+            canvasPairDiv.className = 'canvas-pair';
+
+            const mainCanvasContainer = document.createElement('div');
+            mainCanvasContainer.className = 'main-canvas-container';
+
+            const mainCanvas = document.createElement('canvas');
+            mainCanvas.width = 90;
+            mainCanvas.height = 70;
+            mainCanvasContainer.appendChild(mainCanvas);
+            canvasPairDiv.appendChild(mainCanvasContainer);
+
+            const zoomCanvas = document.createElement('canvas');
+            zoomCanvas.width = 180;
+            zoomCanvas.height = 180;
+            zoomCanvas.className = 'zoom-canvas';
+            canvasPairDiv.appendChild(zoomCanvas);
+
+            div.appendChild(canvasPairDiv);
+
+            const results = document.createElement('div');
+            results.className = 'results';
+            div.appendChild(results);
+
+            const ctx = mainCanvas.getContext('2d');
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, mainCanvas.width, mainCanvas.height);
+            ctx.fillStyle = 'red';
+            ctx.strokeStyle = 'black';
+            
+            drawFn(ctx, params.lineWidth);
+
+            setupZoom(mainCanvasContainer, mainCanvas, zoomCanvas);
+
+            const colors = countUniqueColors(ctx, mainCanvas.width, mainCanvas.height);
+            results.textContent = `Unique colors found: ${colors.size}`;
+            results.innerHTML += '<br>Colors: ' + Array.from(colors).join(', ');
+
+            return div;
+        }
+
+        const examples = [
+            {
+                title: "Vertical Line 1px (45,20 to 45,50)",
+                label: "A vertical/horizontal stroke of width 1 at integer coordinates will be centered on a path in between physical pixels, and it will span two half-pixels, which will be filled with half-opacity and hence are 'blurry'.",
+                draw: (ctx) => {
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(45, 20);
+                    ctx.lineTo(45, 50);
+                    ctx.stroke();
+                }
+            },
+            {
+                title: "Vertical Line 2px (45,20 to 45,50)",
+                label: "A vertical/horizontal stroke of width 2 at integer coordinates will be centered on a path in between physical pixels, and it will span two complete pixels, which will be filled completely and with full opacity and hence are 'crisp'.",
+                draw: (ctx) => {
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(45, 20);
+                    ctx.lineTo(45, 50);
+                    ctx.stroke();
+                }
+            },
+            {
+                title: "fillRect + strokeRect (1px) [20,20,50,30]",
+                label: "Analogous to the example at the top of the page.",
+                draw: (ctx) => {
+                    ctx.lineWidth = 1;
+                    ctx.fillRect(20, 20, 50, 30);
+                    ctx.strokeRect(20, 20, 50, 30);
+                }
+            },
+            {
+                title: "rect() + fill() + stroke() (1px) [20,20,50,30]",
+                label: "Analogous to the example at the top of the page.",
+                draw: (ctx) => {
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.rect(20, 20, 50, 30);
+                    ctx.fill();
+                    ctx.stroke();
+                }
+            },
+            {
+                title: "Path + fill() + stroke() (1px) [20,20 70,20 70,50 20,50]",
+                label: "Analogous to the example at the top of the page.",
+                draw: (ctx) => {
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(20, 20);
+                    ctx.lineTo(70, 20);
+                    ctx.lineTo(70, 50);
+                    ctx.lineTo(20, 50);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke();
+                }
+            },
+            {
+                title: "fillRect + strokeRect (2px) [20,20,50,30]",
+                label: "Analogous to the example at the top of the page.",
+                draw: (ctx) => {
+                    ctx.lineWidth = 2;
+                    ctx.fillRect(20, 20, 50, 30);
+                    ctx.strokeRect(20, 20, 50, 30);
+                }
+            },
+            {
+                title: "rect() + fill() + stroke() (2px) [20,20,50,30]",
+                label: "Analogous to the example at the top of the page.",
+                draw: (ctx) => {
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.rect(20, 20, 50, 30);
+                    ctx.fill();
+                    ctx.stroke();
+                }
+            },
+            {
+                title: "Path + fill() + stroke() (2px) [20,20 70,20 70,50 20,50]",
+                label: "Analogous to the example at the top of the page.",
+                draw: (ctx) => {
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(20, 20);
+                    ctx.lineTo(70, 20);
+                    ctx.lineTo(70, 50);
+                    ctx.lineTo(20, 50);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke();
+                }
+            },
+            {
+                title: "fillRect only [20,20,50,30]",
+                label: "Analogous to the example at the top of the page.",
+                draw: (ctx) => {
+                    ctx.fillRect(20, 20, 50, 30);
+                }
+            },
+            {
+                title: "rect() + fill() [20,20,50,30]",
+                label: "Analogous to the example at the top of the page.",
+                draw: (ctx) => {
+                    ctx.beginPath();
+                    ctx.rect(20, 20, 50, 30);
+                    ctx.fill();
+                }
+            },
+            {
+                title: "Path + fill() [20,20 70,20 70,50 20,50]",
+                label: "Analogous to the example at the top of the page.",
+                draw: (ctx) => {
+                    ctx.beginPath();
+                    ctx.moveTo(20, 20);
+                    ctx.lineTo(70, 20);
+                    ctx.lineTo(70, 50);
+                    ctx.lineTo(20, 50);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+            },
+            {
+                title: "fillRect only (same position) [20,20,50,30]",
+                label: "Analogous to the example at the top of the page.",
+                draw: (ctx) => {
+                    ctx.fillRect(20, 20, 50, 30);
+                }
+            },
+            {
+                title: "rect() + fill() (same position) [20,20,50,30]",
+                label: "Analogous to the example at the top of the page.",
+                draw: (ctx) => {
+                    ctx.beginPath();
+                    ctx.rect(20, 20, 50, 30);
+                    ctx.fill();
+                }
+            },
+            {
+                title: "Path + fill() (same position) [20,20 70,20 70,50 20,50]",
+                label: "Analogous to the example at the top of the page.",
+                draw: (ctx) => {
+                    ctx.beginPath();
+                    ctx.moveTo(20, 20);
+                    ctx.lineTo(70, 20);
+                    ctx.lineTo(70, 50);
+                    ctx.lineTo(20, 50);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+            }
+        ];
+
+        const container = document.getElementById('container');
+        examples.forEach(example => {
+            container.appendChild(createTestCase(
+                example.title,
+                example.draw,
+                example.label
+            ));
+        });
+    </script>
+</body>
+</html>
