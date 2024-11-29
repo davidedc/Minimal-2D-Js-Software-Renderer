@@ -77,21 +77,9 @@
       <line x1="0" y1="210" x2="230" y2="210"/>
     </g>
     
-    <!-- Corner dots -->
-    <circle cx="40" cy="40" r="2" fill="#000"/>
-    <circle cx="190" cy="40" r="2" fill="#000"/>
-    <circle cx="40" cy="140" r="2" fill="#000"/>
-    <circle cx="190" cy="140" r="2" fill="#000"/>
-
     <!-- Text "fill" centered in the rectangle -->
     <text x="115" y="95" text-anchor="middle" dominant-baseline="middle" 
           font-size="16" fill="#000">fill</text>
-
-    <!-- Coordinate labels -->
-    <text x="35" y="35" text-anchor="end" font-size="12">(4,4)</text>
-    <text x="190" y="35" text-anchor="start" font-size="12">(19,4)</text>
-    <text x="35" y="145" text-anchor="end" font-size="12">(4,14)</text>
-    <text x="190" y="145" text-anchor="start" font-size="12">(19,14)</text>
 
     <!-- Explanatory text -->
     <text x="115" y="160" text-anchor="middle" font-size="12">
