@@ -61,8 +61,8 @@
     <img src="canvas-coordinates-system.svg" alt="Canvas coordinates system" style="max-width: 400px; height: auto;">
     </br>
     </br>
-    so if you draw a rect like rect(4,4,15,10), Canvas will set a path, which runs along the grid <i>in between</i> pixels. fill() will then fill the
-    inside of the path, and the fill will have crisp borders, as all pixels inside of it are fully covered and fully on.
+    so if you draw a rect with the command <pre>rect(4,4,15,10);</pre>... Canvas will set a path running along the grid <i>in between</i> pixels. <pre>fill();</pre> will then fill the
+    inside of the path, and the fill will have crisp borders because all the pixels inside the path are fully covered and fully opaque.
     </br>
     </br>
     <img src="canvas-rect-fill.svg" alt="Canvas rect fill diagram" style="max-width: 400px; height: auto;">
