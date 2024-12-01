@@ -2,6 +2,7 @@ const width = 600;
 const height = 600;
 const frameBuffer = new Uint8ClampedArray(width * height * 4);
 
+// Blending happens in sRGB space for performance reasons
 function setPixel(x, y, r, g, b, a) {
   if (x < 0 || x >= width || y < 0 || y >= height) return;
   const index = (y * width + x) * 4;
