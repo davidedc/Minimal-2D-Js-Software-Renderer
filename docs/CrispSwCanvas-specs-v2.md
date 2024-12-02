@@ -135,6 +135,14 @@ stored as a Float64Array in column-major order: `[a, d, 0, b, e, 0, c, f, 1]` Th
             ]);
         }
         
+	    // deep copy of the transformation matrix
+	    clone()  {
+		    const clonedMatrix =  new  TransformationMatrix();
+		    // Copy all elements from the current matrix to the new one
+		    clonedMatrix.elements.set(this.elements);
+		    return clonedMatrix;
+		}
+
         // Add helper methods to access elements in a clear way
         get(row, col) {
             return this.elements[col * 3 + row];
@@ -154,9 +162,11 @@ New transformations multiply on the left: T = T3 * T2 * T1.
         const result =  new  TransformationMatrix();
         for  (let col =  0; col <  3; col++)  {
             for  (let row =  0; row <  3;row++)  {
-                let sum =  0; for  (let i =  0; i <  3; i++)  {
+                let sum =  0;
+                for  (let i =  0; i <  3; i++)  {
                     sum +=  this.get(row, i)  * other.get(i, col);
-                } result.set(row, col, sum);
+                }
+                result.set(row, col, sum);
             }
         }
         return result;
@@ -316,16 +326,26 @@ The clip() function updates (shrinks, or at most leaves the same) the clippingMa
 
     class ClippingMask {
         constructor(width, height) {
-            // Use Uint8Array for simplicity, could optimize to bit-packed later
-            this.mask = new Uint8Array(width * height);
             this.width = width;
             this.height = height;
-            this.clear(true); // Initialize to all 1s
+            // Each byte holds 8 pixels
+            this.mask = new Uint8Array(Math.ceil((width * height) / 8));
         }
         
+	    setPixel(x, y, value) {
+	        const index = (y * this.width + x);
+	        const byteIndex = Math.floor(index / 8);
+	        const bitIndex = index % 8;
+	        if (value) {
+	            this.mask[byteIndex] |= (1 << bitIndex);
+	        } else {
+	            this.mask[byteIndex] &= ~(1 << bitIndex);
+	        }
+	    }
+
         clear(value) {
             this.mask.fill(value ? 1 : 0);
-        }    
+        }
     }
 
 #### How clip() works:
@@ -518,24 +538,6 @@ function validateColor(color) {
 
 See below the graphic routines that CrispSwCanvas uses internally.
 
-### TransformationMatrix  storage
-
-    class TransformationMatrix {
-        // Store as flat array in column-major order
-        // [a, d, 0, b, e, 0, c, f, 1]
-        // Where the matrix is:
-        // [a b c]
-        // [d e f]
-        // [0 0 1]
-        constructor() {
-            this.elements = new Float64Array([
-                1, 0, 0,  // first column
-                0, 1, 0,  // second column
-                0, 0, 1   // third column
-            ]);
-        }
-    }
-
     const width = 600;
     const height = 600;
     const frameBuffer = new Uint8ClampedArray(width * height * 4);
@@ -599,4 +601,3 @@ See below the graphic routines that CrispSwCanvas uses internally.
             }
         }
     }
-
