@@ -234,6 +234,7 @@ where T is the current transformation matrix.
         // |x'|   | a b c |   |x|   |ax + by + c|
         // |y'| = | d e f | * |y| = |dx + ey + f|
         // |1 |   | 0 0 1 |   |1|   | 1 |
+        // For column-major order stored as [a,d,0,b,e,0,c,f,1]
         const tx = matrix[0]  * x + matrix[3]  * y + matrix[6];  // Uses a, b, c
         const ty = matrix[1]  * x + matrix[4]  * y + matrix[7];  // Uses d, e, f
         return {tx, ty};
@@ -344,18 +345,16 @@ The clip() function updates (shrinks, or at most leaves the same) the clippingMa
 	    }
 
         clear(value) {
-            this.mask.fill(value ? 1 : 0);
+            this.mask.fill(value ? 0xFF  :  0x00);
         }
     }
 
 #### How clip() works:
- 1. makes a new empty (all zeroes) *tempMask* (or clear an existing tempMask)
- 2. scans all the shapes in the clippingShapes list.
- 3. for each shape, it updates the *tempMask* by ORing it with the aliased fill of the shape (drawn according to its coordinates and after the associated transformation matrix has been applied). Also note how the temporary clipping area *grows* in this phase, just like the clipping area grows with multiple rect()s in the same path. Each shape, according to the transformation matrix, will take the tempMask and OR it with its own aliased fill (just in a similar manner to when an aliased fill is drawn with an arbitrary transformation matrix).
- 4. after the final tempMask has been updated, updates the clippingMask by ANDing it with the tempMask. Note how the new clippingMask *shrinks* (or stays the same) as it's intersected with the path of the clippingShapes list.
- 5. empties the clippingShapes
+ 1. scans all the shapes in the clippingShapes list.
+ 2. each shape updates the clippingMask by ANDing it with the negation of the 1-bit aliased fill of the shape (drawn according to its coordinates and after the associated transformation matrix has been applied). This 1-bit aliased fill is the (negation of) the standard fill that such shape would produce, just without color and transparency information. Note how the new clippingMask *shrinks* (or stays the same) as it's intersected with the shapes of the clippingShapes list.
+ 3. empties the clippingShapes
 
-The above allows for multiple shapes to be added as a union to the clippingMask, and for further clip() commands to narrow the clippingMask to the intersection of the new and old clipping. clippingMask and tempMask are both mutable i.e. will be updated in-place for efficiency, as there are no pointers to their specific states in time.
+The above allows the clip() commands to narrow the clippingMask. clippingMask is mutable i.e. will be updated in-place for efficiency, as there are no pointers to their specific states in time.
 
 ##### Clipping of shapes with non-integer coordinates and/or transformed arbitrarily
 - All clipping mask edges are aliased (binary, no partial coverage)
