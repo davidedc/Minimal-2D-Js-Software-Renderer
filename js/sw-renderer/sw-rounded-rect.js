@@ -7,14 +7,14 @@ function drawRoundedRectSW(shape) {
 
   if (rotation === 0) {
     // if the stroke is a) invisible (size zero or trasparent) OR b) opaque and thin,
-    //  then use drawAxisAlignedRoundedRectThinOpaqueStrokeSW
-    //  otherwise use drawAxisAlignedRoundedRectThickTrasparentStrokeSW
+    //  then use drawCrispAxisAlignedRoundedRectThinOpaqueStrokeSW
+    //  otherwise use drawCrispAxisAlignedRoundedRectThickTrasparentStrokeSW
     const correctedRadius = radius > 2 ? radius - 1 : radius;
     if (strokeWidth == 0 || strokeA === 255 || (strokeWidth < 5 && strokeA === 255)) {
-      drawAxisAlignedRoundedRectThinOpaqueStrokeSW(center.x, center.y, width, height, correctedRadius,
+      drawCrispAxisAlignedRoundedRectThinOpaqueStrokeSW(center.x, center.y, width, height, correctedRadius,
         strokeWidth, strokeR, strokeG, strokeB, strokeA, fillR, fillG, fillB, fillA);
     } else {
-      drawAxisAlignedRoundedRectThickTrasparentStrokeSW(center.x, center.y, width, height, correctedRadius,
+      drawCrispAxisAlignedRoundedRectThickTrasparentStrokeSW(center.x, center.y, width, height, correctedRadius,
         strokeWidth, strokeR, strokeG, strokeB, strokeA, fillR, fillG, fillB, fillA);
     }
   } else {
@@ -25,11 +25,17 @@ function drawRoundedRectSW(shape) {
 }
 
 
-function drawAxisAlignedRoundedRectThinOpaqueStrokeSW(centerX, centerY, rectWidth, rectHeight, cornerRadius,
+function drawCrispAxisAlignedRoundedRectThinOpaqueStrokeSW(centerX, centerY, rectWidth, rectHeight, cornerRadius,
   strokeWidth, strokeR, strokeG, strokeB, strokeA, fillR, fillG, fillB, fillA) {
+  
+  // to drow a crisp rectangle-like shape, while centerX and centerY could be non-integer,
+  // the width and height must be integers, so let's throw an error if they are not
+  if (rectWidth % 1 !== 0 || rectHeight % 1 !== 0) {
+    throw new Error('Width and height must be integers');
+  }
 
-  const pos = getAlignedPosition(centerX, centerY, rectWidth, rectHeight, strokeWidth);
-  const r = Math.min(cornerRadius, Math.min(pos.w, pos.h) / 2);
+  let pos = getCornerBasedRepresentation(centerX, centerY, rectWidth, rectHeight, strokeWidth);
+  let r = Math.round(Math.min(cornerRadius, Math.min(pos.w, pos.h) / 2));
   const halfStroke = strokeWidth / 2;
 
 
@@ -74,6 +80,9 @@ function drawAxisAlignedRoundedRectThinOpaqueStrokeSW(centerX, centerY, rectWidt
   }
 
   if (strokeA > 0) {
+    pos = getCrispStrokeGeometry(pos.x, pos.y, rectWidth, rectHeight, strokeWidth);
+    let r = Math.round(Math.min(cornerRadius, Math.min(pos.w, pos.h) / 2));
+
     // Horizontal strokes
     for (let xx = Math.floor(pos.x + r); xx < pos.x + pos.w - r; xx++)
       for (let t = -halfStroke; t < halfStroke; t++) {
@@ -114,11 +123,18 @@ function drawAxisAlignedRoundedRectThinOpaqueStrokeSW(centerX, centerY, rectWidt
 // so there is a complex system where the pixels of the stroke are first collected in a set, and then drawn to the
 // screen. Not only that, but the stoke of the corners is actually kept in a set of scanlines, this is to avoid
 // internal gaps that one can see using the current algorithm. Using scanlines, the internal gaps are filled in.
-function drawAxisAlignedRoundedRectThickTrasparentStrokeSW(centerX, centerY, rectWidth, rectHeight, cornerRadius, 
+function drawCrispAxisAlignedRoundedRectThickTrasparentStrokeSW(centerX, centerY, rectWidth, rectHeight, cornerRadius, 
                                     strokeWidth, strokeR, strokeG, strokeB, strokeA, 
                                     fillR, fillG, fillB, fillA) {
-  const pos = getAlignedPosition(centerX, centerY, rectWidth, rectHeight, strokeWidth);
-  const r = Math.min(cornerRadius, Math.min(pos.w, pos.h) / 2);
+
+  // to drow a crisp rectangle-like shape, while centerX and centerY could be non-integer,
+  // the width and height must be integers, so let's throw an error if they are not
+  if (rectWidth % 1 !== 0 || rectHeight % 1 !== 0) {
+    throw new Error('Width and height must be integers');
+  }
+
+  let pos = getCornerBasedRepresentation(centerX, centerY, rectWidth, rectHeight, strokeWidth);
+  let r = Math.round(Math.min(cornerRadius, Math.min(pos.w, pos.h) / 2));
   const halfStroke = strokeWidth / 2;
 
   function isInsideRoundedRect(px, py) {
@@ -164,6 +180,9 @@ function drawAxisAlignedRoundedRectThickTrasparentStrokeSW(centerX, centerY, rec
 
   // Stroke - using PixelSet to handle overdraw
   if (strokeA > 0) {
+    pos = getCrispStrokeGeometry(pos.x, pos.y, rectWidth, rectHeight, strokeWidth);
+    let r = Math.round(Math.min(cornerRadius, Math.min(pos.w, pos.h) / 2));
+
     const strokePixels = new PixelSet();
     
     // Horizontal strokes

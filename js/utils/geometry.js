@@ -79,16 +79,31 @@ function toIntegerPoint(point) {
   };
 }
 
-function roundPoint(x, y) {
+function roundPoint({x, y}) {
   return {
     x: Math.round(x),
     y: Math.round(y)
   };
 }
 
-function getAlignedPosition(centerX, centerY, width, height, strokeWidth) {
+// The intent here is to draw a *crisp* shape.
+// If the user knows what they are doing, they pass centerX and width such that
+// they produce a whole origin x. If they don't, we fix it for them by snapping
+// the origin x to the column to the left.
+// (and same for y/height/row above).
+function getCornerBasedRepresentation(centerX, centerY, width, height) {
+  const x = Math.floor(centerX - width/2);
+  const y = Math.floor(centerY - height/2);
+  return { x, y, w: width, h: height };
+}
+
+// The intent here is to draw a *crisp* stroke that is aligned with the fill, with
+// some overlap (at least half of the stroke width is made to overlap the fill).
+// Given the center and width/height of a rectangle, not only we fix everything
+// as we do in getCornerBasedRepresentation, but we also we tell where exactly the stroke
+// should.
+function getCrispStrokeGeometry(x, y, width, height, strokeWidth) {
+  // if strokeWidth is odd, we need to align the stroke to the pixel grid i.e. inset it by 0.5
   const offset = strokeWidth % 2 ? 0.5 : 0;
-  const x = Math.floor(centerX - width/2) + offset;
-  const y = Math.floor(centerY - height/2) + offset;
-  return { x, y, w: Math.floor(width), h: Math.floor(height) };
+  return { x: x + offset, y: y + offset, w: width - 2 * offset, h: height - 2 * offset};
 }

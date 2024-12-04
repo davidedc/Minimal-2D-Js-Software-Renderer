@@ -6,7 +6,7 @@ function drawRoundedRectCanvas(ctx, shape) {
   } = shape;
 
   if (rotation === 0) {
-      drawAxisAlignedRoundedRectCanvas(ctx, shape);
+      drawCrispAxisAlignedRoundedRectCanvas(ctx, shape);
   } else {
       ctx.save();
       ctx.translate(center.x, center.y);
@@ -29,15 +29,14 @@ function drawRoundedRectCanvas(ctx, shape) {
 }
 
 // Note that this code draws the rounded rect in such a way that
-// the stroke path and the fill always begin and end at the half-pixel boundary
+// the stroke path and the fill always begin and end at the pixel boundary
 // so that their borders are drawn crisply.
-// That depends on what both width/height and strokeWidth are!
 // Also note that this draws the fill and stroke *exactly* aligned
 // with the sw renderer (not the arcs of the rounded corners, those are
 // slightly different, but the borrders of the fill and stroke are the same apart
 // from those arcs).
 
-function drawAxisAlignedRoundedRectCanvas(ctx, shape) {
+function drawCrispAxisAlignedRoundedRectCanvas(ctx, shape) {
   const { 
       center: {x: centerX, y: centerY}, 
       width: rectWidth, 
@@ -48,18 +47,24 @@ function drawAxisAlignedRoundedRectCanvas(ctx, shape) {
       fillColor: { r: fillR, g: fillG, b: fillB, a: fillA }
   } = shape;
 
-  const pos = getAlignedPosition(centerX, centerY, rectWidth, rectHeight, strokeWidth);
-  const r = Math.min(radius, Math.min(pos.w, pos.h) / 2);
+  // to drow a crisp rectangle-like shape, while centerX and centerY could be non-integer,
+  // the width and height must be integers, so let's throw an error if they are not
+  if (rectWidth % 1 !== 0 || rectHeight % 1 !== 0) {
+    throw new Error('Width and height must be integers');
+  }
+
+  let pos = getCornerBasedRepresentation(centerX, centerY, rectWidth, rectHeight, strokeWidth);
+  let r = Math.round(Math.min(radius, Math.min(pos.w, pos.h) / 2));
 
   // Create fill path aligned strictly to whole pixels
-  const createFillPath = () => {
+  const createPath = () => {
       ctx.beginPath();
-      // Round all coordinates for fill to ensure pixel-perfect alignment
-      const fx = Math.ceil(pos.x);
-      const fy = Math.ceil(pos.y);
+
+      const fx = pos.x;
+      const fy = pos.y;
       const fw = pos.w;
       const fh = pos.h;
-      const fr = Math.round(r);  // Round radius too for consistency
+      const fr = r;
 
       ctx.moveTo(fx + fr, fy);
       ctx.lineTo(fx + fw - fr, fy);
@@ -73,31 +78,19 @@ function drawAxisAlignedRoundedRectCanvas(ctx, shape) {
       ctx.closePath();
   };
 
-  // Create stroke path using original aligned positions
-  const createStrokePath = () => {
-      ctx.beginPath();
-      ctx.moveTo(pos.x + r, pos.y);
-      ctx.lineTo(pos.x + pos.w - r, pos.y);
-      ctx.arcTo(pos.x + pos.w, pos.y, pos.x + pos.w, pos.y + r, r);
-      ctx.lineTo(pos.x + pos.w, pos.y + pos.h - r);
-      ctx.arcTo(pos.x + pos.w, pos.y + pos.h, pos.x + pos.w - r, pos.y + pos.h, r);
-      ctx.lineTo(pos.x + r, pos.y + pos.h);
-      ctx.arcTo(pos.x, pos.y + pos.h, pos.x, pos.y + pos.h - r, r);
-      ctx.lineTo(pos.x, pos.y + r);
-      ctx.arcTo(pos.x, pos.y, pos.x + r, pos.y, r);
-      ctx.closePath();
-  };
-
   // Draw fill first (if needed)
   if (fillA > 0) {
-      createFillPath();
-      ctx.fillStyle = `rgba(${fillR}, ${fillG}, ${fillB}, ${fillA/255})`;
-      ctx.fill();
+    createPath();
+    ctx.fillStyle = `rgba(${fillR}, ${fillG}, ${fillB}, ${fillA/255})`;
+    ctx.fill();
   }
+  
+  pos = getCrispStrokeGeometry(pos.x, pos.y, rectWidth, rectHeight, strokeWidth);
+  r = Math.round(Math.min(radius, Math.min(pos.w, pos.h) / 2));
 
   // Draw stroke (if needed)
   if (strokeWidth > 0 && strokeA > 0) {
-      createStrokePath();
+      createPath();
       ctx.strokeStyle = `rgba(${strokeR}, ${strokeG}, ${strokeB}, ${strokeA/255})`;
       ctx.lineWidth = strokeWidth;
       ctx.stroke();

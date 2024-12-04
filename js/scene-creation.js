@@ -78,7 +78,7 @@ function addAxisAlignedRoundedRectangles(count = 10, shapes) {
     const height = Math.round(50 + Math.random() * 100);
     shapes.push({
       type: 'roundedRect',
-      center: getRandomPoint(),
+      center: roundPoint(getRandomPoint()),
       width,
       height,
       radius: Math.round(Math.random() * Math.min(width, height) * 0.2),
@@ -96,7 +96,7 @@ function addThinStrokeRoundedRectangles(count = 10, shapes) {
     const height = Math.round(50 + Math.random() * 100);
     shapes.push({
       type: 'roundedRect',
-      center: getRandomPoint(),
+      center: roundPoint(getRandomPoint()),
       width,
       height,
       radius: Math.round(Math.random() * Math.min(width, height) * 0.2),
@@ -112,7 +112,7 @@ function addLargeTransparentRoundedRectangles(count = 10, shapes) {
   for (let i = 0; i < count; i++) {
     shapes.push({
       type: 'roundedRect',
-      center: getRandomPoint(),
+      center: roundPoint(getRandomPoint()),
       width: 200,
       height: 200,
       radius: 40,
@@ -128,7 +128,7 @@ function addNoStrokeRoundedRectangles(count = 10, shapes) {
   for (let i = 0; i < count; i++) {
     shapes.push({
       type: 'roundedRect',
-      center: getRandomPoint(),
+      center: roundPoint(getRandomPoint()),
       width: 200,
       height: 200,
       radius: 40,
