@@ -274,6 +274,107 @@ class RenderComparison {
     
     document.body.insertBefore(nav, document.body.firstChild);
   }
+
+  checkPlacementOf4Sides(swCtx, canvasCtx, edges) {
+    const results = [];
+    const contexts = [
+      { name: 'Software Renderer', ctx: swCtx },
+      { name: 'Canvas', ctx: canvasCtx }
+    ];
+    
+    for (const { name, ctx } of contexts) {
+      const imageData = ctx.getImageData(0, 0, width, height);
+      const data = imageData.data;
+      
+      // Check horizontal middle line (for left and right edges)
+      const middleY = Math.floor(height / 2);
+      let actualLeftX = -1;
+      let actualRightX = -1;
+      
+      // Scan from left to right for the first non-transparent pixel (left edge)
+      for (let x = 0; x < width; x++) {
+        const i = (middleY * width + x) * 4;
+        if (data[i + 3] > 0) {
+          actualLeftX = x;
+          break;
+        }
+      }
+      
+      // Scan from right to left for the first non-transparent pixel (right edge)
+      for (let x = width - 1; x >= 0; x--) {
+        const i = (middleY * width + x) * 4;
+        if (data[i + 3] > 0) {
+          actualRightX = x;
+          break;
+        }
+      }
+      
+      // Check vertical middle line (for top and bottom edges)
+      const middleX = Math.floor(width / 2);
+      let actualTopY = -1;
+      let actualBottomY = -1;
+      
+      // Scan from top to bottom for the first non-transparent pixel (top edge)
+      for (let y = 0; y < height; y++) {
+        const i = (y * width + middleX) * 4;
+        if (data[i + 3] > 0) {
+          actualTopY = y;
+          break;
+        }
+      }
+      
+      // Scan from bottom to top for the first non-transparent pixel (bottom edge)
+      for (let y = height - 1; y >= 0; y--) {
+        const i = (y * width + middleX) * 4;
+        if (data[i + 3] > 0) {
+          actualBottomY = y;
+          break;
+        }
+      }
+      
+      // Debug info
+      console.log(`${name} found edges:`, {
+        actualLeftX,
+        actualRightX,
+        actualTopY,
+        actualBottomY
+      });
+      console.log('Expected edges:', edges);
+      
+      // Compare with expected positions
+      const edgeResults = [];
+      if (actualLeftX !== edges.leftX) {
+        const message = `Left edge expected at ${edges.leftX}, found at ${actualLeftX}`;
+        edgeResults.push(message);
+        this.showError(message);
+      }
+      if (actualRightX !== edges.rightX) {
+        const message = `Right edge expected at ${edges.rightX}, found at ${actualRightX}`;
+        edgeResults.push(message);
+        this.showError(message);
+      }
+      if (actualTopY !== edges.topY) {
+        const message = `Top edge expected at ${edges.topY}, found at ${actualTopY}`;
+        edgeResults.push(message);
+        this.showError(message);
+      }
+      if (actualBottomY !== edges.bottomY) {
+        const message = `Bottom edge expected at ${edges.bottomY}, found at ${actualBottomY}`;
+        edgeResults.push(message);
+        this.showError(message);
+      }
+      else {
+        results.push(`${name} results:${
+          edgeResults.length === 0 
+            ? ' All edges correctly placed!'
+            : '\n- ' + edgeResults.join('\n- ')
+        }`);
+      }
+    }
+    
+    return results.join('\n\n');
+  }
+  
 }
 
 // Modified drawShapesImpl to accept ctx as parameter
@@ -378,7 +479,7 @@ function add1PxStrokedRoundedRectCenteredAtGridComparison() {
           const edges = comparison.builderReturnValue;
           if (!edges) return "No edges data available";
           
-          const result = comparison.CheckPlacementOf4Sides(
+          const result = comparison.checkPlacementOf4Sides(
               comparison.swCtx,
               comparison.canvasCtx,
               edges
@@ -430,98 +531,6 @@ function add1PxStrokedRoundedRectCenteredAtGrid(shapes) {
   return { leftX, rightX, topY, bottomY };
 }
 
-RenderComparison.prototype.CheckPlacementOf4Sides = function(swCtx, canvasCtx, edges) {
-  const results = [];
-  const contexts = [
-    { name: 'Software Renderer', ctx: swCtx },
-    { name: 'Canvas', ctx: canvasCtx }
-  ];
-  
-  for (const { name, ctx } of contexts) {
-    const imageData = ctx.getImageData(0, 0, width, height);
-    const data = imageData.data;
-    
-    // Check horizontal middle line (for left and right edges)
-    const middleY = Math.floor(height / 2);
-    let actualLeftX = -1;
-    let actualRightX = -1;
-    
-    // Scan from left to right for the first non-transparent pixel (left edge)
-    for (let x = 0; x < width; x++) {
-      const i = (middleY * width + x) * 4;
-      if (data[i + 3] > 0) {
-        actualLeftX = x;
-        break;
-      }
-    }
-    
-    // Scan from right to left for the first non-transparent pixel (right edge)
-    for (let x = width - 1; x >= 0; x--) {
-      const i = (middleY * width + x) * 4;
-      if (data[i + 3] > 0) {
-        actualRightX = x;
-        break;
-      }
-    }
-    
-    // Check vertical middle line (for top and bottom edges)
-    const middleX = Math.floor(width / 2);
-    let actualTopY = -1;
-    let actualBottomY = -1;
-    
-    // Scan from top to bottom for the first non-transparent pixel (top edge)
-    for (let y = 0; y < height; y++) {
-      const i = (y * width + middleX) * 4;
-      if (data[i + 3] > 0) {
-        actualTopY = y;
-        break;
-      }
-    }
-    
-    // Scan from bottom to top for the first non-transparent pixel (bottom edge)
-    for (let y = height - 1; y >= 0; y--) {
-      const i = (y * width + middleX) * 4;
-      if (data[i + 3] > 0) {
-        actualBottomY = y;
-        break;
-      }
-    }
-    
-    // Debug info
-    console.log(`${name} found edges:`, {
-      actualLeftX,
-      actualRightX,
-      actualTopY,
-      actualBottomY
-    });
-    console.log('Expected edges:', edges);
-    
-    // Compare with expected positions
-    const edgeResults = [];
-    if (actualLeftX !== edges.leftX) {
-      edgeResults.push(`Left edge expected at ${edges.leftX}, found at ${actualLeftX}`);
-    }
-    if (actualRightX !== edges.rightX) {
-      edgeResults.push(`Right edge expected at ${edges.rightX}, found at ${actualRightX}`);
-    }
-    if (actualTopY !== edges.topY) {
-      edgeResults.push(`Top edge expected at ${edges.topY}, found at ${actualTopY}`);
-    }
-    if (actualBottomY !== edges.bottomY) {
-      edgeResults.push(`Bottom edge expected at ${edges.bottomY}, found at ${actualBottomY}`);
-    }
-    
-    results.push(`${name} results:${
-      edgeResults.length === 0 
-        ? ' All edges correctly placed!'
-        : '\n- ' + edgeResults.join('\n- ')
-    }`);
-  }
-  
-  return results.join('\n\n');
-};
-
-
 function add1PxStrokedRoundedRectCenteredAtPixelComparison() {
   addRenderComparison(
       "Single 1px Stroked Rounded Rectangle centered at pixel",
@@ -534,7 +543,7 @@ function add1PxStrokedRoundedRectCenteredAtPixelComparison() {
           const edges = comparison.builderReturnValue;
           if (!edges) return "No edges data available";
           
-          const result = comparison.CheckPlacementOf4Sides(
+          const result = comparison.checkPlacementOf4Sides(
               comparison.swCtx,
               comparison.canvasCtx,
               edges
