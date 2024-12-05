@@ -1,5 +1,17 @@
 // Shape management and random generation
 
+function addThinBlackLines(count = 20, shapes) {
+  for (let i = 0; i < count; i++) {
+    shapes.push({
+      type: 'line',
+      start: getRandomPoint(),
+      end: getRandomPoint(),
+      thickness: 1,
+      color: { r: 0, g: 0, b: 0, a: 255 }
+    });
+  }
+}
+
 function getRandomCircle() {
   return {
       ...getRandomArc(),

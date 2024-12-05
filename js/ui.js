@@ -42,12 +42,25 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function addRenderComparisons() {
+  addThinBlackLinesComparison();  // Add this line first
   add1PxStrokedRoundedRectCenteredAtGridComparison();
   add1PxStrokedRoundedRectCenteredAtPixelComparison();
   addCenteredRoundedRectComparison();
   addThinRoundedRectsComparison();
   addEverythingTogetherComparison();
 }
+
+function addThinBlackLinesComparison() {
+  addRenderComparison(
+    "1px Black Lines",
+    'thin-black-lines',
+    (shapes) => {
+      addThinBlackLines(20, shapes);
+    },
+    (comparison) => `Number of lines: ${comparison.shapes.length}`
+  );
+}
+
 function addEverythingTogetherComparison() {
   addRenderComparison(
     "All Shape Types Combined",
