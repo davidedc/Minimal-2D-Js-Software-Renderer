@@ -86,20 +86,22 @@ You can get a context from the CrispSwCanvas. The context is used to issue comma
     // Only “2d” accepted, throws error otherwise.
     var crispSwCtx = crispSwCanvas.getContext("2d");
 
-The context contains a stack (implemented via simple array with index) of *states* i.e. objects containing :
+#### The context contains:
+- a pointer to a tempClippingMask (initially null - only initialised to a 1-bit bitmap/buffer with same size as the main buffer defaulting to all 0s when needed)
+- stack (implemented via simple array with index) of *states* i.e. objects.
 
+#### Each state object contains:
 -  lineWidth (default: 1)
 -  globalAlpha (default: 1 i.e. fully opaque)
 -  clippingMask: a 1-bit bitmap/buffer with same size as the main buffer (default: all 1s).
 -  transformation matrix (default: identity)
 -  stroke color (default: rgba(0,0,0,1) i.e. fully opaque black)
 -  fill color (default: rgba(0,0,0,1) i.e. fully opaque black)
--  clippingShapes list (which includes each shape with transformed coordinates, see later). When clip() is invoked, these shapes will update the clippingMask and this list will be emptied. Also beginPath() empties this list.
 
 The top element of the states in the stack is the "current state" of the context, and is the one modified by the commands.
 
 ### save()/restore()
-A “save” will do a full deep copy of the whole state (except the transformation matrix which can be referenced as it's immutable) and push it onto the stack, and the state will point to it. A restore will remove the last pushed element so the current state will be the element before it; restore on an empty stack throws an Error. In particular, in regards to the clippingMask - a save() will duplicate the clippingMask bitmap, and a restore() will just discard the current state (including its clippingMask). In fact, just like in Canvas, a restore() is the only way to "widen" a clippingMask.
+A “save” will do a full deep copy of the whole state (except the transformation matrix which can be referenced as it's immutable) and push it onto the stack, and the state will point to it. A restore will remove the last pushed element so the current state will be the element before it; restore on an empty stack throws an Error. In particular, in regards to the clippingMask - a save() will make a deep copy clone the clippingMask buffer, and a restore() will just discard the current state (including its clippingMask). In fact, just like in Canvas, a restore() is the only way to "widen" a clippingMask.
 
 ### beginPath()
 CrispSwCanvas doesn't actually support real paths, but this function is going to reset the clippingShapes list. When we hit a clip(), we go through this list.
@@ -230,19 +232,38 @@ For applying transformations, points are represented as column vectors [x, y, 1]
 where T is the current transformation matrix.
 
     function transformPoint(x, y, matrix) {
-        // For column-major order:
+        // The matrix is stored in column-major order as:
+        // [a, d, 0,
+        //  b, e, 0,
+        //  c, f, 1]
+
+        // Which corresponds to the matrix:
+        // | a b c |
+        // | d e f |
+        // | 0 0 1 |
+
+        // From this, we have:
+        // a = matrix[0], d = matrix[1]
+        // b = matrix[3], e = matrix[4]
+        // c = matrix[6], f = matrix[7]
+
+        // Transforming a point (x,y):
         // |x'|   | a b c |   |x|   |ax + by + c|
         // |y'| = | d e f | * |y| = |dx + ey + f|
         // |1 |   | 0 0 1 |   |1|   | 1 |
-        // For column-major order stored as [a,d,0,b,e,0,c,f,1]
-        const tx = matrix[0]  * x + matrix[3]  * y + matrix[6];  // Uses a, b, c
-        const ty = matrix[1]  * x + matrix[4]  * y + matrix[7];  // Uses d, e, f
+
+        // i.e.
+        // x' = a*x + b*y + c
+        // y' = d*x + e*y + f
+
+        const tx = matrix[0] * x + matrix[3]  * y + matrix[6];  // a*x + b*y + c
+        const ty = matrix[1] * x + matrix[4]  * y + matrix[7];  // d*x + e*y + f
         return {tx, ty};
     }
 
 Degenerate transformations (determinant = 0) throw an InvalidStateError. Transformation matrixes are immutable i.e. updates to the current transformation matrix are not in-place: a new transformation matrix is created with each change.
 
-Whenever a "shape path" command is issued, the shape is added to the clippingShapes list together with a pointer to the current transformation matrix, and later at the time of clip(), the referenced transformation matrix will be used together to the coordinates of the shape as specified in the command to determine their screen position. Since transformation matrixes are immutable we can just have the clippingShapes to point to the matrix that is the current transformation matrix at time of insertion in the list, without need of copying the matrix.
+Whenever a "shape path" command (only used for clipping) is invoked, the current transformation matrix is used together with the coordinates in the command to determine the screen position of their fill used to update the tempClippingMask (see later).
 
 strokeRect / fillRect also use the current transformation matrix to determine the screen position of the drawing, although these commands don't touch the clippingShapes list.
 
@@ -266,7 +287,13 @@ for now only rect, example:
 
     crispSwCtx.rect(20, 20, 150, 100);
 
-These commands are only used for clip() as we don't support fill()/stroke(). They add a Shape to the clippingShapes list, containing a pointer to the current transformation matrix. If the user uses rect() for clipping, it will work as expected. If the user uses rect() with the intention of a following fill()/stroke() to fill/stroke the path, he/she will get an Error explaining the limitation at the time of invoking fill()/stroke(), and the workaround e.g. using fillRect/strokeRect.
+These commands are only used for clip() as we don't support fill()/stroke(). I.e. if the user uses rect() for clipping, it will work as expected. If the user uses rect() with the intention of a following fill()/stroke() to fill/stroke the path, he/she will get an Error explaining the limitation at the time of invoking fill()/stroke(), and the workaround e.g. using fillRect/strokeRect.
+
+These commands:
+1. initialise the tempClippingMask if needed
+2. add a 1-bit (i.e. no color, no transparency) screen-coordinate render of their fill on the tempClippingMask (i.e. OR the tempClippingMask with the 1-bit fill with the previous content)
+
+Note that the clippingMask is not updated until the clip() command is invoked (see later).
 
 ### Color
 the color commands are fiillStyle, strokeStyle. The only accept rgb or rgba string formats without spaces and non-case-sensitive, with rgb values clamped to 255 and alpha between 0 and 1.  i.e. a) RGBA string i.e. crispSwCtx.fillStyle = "rgba(32, 45, 21, 0.3)"; or b) crispSwCtx.fillStyle = "rgb(32, 45, 21)”; . All non-parsed formats throw Error. Non-integer rgb values are accepted and will be rounded internally. These rgba values are in sRGB color space as in Canvas by default. Stroke and fill color are kept in the state of the context.
@@ -308,7 +335,7 @@ the color commands are fiillStyle, strokeStyle. The only accept rgb or rgba stri
   
 
 ### Paint commands
-fill() and stroke() throw an Error. This is because fill() stroke() on Canvas act on an arbitrary path overall, not on multiple shapes individually - for example multiple overlapping rectangles would be filled uniformly in the area of the union, and stroked as per the border of the union. While this could be implemented for fill() (using a 1-bit mask to represent the area of the union, similarly to what we do for the clippingMask), it would be rather hard for strokes, so we ditch the whole idea of generic paths and fill/stroke for simplicity/uniformity.
+fill() and stroke() throw an Error. This is because fill() stroke() on Canvas act on an arbitrary path overall, not on multiple shapes individually - for example multiple overlapping rectangles would be filled uniformly in the area of the union, and stroked as per the border of the union. While this could be implemented for fill() (using a 1-bit mask to represent the area of the union, similarly to what we do for the clippingMask), it would be rather hard to do for strokes, so we ditch the whole idea of generic paths and fill/stroke for simplicity/uniformity.
   
 ### Combined shape + paint commands
 fillRect, strokeRect, clearRect. These are the only way to actually draw shapes. These DO NOT add a shape to the clippingShapes list, they by-pass it entirely and just immediately fill/stroke a shape (currently, a rectangle) in an aliased fashion (i.e. *not* anti-aliased) given the current clippingMask, transformation matrix, fill/stroke style and globalAlpha (which gets multiplied to the alphas specified in fill and stoke color).
@@ -321,7 +348,14 @@ clearRect clears the contents of the specified area (subject to current transfor
     crispSwCtx.clearRect(40, 40, 50, 50);
 
 ### Clipping
-The clip() function updates (shrinks, or at most leaves the same) the clippingMask. Just line the main buffer, the  clippingMask doesn't handle anti-aliasing. It also doesn't handle alpha nor color and is unaffected by globalAlpha, so it can be implemented with a buffer of same width/height as the main buffer, but with 1-bit of depth, hence it's 32 times smaller than the main buffer.
+
+The clip() function
+* takes the clippingMask and ANDs it with the tempClippingMask
+* clears the tempClippingMask to all zeroes
+
+The above allows the clip() commands to narrow the clippingMask. clippingMask is mutable i.e. will be updated in-place for efficiency, as there are no pointers to their specific states in time.
+
+Just line the main buffer, the clippingMask and tempClippingMask don't handle anti-aliasing. In addition, they also don't handle alpha nor color and are unaffected by globalAlpha, so they can be implemented with a buffer of same width/height as the main buffer, but with 1-bit of depth, hence it's 32 times smaller than the main buffer.
 
 #### ClippingMask basics
 
@@ -348,13 +382,6 @@ The clip() function updates (shrinks, or at most leaves the same) the clippingMa
             this.mask.fill(value ? 0xFF  :  0x00);
         }
     }
-
-#### How clip() works:
- 1. scans all the shapes in the clippingShapes list.
- 2. each shape updates the clippingMask by ANDing it with the negation of the 1-bit aliased fill of the shape (drawn according to its coordinates and after the associated transformation matrix has been applied). This 1-bit aliased fill is the (negation of) the standard fill that such shape would produce, just without color and transparency information. Note how the new clippingMask *shrinks* (or stays the same) as it's intersected with the shapes of the clippingShapes list.
- 3. empties the clippingShapes
-
-The above allows the clip() commands to narrow the clippingMask. clippingMask is mutable i.e. will be updated in-place for efficiency, as there are no pointers to their specific states in time.
 
 ##### Clipping of shapes with non-integer coordinates and/or transformed arbitrarily
 - All clipping mask edges are aliased (binary, no partial coverage)
@@ -462,9 +489,9 @@ class InvalidArgumentError extends CrispSwCanvasError {
 
 #### Canvas Operations
 - **Invalid Canvas Parameter**
-  - Condition: Invalid canvas passed to `bitToCanvas()`
+  - Condition: Invalid canvas passed to `blitToCanvas()`
   - Throws: `InvalidArgumentError`
-  - Message: `"Invalid canvas element provided to bitToCanvas()"`
+  - Message: `"Invalid canvas element provided to blitToCanvas()"`
 
 ### Error Handling Guidelines
 
