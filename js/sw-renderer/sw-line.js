@@ -8,16 +8,25 @@ function drawLineSW(x1, y1, x2, y2, strokeWidth, strokeR, strokeG, strokeB, stro
 
 function drawLineSW1px(x1, y1, x2, y2, r, g, b, a) {
 
-  // tweaks to make the sw render more closely match the canvas render
-  x1 -= 0.5;
-  y1 -= 0.5;
-  x2 -= 0.5;
-  y2 -= 0.5;
-  
-  x1 = Math.round(x1);
-  y1 = Math.round(y1);
-  x2 = Math.round(x2);
-  y2 = Math.round(y2);
+  // Tweak to make the sw render match more closely the canvas render.
+  // -----------------------------------------------------------------
+  // For an intuition about why this works, imagine a thin vertical line.
+  // If the start point is at x1 = 0.5, y1 = 0.5, then it means that
+  // in canvas we mean to draw it crisply (because the path line is centered in the
+  // middle of the pixel and extends 0.5 pixels in each direction to perfectly cover
+  // one column). In SW, we need to draw that case at x = 0, y = 0.
+  // If the start point is at x1 = 1, y1 = 1, then it means that in canvas we
+  // mean to draw it "blurry" (because the path line is centered in between
+  // pixels and hence the line extends 0.5 pixels in each direction to cover half of two columns).
+  // In SW, we still draw it crisply (this library doesn't support anti-aliasing / sub-pixel
+  // rendering), so we have to pick one of the half-columns to be drawn fully.
+  // We choose the right one, but in general the floor() means that
+  // we pick the one that is closer to the center of the path (which should be the
+  // darker one as it's the most covered by the path).
+  x1 = Math.floor(x1);
+  y1 = Math.floor(y1);
+  x2 = Math.floor(x2);
+  y2 = Math.floor(y2);
   
   const dx = Math.abs(x2 - x1);
   const dy = Math.abs(y2 - y1);
