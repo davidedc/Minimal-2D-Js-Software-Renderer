@@ -8,7 +8,7 @@ function drawLineSW(x1, y1, x2, y2, strokeWidth, strokeR, strokeG, strokeB, stro
 
 function drawLineSW1px(x1, y1, x2, y2, r, g, b, a) {
 
-  // Tweak to make the sw render match more closely the canvas render.
+  // Tweaks to make the sw render match more closely the canvas render.
   // -----------------------------------------------------------------
   // For an intuition about why this works, imagine a thin vertical line.
   // If the start point is at x1 = 0.5, y1 = 0.5, then it means that
@@ -45,7 +45,7 @@ function drawLineSW1px(x1, y1, x2, y2, r, g, b, a) {
 
 function drawLineSWThick(x1, y1, x2, y2, thickness, r, g, b, a) {
 
-  // tweaks to make the sw render more closely match the canvas render
+  // Tweaks to make the sw render more closely match the canvas render.
   x1 -= 0.5;
   y1 -= 0.5;
   x2 -= 0.5;
