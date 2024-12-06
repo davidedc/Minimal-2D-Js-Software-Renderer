@@ -227,6 +227,62 @@ function addCenteredRoundedRect(shapes) {
   });
 }
 
+function add1PxStrokeCenteredRoundedRectAtGrid(shapes) {
+  // if width and height of the canvas are not even, do a console error that they should be
+  if (width % 2 !== 0 || height % 2 !== 0) {
+    console.error('Width and height should be even numbers for this test');
+  }
+
+  // Define rectangle dimensions as random integers between 20 and 150
+  const rectWidth = Math.floor(20 + Math.random() * 130);
+  const rectHeight = Math.floor(20 + Math.random() * 130);
+
+  // Center of the grid
+  const centerX = Math.floor(width / 2);
+  const centerY = Math.floor(height / 2);
+  
+  return add1PxStrokeCenteredRoundedRect(shapes, centerX, centerY, rectWidth, rectHeight);
+}
+
+function add1PxStrokeCenteredRoundedRectAtPixel(shapes) {
+  // if width and height of the canvas are not even, do a console error that they should be
+  if (width % 2 !== 0 || height % 2 !== 0) {
+    console.error('Width and height should be even numbers for this test');
+  }
+
+  // Define rectangle dimensions as random integers between 20 and 150
+  const rectWidth = Math.floor(20 + Math.random() * 130);
+  const rectHeight = Math.floor(20 + Math.random() * 130);
+
+  // Center at pixel
+  const centerX = Math.floor(width / 2) + 0.5;
+  const centerY = Math.floor(height / 2) + 0.5;
+  
+  return add1PxStrokeCenteredRoundedRect(shapes, centerX, centerY, rectWidth, rectHeight);
+}
+
+function add1PxStrokeCenteredRoundedRect(shapes, centerX, centerY, rectWidth, rectHeight) {
+  // Calculate edges for testing
+  const leftX = Math.floor(centerX - rectWidth/2);
+  const rightX = leftX + rectWidth - 1;
+  const topY = Math.floor(centerY - rectHeight/2);
+  const bottomY = topY + rectHeight - 1;
+  
+  shapes.push({
+    type: 'roundedRect',
+    center: { x: centerX, y: centerY },
+    width: rectWidth,
+    height: rectHeight,
+    radius: Math.round(Math.random() * Math.min(rectWidth, rectHeight) * 0.2),
+    rotation: 0,
+    strokeWidth: 1,
+    strokeColor: { r: 255, g: 0, b: 0, a: 255 },
+    fillColor: { r: 0, g: 0, b: 0, a: 0 }
+  });
+  
+  return { leftX, rightX, topY, bottomY };
+}
+
 function buildScene(shapes) {
   addRandomLines(15, shapes);
   addAxisAlignedRectangles(5, shapes);
