@@ -42,7 +42,11 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function addRenderComparisons() {
-  addThinBlackLinesComparison();  // Add this line first
+  addBlackLinesComparison(1);  // 1px lines
+  addBlackLinesComparison(2);  // 2px lines
+  addBlackLinesComparison(3);  // 3px lines
+  addBlackLinesComparison(5);  // 5px lines
+  addBlackLinesComparison(10); // 10px lines
   add1PxStrokedRoundedRectCenteredAtGridComparison();
   add1PxStrokedRoundedRectCenteredAtPixelComparison();
   addCenteredRoundedRectComparison();
@@ -50,12 +54,12 @@ function addRenderComparisons() {
   addEverythingTogetherComparison();
 }
 
-function addThinBlackLinesComparison() {
+function addBlackLinesComparison(lineWidth) {
   addRenderComparison(
-    "1px Black Lines",
+    `${lineWidth}px Black Lines`,
     'thin-black-lines',
     (shapes) => {
-      addThinBlackLines(20, shapes);
+      addBlackLines(20, shapes, lineWidth);
     },
     (comparison) => `Number of lines: ${comparison.shapes.length}`
   );
