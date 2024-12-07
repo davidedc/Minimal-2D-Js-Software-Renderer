@@ -253,7 +253,7 @@ class RenderComparison {
     
     // Clear display canvas
     this.displayCtx.setTransform(1, 0, 0, 1, 0, 0);
-    this.displayCtx.clearRect(0, 0, this.displayCanvas.width, this.displayCanvas.height);
+    this.displayCtx.clearRect(0, 0, this.displayCanvas.width, this.displayCanvas.height);    
 
     // Get image data from both canvases at the same position
     const swImageData = this.swCtx.getImageData(
