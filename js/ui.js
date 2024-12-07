@@ -26,13 +26,6 @@ function drawShapesImpl(shapes, isCanvas, ctx = null) {
   }
 }
 
-function addRenderComparison(title, id, buildShapesFn, metricsFunction = null) {
-  const comparison = new RenderComparison(id, title);
-  comparison.metricsFunction = metricsFunction;
-  comparison.render(buildShapesFn);
-  return comparison;
-}
-
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
   addRenderComparisons();

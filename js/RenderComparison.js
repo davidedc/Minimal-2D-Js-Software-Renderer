@@ -1,12 +1,13 @@
 class RenderComparison {
   static sections = [];
 
-  constructor(id, title) {
+  constructor(id, title, buildShapesFn, metricsFunction = null) {
     RenderComparison.sections.push({ id, title });
     
     this.id = id;
     this.flipState = true;
     this.shapes = [];
+    this.metricsFunction = metricsFunction;
     
     // Create container with anchor
     this.container = document.createElement('div');
@@ -54,7 +55,7 @@ class RenderComparison {
     // Add New Example button first
     const runButton = document.createElement('button');
     runButton.textContent = 'New Example';
-    runButton.onclick = () => this.render(this.buildShapesFn);
+    runButton.onclick = () => this.render(buildShapesFn);
     runButton.className = 'action-button';
     
     // Add run 10 examples button
@@ -96,6 +97,9 @@ class RenderComparison {
     
     // Initialize RenderChecks
     this.renderChecks = new RenderChecks(this);
+
+    // Render initial scene
+    this.render(buildShapesFn);
   }
 
   createCanvas(name) {

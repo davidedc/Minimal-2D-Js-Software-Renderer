@@ -1,7 +1,7 @@
 function addBlackLinesComparison(lineWidth) {
-  addRenderComparison(
-    `${lineWidth}px Black Lines`,
+  return new RenderComparison(
     'thin-black-lines',
+    `${lineWidth}px Black Lines`,
     (shapes) => {
       addBlackLines(20, shapes, lineWidth);
     },
@@ -10,9 +10,9 @@ function addBlackLinesComparison(lineWidth) {
 }
 
 function addEverythingTogetherComparison() {
-  addRenderComparison(
-    "All Shape Types Combined",
+  return new RenderComparison(
     'all-shapes',
+    "All Shape Types Combined",
     (shapes) => {
       buildScene(shapes);
     }
@@ -20,9 +20,9 @@ function addEverythingTogetherComparison() {
 }
 
 function addThinRoundedRectsComparison() {
-  addRenderComparison(
-    "Multiple Thin-Stroke Rounded Rectangles",
+  return new RenderComparison(
     'thin-rounded-rects',
+    "Multiple Thin-Stroke Rounded Rectangles",
     (shapes) => {
       addThinStrokeRoundedRectangles(10, shapes);
     }
@@ -30,9 +30,9 @@ function addThinRoundedRectsComparison() {
 }
 
 function addCenteredRoundedRectComparison() {
-  addRenderComparison(
-    "Single Centered Rounded Rectangle",
+  return new RenderComparison(
     'centered-rounded-rect',
+    "Single Centered Rounded Rectangle",
     (shapes) => {
       addCenteredRoundedRect(shapes);
     },
@@ -50,43 +50,43 @@ function addCenteredRoundedRectComparison() {
 }
 
 function add1PxStrokedRoundedRectCenteredAtGridComparison() {
-  addRenderComparison(
-      "Single 1px Stroked Rounded Rectangle centered at grid",
-      'centered-1px-rounded-rect',
-      (shapes) => {
-          const edges = add1PxStrokeCenteredRoundedRectAtGrid(shapes);
-          return edges; // This will now be stored in this.builderReturnValue
-      },
-      (comparison) => {
-          const edges = comparison.builderReturnValue;
-          if (!edges) return "No edges data available";
-          
-          return comparison.renderChecks.checkPlacementOf4Sides(
-              comparison.swCtx,
-              comparison.canvasCtx,
-              edges
-          );
-      }
+  return new RenderComparison(
+    'centered-1px-rounded-rect',
+    "Single 1px Stroked Rounded Rectangle centered at grid",
+    (shapes) => {
+      const edges = add1PxStrokeCenteredRoundedRectAtGrid(shapes);
+      return edges;
+    },
+    (comparison) => {
+      const edges = comparison.builderReturnValue;
+      if (!edges) return "No edges data available";
+      
+      return comparison.renderChecks.checkPlacementOf4Sides(
+        comparison.swCtx,
+        comparison.canvasCtx,
+        edges
+      );
+    }
   );
 }
 
 function add1PxStrokedRoundedRectCenteredAtPixelComparison() {
-  addRenderComparison(
-      "Single 1px Stroked Rounded Rectangle centered at pixel",
-      'centered-1px-rounded-rect',
-      (shapes) => {
-          const edges = add1PxStrokeCenteredRoundedRectAtPixel(shapes);
-          return edges; // This will now be stored in this.builderReturnValue
-      },
-      (comparison) => {
-          const edges = comparison.builderReturnValue;
-          if (!edges) return "No edges data available";
-          
-          return comparison.renderChecks.checkPlacementOf4Sides(
-              comparison.swCtx,
-              comparison.canvasCtx,
-              edges
-          );
-      }
+  return new RenderComparison(
+    'centered-1px-rounded-rect',
+    "Single 1px Stroked Rounded Rectangle centered at pixel",
+    (shapes) => {
+      const edges = add1PxStrokeCenteredRoundedRectAtPixel(shapes);
+      return edges;
+    },
+    (comparison) => {
+      const edges = comparison.builderReturnValue;
+      if (!edges) return "No edges data available";
+      
+      return comparison.renderChecks.checkPlacementOf4Sides(
+        comparison.swCtx,
+        comparison.canvasCtx,
+        edges
+      );
+    }
   );
 }
