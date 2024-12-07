@@ -126,7 +126,7 @@ class RenderChecks {
       
       results.push(`${name} results:${
         edgeResults.length === 0 
-          ? ' All edges correctly placed!'
+          ? ' All edges correctly placed top: ' + actualTopY + ' bottom: ' + actualBottomY + ' left: ' + actualLeftX + ' right:' + actualRightX
           : '\n- ' + edgeResults.join('\n- ')
       }`);
     }
