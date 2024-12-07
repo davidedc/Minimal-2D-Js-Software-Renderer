@@ -137,13 +137,13 @@ stored as a Float64Array in column-major order: `[a, d, 0, b, e, 0, c, f, 1]` Th
             ]);
         }
         
-	    // deep copy of the transformation matrix
-	    clone()  {
-		    const clonedMatrix =  new  TransformationMatrix();
-		    // Copy all elements from the current matrix to the new one
-		    clonedMatrix.elements.set(this.elements);
-		    return clonedMatrix;
-		}
+        // deep copy of the transformation matrix
+        clone()  {
+            const clonedMatrix =  new  TransformationMatrix();
+            // Copy all elements from the current matrix to the new one
+            clonedMatrix.elements.set(this.elements);
+            return clonedMatrix;
+        }
 
         // Add helper methods to access elements in a clear way
         get(row, col) {
@@ -160,58 +160,58 @@ New transformations multiply on the left: T = T3 * T2 * T1.
     class TransformationMatrix {
     // ... previous code ...
 
-    multiply(other)  {
-        const result =  new  TransformationMatrix();
-        for  (let col =  0; col <  3; col++)  {
-            for  (let row =  0; row <  3;row++)  {
-                let sum =  0;
-                for  (let i =  0; i <  3; i++)  {
-                    sum +=  this.get(row, i)  * other.get(i, col);
+        multiply(other)  {
+            const result =  new  TransformationMatrix();
+            for  (let col =  0; col <  3; col++)  {
+                for  (let row =  0; row <  3;row++)  {
+                    let sum =  0;
+                    for  (let i =  0; i <  3; i++)  {
+                        sum +=  this.get(row, i)  * other.get(i, col);
+                    }
+                    result.set(row, col, sum);
                 }
-                result.set(row, col, sum);
             }
+            return result;
         }
-        return result;
+        
+        translate(x, y) {
+            // Create translation matrix
+            const translationMatrix = new TransformationMatrix();
+            translationMatrix.elements.set([
+                1, 0, 0,  // first column
+                0, 1, 0,  // second column
+                x, y, 1   // third column
+            ]);
+            // Multiply: translation * current
+            return translationMatrix.multiply(this);
+        }
+        
+        scale(sx, sy) {
+            // Create scale matrix
+            const scaleMatrix = new TransformationMatrix();
+            scaleMatrix.elements.set([
+                sx, 0, 0,  // first column
+                0, sy, 0,  // second column
+                0, 0, 1    // third column
+            ]);
+            // Multiply: scale * current
+            return scaleMatrix.multiply(this);
+        }
+        
+        rotate(angleInRadians) {
+            // Create rotation matrix
+            const rotationMatrix = new TransformationMatrix();
+            const cos = Math.cos(angleInRadians);
+            const sin = Math.sin(angleInRadians);
+            rotationMatrix.elements.set([
+                cos, sin, 0,   // first column
+                -sin, cos, 0,  // second column
+                0, 0, 1        // third column
+            ]);
+            // Multiply: rotation * current
+            return rotationMatrix.multiply(this);
+        }
     }
-    
-    translate(x, y) {
-        // Create translation matrix
-        const translationMatrix = new TransformationMatrix();
-        translationMatrix.elements.set([
-            1, 0, 0,  // first column
-            0, 1, 0,  // second column
-            x, y, 1   // third column
-        ]);
-        // Multiply: translation * current
-        return translationMatrix.multiply(this);
-    }
-    
-    scale(sx, sy) {
-        // Create scale matrix
-        const scaleMatrix = new TransformationMatrix();
-        scaleMatrix.elements.set([
-            sx, 0, 0,  // first column
-            0, sy, 0,  // second column
-            0, 0, 1    // third column
-        ]);
-        // Multiply: scale * current
-        return scaleMatrix.multiply(this);
-    }
-    
-    rotate(angleInRadians) {
-        // Create rotation matrix
-        const rotationMatrix = new TransformationMatrix();
-        const cos = Math.cos(angleInRadians);
-        const sin = Math.sin(angleInRadians);
-        rotationMatrix.elements.set([
-            cos, sin, 0,   // first column
-            -sin, cos, 0,  // second column
-            0, 0, 1        // third column
-        ]);
-        // Multiply: rotation * current
-        return rotationMatrix.multiply(this);
-    }
-}
 
 **Example:**
 
@@ -367,16 +367,16 @@ Just line the main buffer, the clippingMask and tempClippingMask don't handle an
             this.mask = new Uint8Array(Math.ceil((width * height) / 8));
         }
         
-	    setPixel(x, y, value) {
-	        const index = (y * this.width + x);
-	        const byteIndex = Math.floor(index / 8);
-	        const bitIndex = index % 8;
-	        if (value) {
-	            this.mask[byteIndex] |= (1 << bitIndex);
-	        } else {
-	            this.mask[byteIndex] &= ~(1 << bitIndex);
-	        }
-	    }
+        setPixel(x, y, value) {
+            const index = (y * this.width + x);
+            const byteIndex = Math.floor(index / 8);
+            const bitIndex = index % 8;
+            if (value) {
+                this.mask[byteIndex] |= (1 << bitIndex);
+            } else {
+                this.mask[byteIndex] &= ~(1 << bitIndex);
+            }
+        }
 
         clear(value) {
             this.mask.fill(value ? 0xFF  :  0x00);
