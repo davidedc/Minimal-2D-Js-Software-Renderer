@@ -351,6 +351,14 @@ class RenderComparison {
     this.displayCtx.moveTo(this.displayCanvas.width / 2 + 3, 0);
     this.displayCtx.lineTo(this.displayCanvas.width / 2 + 3, this.displayCanvas.height);
     this.displayCtx.stroke();
+
+    // Draw coordinates at top center
+    this.displayCtx.font = '14px monospace';
+    this.displayCtx.textAlign = 'center';
+    this.displayCtx.textBaseline = 'top';
+    const coordsText = `(${x}, ${y})`;
+    this.displayCtx.fillStyle = 'black';
+    this.displayCtx.fillText(coordsText, this.displayCanvas.width / 2, 25);
   }
 
   handleMouseOut() {
