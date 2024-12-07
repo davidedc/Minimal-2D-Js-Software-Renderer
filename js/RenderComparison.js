@@ -278,15 +278,39 @@ class RenderComparison {
 
     // Function to draw magnified grid
     const drawMagnifiedGrid = (imageData, offsetX) => {
+      // Calculate the actual coordinates of the top-left pixel in the source image
+      const sourceX = x - Math.floor(RenderComparison.GRID_COLUMNS/2);
+      const sourceY = y - Math.floor(RenderComparison.GRID_ROWS/2);
+      
+      // Calculate where to start reading from the imageData
+      const readOffsetX = Math.max(0, -sourceX);
+      const readOffsetY = Math.max(0, -sourceY);
+      
       for (let py = 0; py < RenderComparison.GRID_ROWS; py++) {
         for (let px = 0; px < RenderComparison.GRID_COLUMNS; px++) {
-          const i = (py * RenderComparison.GRID_COLUMNS + px) * 4;
-          const r = imageData.data[i];
-          const g = imageData.data[i + 1];
-          const b = imageData.data[i + 2];
-          const a = imageData.data[i + 3];
+          // Calculate actual source coordinates for this pixel
+          const actualX = sourceX + px;
+          const actualY = sourceY + py;
+          
+          // Check if the pixel is within canvas bounds
+          const isOutOfBounds = actualX < 0 || actualY < 0 || 
+                               actualX >= canvas.width || actualY >= canvas.height;
 
-          this.displayCtx.fillStyle = `rgba(${r},${g},${b},${a/255})`;
+          if (isOutOfBounds) {
+            // Draw grey pixel for out of bounds
+            this.displayCtx.fillStyle = 'rgb(128,128,128)';
+          } else {
+            // Calculate correct index in the imageData
+            const dataX = px - readOffsetX;
+            const dataY = py - readOffsetY;
+            const i = (dataY * RenderComparison.GRID_COLUMNS + dataX) * 4;
+            const r = imageData.data[i];
+            const g = imageData.data[i + 1];
+            const b = imageData.data[i + 2];
+            const a = imageData.data[i + 3];
+            this.displayCtx.fillStyle = `rgba(${r},${g},${b},${a/255})`;
+          }
+
           this.displayCtx.fillRect(
             offsetX + px * pixelSize,
             py * pixelSize,
