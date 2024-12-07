@@ -1,7 +1,7 @@
 class RenderComparison {
   static sections = [];
   static GRID_COLUMNS = 11;
-  static GRID_ROWS = 22;
+  static GRID_ROWS = 21;
 
   constructor(id, title, buildShapesFn, metricsFunction = null) {
     RenderComparison.sections.push({ id, title });
