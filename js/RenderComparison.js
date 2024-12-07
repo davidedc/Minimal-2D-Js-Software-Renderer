@@ -1,5 +1,7 @@
 class RenderComparison {
   static sections = [];
+  static GRID_COLUMNS = 11;
+  static GRID_ROWS = 22;
 
   constructor(id, title, buildShapesFn, metricsFunction = null) {
     RenderComparison.sections.push({ id, title });
@@ -38,6 +40,16 @@ class RenderComparison {
     this.swCanvas = this.createCanvas('sw');
     this.canvasCanvas = this.createCanvas('canvas');
     this.displayCanvas = this.createCanvas('display');
+    
+    // Add mouse event listeners for inspection
+    this.swCanvas.addEventListener('mousemove', (e) => this.handleMouseMove(e, this.swCanvas));
+    this.canvasCanvas.addEventListener('mousemove', (e) => this.handleMouseMove(e, this.canvasCanvas));
+    this.swCanvas.addEventListener('mouseout', () => this.handleMouseOut());
+    this.canvasCanvas.addEventListener('mouseout', () => this.handleMouseOut());
+    
+    // Set cursor style
+    this.swCanvas.style.cursor = 'crosshair';
+    this.canvasCanvas.style.cursor = 'crosshair';
     
     this.container.appendChild(this.swCanvas);
     this.container.appendChild(this.canvasCanvas);
@@ -232,5 +244,117 @@ class RenderComparison {
     });
     
     document.body.insertBefore(nav, document.body.firstChild);
+  }
+
+  handleMouseMove(event, canvas) {
+    const rect = canvas.getBoundingClientRect();
+    const x = Math.floor(event.clientX - rect.left);
+    const y = Math.floor(event.clientY - rect.top);
+    
+    // Clear display canvas
+    this.displayCtx.setTransform(1, 0, 0, 1, 0, 0);
+    this.displayCtx.clearRect(0, 0, this.displayCanvas.width, this.displayCanvas.height);
+
+    // Get image data from both canvases at the same position
+    const swImageData = this.swCtx.getImageData(
+      Math.max(0, x - Math.floor(RenderComparison.GRID_COLUMNS/2)),
+      Math.max(0, y - Math.floor(RenderComparison.GRID_ROWS/2)),
+      RenderComparison.GRID_COLUMNS,
+      RenderComparison.GRID_ROWS
+    );
+
+    const canvasImageData = this.canvasCtx.getImageData(
+      Math.max(0, x - Math.floor(RenderComparison.GRID_COLUMNS/2)),
+      Math.max(0, y - Math.floor(RenderComparison.GRID_ROWS/2)),
+      RenderComparison.GRID_COLUMNS,
+      RenderComparison.GRID_ROWS
+    );
+
+    // Calculate pixel size for the magnified view
+    const pixelSize = Math.min(
+      (this.displayCanvas.width / 2) / RenderComparison.GRID_COLUMNS,
+      this.displayCanvas.height / RenderComparison.GRID_ROWS
+    );
+
+    // Function to draw magnified grid
+    const drawMagnifiedGrid = (imageData, offsetX) => {
+      for (let py = 0; py < RenderComparison.GRID_ROWS; py++) {
+        for (let px = 0; px < RenderComparison.GRID_COLUMNS; px++) {
+          const i = (py * RenderComparison.GRID_COLUMNS + px) * 4;
+          const r = imageData.data[i];
+          const g = imageData.data[i + 1];
+          const b = imageData.data[i + 2];
+          const a = imageData.data[i + 3];
+
+          this.displayCtx.fillStyle = `rgba(${r},${g},${b},${a/255})`;
+          this.displayCtx.fillRect(
+            offsetX + px * pixelSize,
+            py * pixelSize,
+            pixelSize,
+            pixelSize
+          );
+
+          // Draw grid lines
+          this.displayCtx.strokeStyle = 'rgba(128,128,128,0.5)';
+          this.displayCtx.strokeRect(
+            offsetX + px * pixelSize,
+            py * pixelSize,
+            pixelSize,
+            pixelSize
+          );
+        }
+      }
+
+      // Draw crosshair
+      this.displayCtx.strokeStyle = 'red';
+      this.displayCtx.lineWidth = 2;
+      
+      // Vertical line
+      this.displayCtx.beginPath();
+      this.displayCtx.moveTo(offsetX + (RenderComparison.GRID_COLUMNS/2) * pixelSize, 0);
+      this.displayCtx.lineTo(offsetX + (RenderComparison.GRID_COLUMNS/2) * pixelSize, RenderComparison.GRID_ROWS * pixelSize);
+      this.displayCtx.stroke();
+      
+      // Horizontal line
+      this.displayCtx.beginPath();
+      this.displayCtx.moveTo(offsetX, (RenderComparison.GRID_ROWS/2) * pixelSize);
+      this.displayCtx.lineTo(offsetX + RenderComparison.GRID_COLUMNS * pixelSize, (RenderComparison.GRID_ROWS/2) * pixelSize);
+      this.displayCtx.stroke();
+    };
+
+    // Draw left side (SW renderer)
+    drawMagnifiedGrid(swImageData, 0);
+
+    // Draw right side (Canvas renderer)
+    drawMagnifiedGrid(canvasImageData, this.displayCanvas.width / 2);
+
+    // Draw separator line
+    this.displayCtx.strokeStyle = 'rgba(128,128,128,0.8)';
+    this.displayCtx.lineWidth = 6;
+    this.displayCtx.beginPath();
+    this.displayCtx.moveTo(this.displayCanvas.width / 2, 0);
+    this.displayCtx.lineTo(this.displayCanvas.width / 2, this.displayCanvas.height);
+    this.displayCtx.stroke();
+
+    // Add white highlights on the sides of the separator
+    this.displayCtx.strokeStyle = 'rgba(255,255,255,0.5)';
+    this.displayCtx.lineWidth = 2;
+    
+    // Left highlight
+    this.displayCtx.beginPath();
+    this.displayCtx.moveTo(this.displayCanvas.width / 2 - 3, 0);
+    this.displayCtx.lineTo(this.displayCanvas.width / 2 - 3, this.displayCanvas.height);
+    this.displayCtx.stroke();
+    
+    // Right highlight
+    this.displayCtx.beginPath();
+    this.displayCtx.moveTo(this.displayCanvas.width / 2 + 3, 0);
+    this.displayCtx.lineTo(this.displayCanvas.width / 2 + 3, this.displayCanvas.height);
+    this.displayCtx.stroke();
+  }
+
+  handleMouseOut() {
+    // Restore normal display canvas view
+    this.updateFlipOutput();
   }
 }
