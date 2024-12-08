@@ -283,6 +283,38 @@ function add1PxStrokeCenteredRoundedRect(shapes, centerX, centerY, rectWidth, re
   return { leftX, rightX, topY, bottomY };
 }
 
+function add2PxVerticalLine(shapes, centerX, centerY, height) {
+  // Calculate edges for testing
+  const topY = Math.floor(centerY - height/2);
+  const bottomY = topY + height - 1;
+  
+  shapes.push({
+    type: 'line',
+    start: { x: centerX, y: topY },
+    end: { x: centerX, y: bottomY },
+    thickness: 2,
+    color: { r: 255, g: 0, b: 0, a: 255 }
+  });
+  
+  return { centerX, topY, bottomY };
+}
+
+function add2PxVerticalLineCenteredAtGrid(shapes) {
+  // if width and height of the canvas are not even, do a console error that they should be
+  if (width % 2 !== 0 || height % 2 !== 0) {
+    console.error('Width and height should be even numbers for this test');
+  }
+
+  // Define line height as random integer between 20 and 150
+  const lineHeight = Math.floor(20 + Math.random() * 130);
+
+  // Center of the grid
+  const centerX = Math.floor(width / 2);
+  const centerY = Math.floor(height / 2);
+  
+  return add2PxVerticalLine(shapes, centerX, centerY, lineHeight);
+}
+
 function buildScene(shapes) {
   addRandomLines(15, shapes);
   addAxisAlignedRectangles(5, shapes);

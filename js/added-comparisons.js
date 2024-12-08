@@ -90,3 +90,34 @@ function add1PxStrokedRoundedRectCenteredAtPixelComparison() {
     }
   );
 }
+
+function add2PxVerticalLineCenteredAtGridComparison() {
+  return new RenderComparison(
+    'centered-2px-vertical-line',
+    "Single 2px Vertical Line centered at grid",
+    (shapes) => {
+      const edges = add2PxVerticalLineCenteredAtGrid(shapes);
+      return edges;
+    },
+    (comparison) => {
+      const edges = comparison.builderReturnValue;
+      if (!edges) return "No edges data available";
+      
+      let results = [];
+      
+      // Check if the line appears at the expected X coordinate
+      const swColorsMiddleRow = comparison.renderChecks.checkCountOfUniqueColorsInMiddleRow(comparison.swCtx, 1);
+      const canvasColorsMiddleRow = comparison.renderChecks.checkCountOfUniqueColorsInMiddleRow(comparison.canvasCtx, 1);
+      
+      results.push(`Middle row unique colors: SW: ${swColorsMiddleRow}, Canvas: ${canvasColorsMiddleRow}`);
+      
+      // Check vertical alignment
+      const swColorsMiddleColumn = comparison.renderChecks.checkCountOfUniqueColorsInMiddleColumn(comparison.swCtx, 1);
+      const canvasColorsMiddleColumn = comparison.renderChecks.checkCountOfUniqueColorsInMiddleColumn(comparison.canvasCtx, 1);
+      
+      results.push(`Middle column unique colors: SW: ${swColorsMiddleColumn}, Canvas: ${canvasColorsMiddleColumn}`);
+      
+      return results.join('<br>');
+    }
+  );
+}
