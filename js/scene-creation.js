@@ -283,7 +283,7 @@ function add1PxStrokeCenteredRoundedRect(shapes, centerX, centerY, rectWidth, re
   return { leftX, rightX, topY, bottomY };
 }
 
-function add2PxVerticalLine(shapes, results, centerX, centerY, height) {
+function add2PxVerticalLine(shapes, comparisonLog, centerX, centerY, height) {
   // the default lineCap is butt
   // see: https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/lineCap#butt
   // ...which means that the top aligns
@@ -312,13 +312,13 @@ function add2PxVerticalLine(shapes, results, centerX, centerY, height) {
     color: { r: 255, g: 0, b: 0, a: 255 }
   });
 
-  results.push(`2px vertical line from (${centerX}, ${topY}) to (${centerX}, ${bottomY}) of height ${height}`);
+  comparisonLog.push(`2px vertical line from (${centerX}, ${topY}) to (${centerX}, ${bottomY}) of height ${height}`);
   
   // NOTE how you expect the Y of the bottom pixel to be bottomY - 1 !
   return { leftX, rightX, topY, bottomY: bottomY - 1};
 }
 
-function add2PxVerticalLineCenteredAtGrid(shapes, results) {
+function add2PxVerticalLineCenteredAtGrid(shapes, comparisonLog) {
   // if width and height of the canvas are not even, do a console error that they should be
   if (width % 2 !== 0 || height % 2 !== 0) {
     console.error('Width and height should be even numbers for this test');
@@ -331,7 +331,7 @@ function add2PxVerticalLineCenteredAtGrid(shapes, results) {
   const centerX = Math.floor(width / 2);
   const centerY = Math.floor(height / 2);
   
-  return add2PxVerticalLine(shapes, results, centerX, centerY, lineHeight);
+  return add2PxVerticalLine(shapes, comparisonLog, centerX, centerY, lineHeight);
 }
 
 function buildScene(shapes) {

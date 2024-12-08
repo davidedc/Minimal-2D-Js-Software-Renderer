@@ -30,7 +30,7 @@ function addThinRoundedRectsComparison() {
 }
 
 function addCenteredRoundedRectComparison() {
-  let results = [];
+  let comparisonLog = [];
   return new RenderComparison(
     'centered-rounded-rect',
     "Single Centered Rounded Rectangle",
@@ -43,16 +43,16 @@ function addCenteredRoundedRectComparison() {
       const swColorsMiddleColumn = comparison.renderChecks.checkCountOfUniqueColorsInMiddleColumn(comparison.swCtx, 2);
       const canvasColorsMiddleColumn = comparison.renderChecks.checkCountOfUniqueColorsInMiddleColumn(comparison.canvasCtx, 2);
       
-      results = [];
-      results.push(`Unique colors in middle row: SW: ${swColorsMiddleRow}, Canvas: ${canvasColorsMiddleRow}`);
-      results.push(`Unique colors in middle column: SW: ${swColorsMiddleColumn}, Canvas: ${canvasColorsMiddleColumn}`);
-      return results.join('<br>');
+      comparisonLog = [];
+      comparisonLog.push(`Unique colors in middle row: SW: ${swColorsMiddleRow}, Canvas: ${canvasColorsMiddleRow}`);
+      comparisonLog.push(`Unique colors in middle column: SW: ${swColorsMiddleColumn}, Canvas: ${canvasColorsMiddleColumn}`);
+      return comparisonLog.join('<br>');
     }
   );
 }
 
 function add1PxStrokedRoundedRectCenteredAtGridComparison() {
-  let results = [];
+  let comparisonLog = [];
   return new RenderComparison(
     'centered-1px-rounded-rect',
     "Single 1px Stroked Rounded Rectangle centered at grid",
@@ -74,7 +74,7 @@ function add1PxStrokedRoundedRectCenteredAtGridComparison() {
 }
 
 function add1PxStrokedRoundedRectCenteredAtPixelComparison() {
-  let results = [];
+  let comparisonLog = [];
   return new RenderComparison(
     'centered-1px-rounded-rect',
     "Single 1px Stroked Rounded Rectangle centered at pixel",
@@ -96,31 +96,31 @@ function add1PxStrokedRoundedRectCenteredAtPixelComparison() {
 }
 
 function add2PxVerticalLineCenteredAtGridComparison() {
-  let results = [];
+  let comparisonLog = [];
   return new RenderComparison(
     'centered-2px-vertical-line',
     "Single 2px Vertical Line centered at grid",
     (shapes) => {
-      const edges = add2PxVerticalLineCenteredAtGrid(shapes, results);
+      const edges = add2PxVerticalLineCenteredAtGrid(shapes, comparisonLog);
       return edges;
     },
     (comparison) => {
       const edges = comparison.builderReturnValue;
       if (!edges) return "No edges data available";      
       
-      results = [];
+      comparisonLog = [];
 
       // Check if the line appears at the expected X coordinate
       const swColorsMiddleRow = comparison.renderChecks.checkCountOfUniqueColorsInMiddleRow(comparison.swCtx, 1);
       const canvasColorsMiddleRow = comparison.renderChecks.checkCountOfUniqueColorsInMiddleRow(comparison.canvasCtx, 1);
       
-      results.push(`Middle row unique colors: SW: ${swColorsMiddleRow}, Canvas: ${canvasColorsMiddleRow}`);
+      comparisonLog.push(`Middle row unique colors: SW: ${swColorsMiddleRow}, Canvas: ${canvasColorsMiddleRow}`);
       
       // Check vertical alignment
       const swColorsMiddleColumn = comparison.renderChecks.checkCountOfUniqueColorsInMiddleColumn(comparison.swCtx, 1);
       const canvasColorsMiddleColumn = comparison.renderChecks.checkCountOfUniqueColorsInMiddleColumn(comparison.canvasCtx, 1);
       
-      results.push(`Middle column unique colors: SW: ${swColorsMiddleColumn}, Canvas: ${canvasColorsMiddleColumn}`);
+      comparisonLog.push(`Middle column unique colors: SW: ${swColorsMiddleColumn}, Canvas: ${canvasColorsMiddleColumn}`);
       
       // Check extremes
       const extremesResults = comparison.renderChecks.checkExtremes(
@@ -129,10 +129,10 @@ function add2PxVerticalLineCenteredAtGridComparison() {
         edges  // The expected extremes returned from add2PxVerticalLineCenteredAtGrid
       );
       
-      results.push('Extremes check:');
-      results.push(extremesResults);
+      comparisonLog.push('Extremes check:');
+      comparisonLog.push(extremesResults);
       
-      return results.join('<br>');
+      return comparisonLog.join('<br>');
     }
   );
 }
