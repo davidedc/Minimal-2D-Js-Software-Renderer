@@ -30,6 +30,7 @@ function addThinRoundedRectsComparison() {
 }
 
 function addCenteredRoundedRectComparison() {
+  let results = [];
   return new RenderComparison(
     'centered-rounded-rect',
     "Single Centered Rounded Rectangle",
@@ -42,14 +43,16 @@ function addCenteredRoundedRectComparison() {
       const swColorsMiddleColumn = comparison.renderChecks.checkCountOfUniqueColorsInMiddleColumn(comparison.swCtx, 2);
       const canvasColorsMiddleColumn = comparison.renderChecks.checkCountOfUniqueColorsInMiddleColumn(comparison.canvasCtx, 2);
       
-      const row = `Unique colors in middle row: SW: ${swColorsMiddleRow}, Canvas: ${canvasColorsMiddleRow}`;
-      const column = `Unique colors in middle column: SW: ${swColorsMiddleColumn}, Canvas: ${canvasColorsMiddleColumn}`;
-      return row + '<br>' + column;
+      results = [];
+      results.push(`Unique colors in middle row: SW: ${swColorsMiddleRow}, Canvas: ${canvasColorsMiddleRow}`);
+      results.push(`Unique colors in middle column: SW: ${swColorsMiddleColumn}, Canvas: ${canvasColorsMiddleColumn}`);
+      return results.join('<br>');
     }
   );
 }
 
 function add1PxStrokedRoundedRectCenteredAtGridComparison() {
+  let results = [];
   return new RenderComparison(
     'centered-1px-rounded-rect',
     "Single 1px Stroked Rounded Rectangle centered at grid",
@@ -71,6 +74,7 @@ function add1PxStrokedRoundedRectCenteredAtGridComparison() {
 }
 
 function add1PxStrokedRoundedRectCenteredAtPixelComparison() {
+  let results = [];
   return new RenderComparison(
     'centered-1px-rounded-rect',
     "Single 1px Stroked Rounded Rectangle centered at pixel",
@@ -104,6 +108,8 @@ function add2PxVerticalLineCenteredAtGridComparison() {
       const edges = comparison.builderReturnValue;
       if (!edges) return "No edges data available";      
       
+      results = [];
+
       // Check if the line appears at the expected X coordinate
       const swColorsMiddleRow = comparison.renderChecks.checkCountOfUniqueColorsInMiddleRow(comparison.swCtx, 1);
       const canvasColorsMiddleRow = comparison.renderChecks.checkCountOfUniqueColorsInMiddleRow(comparison.canvasCtx, 1);
