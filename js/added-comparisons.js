@@ -5,7 +5,8 @@ function addBlackLinesComparison(lineWidth) {
     (shapes) => {
       addBlackLines(20, shapes, lineWidth);
     },
-    (comparison) => `Number of lines: ${comparison.shapes.length}`
+    (comparison) => `Number of lines: ${comparison.shapes.length}`,
+    `Tests rendering of multiple black lines of line width ${lineWidth}`
   );
 }
 
@@ -15,7 +16,9 @@ function addEverythingTogetherComparison() {
     "All Shape Types Combined",
     (shapes) => {
       buildScene(shapes);
-    }
+    },
+    null,
+    'Combines all shape types into a single scene to test overall rendering consistency'
   );
 }
 
@@ -25,7 +28,9 @@ function addThinRoundedRectsComparison() {
     "Multiple Thin-Stroke Rounded Rectangles",
     (shapes) => {
       addThinStrokeRoundedRectangles(10, shapes);
-    }
+    },
+    null,
+    'Tests rendering of multiple rounded rectangles with thin stroke widths'
   );
 }
 
@@ -47,7 +52,8 @@ function addCenteredRoundedRectComparison() {
       comparisonLog.push(`Unique colors in middle row: SW: ${swColorsMiddleRow}, Canvas: ${canvasColorsMiddleRow}`);
       comparisonLog.push(`Unique colors in middle column: SW: ${swColorsMiddleColumn}, Canvas: ${canvasColorsMiddleColumn}`);
       return comparisonLog.join('<br>');
-    }
+    },
+    'A single rounded rectangle with different stroke widths and colors'
   );
 }
 
@@ -69,7 +75,8 @@ function add1PxStrokedRoundedRectCenteredAtGridComparison() {
         comparison.canvasCtx,
         edges
       );
-    }
+    },
+    'Tests crisp rendering of a 1px stroked rounded rectangle where the center is at a crossing in the grid'
   );
 }
 
@@ -91,7 +98,8 @@ function add1PxStrokedRoundedRectCenteredAtPixelComparison() {
         comparison.canvasCtx,
         edges
       );
-    }
+    },
+    'Tests crisp rendering of a 1px stroked rounded rectangle where the center is in the middle of a pixel'
   );
 }
 
@@ -133,6 +141,7 @@ function add2PxVerticalLineCenteredAtGridComparison() {
       comparisonLog.push(extremesResults);
       
       return comparisonLog.join('<br>');
-    }
+    },
+    'Tests crisp rendering of a 2px vertical line'
   );
 }

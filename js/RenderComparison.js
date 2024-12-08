@@ -3,7 +3,7 @@ class RenderComparison {
   static GRID_COLUMNS = 11;
   static GRID_ROWS = 21;
 
-  constructor(id, title, buildShapesFn, metricsFunction = null) {
+  constructor(id, title, buildShapesFn, metricsFunction = null, comparisonDescription = '') {
     RenderComparison.sections.push({ id, title });
     
     this.id = id;
@@ -35,6 +35,14 @@ class RenderComparison {
     titleElement.textContent = title;
     titleElement.className = 'comparison-title';
     this.container.appendChild(titleElement);
+    
+    // Add description if provided
+    if (comparisonDescription) {
+      const descriptionElement = document.createElement('p');
+      descriptionElement.textContent = comparisonDescription;
+      descriptionElement.className = 'comparison-description';
+      this.container.appendChild(descriptionElement);
+    }
     
     // Create canvases
     this.swCanvas = this.createCanvas('sw');
