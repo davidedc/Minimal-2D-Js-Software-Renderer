@@ -283,10 +283,26 @@ function add1PxStrokeCenteredRoundedRect(shapes, centerX, centerY, rectWidth, re
   return { leftX, rightX, topY, bottomY };
 }
 
-function add2PxVerticalLine(shapes, centerX, centerY, height) {
-  // Calculate edges for testing
+function add2PxVerticalLine(shapes, results, centerX, centerY, height) {
+  // the default lineCap is butt
+  // see: https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/lineCap#butt
+  // ...which means that the top aligns
+  // exactly with the top of the path i.e. topY, and the bottom aligns
+  // exactly with the bottom of the path i.e. bottomY
+  // So to get a 2px line of height "height" we need to move down from the topY
+  // by height to get the bottomY.
+  // To understand this better, try forcing the topY to be 5
+  // and the height to be 5
+  // to see a simple inspectable example:
+  //    const topY = 5;
+  //    const height = 5;
+
   const topY = Math.floor(centerY - height/2);
-  const bottomY = topY + height - 1;
+  const bottomY = topY + height;
+  
+  // For a 2px line, it will occupy two columns of pixels
+  const leftX = Math.floor(centerX - 1);
+  const rightX = leftX + 1;
   
   shapes.push({
     type: 'line',
@@ -295,11 +311,14 @@ function add2PxVerticalLine(shapes, centerX, centerY, height) {
     thickness: 2,
     color: { r: 255, g: 0, b: 0, a: 255 }
   });
+
+  results.push(`2px vertical line from (${centerX}, ${topY}) to (${centerX}, ${bottomY}) of height ${height}`);
   
-  return { centerX, topY, bottomY };
+  // NOTE how you expect the Y of the bottom pixel to be bottomY - 1 !
+  return { leftX, rightX, topY, bottomY: bottomY - 1};
 }
 
-function add2PxVerticalLineCenteredAtGrid(shapes) {
+function add2PxVerticalLineCenteredAtGrid(shapes, results) {
   // if width and height of the canvas are not even, do a console error that they should be
   if (width % 2 !== 0 || height % 2 !== 0) {
     console.error('Width and height should be even numbers for this test');
@@ -312,7 +331,7 @@ function add2PxVerticalLineCenteredAtGrid(shapes) {
   const centerX = Math.floor(width / 2);
   const centerY = Math.floor(height / 2);
   
-  return add2PxVerticalLine(shapes, centerX, centerY, lineHeight);
+  return add2PxVerticalLine(shapes, results, centerX, centerY, lineHeight);
 }
 
 function buildScene(shapes) {

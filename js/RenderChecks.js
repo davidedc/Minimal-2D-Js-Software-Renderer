@@ -133,4 +133,76 @@ class RenderChecks {
     
     return results.join('\n\n');
   }
+
+  checkExtremes(swCtx, canvasCtx, expectedExtremes) {
+    const contexts = [
+      { name: 'Software Renderer', ctx: swCtx },
+      { name: 'Canvas', ctx: canvasCtx }
+    ];
+    
+    const results = [];
+    
+    for (const { name, ctx } of contexts) {
+      const imageData = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
+      const data = imageData.data;
+      const width = ctx.canvas.width;
+      const height = ctx.canvas.height;
+      
+      let minX = width;
+      let maxX = -1;
+      let minY = height;
+      let maxY = -1;
+      
+      // Scan all pixels
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          const i = (y * width + x) * 4;
+          if (data[i + 3] > 0) {  // If pixel is not fully transparent
+            minX = Math.min(minX, x);
+            maxX = Math.max(maxX, x);
+            minY = Math.min(minY, y);
+            maxY = Math.max(maxY, y);
+          }
+        }
+      }
+      
+      // If no non-transparent pixels were found, all values will be at their initial values
+      if (minX === width || maxX === -1 || minY === height || maxY === -1) {
+        const message = `${name}: No non-transparent pixels found`;
+        results.push(message);
+        this.comparison.showError(message);
+        continue;
+      }
+
+      const actualExtremes = { leftX: minX, rightX: maxX, topY: minY, bottomY: maxY };
+      console.log(`${name} found extremes:`, actualExtremes);
+      
+      if (expectedExtremes) {
+        if (actualExtremes.leftX !== expectedExtremes.leftX) {
+          const message = `${name}: Left extreme expected at ${expectedExtremes.leftX}, found at ${actualExtremes.leftX}`;
+          results.push(message);
+          this.comparison.showError(message);
+        }
+        if (actualExtremes.rightX !== expectedExtremes.rightX) {
+          const message = `${name}: Right extreme expected at ${expectedExtremes.rightX}, found at ${actualExtremes.rightX}`;
+          results.push(message);
+          this.comparison.showError(message);
+        }
+        if (actualExtremes.topY !== expectedExtremes.topY) {
+          const message = `${name}: Top extreme expected at ${expectedExtremes.topY}, found at ${actualExtremes.topY}`;
+          results.push(message);
+          this.comparison.showError(message);
+        }
+        if (actualExtremes.bottomY !== expectedExtremes.bottomY) {
+          const message = `${name}: Bottom extreme expected at ${expectedExtremes.bottomY}, found at ${actualExtremes.bottomY}`;
+          results.push(message);
+          this.comparison.showError(message);
+        }
+      }
+      
+      results.push(`${name}: left=${actualExtremes.leftX}, right=${actualExtremes.rightX}, top=${actualExtremes.topY}, bottom=${actualExtremes.bottomY}`);
+    }
+    
+    return results.join('\n');
+  }
 }

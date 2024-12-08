@@ -92,18 +92,17 @@ function add1PxStrokedRoundedRectCenteredAtPixelComparison() {
 }
 
 function add2PxVerticalLineCenteredAtGridComparison() {
+  let results = [];
   return new RenderComparison(
     'centered-2px-vertical-line',
     "Single 2px Vertical Line centered at grid",
     (shapes) => {
-      const edges = add2PxVerticalLineCenteredAtGrid(shapes);
+      const edges = add2PxVerticalLineCenteredAtGrid(shapes, results);
       return edges;
     },
     (comparison) => {
       const edges = comparison.builderReturnValue;
-      if (!edges) return "No edges data available";
-      
-      let results = [];
+      if (!edges) return "No edges data available";      
       
       // Check if the line appears at the expected X coordinate
       const swColorsMiddleRow = comparison.renderChecks.checkCountOfUniqueColorsInMiddleRow(comparison.swCtx, 1);
@@ -116,6 +115,16 @@ function add2PxVerticalLineCenteredAtGridComparison() {
       const canvasColorsMiddleColumn = comparison.renderChecks.checkCountOfUniqueColorsInMiddleColumn(comparison.canvasCtx, 1);
       
       results.push(`Middle column unique colors: SW: ${swColorsMiddleColumn}, Canvas: ${canvasColorsMiddleColumn}`);
+      
+      // Check extremes
+      const extremesResults = comparison.renderChecks.checkExtremes(
+        comparison.swCtx,
+        comparison.canvasCtx,
+        edges  // The expected extremes returned from add2PxVerticalLineCenteredAtGrid
+      );
+      
+      results.push('Extremes check:');
+      results.push(extremesResults);
       
       return results.join('<br>');
     }
