@@ -145,3 +145,46 @@ function add2PxVerticalLineCenteredAtGridComparison() {
     'Tests crisp rendering of a 2px vertical line'
   );
 }
+
+function add1PxVerticalLineCenteredAtPixelComparison() {
+  let comparisonLog = [];
+  return new RenderComparison(
+    'centered-1px-vertical-line',
+    "Single 1px Vertical Line centered at pixel",
+    (shapes) => {
+      const extremes = add1PxVerticalLineCenteredAtPixel(shapes, comparisonLog);
+      return extremes;
+    },
+    (comparison) => {
+      const extremes = comparison.builderReturnValue;
+      if (!extremes) return "No extremes data available";      
+      
+      comparisonLog = [];
+
+      // Count unique colors in the middle row
+      const swColorsMiddleRow = comparison.renderChecks.checkCountOfUniqueColorsInMiddleRow(comparison.swCtx, 1);
+      const canvasColorsMiddleRow = comparison.renderChecks.checkCountOfUniqueColorsInMiddleRow(comparison.canvasCtx, 1);
+      
+      comparisonLog.push(`Middle row unique colors: SW: ${swColorsMiddleRow}, Canvas: ${canvasColorsMiddleRow}`);
+      
+      // Count unique colors in the middle column
+      const swColorsMiddleColumn = comparison.renderChecks.checkCountOfUniqueColorsInMiddleColumn(comparison.swCtx, 1);
+      const canvasColorsMiddleColumn = comparison.renderChecks.checkCountOfUniqueColorsInMiddleColumn(comparison.canvasCtx, 1);
+      
+      comparisonLog.push(`Middle column unique colors: SW: ${swColorsMiddleColumn}, Canvas: ${canvasColorsMiddleColumn}`);
+      
+      // Check extremes
+      const extremesResults = comparison.renderChecks.checkExtremes(
+        comparison.swCtx,
+        comparison.canvasCtx,
+        extremes
+      );
+      
+      comparisonLog.push('Extremes check:');
+      comparisonLog.push(extremesResults);
+      
+      return comparisonLog.join('<br>');
+    },
+    'Tests crisp rendering of a 1px vertical line centered at pixel'
+  );
+}

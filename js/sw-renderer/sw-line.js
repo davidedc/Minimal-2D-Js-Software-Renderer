@@ -28,6 +28,41 @@ function drawLineSW1px(x1, y1, x2, y2, r, g, b, a) {
   x2 = Math.floor(x2);
   y2 = Math.floor(y2);
   
+  // MOREOVER, in Canvas you reason in terms of grid lines, so
+  // in case of a vertical line, where you want the two renders to be
+  // identical, for example three grid lines actually cover the span
+  // of 2 pixels.
+  // However, in SW you reason in terms of pixels, so you can't cover
+  // "three" as in Canvas, rather "two" because you actually want to
+  // cover two pixels, not three.
+  // Hence, in a nutshell, you have to tweak the received parameters
+  // (which work in canvas) by shortening the line by 1 pixel if it's vertical.
+  //
+  // Note how always decreasing the bottom y coordinate is always correct:
+  //
+  //          Case y2 > y1            #          Case y1 > y2
+  //       e.g. y1 = 1, y2 = 3        #       e.g. y1 = 3, y2 = 1
+  //      (drawing going down)        #       (drawing going up)
+  //  ------------------------------- # ---------------------------------
+  //  Before adjustment:              #   Before adjustment:
+  //    0                             #     0
+  //    1 ● ↓                         #     1 ●
+  //    2 ● ↓                         #     2 ● ↑
+  //    3 ●                           #     3 ● ↑
+  //  ------------------------------- # ---------------------------------
+  //  After adjustment (i.e. y2--):   #   After adjustment (i.e. y1--):
+  //    0                             #     0
+  //    1 ● ↓                         #     1 ●
+  //    2 ●                           #     2 ● ↑
+  //    3                             #     3
+  //
+  // Note also that this "off by one" difference is always present also
+  // in oblique lines, however a) you don't expect the renders to be
+  // identical in those cases as sw render doesn't support anti-aliasing / sub-pixel
+  // rendering anyways and b) the difference is barely noticeable in those cases.
+
+  if (x1 === x2) y2 > y1 ? y2-- : y1--;
+
   const dx = Math.abs(x2 - x1);
   const dy = Math.abs(y2 - y1);
   const sx = x1 < x2 ? 1 : -1;
