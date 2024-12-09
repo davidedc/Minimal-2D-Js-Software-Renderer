@@ -109,22 +109,22 @@ function add2PxVerticalLineCenteredAtGridComparison() {
     'centered-2px-vertical-line',
     "Single 2px Vertical Line centered at grid",
     (shapes) => {
-      const edges = add2PxVerticalLineCenteredAtGrid(shapes, comparisonLog);
-      return edges;
+      const extremes = add2PxVerticalLineCenteredAtGrid(shapes, comparisonLog);
+      return extremes;
     },
     (comparison) => {
-      const edges = comparison.builderReturnValue;
-      if (!edges) return "No edges data available";      
+      const extremes = comparison.builderReturnValue;
+      if (!extremes) return "No extremes data available";      
       
       comparisonLog = [];
 
-      // Check if the line appears at the expected X coordinate
+      // Count unique colors in the middle row
       const swColorsMiddleRow = comparison.renderChecks.checkCountOfUniqueColorsInMiddleRow(comparison.swCtx, 1);
       const canvasColorsMiddleRow = comparison.renderChecks.checkCountOfUniqueColorsInMiddleRow(comparison.canvasCtx, 1);
       
       comparisonLog.push(`Middle row unique colors: SW: ${swColorsMiddleRow}, Canvas: ${canvasColorsMiddleRow}`);
       
-      // Check vertical alignment
+      // Count unique colors in the middle column
       const swColorsMiddleColumn = comparison.renderChecks.checkCountOfUniqueColorsInMiddleColumn(comparison.swCtx, 1);
       const canvasColorsMiddleColumn = comparison.renderChecks.checkCountOfUniqueColorsInMiddleColumn(comparison.canvasCtx, 1);
       
@@ -134,7 +134,7 @@ function add2PxVerticalLineCenteredAtGridComparison() {
       const extremesResults = comparison.renderChecks.checkExtremes(
         comparison.swCtx,
         comparison.canvasCtx,
-        edges  // The expected extremes returned from add2PxVerticalLineCenteredAtGrid
+        extremes  // The expected extremes returned from add2PxVerticalLineCenteredAtGrid
       );
       
       comparisonLog.push('Extremes check:');
