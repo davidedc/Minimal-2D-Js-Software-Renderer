@@ -299,6 +299,16 @@ function add2PxVerticalLine(shapes, comparisonLog, centerX, centerY, height) {
 
   const topY = Math.floor(centerY - height/2);
   const bottomY = topY + height;
+
+  let startY = topY;
+  let endY = bottomY;
+
+  // half of the times swap the start and end
+  // just in case it matters (it should not)
+  if (Math.random() < 0.5) {
+    startY = bottomY;
+    endY = topY;
+  }
   
   // For a 2px line, it will occupy two columns of pixels
   const leftX = Math.floor(centerX - 1);
@@ -306,8 +316,8 @@ function add2PxVerticalLine(shapes, comparisonLog, centerX, centerY, height) {
   
   shapes.push({
     type: 'line',
-    start: { x: centerX, y: topY },
-    end: { x: centerX, y: bottomY },
+    start: { x: centerX, y: startY },
+    end: { x: centerX, y: endY },
     thickness: 2,
     color: { r: 255, g: 0, b: 0, a: 255 }
   });
