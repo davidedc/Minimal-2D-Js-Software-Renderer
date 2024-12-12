@@ -1,6 +1,6 @@
 // Shape management and random generation
 
-function addBlackLines(count, lineWidth, shapes, log) {
+function addBlackLines(shapes, log, lineWidth, count) {
   for (let i = 0; i < count; i++) {
     shapes.push({
       type: 'line',
@@ -42,7 +42,7 @@ function getRandomArc() {
   };
 }
 
-function addRandomLines(count = 15, shapes, log) {
+function addRandomLines(shapes, log, count = 15) {
   for (let i = 0; i < count; i++) {
     shapes.push({
       type: 'line',
@@ -54,7 +54,7 @@ function addRandomLines(count = 15, shapes, log) {
   }
 }
 
-function addAxisAlignedRectangles(count = 5, shapes, log) {
+function addAxisAlignedRectangles(shapes, log, count = 5) {
   for (let i = 0; i < count; i++) {
     shapes.push({
       type: 'rect',
@@ -69,7 +69,7 @@ function addAxisAlignedRectangles(count = 5, shapes, log) {
   }
 }
 
-function addRotatedRectangles(count = 5, shapes, log) {
+function addRotatedRectangles(shapes, log, count = 5) {
   for (let i = 0; i < count; i++) {
     shapes.push({
       type: 'rect',
@@ -84,7 +84,7 @@ function addRotatedRectangles(count = 5, shapes, log) {
   }
 }
 
-function addAxisAlignedRoundedRectangles(count = 10, shapes, log) {
+function addAxisAlignedRoundedRectangles(shapes, log, count = 10) {
   for (let i = 0; i < count; i++) {
     const width = Math.round(50 + Math.random() * 100);
     const height = Math.round(50 + Math.random() * 100);
@@ -102,7 +102,7 @@ function addAxisAlignedRoundedRectangles(count = 10, shapes, log) {
   }
 }
 
-function addThinStrokeRoundedRectangles(count = 10, shapes, log) {
+function addThinStrokeRoundedRectangles(shapes, log, count = 10) {
   for (let i = 0; i < count; i++) {
     const width = Math.round(50 + Math.random() * 100);
     const height = Math.round(50 + Math.random() * 100);
@@ -120,7 +120,7 @@ function addThinStrokeRoundedRectangles(count = 10, shapes, log) {
   }
 }
 
-function addLargeTransparentRoundedRectangles(count = 10, shapes, log) {
+function addLargeTransparentRoundedRectangles(shapes, log, count = 10) {
   for (let i = 0; i < count; i++) {
     shapes.push({
       type: 'roundedRect',
@@ -136,7 +136,7 @@ function addLargeTransparentRoundedRectangles(count = 10, shapes, log) {
   }
 }
 
-function addNoStrokeRoundedRectangles(count = 10, shapes, log) {
+function addNoStrokeRoundedRectangles(shapes, log, count = 10) {
   for (let i = 0; i < count; i++) {
     shapes.push({
       type: 'roundedRect',
@@ -152,7 +152,7 @@ function addNoStrokeRoundedRectangles(count = 10, shapes, log) {
   }
 }
 
-function addRotatedRoundedRectangles(count = 3, shapes, log) {
+function addRotatedRoundedRectangles(shapes, log, count = 3) {
   for (let i = 0; i < count; i++) {
     const width = 50 + Math.random() * 100;
     const height = 50 + Math.random() * 100;
@@ -194,13 +194,13 @@ function addNinetyDegreeArcs(shapes, log) {
   }
 }
 
-function addRandomCircles(count = 5, shapes, log) {
+function addRandomCircles(shapes, log, count = 5) {
   for (let i = 0; i < count; i++) {
     shapes.push(getRandomCircle());
   }
 }
 
-function addRandomArcs(count = 3, shapes, log) {
+function addRandomArcs(shapes, log, count = 3) {
   for (let i = 0; i < count; i++) {
     shapes.push(getRandomArc());
   }
@@ -484,15 +484,15 @@ function add2PxHorizontalLineCenteredAtGrid(shapes, log) {
 }
 
 function buildScene(shapes, log) {
-  addRandomLines(15, shapes, log);
-  addAxisAlignedRectangles(5, shapes, log);
-  addRotatedRectangles(5, shapes, log);
-  addAxisAlignedRoundedRectangles(10, shapes, log);
-  addLargeTransparentRoundedRectangles(10, shapes, log);
-  addNoStrokeRoundedRectangles(10, shapes, log);
-  // addRotatedRoundedRectangles(3, shapes, log);
+  addRandomLines(shapes, log, 15);
+  addAxisAlignedRectangles(shapes, log, 5);
+  addRotatedRectangles(shapes, log, 5);
+  addAxisAlignedRoundedRectangles(shapes, log, 10);
+  addLargeTransparentRoundedRectangles(shapes, log, 10);
+  addNoStrokeRoundedRectangles(shapes, log, 10);
+  // addRotatedRoundedRectangles(shapes, log, 3);
   addNinetyDegreeArcs(shapes, log);
-  addRandomArcs(3, shapes, log);
-  addRandomCircles(5, shapes, log);
-  addThinStrokeRoundedRectangles(10, shapes, log);
+  addRandomArcs(shapes, log, 3);
+  addRandomCircles(shapes, log, 5);
+  addThinStrokeRoundedRectangles(shapes, log, 10);
 }

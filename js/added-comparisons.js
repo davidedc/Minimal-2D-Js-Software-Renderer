@@ -4,7 +4,7 @@ function addBlackLinesComparison(lineWidth) {
     .withTitle(`${lineWidth}px Black Lines`)
     .withDescription(`Tests rendering of multiple black lines of line width ${lineWidth}`)
     .addShapes((shapes, log) => {
-      addBlackLines(20,lineWidth, shapes, log);
+      addBlackLines(shapes, log, lineWidth, 20);
       return null;
     })
     .build();
@@ -28,7 +28,7 @@ function addThinRoundedRectsComparison() {
     .withTitle('Multiple Thin-Stroke Rounded Rectangles')
     .withDescription('Tests rendering of multiple rounded rectangles with thin stroke widths')
     .addShapes((shapes, log) => {
-      addThinStrokeRoundedRectangles(10, shapes, log);
+      addThinStrokeRoundedRectangles(shapes, log, 10);
       return null;
     })
     .build();
