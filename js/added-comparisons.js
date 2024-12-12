@@ -3,9 +3,7 @@ function addBlackLinesComparison(lineWidth) {
     .withId('thin-black-lines')
     .withTitle(`${lineWidth}px Black Lines`)
     .withDescription(`Tests rendering of multiple black lines of line width ${lineWidth}`)
-    .addShapes((shapes, log) => {
-      addBlackLines(shapes, log, lineWidth, 20);
-    })
+    .addShapes(addBlackLines, lineWidth, 20)
     .build();
 }
 
@@ -14,10 +12,7 @@ function addEverythingTogetherComparison() {
     .withId('all-shapes')
     .withTitle('All Shape Types Combined')
     .withDescription('Combines all shape types into a single scene to test overall rendering consistency')
-    .addShapes((shapes, log) => {
-      buildScene(shapes, log);
-      return null;
-    })
+    .addShapes(buildScene)
     .build();
 }
 
@@ -26,9 +21,7 @@ function addThinRoundedRectsComparison() {
     .withId('thin-rounded-rects')
     .withTitle('Multiple Thin-Stroke Rounded Rectangles')
     .withDescription('Tests rendering of multiple rounded rectangles with thin stroke widths')
-    .addShapes((shapes, log) => {
-      addThinStrokeRoundedRectangles(shapes, log, 10);
-    })
+    .addShapes(addThinStrokeRoundedRectangles, 10)
     .build();
 }
 
@@ -37,9 +30,7 @@ function addCenteredRoundedRectComparison() {
     .withId('centered-rounded-rect')
     .withTitle('Single Centered Rounded Rectangle')
     .withDescription('A single rounded rectangle with different stroke widths and colors')
-    .addShapes((shapes, log) => {
-      addCenteredRoundedRect(shapes, log);
-    })
+    .addShapes(addCenteredRoundedRect)
     .withColorCheckMiddleRow({ expectedUniqueColors: 2 })
     .withColorCheckMiddleColumn({ expectedUniqueColors: 2 })
     .build();
@@ -50,7 +41,7 @@ function add1PxStrokedRoundedRectCenteredAtGridComparison() {
     .withId('centered-1px-rounded-rect')
     .withTitle('Single 1px Stroked Rounded Rectangle centered at grid')
     .withDescription('Tests crisp rendering of a 1px stroked rounded rectangle where the center is at a crossing in the grid')
-    .addShapes((shapes, log) => add1PxStrokeCenteredRoundedRectAtGrid(shapes, log))
+    .addShapes(add1PxStrokeCenteredRoundedRectAtGrid)
     .withPlacementCheck()
     .build();
 }
@@ -60,7 +51,7 @@ function add1PxStrokedRoundedRectCenteredAtPixelComparison() {
     .withId('centered-1px-rounded-rect')
     .withTitle('Single 1px Stroked Rounded Rectangle centered at pixel')
     .withDescription('Tests crisp rendering of a 1px stroked rounded rectangle where the center is in the middle of a pixel')
-    .addShapes((shapes, log) => add1PxStrokeCenteredRoundedRectAtPixel(shapes, log))
+    .addShapes(add1PxStrokeCenteredRoundedRectAtPixel)
     .withPlacementCheck()
     .build();
 }
@@ -70,7 +61,7 @@ function add2PxVerticalLineCenteredAtGridComparison() {
     .withId('centered-2px-vertical-line')
     .withTitle('Single 2px Vertical Line centered at grid')
     .withDescription('Tests crisp rendering of a 2px vertical line')
-    .addShapes((shapes, log) => add2PxVerticalLineCenteredAtGrid(shapes, log))
+    .addShapes(add2PxVerticalLineCenteredAtGrid)
     .withColorCheckMiddleRow({ expectedUniqueColors: 1 })
     .withColorCheckMiddleColumn({ expectedUniqueColors: 1 })
     .withExtremesCheck()
@@ -82,7 +73,7 @@ function add1PxVerticalLineCenteredAtPixelComparison() {
     .withId('centered-1px-vertical-line')
     .withTitle('Single 1px Vertical Line centered at pixel')
     .withDescription('Tests crisp rendering of a 1px vertical line centered at pixel')
-    .addShapes((shapes, log) => add1PxVerticalLineCenteredAtPixel(shapes, log))
+    .addShapes(add1PxVerticalLineCenteredAtPixel)
     .withColorCheckMiddleRow({ expectedUniqueColors: 1 })
     .withColorCheckMiddleColumn({ expectedUniqueColors: 1 })
     .withExtremesCheck()
@@ -94,7 +85,7 @@ function add1PxHorizontalLineCenteredAtPixelComparison() {
     .withId('centered-1px-horizontal-line')
     .withTitle('Single 1px Horizontal Line centered at pixel')
     .withDescription('Tests crisp rendering of a 1px horizontal line centered at pixel')
-    .addShapes((shapes, log) => add1PxHorizontalLineCenteredAtPixel(shapes, log))
+    .addShapes(add1PxHorizontalLineCenteredAtPixel)
     .withColorCheckMiddleRow({ expectedUniqueColors: 1 })
     .withColorCheckMiddleColumn({ expectedUniqueColors: 1 })
     .withExtremesCheck()
@@ -106,7 +97,7 @@ function add2PxHorizontalLineCenteredAtGridComparison() {
     .withId('centered-2px-horizontal-line')
     .withTitle('Single 2px Horizontal Line centered at grid')
     .withDescription('Tests crisp rendering of a 2px horizontal line centered at grid')
-    .addShapes((shapes, log) => add2PxHorizontalLineCenteredAtGrid(shapes, log))
+    .addShapes(add2PxHorizontalLineCenteredAtGrid)
     .withColorCheckMiddleRow({ expectedUniqueColors: 1 })
     .withColorCheckMiddleColumn({ expectedUniqueColors: 1 })
     .withExtremesCheck()

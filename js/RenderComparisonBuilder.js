@@ -23,16 +23,10 @@ class RenderComparisonBuilder {
     return this;
   }
 
-  addShapes(shapeBuilder) {
-    this._shapeBuilder = (shapes) => {
+  addShapes(shapeFunction, ...args) {
+    this._shapeBuilder = (shapes, log) => {
       this._buildLog = [];
-      const result = shapeBuilder(shapes, this._buildLog);
-      if (this._buildLog.length > 0) {
-        this._checks.unshift((comparison) => {
-          return this._buildLog.join('<br>');
-        });
-      }
-      return result;
+      return shapeFunction(shapes, log, ...args);
     };
     return this;
   }
