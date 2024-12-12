@@ -35,6 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function addRenderComparisons() {
+  add1PxHorizontalLineCenteredAtPixelComparison();
   add1PxVerticalLineCenteredAtPixelComparison();
   add2PxVerticalLineCenteredAtGridComparison();
   addBlackLinesComparison(1);  // 1px lines
