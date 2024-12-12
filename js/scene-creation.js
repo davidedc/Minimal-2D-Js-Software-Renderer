@@ -283,7 +283,7 @@ function add1PxStrokeCenteredRoundedRect(shapes, centerX, centerY, rectWidth, re
   return { leftX, rightX, topY, bottomY };
 }
 
-function add2PxVerticalLine(shapes, comparisonLog, centerX, centerY, height) {
+function add2PxVerticalLine(shapes, centerX, centerY, height) {
   // the default lineCap is butt
   // see: https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/lineCap#butt
   // ...which means that the top aligns
@@ -322,13 +322,11 @@ function add2PxVerticalLine(shapes, comparisonLog, centerX, centerY, height) {
     color: { r: 255, g: 0, b: 0, a: 255 }
   });
 
-  comparisonLog.push(`2px vertical line from (${centerX}, ${topY}) to (${centerX}, ${bottomY}) of height ${height}`);
-  
   // NOTE how you expect the Y of the bottom pixel to be bottomY - 1 !
   return { leftX, rightX, topY, bottomY: bottomY - 1};
 }
 
-function add2PxVerticalLineCenteredAtGrid(shapes, comparisonLog) {
+function add2PxVerticalLineCenteredAtGrid(shapes) {
   // if width and height of the canvas are not even, do a console error that they should be
   if (width % 2 !== 0 || height % 2 !== 0) {
     console.error('Width and height should be even numbers for this test');
@@ -341,10 +339,10 @@ function add2PxVerticalLineCenteredAtGrid(shapes, comparisonLog) {
   const centerX = Math.floor(width / 2);
   const centerY = Math.floor(height / 2);
   
-  return add2PxVerticalLine(shapes, comparisonLog, centerX, centerY, lineHeight);
+  return add2PxVerticalLine(shapes, centerX, centerY, lineHeight);
 }
 
-function add1PxVerticalLine(shapes, comparisonLog, centerX, centerY, height) {
+function add1PxVerticalLine(shapes, centerX, centerY, height) {
   const topY = Math.floor(centerY - height/2);
   const bottomY = topY + height;
 
@@ -369,13 +367,11 @@ function add1PxVerticalLine(shapes, comparisonLog, centerX, centerY, height) {
     color: { r: 255, g: 0, b: 0, a: 255 }
   });
 
-  comparisonLog.push(`1px vertical line from (${centerX}, ${topY}) to (${centerX}, ${bottomY}) of height ${height}`);
-  
   // For 1px line, leftX and rightX are the same
   return { leftX: pixelX, rightX: pixelX, topY, bottomY: bottomY - 1};
 }
 
-function add1PxVerticalLineCenteredAtPixel(shapes, comparisonLog) {
+function add1PxVerticalLineCenteredAtPixel(shapes) {
   // if width and height of the canvas are not even, do a console error that they should be
   if (width % 2 !== 0 || height % 2 !== 0) {
     console.error('Width and height should be even numbers for this test');
@@ -388,10 +384,10 @@ function add1PxVerticalLineCenteredAtPixel(shapes, comparisonLog) {
   const centerX = Math.floor(width / 2) + 0.5;
   const centerY = Math.floor(height / 2);
   
-  return add1PxVerticalLine(shapes, comparisonLog, centerX, centerY, lineHeight);
+  return add1PxVerticalLine(shapes, centerX, centerY, lineHeight);
 }
 
-function add1PxHorizontalLine(shapes, comparisonLog, centerX, centerY, width) {
+function add1PxHorizontalLine(shapes, centerX, centerY, width) {
   const leftX = Math.floor(centerX - width/2);
   const rightX = leftX + width;
 
@@ -416,13 +412,11 @@ function add1PxHorizontalLine(shapes, comparisonLog, centerX, centerY, width) {
     color: { r: 255, g: 0, b: 0, a: 255 }
   });
 
-  comparisonLog.push(`1px horizontal line from (${leftX}, ${centerY}) to (${rightX}, ${centerY}) of width ${width}`);
-  
   // For 1px line, topY and bottomY are the same
   return { topY: pixelY, bottomY: pixelY, leftX, rightX: rightX - 1};
 }
 
-function add1PxHorizontalLineCenteredAtPixel(shapes, comparisonLog) {
+function add1PxHorizontalLineCenteredAtPixel(shapes) {
   // if width and height of the canvas are not even, do a console error that they should be
   if (width % 2 !== 0 || height % 2 !== 0) {
     console.error('Width and height should be even numbers for this test');
@@ -435,10 +429,10 @@ function add1PxHorizontalLineCenteredAtPixel(shapes, comparisonLog) {
   const centerX = Math.floor(width / 2);
   const centerY = Math.floor(height / 2) + 0.5;
   
-  return add1PxHorizontalLine(shapes, comparisonLog, centerX, centerY, lineWidth);
+  return add1PxHorizontalLine(shapes, centerX, centerY, lineWidth);
 }
 
-function add2PxHorizontalLine(shapes, comparisonLog, centerX, centerY, width) {
+function add2PxHorizontalLine(shapes, centerX, centerY, width) {
   // For a 2px line, it will occupy two rows of pixels
   const topY = Math.floor(centerY - 1);
   const bottomY = topY + 1;
@@ -464,12 +458,10 @@ function add2PxHorizontalLine(shapes, comparisonLog, centerX, centerY, width) {
     color: { r: 255, g: 0, b: 0, a: 255 }
   });
 
-  comparisonLog.push(`2px horizontal line from (${leftX}, ${centerY}) to (${rightX}, ${centerY}) of width ${width}`);
-  
   return { topY, bottomY, leftX, rightX: rightX - 1};
 }
 
-function add2PxHorizontalLineCenteredAtGrid(shapes, comparisonLog) {
+function add2PxHorizontalLineCenteredAtGrid(shapes) {
   // if width and height of the canvas are not even, do a console error that they should be
   if (width % 2 !== 0 || height % 2 !== 0) {
     console.error('Width and height should be even numbers for this test');
@@ -482,7 +474,7 @@ function add2PxHorizontalLineCenteredAtGrid(shapes, comparisonLog) {
   const centerX = Math.floor(width / 2);
   const centerY = Math.floor(height / 2);
   
-  return add2PxHorizontalLine(shapes, comparisonLog, centerX, centerY, lineWidth);
+  return add2PxHorizontalLine(shapes, centerX, centerY, lineWidth);
 }
 
 function buildScene(shapes) {
