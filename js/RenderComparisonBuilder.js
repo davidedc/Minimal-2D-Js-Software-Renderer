@@ -5,6 +5,7 @@ class RenderComparisonBuilder {
     this._description = '';
     this._shapeBuilder = null;
     this._checks = [];
+    this._buildLog = [];
   }
 
   withId(id) {
@@ -23,7 +24,16 @@ class RenderComparisonBuilder {
   }
 
   addShapes(shapeBuilder) {
-    this._shapeBuilder = shapeBuilder;
+    this._shapeBuilder = (shapes) => {
+      this._buildLog = [];
+      const result = shapeBuilder(shapes, this._buildLog);
+      if (this._buildLog.length > 0) {
+        this._checks.unshift((comparison) => {
+          return this._buildLog.join('<br>');
+        });
+      }
+      return result;
+    };
     return this;
   }
 

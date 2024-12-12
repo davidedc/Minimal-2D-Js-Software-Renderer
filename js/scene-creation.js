@@ -1,12 +1,12 @@
 // Shape management and random generation
 
-function addBlackLines(count = 20, shapes, strokeWidth) {
+function addBlackLines(count, lineWidth, shapes, log) {
   for (let i = 0; i < count; i++) {
     shapes.push({
       type: 'line',
       start: getRandomPoint(),
       end: getRandomPoint(),
-      thickness: strokeWidth,
+      thickness: lineWidth,
       color: { r: 0, g: 0, b: 0, a: 255 }
     });
   }
@@ -42,7 +42,7 @@ function getRandomArc() {
   };
 }
 
-function addRandomLines(count = 15, shapes) {
+function addRandomLines(count = 15, shapes, log) {
   for (let i = 0; i < count; i++) {
     shapes.push({
       type: 'line',
@@ -54,7 +54,7 @@ function addRandomLines(count = 15, shapes) {
   }
 }
 
-function addAxisAlignedRectangles(count = 5, shapes) {
+function addAxisAlignedRectangles(count = 5, shapes, log) {
   for (let i = 0; i < count; i++) {
     shapes.push({
       type: 'rect',
@@ -69,7 +69,7 @@ function addAxisAlignedRectangles(count = 5, shapes) {
   }
 }
 
-function addRotatedRectangles(count = 5, shapes) {
+function addRotatedRectangles(count = 5, shapes, log) {
   for (let i = 0; i < count; i++) {
     shapes.push({
       type: 'rect',
@@ -84,7 +84,7 @@ function addRotatedRectangles(count = 5, shapes) {
   }
 }
 
-function addAxisAlignedRoundedRectangles(count = 10, shapes) {
+function addAxisAlignedRoundedRectangles(count = 10, shapes, log) {
   for (let i = 0; i < count; i++) {
     const width = Math.round(50 + Math.random() * 100);
     const height = Math.round(50 + Math.random() * 100);
@@ -102,7 +102,7 @@ function addAxisAlignedRoundedRectangles(count = 10, shapes) {
   }
 }
 
-function addThinStrokeRoundedRectangles(count = 10, shapes) {
+function addThinStrokeRoundedRectangles(count = 10, shapes, log) {
   for (let i = 0; i < count; i++) {
     const width = Math.round(50 + Math.random() * 100);
     const height = Math.round(50 + Math.random() * 100);
@@ -120,7 +120,7 @@ function addThinStrokeRoundedRectangles(count = 10, shapes) {
   }
 }
 
-function addLargeTransparentRoundedRectangles(count = 10, shapes) {
+function addLargeTransparentRoundedRectangles(count = 10, shapes, log) {
   for (let i = 0; i < count; i++) {
     shapes.push({
       type: 'roundedRect',
@@ -136,7 +136,7 @@ function addLargeTransparentRoundedRectangles(count = 10, shapes) {
   }
 }
 
-function addNoStrokeRoundedRectangles(count = 10, shapes) {
+function addNoStrokeRoundedRectangles(count = 10, shapes, log) {
   for (let i = 0; i < count; i++) {
     shapes.push({
       type: 'roundedRect',
@@ -152,7 +152,7 @@ function addNoStrokeRoundedRectangles(count = 10, shapes) {
   }
 }
 
-function addRotatedRoundedRectangles(count = 3, shapes) {
+function addRotatedRoundedRectangles(count = 3, shapes, log) {
   for (let i = 0; i < count; i++) {
     const width = 50 + Math.random() * 100;
     const height = 50 + Math.random() * 100;
@@ -170,7 +170,7 @@ function addRotatedRoundedRectangles(count = 3, shapes) {
   }
 }
 
-function addNinetyDegreeArcs(shapes) {
+function addNinetyDegreeArcs(shapes, log) {
   const strokeSizes = [1, 2, 3, 4];
   const radii = [20, 40, 60];
   let xOffset = 150;
@@ -194,19 +194,19 @@ function addNinetyDegreeArcs(shapes) {
   }
 }
 
-function addRandomCircles(count = 5, shapes) {
+function addRandomCircles(count = 5, shapes, log) {
   for (let i = 0; i < count; i++) {
     shapes.push(getRandomCircle());
   }
 }
 
-function addRandomArcs(count = 3, shapes) {
+function addRandomArcs(count = 3, shapes, log) {
   for (let i = 0; i < count; i++) {
     shapes.push(getRandomArc());
   }
 }
 
-function addCenteredRoundedRect(shapes) {
+function addCenteredRoundedRect(shapes, log) {
   // Leave 20% margin from canvas edges
   const maxWidth = width * 0.6;
   const maxHeight = height * 0.6;
@@ -227,7 +227,7 @@ function addCenteredRoundedRect(shapes) {
   });
 }
 
-function add1PxStrokeCenteredRoundedRectAtGrid(shapes) {
+function add1PxStrokeCenteredRoundedRectAtGrid(shapes, log) {
   // if width and height of the canvas are not even, do a console error that they should be
   if (width % 2 !== 0 || height % 2 !== 0) {
     console.error('Width and height should be even numbers for this test');
@@ -241,10 +241,10 @@ function add1PxStrokeCenteredRoundedRectAtGrid(shapes) {
   const centerX = Math.floor(width / 2);
   const centerY = Math.floor(height / 2);
   
-  return add1PxStrokeCenteredRoundedRect(shapes, centerX, centerY, rectWidth, rectHeight);
+  return add1PxStrokeCenteredRoundedRect(centerX, centerY, rectWidth, rectHeight, shapes, log);
 }
 
-function add1PxStrokeCenteredRoundedRectAtPixel(shapes) {
+function add1PxStrokeCenteredRoundedRectAtPixel(shapes, log) {
   // if width and height of the canvas are not even, do a console error that they should be
   if (width % 2 !== 0 || height % 2 !== 0) {
     console.error('Width and height should be even numbers for this test');
@@ -258,10 +258,10 @@ function add1PxStrokeCenteredRoundedRectAtPixel(shapes) {
   const centerX = Math.floor(width / 2) + 0.5;
   const centerY = Math.floor(height / 2) + 0.5;
   
-  return add1PxStrokeCenteredRoundedRect(shapes, centerX, centerY, rectWidth, rectHeight);
+  return add1PxStrokeCenteredRoundedRect(centerX, centerY, rectWidth, rectHeight, shapes, log);
 }
 
-function add1PxStrokeCenteredRoundedRect(shapes, centerX, centerY, rectWidth, rectHeight) {
+function add1PxStrokeCenteredRoundedRect(centerX, centerY, rectWidth, rectHeight, shapes, log) {
   // Calculate edges for testing
   const leftX = Math.floor(centerX - rectWidth/2);
   const rightX = leftX + rectWidth - 1;
@@ -283,7 +283,7 @@ function add1PxStrokeCenteredRoundedRect(shapes, centerX, centerY, rectWidth, re
   return { leftX, rightX, topY, bottomY };
 }
 
-function add2PxVerticalLine(shapes, centerX, centerY, height) {
+function add2PxVerticalLine(centerX, centerY, height, shapes, log) {
   // the default lineCap is butt
   // see: https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/lineCap#butt
   // ...which means that the top aligns
@@ -326,7 +326,7 @@ function add2PxVerticalLine(shapes, centerX, centerY, height) {
   return { leftX, rightX, topY, bottomY: bottomY - 1};
 }
 
-function add2PxVerticalLineCenteredAtGrid(shapes) {
+function add2PxVerticalLineCenteredAtGrid(shapes, log) {
   // if width and height of the canvas are not even, do a console error that they should be
   if (width % 2 !== 0 || height % 2 !== 0) {
     console.error('Width and height should be even numbers for this test');
@@ -339,10 +339,16 @@ function add2PxVerticalLineCenteredAtGrid(shapes) {
   const centerX = Math.floor(width / 2);
   const centerY = Math.floor(height / 2);
   
-  return add2PxVerticalLine(shapes, centerX, centerY, lineHeight);
+  const result = add2PxVerticalLine(centerX, centerY, lineHeight, shapes, log);
+  
+  if (log) {
+    log.push(`2px vertical line from (${centerX}, ${result.topY}) to (${centerX}, ${result.bottomY}) of height ${lineHeight}`);
+  }
+  
+  return result;
 }
 
-function add1PxVerticalLine(shapes, centerX, centerY, height) {
+function add1PxVerticalLine(centerX, centerY, height, shapes, log) {
   const topY = Math.floor(centerY - height/2);
   const bottomY = topY + height;
 
@@ -371,7 +377,7 @@ function add1PxVerticalLine(shapes, centerX, centerY, height) {
   return { leftX: pixelX, rightX: pixelX, topY, bottomY: bottomY - 1};
 }
 
-function add1PxVerticalLineCenteredAtPixel(shapes) {
+function add1PxVerticalLineCenteredAtPixel(shapes, log) {
   // if width and height of the canvas are not even, do a console error that they should be
   if (width % 2 !== 0 || height % 2 !== 0) {
     console.error('Width and height should be even numbers for this test');
@@ -384,10 +390,10 @@ function add1PxVerticalLineCenteredAtPixel(shapes) {
   const centerX = Math.floor(width / 2) + 0.5;
   const centerY = Math.floor(height / 2);
   
-  return add1PxVerticalLine(shapes, centerX, centerY, lineHeight);
+  return add1PxVerticalLine(centerX, centerY, lineHeight, shapes, log);
 }
 
-function add1PxHorizontalLine(shapes, centerX, centerY, width) {
+function add1PxHorizontalLine(centerX, centerY, width, shapes, log) {
   const leftX = Math.floor(centerX - width/2);
   const rightX = leftX + width;
 
@@ -416,7 +422,7 @@ function add1PxHorizontalLine(shapes, centerX, centerY, width) {
   return { topY: pixelY, bottomY: pixelY, leftX, rightX: rightX - 1};
 }
 
-function add1PxHorizontalLineCenteredAtPixel(shapes) {
+function add1PxHorizontalLineCenteredAtPixel(shapes, log) {
   // if width and height of the canvas are not even, do a console error that they should be
   if (width % 2 !== 0 || height % 2 !== 0) {
     console.error('Width and height should be even numbers for this test');
@@ -429,10 +435,10 @@ function add1PxHorizontalLineCenteredAtPixel(shapes) {
   const centerX = Math.floor(width / 2);
   const centerY = Math.floor(height / 2) + 0.5;
   
-  return add1PxHorizontalLine(shapes, centerX, centerY, lineWidth);
+  return add1PxHorizontalLine(centerX, centerY, lineWidth, shapes, log);
 }
 
-function add2PxHorizontalLine(shapes, centerX, centerY, width) {
+function add2PxHorizontalLine(centerX, centerY, width, shapes, log) {
   // For a 2px line, it will occupy two rows of pixels
   const topY = Math.floor(centerY - 1);
   const bottomY = topY + 1;
@@ -461,7 +467,7 @@ function add2PxHorizontalLine(shapes, centerX, centerY, width) {
   return { topY, bottomY, leftX, rightX: rightX - 1};
 }
 
-function add2PxHorizontalLineCenteredAtGrid(shapes) {
+function add2PxHorizontalLineCenteredAtGrid(shapes, log) {
   // if width and height of the canvas are not even, do a console error that they should be
   if (width % 2 !== 0 || height % 2 !== 0) {
     console.error('Width and height should be even numbers for this test');
@@ -474,19 +480,19 @@ function add2PxHorizontalLineCenteredAtGrid(shapes) {
   const centerX = Math.floor(width / 2);
   const centerY = Math.floor(height / 2);
   
-  return add2PxHorizontalLine(shapes, centerX, centerY, lineWidth);
+  return add2PxHorizontalLine(centerX, centerY, lineWidth, shapes, log);
 }
 
-function buildScene(shapes) {
-  addRandomLines(15, shapes);
-  addAxisAlignedRectangles(5, shapes);
-  addRotatedRectangles(5, shapes);
-  addAxisAlignedRoundedRectangles(10, shapes);
-  addLargeTransparentRoundedRectangles(10, shapes);
-  addNoStrokeRoundedRectangles(10, shapes);
-  // addRotatedRoundedRectangles(3, shapes);
-  addNinetyDegreeArcs(shapes);
-  addRandomArcs(3, shapes);
-  addRandomCircles(5, shapes);
-  addThinStrokeRoundedRectangles(10, shapes);
+function buildScene(shapes, log) {
+  addRandomLines(15, shapes, log);
+  addAxisAlignedRectangles(5, shapes, log);
+  addRotatedRectangles(5, shapes, log);
+  addAxisAlignedRoundedRectangles(10, shapes, log);
+  addLargeTransparentRoundedRectangles(10, shapes, log);
+  addNoStrokeRoundedRectangles(10, shapes, log);
+  // addRotatedRoundedRectangles(3, shapes, log);
+  addNinetyDegreeArcs(shapes, log);
+  addRandomArcs(3, shapes, log);
+  addRandomCircles(5, shapes, log);
+  addThinStrokeRoundedRectangles(10, shapes, log);
 }
