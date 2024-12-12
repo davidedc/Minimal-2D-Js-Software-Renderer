@@ -5,7 +5,6 @@ function addBlackLinesComparison(lineWidth) {
     .withDescription(`Tests rendering of multiple black lines of line width ${lineWidth}`)
     .addShapes((shapes, log) => {
       addBlackLines(shapes, log, lineWidth, 20);
-      return null;
     })
     .build();
 }
@@ -29,7 +28,6 @@ function addThinRoundedRectsComparison() {
     .withDescription('Tests rendering of multiple rounded rectangles with thin stroke widths')
     .addShapes((shapes, log) => {
       addThinStrokeRoundedRectangles(shapes, log, 10);
-      return null;
     })
     .build();
 }
@@ -41,7 +39,6 @@ function addCenteredRoundedRectComparison() {
     .withDescription('A single rounded rectangle with different stroke widths and colors')
     .addShapes((shapes, log) => {
       addCenteredRoundedRect(shapes, log);
-      return null;
     })
     .withColorCheckMiddleRow({ expectedUniqueColors: 2 })
     .withColorCheckMiddleColumn({ expectedUniqueColors: 2 })
