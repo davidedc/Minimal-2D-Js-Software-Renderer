@@ -438,6 +438,53 @@ function add1PxHorizontalLineCenteredAtPixel(shapes, comparisonLog) {
   return add1PxHorizontalLine(shapes, comparisonLog, centerX, centerY, lineWidth);
 }
 
+function add2PxHorizontalLine(shapes, comparisonLog, centerX, centerY, width) {
+  // For a 2px line, it will occupy two rows of pixels
+  const topY = Math.floor(centerY - 1);
+  const bottomY = topY + 1;
+
+  const leftX = Math.floor(centerX - width/2);
+  const rightX = leftX + width;
+
+  let startX = leftX;
+  let endX = rightX;
+
+  // half of the times swap the start and end
+  // just in case it matters (it should not)
+  if (Math.random() < 0.5) {
+    startX = rightX;
+    endX = leftX;
+  }
+  
+  shapes.push({
+    type: 'line',
+    start: { x: startX, y: centerY },
+    end: { x: endX, y: centerY },
+    thickness: 2,
+    color: { r: 255, g: 0, b: 0, a: 255 }
+  });
+
+  comparisonLog.push(`2px horizontal line from (${leftX}, ${centerY}) to (${rightX}, ${centerY}) of width ${width}`);
+  
+  return { topY, bottomY, leftX, rightX: rightX - 1};
+}
+
+function add2PxHorizontalLineCenteredAtGrid(shapes, comparisonLog) {
+  // if width and height of the canvas are not even, do a console error that they should be
+  if (width % 2 !== 0 || height % 2 !== 0) {
+    console.error('Width and height should be even numbers for this test');
+  }
+
+  // Define line width as random integer between 20 and 150
+  const lineWidth = Math.floor(20 + Math.random() * 130);
+
+  // Center of the grid
+  const centerX = Math.floor(width / 2);
+  const centerY = Math.floor(height / 2);
+  
+  return add2PxHorizontalLine(shapes, comparisonLog, centerX, centerY, lineWidth);
+}
+
 function buildScene(shapes) {
   addRandomLines(15, shapes);
   addAxisAlignedRectangles(5, shapes);
