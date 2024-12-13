@@ -1,5 +1,11 @@
 // Shape management and random generation
 
+function checkCanvasHasEvenDimensions() {
+  if (width % 2 !== 0 || height % 2 !== 0) {
+    console.error('Width and height should be even numbers for this test');
+  }
+}
+
 function addBlackLines(shapes, log, lineWidth, count) {
   for (let i = 0; i < count; i++) {
     shapes.push({
@@ -228,10 +234,7 @@ function addCenteredRoundedRect(shapes, log) {
 }
 
 function add1PxStrokeCenteredRoundedRectAtGrid(shapes, log) {
-  // if width and height of the canvas are not even, do a console error that they should be
-  if (width % 2 !== 0 || height % 2 !== 0) {
-    console.error('Width and height should be even numbers for this test');
-  }
+  checkCanvasHasEvenDimensions();
 
   // Define rectangle dimensions as random integers between 20 and 150
   const rectWidth = Math.floor(20 + Math.random() * 130);
@@ -245,10 +248,7 @@ function add1PxStrokeCenteredRoundedRectAtGrid(shapes, log) {
 }
 
 function add1PxStrokeCenteredRoundedRectAtPixel(shapes, log) {
-  // if width and height of the canvas are not even, do a console error that they should be
-  if (width % 2 !== 0 || height % 2 !== 0) {
-    console.error('Width and height should be even numbers for this test');
-  }
+  checkCanvasHasEvenDimensions();
 
   // Define rectangle dimensions as random integers between 20 and 150
   const rectWidth = Math.floor(20 + Math.random() * 130);
@@ -327,10 +327,7 @@ function add2PxVerticalLine(centerX, centerY, height, shapes, log) {
 }
 
 function add2PxVerticalLineCenteredAtGrid(shapes, log) {
-  // if width and height of the canvas are not even, do a console error that they should be
-  if (width % 2 !== 0 || height % 2 !== 0) {
-    console.error('Width and height should be even numbers for this test');
-  }
+  checkCanvasHasEvenDimensions();
 
   // Define line height as random integer between 20 and 150
   const lineHeight = Math.floor(20 + Math.random() * 130);
@@ -378,10 +375,7 @@ function add1PxVerticalLine(centerX, centerY, height, shapes, log) {
 }
 
 function add1PxVerticalLineCenteredAtPixel(shapes, log) {
-  // if width and height of the canvas are not even, do a console error that they should be
-  if (width % 2 !== 0 || height % 2 !== 0) {
-    console.error('Width and height should be even numbers for this test');
-  }
+  checkCanvasHasEvenDimensions();
 
   // Define line height as random integer between 20 and 150
   const lineHeight = Math.floor(20 + Math.random() * 130);
@@ -423,10 +417,7 @@ function add1PxHorizontalLine(centerX, centerY, width, shapes, log) {
 }
 
 function add1PxHorizontalLineCenteredAtPixel(shapes, log) {
-  // if width and height of the canvas are not even, do a console error that they should be
-  if (width % 2 !== 0 || height % 2 !== 0) {
-    console.error('Width and height should be even numbers for this test');
-  }
+  checkCanvasHasEvenDimensions();
 
   // Define line width as random integer between 20 and 150
   const lineWidth = Math.floor(20 + Math.random() * 130);
@@ -468,10 +459,7 @@ function add2PxHorizontalLine(centerX, centerY, width, shapes, log) {
 }
 
 function add2PxHorizontalLineCenteredAtGrid(shapes, log) {
-  // if width and height of the canvas are not even, do a console error that they should be
-  if (width % 2 !== 0 || height % 2 !== 0) {
-    console.error('Width and height should be even numbers for this test');
-  }
+  checkCanvasHasEvenDimensions();
 
   // Define line width as random integer between 20 and 150
   const lineWidth = Math.floor(20 + Math.random() * 130);
