@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CrispSwCanvas Demo</title>
+    <style>
+        canvas {
+            border: 1px solid #ccc;
+            margin: 10px;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .canvas-container {
+            display: flex;
+            flex-direction: row;
+            gap: 20px;
+        }
+        .canvas-label {
+            text-align: center;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>CrispSwCanvas Demo</h1>
+        <div class="canvas-container">
+            <div>
+                <div class="canvas-label">CrispSwCanvas</div>
+                <canvas id="targetCanvas" width="800" height="600"></canvas>
+            </div>
+            <div>
+                <div class="canvas-label">Standard HTML5 Canvas</div>
+                <canvas id="standardCanvas" width="800" height="600"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let frameBuffer = null;
+        let width = null;
+        let height = null;
+        // Blending happens in sRGB space for performance reasons
+        function setPixel(x, y, r, g, b, a) {
+            if (x < 0 || x >= width || y < 0 || y >= height) return;
+            const index = (y * width + x) * 4;
+            
+            const alpha = a / 255;
+            const oldAlpha = frameBuffer[index + 3] / 255;
+            const newAlpha = alpha + oldAlpha * (1 - alpha);
+            
+            if (newAlpha > 0) {
+                frameBuffer[index] = (r * alpha + frameBuffer[index] * oldAlpha * (1 - alpha)) / newAlpha;
+                frameBuffer[index + 1] = (g * alpha + frameBuffer[index + 1] * oldAlpha * (1 - alpha)) / newAlpha;
+                frameBuffer[index + 2] = (b * alpha + frameBuffer[index + 2] * oldAlpha * (1 - alpha)) / newAlpha;
+                frameBuffer[index + 3] = newAlpha * 255;
+            }
+        }        
+    </script>
+    <script src="utils/geometry.js"></script>
+    <script src="sw-renderer/sw-line.js"></script>
+    <script src="sw-renderer/sw-rect.js"></script>
+    <script src="CrispSwCanvas.js"></script>
+    <script>
+        // Function to run the same drawing commands on both canvases
+        function drawScene(ctx) {
+            // Basic rectangle with fill
+            ctx.fillStyle = "rgba(255, 0, 0, 0.5)";
+            ctx.rotate(Math.PI / 16);
+            ctx.fillRect(20, 20, 150, 100);
+
+            // Stroked rectangle with crisp lines
+            ctx.strokeStyle = "rgb(0, 0, 255)";
+            ctx.lineWidth = 1;
+            ctx.strokeRect(20.5, 20.5, 149, 99);
+
+            // Demonstrate transformations
+            ctx.save();
+            ctx.translate(200, 200);
+            ctx.rotate(Math.PI / 16);
+            ctx.scale(2, 2);
+            ctx.fillStyle = "rgba(0, 255, 0, 0.5)";
+            ctx.fillRect(0, 0, 50, 50);
+            ctx.restore();
+
+            // Example of overlapping shapes
+            ctx.fillStyle = "rgba(255, 255, 0, 0.5)";
+            ctx.fillRect(300, 50, 100, 100);
+            
+            ctx.fillStyle = "rgba(0, 255, 255, 0.5)";
+            ctx.fillRect(350, 100, 100, 100);
+
+            // Example of clearing a region
+            ctx.fillStyle = "rgba(128, 0, 128, 1)";
+            ctx.fillRect(500, 50, 200, 200);
+            ctx.clearRect(550, 100, 100, 100);
+
+            // Example of nested transformations
+            ctx.save();
+            ctx.translate(400, 400);
+            
+            ctx.fillStyle = "rgba(255, 0, 0, 0.5)";
+            ctx.fillRect(-25, -25, 50, 50);
+            
+            ctx.rotate(Math.PI / 16);
+            ctx.fillStyle = "rgba(0, 255, 0, 0.5)";
+            ctx.fillRect(-25, -25, 50, 50);
+            
+            ctx.scale(1.5, 1.5);
+            ctx.fillStyle = "rgba(0, 0, 255, 0.5)";
+            ctx.fillRect(-25, -25, 50, 50);
+            
+            ctx.restore();
+        }
+
+        // Create our CrispSwCanvas
+        const crispCanvas = new CrispSwCanvas(800, 600);
+        const ctx = crispCanvas.getContext('2d');
+        drawScene(ctx);
+
+        // Draw the same scene on standard canvas
+        const standardCanvas = document.getElementById('standardCanvas');
+        const standardCtx = standardCanvas.getContext('2d');
+        drawScene(standardCtx);
+
+        // Get the target canvas and blit our content to it
+        const targetCanvas = document.getElementById('targetCanvas');
+        crispCanvas.blitToCanvas(targetCanvas);
+    </script>
+</body>
+</html>
