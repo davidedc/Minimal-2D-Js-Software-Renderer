@@ -15,7 +15,7 @@ So, the reasons we are making this crisp sw rendered canvas are:
 
 CrispSwCanvas supports:
  - basic shapes filled / stroked with trasparency
- - transformations
+ - transformations (translation, rotation, scaling) that affect both position and dimensions of shapes
 
 CrispSwCanvas does *not* support:
  - anti-aliasing
@@ -83,7 +83,7 @@ At creation time, the width and height are given and a RGBA frame buffer is crea
 
 You can get a context from the CrispSwCanvas. The context is used to issue commands. 
 
-    // Only “2d” accepted, throws error otherwise.
+    // Only "2d" accepted, throws error otherwise.
     var crispSwCtx = crispSwCanvas.getContext("2d");
 
 #### The context contains:
@@ -104,7 +104,20 @@ A “save” will do a full deep copy of the whole state (except the transformat
 does nothing
 
 ### Transformations
-Transformations-related commands are: scale, rotate(radians), translate. For simplicity, `setTransform()` and `resetTransform()` are not implemented for now.
+Transformations are applied in the same order as in the standard Canvas API. For example:
+```javascript
+ctx.translate(200, 200);  // Move to point (200,200)
+ctx.rotate(Math.PI / 4);  // Then rotate around that point
+ctx.scale(2, 2);         // Then scale from the rotated position
+```
+
+The transformations affect:
+- The position of shapes (via transformed center point)
+- The dimensions of shapes (via scale factors)
+- The rotation of shapes
+- The line width of strokes (scaled appropriately)
+
+Available transformation commands are: scale, rotate(radians), translate. For simplicity, `setTransform()` and `resetTransform()` are not implemented for now.
 
 #### Matrix Representation
 Transformations are tracked via a 3x3 transformation matrix kept in the state. All transformation matrices in CrispSwCanvas are stored in column-major order for consistency with WebGL conventions. A transformation matrix is represented as a 3x3 matrix in homogeneous coordinates:
@@ -150,7 +163,16 @@ stored as a Float64Array in column-major order: `[a, d, 0, b, e, 0, c, f, 1]` Th
         }
     }
 
-New transformations multiply on the left: T = T3 * T2 * T1.
+New transformations multiply on the right: T = T1 * T2 * T3. This ensures transformations are applied in the same order as they appear in the code:
+```javascript
+// For the sequence:
+ctx.translate(200, 200);  // T1
+ctx.rotate(Math.PI / 4);  // T2
+ctx.scale(2, 2);         // T3
+
+// The final transformation is:
+Final = T1 * T2 * T3 = Translation * Rotation * Scale
+```
 
     class TransformationMatrix {
     // ... previous code ...
@@ -177,8 +199,8 @@ New transformations multiply on the left: T = T3 * T2 * T1.
                 0, 1, 0,  // second column
                 x, y, 1   // third column
             ]);
-            // Multiply: translation * current
-            return translationMatrix.multiply(this);
+            // Multiply: current * translation
+            return this.multiply(translationMatrix);
         }
         
         scale(sx, sy) {
@@ -189,8 +211,8 @@ New transformations multiply on the left: T = T3 * T2 * T1.
                 0, sy, 0,  // second column
                 0, 0, 1    // third column
             ]);
-            // Multiply: scale * current
-            return scaleMatrix.multiply(this);
+            // Multiply: current * scale
+            return this.multiply(scaleMatrix);
         }
         
         rotate(angleInRadians) {
@@ -203,8 +225,8 @@ New transformations multiply on the left: T = T3 * T2 * T1.
                 -sin, cos, 0,  // second column
                 0, 0, 1        // third column
             ]);
-            // Multiply: rotation * current
-            return rotationMatrix.multiply(this);
+            // Multiply: current * rotation
+            return this.multiply(rotationMatrix);
         }
     }
 
@@ -338,3 +360,7 @@ clearRect clears the contents of the specified area (subject to current transfor
 
     new ImageData(frameBuffer, width, height); // Put the image data onto the canvas
     ctx.putImageData(imageData,  0,  0);
+
+### Clearing operations
+The `clearRect` operation sets all pixels in the specified rectangle to transparent (rgba(0,0,0,0)), 
+respecting the current transformation matrix. This matches the behavior of the standard Canvas API.
