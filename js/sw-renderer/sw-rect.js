@@ -5,7 +5,7 @@ function drawRectSW(shape) {
     fillColor: { r: fillR, g: fillG, b: fillB, a: fillA }
   } = shape;
 
-  if (rotation === 0) {
+  if (rotation === 0) {    
     drawAxisAlignedRectSW(center.x, center.y, width, height,
       strokeWidth, strokeR, strokeG, strokeB, strokeA,
       fillR, fillG, fillB, fillA);
