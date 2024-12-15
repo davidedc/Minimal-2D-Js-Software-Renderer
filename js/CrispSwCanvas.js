@@ -279,9 +279,10 @@ class CrispSwContext {
         const scaledLineWidth = getScaledLineWidth(state.transform.elements, state.lineWidth);
         const center = transformPoint(x + width/2, y + height/2, state.transform.elements);
         const rotation = getRotationAngle(state.transform.elements);
+        const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
         drawRotatedRectSW(
             center.tx, center.ty,
-            width, height,
+            width * scaleX, height * scaleY,
             rotation, // Pass the rotation angle
             scaledLineWidth,
             state.strokeColor.r,
