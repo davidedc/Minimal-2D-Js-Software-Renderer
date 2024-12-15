@@ -246,14 +246,16 @@ class CrispSwContext {
         const center = transformPoint(x + width/2, y + height/2, state.transform.elements);
         const rotation = getRotationAngle(state.transform.elements);
         const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
-        drawRotatedRectSW(
-            center.tx, center.ty,
-            width * scaleX, height * scaleY,
-            rotation,
-            0, // strokeWidth
-            0, 0, 0, 0, // stroke color (transparent)
-            255, 255, 255, 255  // fill opaque white TODO: this is not correct
-        );
+        
+        drawRectSW({
+            center: { x: center.tx, y: center.ty },
+            width: width * scaleX,
+            height: height * scaleY,
+            rotation: rotation,
+            strokeWidth: 0,
+            strokeColor: { r: 0, g: 0, b: 0, a: 0 },
+            fillColor: { r: 255, g: 255, b: 255, a: 255 }  // TODO: this is not correct
+        });
     }
 
     fillRect(x, y, width, height) {
@@ -261,17 +263,16 @@ class CrispSwContext {
         const center = transformPoint(x + width/2, y + height/2, state.transform.elements);
         const rotation = getRotationAngle(state.transform.elements);
         const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
-        drawRotatedRectSW(
-            center.tx, center.ty,
-            width * scaleX, height * scaleY,
-            rotation,
-            0,
-            0, 0, 0, 0,
-            state.fillColor.r,
-            state.fillColor.g,
-            state.fillColor.b,
-            state.fillColor.a
-        );
+        
+        drawRectSW({
+            center: { x: center.tx, y: center.ty },
+            width: width * scaleX,
+            height: height * scaleY,
+            rotation: rotation,
+            strokeWidth: 0,
+            strokeColor: { r: 0, g: 0, b: 0, a: 0 },
+            fillColor: state.fillColor
+        });
     }
 
     strokeRect(x, y, width, height) {
@@ -280,16 +281,15 @@ class CrispSwContext {
         const center = transformPoint(x + width/2, y + height/2, state.transform.elements);
         const rotation = getRotationAngle(state.transform.elements);
         const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
-        drawRotatedRectSW(
-            center.tx, center.ty,
-            width * scaleX, height * scaleY,
-            rotation, // Pass the rotation angle
-            scaledLineWidth,
-            state.strokeColor.r,
-            state.strokeColor.g,
-            state.strokeColor.b,
-            state.strokeColor.a,
-            0, 0, 0, 0 // fill color (transparent)
-        );
+        
+        drawRectSW({
+            center: { x: center.tx, y: center.ty },
+            width: width * scaleX,
+            height: height * scaleY,
+            rotation: rotation,
+            strokeWidth: scaledLineWidth,
+            strokeColor: state.strokeColor,
+            fillColor: { r: 0, g: 0, b: 0, a: 0 }
+        });
     }
 }
