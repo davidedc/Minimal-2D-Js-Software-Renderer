@@ -93,7 +93,16 @@
     <script>
         // Function to run the same drawing commands on both canvases
         function drawScene(ctx) {
-            // Basic rectangle with fill
+
+            // Basic red rectangle with fill
+            // however we are not going to see it
+            // because we are going to clear the whole canvas
+            // after drawing it
+            ctx.fillStyle = "rgb(255, 0, 0)";
+            ctx.fillRect(100, 100, 150, 100);
+            // clear the whole canvas
+            ctx.clearRect(0, 0, 800, 600);
+
             ctx.fillStyle = "rgba(255, 0, 0, 0.5)";
             ctx.fillRect(20, 20, 150, 100);
 

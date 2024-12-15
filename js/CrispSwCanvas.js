@@ -245,16 +245,11 @@ class CrispSwContext {
         const state = this.currentState;
         const center = transformPoint(x + width/2, y + height/2, state.transform.elements);
         const rotation = getRotationAngle(state.transform.elements);
-        const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
-        
-        drawRectSW({
+        clearRectSW({
             center: { x: center.tx, y: center.ty },
-            width: width * scaleX,
-            height: height * scaleY,
-            rotation: rotation,
-            strokeWidth: 0,
-            strokeColor: { r: 0, g: 0, b: 0, a: 0 },
-            fillColor: { r: 255, g: 255, b: 255, a: 255 }  // TODO: this is not correct
+            width: width,
+            height: height,
+            rotation: rotation
         });
     }
 

@@ -13,4 +13,13 @@ function setPixel(x, y, r, g, b, a) {
       frameBuffer[index + 2] = (b * alpha + frameBuffer[index + 2] * oldAlpha * (1 - alpha)) / newAlpha;
       frameBuffer[index + 3] = newAlpha * 255;
     }
-  }
+}
+
+function clearPixel(x, y) {
+    if (x < 0 || x >= width || y < 0 || y >= height) return;
+    const index = (y * width + x) * 4;
+    frameBuffer[index] = 0;
+    frameBuffer[index + 1] = 0;
+    frameBuffer[index + 2] = 0;
+    frameBuffer[index + 3] = 0;
+}

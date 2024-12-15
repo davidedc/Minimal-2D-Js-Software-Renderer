@@ -16,6 +16,28 @@ function drawRectSW(shape) {
   }
 }
 
+function clearRectSW(shape) {
+
+  const center = shape.center;
+  const theWidth = shape.width;
+  const theHeight = shape.height;
+  const rotation = shape.rotation;
+
+  if (rotation === 0) {
+
+    if (theWidth === width && 
+      theHeight === height &&
+      center.x === theWidth / 2 &&
+      center.y === theHeight / 2) {
+      frameBuffer.fill(0);
+      return;
+    }
+    clearAxisAlignedRectSW(center.x, center.y, theWidth, theHeight);
+  } else {
+    clearRotatedRectSW(center.x, center.y, theWidth, theHeight, rotation);
+  }
+}
+
 function drawRotatedRectSW(centerX, centerY, width, height, rotation, strokeWidth, strokeR, strokeG, strokeB, strokeA, fillR, fillG, fillB, fillA) {
   const cos = Math.cos(rotation);
   const sin = Math.sin(rotation);
@@ -88,6 +110,34 @@ function drawRotatedRectSW(centerX, centerY, width, height, rotation, strokeWidt
   }
 }
 
+function clearRotatedRectSW(centerX, centerY, width, height, rotation) {
+  const cos = Math.cos(rotation);
+  const sin = Math.sin(rotation);
+
+  const points = [
+    [-width / 2, -height / 2],
+    [width / 2, -height / 2],
+    [width / 2, height / 2],
+    [-width / 2, height / 2]
+  ].map(([x, y]) => ({
+    x: centerX + x * cos - y * sin,
+    y: centerY + x * sin + y * cos
+  }));
+
+  const minX = Math.floor(Math.min(...points.map(p => p.x)));
+  const maxX = Math.ceil(Math.max(...points.map(p => p.x)));
+  const minY = Math.floor(Math.min(...points.map(p => p.y)));
+  const maxY = Math.ceil(Math.max(...points.map(p => p.y)));
+
+  for (let y = minY; y <= maxY; y++) {
+    for (let x = minX; x <= maxX; x++) {
+      if (pointInPolygon(x, y, points)) {
+        clearPixel(x, y);
+      }
+    }
+  }
+}
+
 // Draw axis-aligned rectangle using software rendering
 function drawAxisAlignedRectSW(centerX, centerY, rectWidth, rectHeight,
   strokeWidth, strokeR, strokeG, strokeB, strokeA,
@@ -149,5 +199,26 @@ function drawAxisAlignedRectSW(centerX, centerY, rectWidth, rectHeight,
               setPixel(x, y, strokeR, strokeG, strokeB, strokeA);
           }
       }
+  }
+}
+
+function clearAxisAlignedRectSW(centerX, centerY, rectWidth, rectHeight) {
+  // Round inputs for consistency with draw function
+  centerX = Math.round(centerX);
+  centerY = Math.round(centerY);
+  rectWidth = Math.round(rectWidth);
+  rectHeight = Math.round(rectHeight);
+
+  const halfWidth = Math.floor(rectWidth / 2);
+  const halfHeight = Math.floor(rectHeight / 2);
+  const pathLeft = centerX - halfWidth;
+  const pathTop = centerY - halfHeight;
+  const pathRight = pathLeft + rectWidth;
+  const pathBottom = pathTop + rectHeight;
+
+  for (let y = pathTop; y < pathBottom; y++) {
+    for (let x = pathLeft; x < pathRight; x++) {
+      clearPixel(x, y);
+    }
   }
 }
