@@ -85,11 +85,19 @@
             }
         }        
     </script>
+
     <script src="utils/geometry.js"></script>
     <script src="sw-renderer/sw-pixel.js"></script>
     <script src="sw-renderer/sw-line.js"></script>
     <script src="sw-renderer/sw-rect.js"></script>
-    <script src="CrispSwCanvas.js"></script>
+
+    <script src="crisp-sw-canvas/color-utils.js"></script>
+    <script src="crisp-sw-canvas/transform-utils.js"></script>
+    <script src="crisp-sw-canvas/ContextState.js"></script>
+    <script src="crisp-sw-canvas/CrispSwCanvas.js"></script>
+    <script src="crisp-sw-canvas/CrispSwContext.js"></script>
+    <script src="crisp-sw-canvas/TransformationMatrix.js"></script>
+
     <script>
         // Function to run the same drawing commands on both canvases
         function drawScene(ctx) {
