@@ -2,6 +2,8 @@ class CrispSwContext {
     constructor(canvas) {
         this.canvas = canvas;
         this.stateStack = [new ContextState()];
+        frameBuffer = new Uint8ClampedArray(canvas.width * canvas.height * 4).fill(0);
+        this.frameBuffer = frameBuffer;
     }
 
     get currentState() {
@@ -107,7 +109,7 @@ class CrispSwContext {
 
     blitToCanvas(canvas) {
         const ctx = canvas.getContext('2d');
-        const imageData = new ImageData(this.canvas.frameBuffer, this.canvas.width, this.canvas.height);
+        const imageData = new ImageData(this.frameBuffer, this.canvas.width, this.canvas.height);
         ctx.putImageData(imageData, 0, 0);
     }
 }
