@@ -17,12 +17,6 @@ class CrispSwCanvas {
         if (contextType !== "2d") {
             throw new Error("Only '2d' context is supported");
         }
-    }
-
-    blitToCanvas(canvas) {
-        const ctx = canvas.getContext('2d');
-        const imageData = new ImageData(this.frameBuffer, this.width, this.height);
-        ctx.putImageData(imageData, 0, 0);
         return this._context;
     }
 }

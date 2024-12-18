@@ -172,7 +172,7 @@
 
         // Get the target canvas and blit our content to it
         const targetCanvas = document.getElementById('targetCanvas');
-        crispCanvas.blitToCanvas(targetCanvas);
+        ctx.blitToCanvas(targetCanvas);
 
         // Add transparency grid toggle functionality
         const checkbox = document.getElementById('showBackground');

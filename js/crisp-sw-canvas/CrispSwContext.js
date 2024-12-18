@@ -104,4 +104,10 @@ class CrispSwContext {
             fillColor: { r: 0, g: 0, b: 0, a: 0 }
         });
     }
+
+    blitToCanvas(canvas) {
+        const ctx = canvas.getContext('2d');
+        const imageData = new ImageData(this.canvas.frameBuffer, this.canvas.width, this.canvas.height);
+        ctx.putImageData(imageData, 0, 0);
+    }
 }
