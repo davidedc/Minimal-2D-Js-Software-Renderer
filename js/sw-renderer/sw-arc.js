@@ -1,3 +1,20 @@
+function drawArcSW(shape) {
+    const {
+      center, radius, startAngle, endAngle,
+      strokeWidth, strokeColor: { r: strokeR, g: strokeG, b: strokeB, a: strokeA },
+      fillColor: { r: fillR, g: fillG, b: fillB, a: fillA }
+    } = shape;
+  
+    if (fillA > 0) {
+      drawArcSWHelper(center.x, center.y, radius, startAngle, endAngle,
+        fillR, fillG, fillB, fillA, true);
+    }
+    if (strokeA > 0 && strokeWidth > 0) {
+      drawArcSWHelper(center.x, center.y, radius, startAngle, endAngle,
+        strokeR, strokeG, strokeB, strokeA, false, strokeWidth);
+    }
+}
+
 function drawArcSWHelper(centerX, centerY, radius, startAngle, endAngle, r, g, b, a, fill = false, thickness = 1) {
   // Convert angles from degrees to radians
   startAngle = (startAngle % 360) * Math.PI / 180;

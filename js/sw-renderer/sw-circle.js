@@ -76,20 +76,3 @@ function drawCircleSWHelper(centerX, centerY, radius, r, g, b, a, fill = false, 
 function drawCircleSWHQ(xc, yc, radius, r, g, b, a, fill = false, thickness = 1) {
   drawArcSWHQ(xc, yc, radius, 0, 360, r, g, b, a, fill, thickness);
 }
-
-function drawArcSW(shape) {
-  const {
-    center, radius, startAngle, endAngle,
-    strokeWidth, strokeColor: { r: strokeR, g: strokeG, b: strokeB, a: strokeA },
-    fillColor: { r: fillR, g: fillG, b: fillB, a: fillA }
-  } = shape;
-
-  if (fillA > 0) {
-    drawArcSWHelper(center.x, center.y, radius, startAngle, endAngle,
-      fillR, fillG, fillB, fillA, true);
-  }
-  if (strokeA > 0 && strokeWidth > 0) {
-    drawArcSWHelper(center.x, center.y, radius, startAngle, endAngle,
-      strokeR, strokeG, strokeB, strokeA, false, strokeWidth);
-  }
-}
