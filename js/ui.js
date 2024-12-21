@@ -6,23 +6,14 @@ function drawShapesImpl(shapes, isCanvas, ctx = null) {
   
   for (let shape of shapes) {
     if (shape.type === 'line') {
-      if (isCanvas) {
-        drawLineCanvas(ctx, shape);
-      } else {
-        swLineRenderer.drawLine(shape);
-      }
+      const draw = isCanvas ? drawLineCanvas : swLineRenderer.drawLine.bind(swLineRenderer);
+      isCanvas ? draw(ctx, shape) : draw(shape);
     } else if (shape.type === 'rect') {
-      if (isCanvas) {
-        drawRectCanvas(ctx, shape);
-      } else {
-        swRectRenderer.drawRect(shape);
-      }
+      const draw = isCanvas ? drawRectCanvas : swRectRenderer.drawRect.bind(swRectRenderer);
+      isCanvas ? draw(ctx, shape) : draw(shape);
     } else if (shape.type === 'roundedRect') {
-      if (isCanvas) {
-        drawRoundedRectCanvas(ctx, shape);
-      } else {
-        swRoundedRectRenderer.drawRoundedRect(shape);
-      }
+      const draw = isCanvas ? drawRoundedRectCanvas : swRoundedRectRenderer.drawRoundedRect.bind(swRoundedRectRenderer);
+      isCanvas ? draw(ctx, shape) : draw(shape);
     } else if (shape.type === 'circle') {
       const draw = isCanvas ? drawCircleCanvas : drawCircleSW;
       isCanvas ? draw(ctx, shape) : draw(shape);
