@@ -4,6 +4,9 @@ class CrispSwContext {
         this.stateStack = [new ContextState()];
         frameBuffer = new Uint8ClampedArray(canvas.width * canvas.height * 4).fill(0);
         this.frameBuffer = frameBuffer;
+        this.lineRenderer = new SWRendererLine();
+        this.rectRenderer = new SWRendererRect(frameBuffer, canvas.width, canvas.height, this.lineRenderer);
+        //this.roundedRectRenderer = new SWRendererRoundedRect(frameBuffer, canvas.width, canvas.height, this.lineRenderer);
     }
 
     get currentState() {
@@ -64,7 +67,7 @@ class CrispSwContext {
         const state = this.currentState;
         const center = transformPoint(x + width / 2, y + height / 2, state.transform.elements);
         const rotation = getRotationAngle(state.transform.elements);
-        clearRectSW({
+        this.rectRenderer.clearRect({
             center: { x: center.tx, y: center.ty },
             width: width,
             height: height,
@@ -78,7 +81,7 @@ class CrispSwContext {
         const rotation = getRotationAngle(state.transform.elements);
         const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
 
-        drawRectSW({
+        this.rectRenderer.drawRect({
             center: { x: center.tx, y: center.ty },
             width: width * scaleX,
             height: height * scaleY,
@@ -96,7 +99,7 @@ class CrispSwContext {
         const rotation = getRotationAngle(state.transform.elements);
         const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
 
-        drawRectSW({
+        this.rectRenderer.drawRect({
             center: { x: center.tx, y: center.ty },
             width: width * scaleX,
             height: height * scaleY,

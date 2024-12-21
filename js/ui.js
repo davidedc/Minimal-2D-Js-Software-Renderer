@@ -1,18 +1,38 @@
 // Modified drawShapesImpl to accept ctx as parameter
 function drawShapesImpl(shapes, isCanvas, ctx = null) {
+  const swLineRenderer = new SWRendererLine();
+  const swRectRenderer = new SWRendererRect(frameBuffer, width, height, swLineRenderer);
+  const swRoundedRectRenderer = new SWRendererRoundedRect(frameBuffer, width, height, swLineRenderer);
+  
   for (let shape of shapes) {
     if (shape.type === 'line') {
-      const draw = isCanvas ? drawLineCanvas : drawLineSW;
-      const args = [
-        shape.start.x, shape.start.y,
-        shape.end.x, shape.end.y,
-        shape.thickness,
-        shape.color.r, shape.color.g, shape.color.b, shape.color.a
-      ];
-      isCanvas ? draw(ctx, ...args) : draw(...args);
+      if (isCanvas) {
+        drawLineCanvas(ctx, 
+          shape.start.x, shape.start.y,
+          shape.end.x, shape.end.y,
+          shape.thickness,
+          shape.color.r, shape.color.g, shape.color.b, shape.color.a
+        );
+      } else {
+        swLineRenderer.drawLine(
+          shape.start.x, shape.start.y,
+          shape.end.x, shape.end.y,
+          shape.thickness,
+          shape.color.r, shape.color.g, shape.color.b, shape.color.a
+        );
+      }
     } else if (shape.type === 'rect') {
-      const draw = isCanvas ? drawRectCanvas : drawRectSW;
-      isCanvas ? draw(ctx, shape) : draw(shape);
+      if (isCanvas) {
+        drawRectCanvas(ctx, shape);
+      } else {
+        swRectRenderer.drawRect(shape);
+      }
+    } else if (shape.type === 'roundedRect') {
+      if (isCanvas) {
+        drawRoundedRectCanvas(ctx, shape);
+      } else {
+        swRoundedRectRenderer.drawRoundedRect(shape);
+      }
     } else if (shape.type === 'circle') {
       const draw = isCanvas ? drawCircleCanvas : drawCircleSW;
       isCanvas ? draw(ctx, shape) : draw(shape);
