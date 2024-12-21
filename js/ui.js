@@ -1,8 +1,11 @@
 // Modified drawShapesImpl to accept ctx as parameter
 function drawShapesImpl(shapes, isCanvas, ctx = null) {
-  const swLineRenderer = new SWRendererLine();
-  const swRectRenderer = new SWRendererRect(frameBuffer, width, height, swLineRenderer);
-  const swRoundedRectRenderer = new SWRendererRoundedRect(frameBuffer, width, height, swLineRenderer);
+  const pixelRenderer = new SWRendererPixel(frameBuffer, width, height);
+  const swLineRenderer = new SWRendererLine(pixelRenderer);
+  const swRectRenderer = new SWRendererRect(frameBuffer, width, height, swLineRenderer, pixelRenderer);
+  const swRoundedRectRenderer = new SWRendererRoundedRect(frameBuffer, width, height, swLineRenderer, pixelRenderer);
+  const swCircleRenderer = new SWRendererCircle(pixelRenderer);
+  const swArcRenderer = new SWRendererArc(pixelRenderer);
   
   for (let shape of shapes) {
     if (shape.type === 'line') {
@@ -11,17 +14,14 @@ function drawShapesImpl(shapes, isCanvas, ctx = null) {
     } else if (shape.type === 'rect') {
       const draw = isCanvas ? drawRectCanvas : swRectRenderer.drawRect.bind(swRectRenderer);
       isCanvas ? draw(ctx, shape) : draw(shape);
-    } else if (shape.type === 'roundedRect') {
-      const draw = isCanvas ? drawRoundedRectCanvas : swRoundedRectRenderer.drawRoundedRect.bind(swRoundedRectRenderer);
-      isCanvas ? draw(ctx, shape) : draw(shape);
     } else if (shape.type === 'circle') {
-      const draw = isCanvas ? drawCircleCanvas : drawCircleSW;
+      const draw = isCanvas ? drawCircleCanvas : swCircleRenderer.drawCircle.bind(swCircleRenderer);
       isCanvas ? draw(ctx, shape) : draw(shape);
     } else if (shape.type === 'arc') {
-      const draw = isCanvas ? drawArcCanvas : drawArcSW;
+      const draw = isCanvas ? drawArcCanvas : swArcRenderer.drawArc.bind(swArcRenderer);
       isCanvas ? draw(ctx, shape) : draw(shape);
     } else if (shape.type === 'roundedRect') {
-      const draw = isCanvas ? drawRoundedRectCanvas : drawRoundedRectSW;
+      const draw = isCanvas ? drawRoundedRectCanvas : swRoundedRectRenderer.drawRoundedRect.bind(swRoundedRectRenderer);
       isCanvas ? draw(ctx, shape) : draw(shape);
     }
   }

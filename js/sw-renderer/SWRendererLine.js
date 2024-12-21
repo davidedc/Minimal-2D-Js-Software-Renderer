@@ -1,5 +1,7 @@
 class SWRendererLine {
-  constructor() {}
+  constructor(pixelRenderer) {
+    this.pixelRenderer = pixelRenderer;
+  }
 
   drawLine(shape) {
     const {
@@ -81,7 +83,7 @@ class SWRendererLine {
     let err = dx - dy;
 
     while (true) {
-      setPixel(x1, y1, r, g, b, a);
+      this.pixelRenderer.setPixel(x1, y1, r, g, b, a);
       if (x1 === x2 && y1 === y2) break;
       const e2 = 2 * err;
       if (e2 > -dy) { err -= dy; x1 += sx; }
@@ -130,7 +132,7 @@ class SWRendererLine {
         const dist = Math.sqrt(distX * distX + distY * distY);
         
         if (dot >= 0 && dot <= length && dist <= halfThickness) {
-          setPixel(x, y, r, g, b, a);
+          this.pixelRenderer.setPixel(x, y, r, g, b, a);
         }
       }
     }

@@ -1,6 +1,7 @@
 class PixelSet {
-  constructor() {
+  constructor(pixelRenderer) {
     this.pixels = new Map();
+    this.pixelRenderer = pixelRenderer;
   }
 
   addPixel(x, y, r, g, b, a) {
@@ -10,7 +11,7 @@ class PixelSet {
 
   paint() {
     for (const pixel of this.pixels.values()) {
-      setPixel(pixel.x, pixel.y, pixel.r, pixel.g, pixel.b, pixel.a);
+      this.pixelRenderer.setPixel(pixel.x, pixel.y, pixel.r, pixel.g, pixel.b, pixel.a);
     }
   }
 }

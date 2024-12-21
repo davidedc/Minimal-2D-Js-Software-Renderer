@@ -1,9 +1,10 @@
 class SWRendererRect {
-  constructor(frameBuffer, width, height, lineRenderer) {
+  constructor(frameBuffer, width, height, lineRenderer, pixelRenderer) {
     this.frameBuffer = frameBuffer;
     this.width = width;
     this.height = height;
     this.lineRenderer = lineRenderer;
+    this.pixelRenderer = pixelRenderer;
   }
 
   drawRect(shape) {
@@ -68,7 +69,7 @@ class SWRendererRect {
       for (let y = minY; y <= maxY; y++) {
         for (let x = minX; x <= maxX; x++) {
           if (pointInPolygon(x, y, points)) {
-            setPixel(x, y, fillR, fillG, fillB, fillA);
+            this.pixelRenderer.setPixel(x, y, fillR, fillG, fillB, fillA);
           }
         }
       }
@@ -139,7 +140,7 @@ class SWRendererRect {
     for (let y = minY; y <= maxY; y++) {
       for (let x = minX; x <= maxX; x++) {
         if (pointInPolygon(x, y, points)) {
-          clearPixel(x, y);
+          this.pixelRenderer.clearPixel(x, y);
         }
       }
     }
@@ -172,7 +173,7 @@ class SWRendererRect {
       
       for (let y = fillTop; y < fillBottom; y++) {
         for (let x = fillLeft; x < fillRight; x++) {
-          setPixel(x, y, fillR, fillG, fillB, fillA);
+          this.pixelRenderer.setPixel(x, y, fillR, fillG, fillB, fillA);
         }
       }
     }
@@ -199,7 +200,7 @@ class SWRendererRect {
             y >= strokeInnerTop && y < strokeInnerBottom) {
             continue;
           }
-          setPixel(x, y, strokeR, strokeG, strokeB, strokeA);
+          this.pixelRenderer.setPixel(x, y, strokeR, strokeG, strokeB, strokeA);
         }
       }
     }
@@ -221,7 +222,7 @@ class SWRendererRect {
 
     for (let y = pathTop; y < pathBottom; y++) {
       for (let x = pathLeft; x < pathRight; x++) {
-        clearPixel(x, y);
+        this.pixelRenderer.clearPixel(x, y);
       }
     }
   }

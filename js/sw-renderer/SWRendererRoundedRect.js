@@ -1,9 +1,10 @@
 class SWRendererRoundedRect {
-  constructor(frameBuffer, width, height, lineRenderer) {
+  constructor(frameBuffer, width, height, lineRenderer, pixelRenderer) {
     this.frameBuffer = frameBuffer;
     this.width = width;
     this.height = height;
     this.lineRenderer = lineRenderer;
+    this.pixelRenderer = pixelRenderer;
   }
 
   drawRoundedRect(shape) {
@@ -79,7 +80,7 @@ class SWRendererRoundedRect {
       for (let yy = Math.floor(pos.y); yy <= Math.ceil(pos.y + pos.h); yy++) {
         for (let xx = Math.floor(pos.x); xx <= Math.ceil(pos.x + pos.w); xx++) {
           if (isInsideRoundedRect(xx, yy)) {
-            setPixel(xx, yy, fillR, fillG, fillB, fillA);
+            this.pixelRenderer.setPixel(xx, yy, fillR, fillG, fillB, fillA);
           }
         }
       }
@@ -92,15 +93,15 @@ class SWRendererRoundedRect {
       // Draw horizontal strokes
       for (let xx = Math.floor(pos.x + r); xx < pos.x + pos.w - r; xx++)
         for (let t = -halfStroke; t < halfStroke; t++) {
-          setPixel(xx, pos.y + t, strokeR, strokeG, strokeB, strokeA);
-          setPixel(xx, pos.y + pos.h + t, strokeR, strokeG, strokeB, strokeA);
+          this.pixelRenderer.setPixel(xx, pos.y + t, strokeR, strokeG, strokeB, strokeA);
+          this.pixelRenderer.setPixel(xx, pos.y + pos.h + t, strokeR, strokeG, strokeB, strokeA);
         }
       
       // Draw vertical strokes
       for (let yy = Math.floor(pos.y + r); yy < pos.y + pos.h - r; yy++)
         for (let t = -halfStroke; t < halfStroke; t++) {
-          setPixel(pos.x + t, yy, strokeR, strokeG, strokeB, strokeA);
-          setPixel(pos.x + pos.w + t, yy, strokeR, strokeG, strokeB, strokeA);
+          this.pixelRenderer.setPixel(pos.x + t, yy, strokeR, strokeG, strokeB, strokeA);
+          this.pixelRenderer.setPixel(pos.x + pos.w + t, yy, strokeR, strokeG, strokeB, strokeA);
         }
 
       // Draw corner strokes
@@ -110,7 +111,7 @@ class SWRendererRoundedRect {
             const sr = r + t;
             const px = cx + sr * Math.cos(angle);
             const py = cy + sr * Math.sin(angle);
-            setPixel(Math.round(px), Math.round(py), strokeR, strokeG, strokeB, strokeA);
+            this.pixelRenderer.setPixel(Math.round(px), Math.round(py), strokeR, strokeG, strokeB, strokeA);
           }
         }
       };
@@ -175,7 +176,7 @@ class SWRendererRoundedRect {
       for (let yy = Math.floor(pos.y); yy <= Math.ceil(pos.y + pos.h); yy++) {
         for (let xx = Math.floor(pos.x); xx <= Math.ceil(pos.x + pos.w); xx++) {
           if (isInsideRoundedRect(xx, yy)) {
-            setPixel(xx, yy, fillR, fillG, fillB, fillA);
+            this.pixelRenderer.setPixel(xx, yy, fillR, fillG, fillB, fillA);
           }
         }
       }
@@ -186,7 +187,7 @@ class SWRendererRoundedRect {
       pos = getCrispStrokeGeometry(pos.x, pos.y, rectWidth, rectHeight, strokeWidth);
       let r = Math.round(Math.min(cornerRadius, Math.min(pos.w, pos.h) / 2));
 
-      const strokePixels = new PixelSet();
+      const strokePixels = new PixelSet(this.pixelRenderer);
       
       const horizontalStrokes = new ScanlineSpans();
       for (let y = pos.y - halfStroke; y < pos.y + halfStroke; y++) {
@@ -246,7 +247,7 @@ class SWRendererRoundedRect {
     for (let y = minY; y <= maxY; y++) {
       for (let x = minX; x <= maxX; x++) {
         if (pointInPolygon(x, y, points)) {
-          setPixel(x, y, r, g, b, a);
+          this.pixelRenderer.setPixel(x, y, r, g, b, a);
         }
       }
     }
