@@ -1,7 +1,14 @@
 class SWRendererLine {
   constructor() {}
 
-  drawLine(x1, y1, x2, y2, strokeWidth, strokeR, strokeG, strokeB, strokeA) {
+  drawLine(shape) {
+    const {
+      start: { x: x1, y: y1 },
+      end: { x: x2, y: y2 },
+      thickness: strokeWidth,
+      color: { r: strokeR, g: strokeG, b: strokeB, a: strokeA }
+    } = shape;
+
     if (strokeWidth === 1) {
       this.drawLine1px(x1, y1, x2, y2, strokeR, strokeG, strokeB, strokeA);
     } else {

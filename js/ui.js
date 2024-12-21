@@ -7,19 +7,9 @@ function drawShapesImpl(shapes, isCanvas, ctx = null) {
   for (let shape of shapes) {
     if (shape.type === 'line') {
       if (isCanvas) {
-        drawLineCanvas(ctx, 
-          shape.start.x, shape.start.y,
-          shape.end.x, shape.end.y,
-          shape.thickness,
-          shape.color.r, shape.color.g, shape.color.b, shape.color.a
-        );
+        drawLineCanvas(ctx, shape);
       } else {
-        swLineRenderer.drawLine(
-          shape.start.x, shape.start.y,
-          shape.end.x, shape.end.y,
-          shape.thickness,
-          shape.color.r, shape.color.g, shape.color.b, shape.color.a
-        );
+        swLineRenderer.drawLine(shape);
       }
     } else if (shape.type === 'rect') {
       if (isCanvas) {
