@@ -27,21 +27,21 @@ class SWRendererRect {
 
   clearRect(shape) {
     const center = shape.center;
-    const theWidth = shape.width;
-    const theHeight = shape.height;
+    const shapeWidth = shape.width;
+    const shapeHeight = shape.height;
     const rotation = shape.rotation;
 
     if (rotation === 0) {
-      if (theWidth === this.width && 
-        theHeight === this.height &&
-        center.x === theWidth / 2 &&
-        center.y === theHeight / 2) {
+      if (shapeWidth === this.width && 
+        shapeHeight === this.height &&
+        center.x === shapeWidth / 2 &&
+        center.y === shapeHeight / 2) {
         this.frameBuffer.fill(0);
         return;
       }
-      this.clearAxisAlignedRect(center.x, center.y, theWidth, theHeight);
+      this.clearAxisAlignedRect(center.x, center.y, shapeWidth, shapeHeight);
     } else {
-      this.clearRotatedRect(center.x, center.y, theWidth, theHeight, rotation);
+      this.clearRotatedRect(center.x, center.y, shapeWidth, shapeHeight, rotation);
     }
   }
 

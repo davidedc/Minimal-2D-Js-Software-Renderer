@@ -2,12 +2,11 @@ class CrispSwContext {
     constructor(canvas) {
         this.canvas = canvas;
         this.stateStack = [new ContextState()];
-        frameBuffer = new Uint8ClampedArray(canvas.width * canvas.height * 4).fill(0);
-        this.frameBuffer = frameBuffer;
-        this.pixelRenderer = new SWRendererPixel(frameBuffer, canvas.width, canvas.height);
+        this.frameBuffer = new Uint8ClampedArray(canvas.width * canvas.height * 4).fill(0);
+        this.pixelRenderer = new SWRendererPixel(this.frameBuffer, canvas.width, canvas.height);
         this.lineRenderer = new SWRendererLine(this.pixelRenderer);
-        this.rectRenderer = new SWRendererRect(frameBuffer, canvas.width, canvas.height, this.lineRenderer, this.pixelRenderer);
-        //this.roundedRectRenderer = new SWRendererRoundedRect(frameBuffer, canvas.width, canvas.height, this.lineRenderer, this.pixelRenderer);
+        this.rectRenderer = new SWRendererRect(this.frameBuffer, canvas.width, canvas.height, this.lineRenderer, this.pixelRenderer);
+        //this.roundedRectRenderer = new SWRendererRoundedRect(this.frameBuffer, canvas.width, canvas.height, this.lineRenderer, this.pixelRenderer);
         //this.circleRenderer = new SWRendererCircle(this.pixelRenderer);
         //this.arcRenderer = new SWRendererArc(this.pixelRenderer);
     }

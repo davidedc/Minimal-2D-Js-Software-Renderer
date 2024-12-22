@@ -1,11 +1,8 @@
 // Main CrispSwCanvas class
 class CrispSwCanvas {
-    constructor(aWidth, aHeight) {
-        this.width = aWidth;
-        // set the global width to width too
-        width = aWidth;
-        this.height = aHeight;
-        height = aHeight;
+    constructor(width, height) {
+        this.width = width;
+        this.height = height;
         
         // Create the context immediately and store it privately
         this._context = new CrispSwContext(this);
