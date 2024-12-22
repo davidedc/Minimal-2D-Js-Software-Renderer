@@ -1,38 +1,63 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <link rel="stylesheet" href="styles/main.css">
+    <title>Canvas Rendering Tests & Demos</title>
+    <style>
+        body {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 0 20px;
+            font-family: system-ui, -apple-system, sans-serif;
+            line-height: 1.5;
+        }
+        .demo-link {
+            margin-bottom: 30px;
+        }
+        .demo-link h2 {
+            margin-bottom: 10px;
+        }
+        .demo-link p {
+            margin-top: 0;
+            color: #444;
+        }
+        a {
+            color: #0066cc;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
 </head>
 <body>
-  <script src="js/utils/geometry.js"></script>
-  <script src="js/utils/PixelSet.js"></script>
-  <script src="js/utils/random-utils.js"></script>
-  <script src="js/utils/ScanlineSpans.js"></script>
+    <h1>Canvas Rendering Tests & Demos</h1>
 
-  <script src="js/sw-renderer/SWRendererPixel.js"></script>
-  <script src="js/sw-renderer/SWRendererArc.js"></script>
-  <script src="js/sw-renderer/SWRendererCircle.js"></script>
-  <script src="js/sw-renderer/SWRendererLine.js"></script>
-  <script src="js/sw-renderer/SWRendererRect.js"></script>
-  <script src="js/sw-renderer/SWRendererRoundedRect.js"></script>
+    <div class="demo-link">
+        <h2><a href="js/index-crisp-sw-canvas-demo.html">CrispSwCanvas Demo</a></h2>
+        <p>
+            A side-by-side comparison between CrispSwCanvas and standard HTML5 Canvas.
+            Demonstrates various drawing operations including rectangles, transformations,
+            and transparency handling.
+        </p>
+    </div>
 
-  <script src="js/canvas-renderer/canvas-arc.js"></script>
-  <script src="js/canvas-renderer/canvas-circle.js"></script>
-  <script src="js/canvas-renderer/canvas-line.js"></script>
-  <script src="js/canvas-renderer/canvas-rect.js"></script>
-  <script src="js/canvas-renderer/canvas-rounded-rect.js"></script>
+    <div class="demo-link">
+        <h2><a href="index-low-level-renderer-tests.html">Low Level Renderer Tests</a></h2>
+        <p>
+            Comprehensive tests for the low-level software renderer components.
+            Tests various primitives like lines, rectangles, circles, and arcs,
+            comparing them with canvas rendering.
+        </p>
+    </div>
 
-  <script src="js/scene-creation/scene-creation-lines.js"></script>
-  <script src="js/scene-creation/scene-creation-rects.js"></script>
-  <script src="js/scene-creation/scene-creation-rounded-rects.js"></script>
-  <script src="js/scene-creation/scene-creation-circles.js"></script>
-  <script src="js/scene-creation/scene-creation-arcs.js"></script>
-  <script src="js/scene-creation/scene-creation.js"></script>
-  
-  <script src="js/RenderChecks.js"></script>
-  <script src="js/RenderComparison.js"></script>
-  <script src="js/RenderComparisonBuilder.js"></script>
-  <script src="js/added-comparisons.js"></script>
-  <script src="js/ui.js"></script>
+    <div class="demo-link">
+        <h2><a href="canvas-crispness-tests/canvas-crispness-tests.html">Canvas Crispness Tests</a></h2>
+        <p>
+            Detailed exploration of canvas rendering crispness, including pixel-perfect
+            drawing techniques, coordinate system explanations, and various examples
+            of strokes and fills. Features interactive zoom functionality to examine
+            pixel-level details.
+        </p>
+    </div>
 </body>
 </html>
