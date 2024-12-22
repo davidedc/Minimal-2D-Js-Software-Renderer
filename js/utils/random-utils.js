@@ -1,8 +1,8 @@
 function getRandomPoint() {
   const margin = 100;
   return {
-    x: margin + Math.random() * (width - 2 * margin),
-    y: margin + Math.random() * (height - 2 * margin)
+    x: margin + Math.random() * (renderComparisonWidth - 2 * margin),
+    y: margin + Math.random() * (renderComparisonHeight - 2 * margin)
   };
 }
 

@@ -1,9 +1,16 @@
+const renderComparisonWidth = 600;
+const renderComparisonHeight = 600;
+
 class RenderComparison {
   static sections = [];
   static GRID_COLUMNS = 11;
   static GRID_ROWS = 21;
 
   constructor(id, title, buildShapesFn, metricsFunction = null, comparisonDescription = '') {
+    this.width = renderComparisonWidth;
+    this.height = renderComparisonHeight;
+    this.frameBuffer = new Uint8ClampedArray(this.width * this.height * 4);
+
     RenderComparison.sections.push({ id, title });
     
     this.id = id;
@@ -124,19 +131,19 @@ class RenderComparison {
 
   createCanvas(name) {
     const canvas = document.createElement('canvas');
-    canvas.width = width;
-    canvas.height = height;
+    canvas.width = this.width;
+    canvas.height = this.height;
     canvas.className = 'comparison-canvas';
     canvas.title = `${this.id}-${name}`;
     return canvas;
   }
 
   clearFrameBuffer() {
-    frameBuffer.fill(0);
+    this.frameBuffer.fill(0);
   }
 
   updateSWRenderOutput() {
-    const imageData = new ImageData(frameBuffer, width, height);
+    const imageData = new ImageData(this.frameBuffer, this.width, this.height);
     this.swCtx.putImageData(imageData, 0, 0);
   }
 
@@ -148,7 +155,7 @@ class RenderComparison {
 
   drawSceneSW() {
     this.clearFrameBuffer();
-    drawShapesImpl(this.shapes, false);
+    drawShapesImpl(this.shapes, false, null, this.frameBuffer);
   }
 
   flip() {

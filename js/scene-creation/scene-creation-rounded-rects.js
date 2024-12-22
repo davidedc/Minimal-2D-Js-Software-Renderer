@@ -85,15 +85,15 @@ function addRotatedRoundedRectangles(shapes, log, count = 3) {
 }
 
 function addCenteredRoundedRect(shapes, log) {
-  const maxWidth = width * 0.6;
-  const maxHeight = height * 0.6;
+  const maxWidth = renderComparisonWidth * 0.6;
+  const maxHeight = renderComparisonHeight * 0.6;
   
   const rectWidth = Math.round(50 + Math.random() * maxWidth);
   const rectHeight = Math.round(50 + Math.random() * maxHeight);
   
   shapes.push({
     type: 'roundedRect',
-    center: { x: width/2, y: height/2 },
+    center: { x: renderComparisonWidth/2, y: renderComparisonHeight/2 },
     width: rectWidth,
     height: rectHeight,
     radius: Math.round(Math.random() * Math.min(rectWidth, rectHeight) * 0.2),
@@ -109,8 +109,8 @@ function add1PxStrokeCenteredRoundedRectAtGrid(shapes, log) {
 
   const rectWidth = Math.floor(20 + Math.random() * 130);
   const rectHeight = Math.floor(20 + Math.random() * 130);
-  const centerX = Math.floor(width / 2);
-  const centerY = Math.floor(height / 2);
+  const centerX = Math.floor(renderComparisonWidth / 2);
+  const centerY = Math.floor(renderComparisonHeight / 2);
   
   return add1PxStrokeCenteredRoundedRect(centerX, centerY, rectWidth, rectHeight, shapes, log);
 }
@@ -120,8 +120,8 @@ function add1PxStrokeCenteredRoundedRectAtPixel(shapes, log) {
 
   const rectWidth = Math.floor(20 + Math.random() * 130);
   const rectHeight = Math.floor(20 + Math.random() * 130);
-  const centerX = Math.floor(width / 2) + 0.5;
-  const centerY = Math.floor(height / 2) + 0.5;
+  const centerX = Math.floor(renderComparisonWidth / 2) + 0.5;
+  const centerY = Math.floor(renderComparisonHeight / 2) + 0.5;
   
   return add1PxStrokeCenteredRoundedRect(centerX, centerY, rectWidth, rectHeight, shapes, log);
 }

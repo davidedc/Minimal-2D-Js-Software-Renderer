@@ -46,6 +46,7 @@ class RenderChecks {
     return count;
   }
 
+  // note that these first two parameters are both CanvasRenderingContext2D
   checkPlacementOf4Sides(swCtx, canvasCtx, edges) {
     const results = [];
     const contexts = [

@@ -1,5 +1,5 @@
 function checkCanvasHasEvenDimensions() {
-  if (width % 2 !== 0 || height % 2 !== 0) {
+  if (renderComparisonWidth % 2 !== 0 || renderComparisonHeight % 2 !== 0) {
     console.error('Width and height should be even numbers for this test');
   }
 }
