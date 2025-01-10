@@ -307,7 +307,7 @@ class SWRendererRoundedRect {
         centerX + (-radius * sin),
         centerY + (-height/2 + radius/2) * cos,
         width - 2 * radius, radius,
-        rotation, fillR, fillG, fillB, fillA
+        rotation, false, fillR, fillG, fillB, fillA
       );
 
       // Right rectangle 
@@ -315,7 +315,7 @@ class SWRendererRoundedRect {
         centerX + (width/2 - radius/2) * cos,
         centerY + (width/2 - radius/2) * sin,
         radius, height - 2 * radius,
-        rotation, fillR, fillG, fillB, fillA
+        rotation, false, fillR, fillG, fillB, fillA
       );
 
       // Bottom rectangle
@@ -323,7 +323,7 @@ class SWRendererRoundedRect {
         centerX + (radius * sin),
         centerY + (height/2 - radius/2) * cos,
         width - 2 * radius, radius,
-        rotation, fillR, fillG, fillB, fillA
+        rotation, false, fillR, fillG, fillB, fillA
       );
 
       // Left rectangle
@@ -331,7 +331,7 @@ class SWRendererRoundedRect {
         centerX + (-width/2 + radius/2) * cos,
         centerY + (-width/2 + radius/2) * sin,
         radius, height - 2 * radius,
-        rotation, fillR, fillG, fillB, fillA
+        rotation, false, fillR, fillG, fillB, fillA
       );
 
       // 3. Fill corner arcs

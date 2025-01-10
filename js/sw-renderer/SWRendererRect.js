@@ -41,7 +41,7 @@ class SWRendererRect {
       }
       this.clearAxisAlignedRect(center.x, center.y, shapeWidth, shapeHeight);
     } else {
-      this.clearRotatedRect(center.x, center.y, shapeWidth, shapeHeight, rotation);
+      this.fillRotatedRect(center.x, center.y, shapeWidth, shapeHeight, rotation, true);
     }
   }
 
@@ -49,33 +49,24 @@ class SWRendererRect {
     const cos = Math.cos(rotation);
     const sin = Math.sin(rotation);
 
-    const points = [
-      [-width / 2, -height / 2],
-      [width / 2, -height / 2],
-      [width / 2, height / 2],
-      [-width / 2, height / 2]
-    ].map(([x, y]) => ({
-      x: centerX + x * cos - y * sin,
-      y: centerY + x * sin + y * cos
-    }));
-
     // draw fill first
     if (fillA > 0) {
-      const minX = Math.floor(Math.min(...points.map(p => p.x)));
-      const maxX = Math.ceil(Math.max(...points.map(p => p.x)));
-      const minY = Math.floor(Math.min(...points.map(p => p.y)));
-      const maxY = Math.ceil(Math.max(...points.map(p => p.y)));
-
-      for (let y = minY; y <= maxY; y++) {
-        for (let x = minX; x <= maxX; x++) {
-          if (pointInPolygon(x, y, points)) {
-            this.pixelRenderer.setPixel(x, y, fillR, fillG, fillB, fillA);
-          }
-        }
-      }
+      this.fillRotatedRect(centerX, centerY, width, height, rotation, false, fillR, fillG, fillB, fillA);
     }
 
     if (strokeA > 0) {
+      const halfWidth = width / 2;
+      const halfHeight = height / 2;
+      const points = [
+        [-halfWidth, -halfHeight],
+        [halfWidth, -halfHeight],
+        [halfWidth, halfHeight],
+        [-halfWidth, halfHeight]
+      ].map(([x, y]) => ({
+        x: centerX + x * cos - y * sin,
+        y: centerY + x * sin + y * cos
+      }));
+
       if (strokeWidth === 1) {
         for (let i = 0; i < 4; i++) {
           const p1 = points[i];
@@ -113,34 +104,6 @@ class SWRendererRect {
             strokeWidth,
             strokeR, strokeG, strokeB, strokeA
           );
-        }
-      }
-    }
-  }
-
-  clearRotatedRect(centerX, centerY, width, height, rotation) {
-    const cos = Math.cos(rotation);
-    const sin = Math.sin(rotation);
-
-    const points = [
-      [-width / 2, -height / 2],
-      [width / 2, -height / 2],
-      [width / 2, height / 2],
-      [-width / 2, height / 2]
-    ].map(([x, y]) => ({
-      x: centerX + x * cos - y * sin,
-      y: centerY + x * sin + y * cos
-    }));
-
-    const minX = Math.floor(Math.min(...points.map(p => p.x)));
-    const maxX = Math.ceil(Math.max(...points.map(p => p.x)));
-    const minY = Math.floor(Math.min(...points.map(p => p.y)));
-    const maxY = Math.ceil(Math.max(...points.map(p => p.y)));
-
-    for (let y = minY; y <= maxY; y++) {
-      for (let x = minX; x <= maxX; x++) {
-        if (pointInPolygon(x, y, points)) {
-          this.pixelRenderer.clearPixel(x, y);
         }
       }
     }
@@ -227,7 +190,7 @@ class SWRendererRect {
     }
   }
 
-  fillRotatedRect(centerX, centerY, width, height, rotation, r, g, b, a) {
+  fillRotatedRect(centerX, centerY, width, height, rotation, clear, r, g, b, a) {
     const cos = Math.cos(rotation);
     const sin = Math.sin(rotation);
     const hw = width / 2;
@@ -270,7 +233,11 @@ class SWRendererRect {
         );
         
         if(inside) {
-          this.pixelRenderer.setPixel(x, y, r, g, b, a);
+          if (clear) {
+            this.pixelRenderer.clearPixel(x, y);
+          } else {
+            this.pixelRenderer.setPixel(x, y, r, g, b, a);
+          }
         }
       }
     }

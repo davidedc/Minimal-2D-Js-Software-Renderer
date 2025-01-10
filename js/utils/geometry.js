@@ -1,3 +1,6 @@
+// THIS IS NOT USED SO FAR BECAUSE WE FILL (ROTATED) RECTANGLES SO FAR, FOR WHICH WE
+// USE THE Edge Function Method (Half-Space Method), WHICH SHOULD BE FASTER.
+// --------------------------------------------------------------------------
 // Ray Casting algorithm (also known as the Even-Odd Rule algorithm) for
 // determining if a point lies inside a polygon
 // conceptually draws a ray from the test point (x,y) extending infinitely
