@@ -3,7 +3,7 @@ function drawShapesImpl(shapes, isCanvas, ctx = null, frameBuffer) {
   const pixelRenderer = new SWRendererPixel(frameBuffer, renderComparisonWidth, renderComparisonHeight);
   const swLineRenderer = new SWRendererLine(pixelRenderer);
   const swRectRenderer = new SWRendererRect(frameBuffer, renderComparisonWidth, renderComparisonHeight, swLineRenderer, pixelRenderer);
-  const swRoundedRectRenderer = new SWRendererRoundedRect(frameBuffer, renderComparisonWidth, renderComparisonHeight, swLineRenderer, pixelRenderer);
+  const swRoundedRectRenderer = new SWRendererRoundedRect(frameBuffer, renderComparisonWidth, renderComparisonHeight, swLineRenderer, pixelRenderer, swRectRenderer);
   const swCircleRenderer = new SWRendererCircle(pixelRenderer);
   const swArcRenderer = new SWRendererArc(pixelRenderer);
   

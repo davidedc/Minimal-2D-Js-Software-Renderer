@@ -1,10 +1,11 @@
 class SWRendererRoundedRect {
-  constructor(frameBuffer, width, height, lineRenderer, pixelRenderer) {
+  constructor(frameBuffer, width, height, lineRenderer, pixelRenderer, swRectRenderer) {
     this.frameBuffer = frameBuffer;
     this.width = width;
     this.height = height;
     this.lineRenderer = lineRenderer;
     this.pixelRenderer = pixelRenderer;
+    this.swRectRenderer = swRectRenderer;
   }
 
   drawRoundedRect(shape) {
@@ -238,22 +239,6 @@ class SWRendererRoundedRect {
     }
   }
 
-  fillPolygon(points, r, g, b, a) {
-    const minX = Math.floor(Math.min(...points.map(p => p.x)));
-    const maxX = Math.ceil(Math.max(...points.map(p => p.x)));
-    const minY = Math.floor(Math.min(...points.map(p => p.y)));
-    const maxY = Math.ceil(Math.max(...points.map(p => p.y)));
-
-    for (let y = minY; y <= maxY; y++) {
-      for (let x = minX; x <= maxX; x++) {
-        if (pointInPolygon(x, y, points)) {
-          this.pixelRenderer.setPixel(x, y, r, g, b, a);
-        }
-      }
-    }
-  }
-
-  // Doesn't really work very well yet, some artifacts remaining.
   drawRotatedRoundedRect(centerX, centerY, width, height, radius, rotation,
     strokeWidth, strokeR, strokeG, strokeB, strokeA,
     fillR, fillG, fillB, fillA) {
@@ -310,58 +295,44 @@ class SWRendererRoundedRect {
 
     if (fillA > 0) {
       // 1. Draw the central rectangle
-      const centralPoints = [
-        [-halfWidth + radius, -halfHeight + radius],
-        [halfWidth - radius, -halfHeight + radius],
-        [halfWidth - radius, halfHeight - radius],
-        [-halfWidth + radius, halfHeight - radius]
-      ].map(([x, y]) => ({
-        x: centerX + x * cos - y * sin,
-        y: centerY + x * sin + y * cos
-      }));
-
-      this.fillPolygon(centralPoints, fillR, fillG, fillB, fillA);
+      this.swRectRenderer.fillRotatedRect(
+        centerX, centerY,
+        width - 2 * radius, height - 2 * radius,
+        rotation, fillR, fillG, fillB, fillA
+      );
 
       // 2. Draw the four side rectangles
-      const sideRects = [
-        [
-          // top rectangle
-          [-halfWidth + radius, -halfHeight],
-          [halfWidth - radius, -halfHeight],
-          [halfWidth - radius, -halfHeight + radius],
-          [-halfWidth + radius, -halfHeight + radius]
-        ],
-        [
-          // right rectangle
-          [halfWidth - radius, -halfHeight + radius],
-          [halfWidth, -halfHeight + radius],
-          [halfWidth, halfHeight - radius],
-          [halfWidth - radius, halfHeight - radius]
-        ],
-        [
-          // bottom rectangle
-          [-halfWidth + radius, halfHeight - radius],
-          [halfWidth - radius, halfHeight - radius],
-          [halfWidth - radius, halfHeight],
-          [-halfWidth + radius, halfHeight]
-        ],
-        [
-          // left rectangle
-          [-halfWidth, -halfHeight + radius],
-          [-halfWidth + radius, -halfHeight + radius],
-          [-halfWidth + radius, halfHeight - radius],
-          [-halfWidth, halfHeight - radius]
-        ]
-      ];
+      // Top rectangle
+      this.swRectRenderer.fillRotatedRect(
+        centerX + (-radius * sin),
+        centerY + (-height/2 + radius/2) * cos,
+        width - 2 * radius, radius,
+        rotation, fillR, fillG, fillB, fillA
+      );
 
-      // Draw each side rectangle
-      sideRects.forEach(points => {
-        const transformedPoints = points.map(([x, y]) => ({
-          x: centerX + x * cos - y * sin,
-          y: centerY + x * sin + y * cos
-        }));
-        this.fillPolygon(transformedPoints, fillR, fillG, fillB, fillA);
-      });
+      // Right rectangle 
+      this.swRectRenderer.fillRotatedRect(
+        centerX + (width/2 - radius/2) * cos,
+        centerY + (width/2 - radius/2) * sin,
+        radius, height - 2 * radius,
+        rotation, fillR, fillG, fillB, fillA
+      );
+
+      // Bottom rectangle
+      this.swRectRenderer.fillRotatedRect(
+        centerX + (radius * sin),
+        centerY + (height/2 - radius/2) * cos,
+        width - 2 * radius, radius,
+        rotation, fillR, fillG, fillB, fillA
+      );
+
+      // Left rectangle
+      this.swRectRenderer.fillRotatedRect(
+        centerX + (-width/2 + radius/2) * cos,
+        centerY + (-width/2 + radius/2) * sin,
+        radius, height - 2 * radius,
+        rotation, fillR, fillG, fillB, fillA
+      );
 
       // 3. Fill corner arcs
       const rotationDegrees = rotation * 180 / Math.PI;

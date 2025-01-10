@@ -226,4 +226,53 @@ class SWRendererRect {
       }
     }
   }
+
+  fillRotatedRect(centerX, centerY, width, height, rotation, r, g, b, a) {
+    const cos = Math.cos(rotation);
+    const sin = Math.sin(rotation);
+    const hw = width / 2;
+    const hh = height / 2;
+    
+    // Calculate corners
+    const corners = [
+      { x: centerX + hw * cos - hh * sin, y: centerY + hw * sin + hh * cos },
+      { x: centerX + hw * cos + hh * sin, y: centerY + hw * sin - hh * cos },
+      { x: centerX - hw * cos + hh * sin, y: centerY - hw * sin - hh * cos },
+      { x: centerX - hw * cos - hh * sin, y: centerY - hw * sin + hh * cos }
+    ];
+    
+    // Create edge functions for each edge
+    const edges = [];
+    for(let i = 0; i < 4; i++) {
+      const p1 = corners[i];
+      const p2 = corners[(i + 1) % 4];
+      
+      // Edge equation coefficients
+      const a = p2.y - p1.y;
+      const b = p1.x - p2.x;
+      const c = p2.x * p1.y - p1.x * p2.y;
+      
+      edges.push({a, b, c});
+    }
+    
+    // Find bounding box
+    const minX = Math.floor(Math.min(...corners.map(p => p.x)));
+    const maxX = Math.ceil(Math.max(...corners.map(p => p.x)));
+    const minY = Math.floor(Math.min(...corners.map(p => p.y)));
+    const maxY = Math.ceil(Math.max(...corners.map(p => p.y)));
+    
+    // Test each pixel using edge functions
+    for(let y = minY; y <= maxY; y++) {
+      for(let x = minX; x <= maxX; x++) {
+        // A point is inside if it's on the "inside" of all edges
+        const inside = edges.every(edge => 
+          (edge.a * x + edge.b * y + edge.c) >= 0
+        );
+        
+        if(inside) {
+          this.pixelRenderer.setPixel(x, y, r, g, b, a);
+        }
+      }
+    }
+  }
 }
