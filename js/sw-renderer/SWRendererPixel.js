@@ -1,8 +1,16 @@
 class SWRendererPixel {
-  constructor(frameBuffer, width, height) {
+  constructor(frameBuffer, width, height, context) {
     this.frameBuffer = frameBuffer;
     this.width = width;
     this.height = height;
+    // if context is null, then it means we are just using the primitives without the
+    // whole context apparatus, so we create a placeholder object with the globalAlpha property
+    // that we need for the blending calculations
+    if (context === null || context === undefined) {
+      this.context = { globalAlpha: 1.0 };
+    } else {
+      this.context = context;
+    }
   }
 
   // Blending happens in sRGB space for performance reasons
@@ -10,7 +18,7 @@ class SWRendererPixel {
     if (x < 0 || x >= this.width || y < 0 || y >= this.height) return;
     const index = (y * this.width + x) * 4;
     
-    const alpha = a / 255;
+    const alpha = (a / 255) * this.context.globalAlpha;
     const oldAlpha = this.frameBuffer[index + 3] / 255;
     const newAlpha = alpha + oldAlpha * (1 - alpha);
     

@@ -3,7 +3,7 @@ class CrispSwContext {
         this.canvas = canvas;
         this.stateStack = [new ContextState()];
         this.frameBuffer = new Uint8ClampedArray(canvas.width * canvas.height * 4).fill(0);
-        this.pixelRenderer = new SWRendererPixel(this.frameBuffer, canvas.width, canvas.height);
+        this.pixelRenderer = new SWRendererPixel(this.frameBuffer, canvas.width, canvas.height, this);
         this.lineRenderer = new SWRendererLine(this.pixelRenderer);
         this.rectRenderer = new SWRendererRect(this.frameBuffer, canvas.width, canvas.height, this.lineRenderer, this.pixelRenderer);
         //this.roundedRectRenderer = new SWRendererRoundedRect(this.frameBuffer, canvas.width, canvas.height, this.lineRenderer, this.pixelRenderer);
@@ -50,6 +50,15 @@ class CrispSwContext {
 
     set lineWidth(width) {
         this.currentState.lineWidth = width;
+    }
+
+    // Add globalAlpha property
+    set globalAlpha(value) {
+        this.currentState.globalAlpha = Math.max(0, Math.min(1, value)); // Clamp between 0 and 1
+    }
+
+    get globalAlpha() {
+        return this.currentState.globalAlpha;
     }
 
     // Drawing methods

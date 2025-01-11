@@ -136,6 +136,24 @@
             ctx.fillRect(-25, -25, 50, 50);
             
             ctx.restore();
+
+            ctx.save();
+            ctx.translate(600, 400);
+            
+            // Draw three overlapping rectangles with different globalAlpha values
+            ctx.fillStyle = "rgb(255, 0, 0)";
+            ctx.globalAlpha = 1.0;
+            ctx.fillRect(-50, -50, 100, 100);
+            
+            ctx.fillStyle = "rgb(0, 255, 0)";
+            ctx.globalAlpha = 0.5;
+            ctx.fillRect(-25, -25, 100, 100);
+            
+            ctx.fillStyle = "rgb(0, 0, 255)";
+            ctx.globalAlpha = 0.25;
+            ctx.fillRect(0, 0, 100, 100);
+            
+            ctx.restore();
         }
 
         // Create our CrispSwCanvas

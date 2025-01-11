@@ -4,6 +4,7 @@ class ContextState {
         this.transform = new TransformationMatrix();
         this.strokeColor = { r: 0, g: 0, b: 0, a: 1 };
         this.fillColor = { r: 0, g: 0, b: 0, a: 1 };
+        this.globalAlpha = 1.0;
     }
 
     clone() {
@@ -12,6 +13,7 @@ class ContextState {
         newState.transform = this.transform.clone();
         newState.strokeColor = { ...this.strokeColor };
         newState.fillColor = { ...this.fillColor };
+        newState.globalAlpha = this.globalAlpha;
         return newState;
     }
 }
