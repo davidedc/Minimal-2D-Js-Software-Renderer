@@ -225,17 +225,28 @@ class SWRendererRect {
     const maxY = Math.ceil(Math.max(...corners.map(p => p.y)));
     
     // Test each pixel using edge functions
-    for(let y = minY; y <= maxY; y++) {
-      for(let x = minX; x <= maxX; x++) {
-        // A point is inside if it's on the "inside" of all edges
-        const inside = edges.every(edge => 
-          (edge.a * x + edge.b * y + edge.c) >= 0
-        );
-        
-        if(inside) {
-          if (clear) {
+    if (clear) {
+      for(let y = minY; y <= maxY; y++) {
+        for(let x = minX; x <= maxX; x++) {
+          // A point is inside if it's on the "inside" of all edges
+          const inside = edges.every(edge => 
+            (edge.a * x + edge.b * y + edge.c) >= 0
+          );
+          
+          if(inside) {
             this.pixelRenderer.clearPixel(x, y);
-          } else {
+          }
+        }
+      }
+    } else {
+      for(let y = minY; y <= maxY; y++) {
+        for(let x = minX; x <= maxX; x++) {
+          // A point is inside if it's on the "inside" of all edges
+          const inside = edges.every(edge => 
+            (edge.a * x + edge.b * y + edge.c) >= 0
+          );
+          
+          if(inside) {
             this.pixelRenderer.setPixel(x, y, r, g, b, a);
           }
         }
