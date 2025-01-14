@@ -8,18 +8,27 @@ class SWRendererRect {
   }
 
   drawRect(shape) {
+    if(shape.clippingOnly) {
+      if (shape.rotation === 0) {
+        this.drawAxisAlignedRect(shape.center.x, shape.center.y, shape.width, shape.height, true);
+      } else {
+        this.drawRotatedRect(shape.center.x, shape.center.y, shape.width, shape.height, shape.rotation, true);
+      }
+      return;
+    }
+
     const {
-      center, width, height, rotation,
+      center, width, height, rotation, clippingOnly,
       strokeWidth, strokeColor: { r: strokeR, g: strokeG, b: strokeB, a: strokeA },
       fillColor: { r: fillR, g: fillG, b: fillB, a: fillA }
     } = shape;
 
     if (rotation === 0) {    
-      this.drawAxisAlignedRect(center.x, center.y, width, height,
+      this.drawAxisAlignedRect(center.x, center.y, width, height, clippingOnly,
         strokeWidth, strokeR, strokeG, strokeB, strokeA,
         fillR, fillG, fillB, fillA);
     } else {
-      this.drawRotatedRect(center.x, center.y, width, height, rotation,
+      this.drawRotatedRect(center.x, center.y, width, height, rotation, clippingOnly,
         strokeWidth, strokeR, strokeG, strokeB, strokeA,
         fillR, fillG, fillB, fillA);
     }
@@ -41,17 +50,20 @@ class SWRendererRect {
       }
       this.clearAxisAlignedRect(center.x, center.y, shapeWidth, shapeHeight);
     } else {
-      this.fillRotatedRect(center.x, center.y, shapeWidth, shapeHeight, rotation, true);
+      this.fillRotatedRect(center.x, center.y, shapeWidth, shapeHeight, rotation, false, true);
     }
   }
 
-  drawRotatedRect(centerX, centerY, width, height, rotation, strokeWidth, strokeR, strokeG, strokeB, strokeA, fillR, fillG, fillB, fillA) {
+  drawRotatedRect(centerX, centerY, width, height, rotation, clippingOnly, strokeWidth, strokeR, strokeG, strokeB, strokeA, fillR, fillG, fillB, fillA) {
     const cos = Math.cos(rotation);
     const sin = Math.sin(rotation);
 
     // draw fill first
-    if (fillA > 0) {
-      this.fillRotatedRect(centerX, centerY, width, height, rotation, false, fillR, fillG, fillB, fillA);
+    if (clippingOnly || fillA > 0) {
+      this.fillRotatedRect(centerX, centerY, width, height, rotation, clippingOnly, false, fillR, fillG, fillB, fillA);
+    }
+    if (clippingOnly) {
+      return;
     }
 
     if (strokeA > 0) {
@@ -109,7 +121,7 @@ class SWRendererRect {
     }
   }
 
-  drawAxisAlignedRect(centerX, centerY, rectWidth, rectHeight,
+  drawAxisAlignedRect(centerX, centerY, rectWidth, rectHeight, clippingOnly,
     strokeWidth, strokeR, strokeG, strokeB, strokeA,
     fillR, fillG, fillB, fillA) {
     centerX = Math.round(centerX);
@@ -117,6 +129,7 @@ class SWRendererRect {
     rectWidth = Math.round(rectWidth);
     rectHeight = Math.round(rectHeight);
     strokeWidth = Math.round(strokeWidth);
+    if (clippingOnly) {strokeWidth = 0;}
 
     const halfWidth = Math.floor(rectWidth / 2);
     const halfHeight = Math.floor(rectHeight / 2);
@@ -126,14 +139,24 @@ class SWRendererRect {
     const pathRight = pathLeft + rectWidth;
     const pathBottom = pathTop + rectHeight;
     
+
     // draw fill first
-    if (fillA > 0) {
+    if (clippingOnly || fillA > 0) {
       const inset = Math.ceil(strokeWidth / 2) - 1;
       const fillLeft = pathLeft + inset + 1;
       const fillRight = pathRight - inset - 1;
       const fillTop = pathTop + inset + 1;
       const fillBottom = pathBottom - inset - 1;
       
+      if (clippingOnly) {
+        for (let y = fillTop; y < fillBottom; y++) {
+          for (let x = fillLeft; x < fillRight; x++) {
+            this.pixelRenderer.clipPixel(x, y);
+          }
+        }
+        return;
+      }
+
       for (let y = fillTop; y < fillBottom; y++) {
         for (let x = fillLeft; x < fillRight; x++) {
           this.pixelRenderer.setPixel(x, y, fillR, fillG, fillB, fillA);
@@ -190,7 +213,7 @@ class SWRendererRect {
     }
   }
 
-  fillRotatedRect(centerX, centerY, width, height, rotation, clear, r, g, b, a) {
+  fillRotatedRect(centerX, centerY, width, height, rotation, clippingOnly, clear, r, g, b, a) {
     const cos = Math.cos(rotation);
     const sin = Math.sin(rotation);
     const hw = width / 2;
@@ -225,7 +248,21 @@ class SWRendererRect {
     const maxY = Math.ceil(Math.max(...corners.map(p => p.y)));
     
     // Test each pixel using edge functions
-    if (clear) {
+    if (clippingOnly) {
+      for(let y = minY; y <= maxY; y++) {
+        for(let x = minX; x <= maxX; x++) {
+          // A point is inside if it's on the "inside" of all edges
+          const inside = edges.every(edge => 
+            (edge.a * x + edge.b * y + edge.c) >= 0
+          );
+          
+          if(inside) {
+            this.pixelRenderer.clipPixel(x, y);
+          }
+        }
+      }
+    }
+    else if (clear) {
       for(let y = minY; y <= maxY; y++) {
         for(let x = minX; x <= maxX; x++) {
           // A point is inside if it's on the "inside" of all edges
@@ -238,7 +275,8 @@ class SWRendererRect {
           }
         }
       }
-    } else {
+    }
+    else {
       for(let y = minY; y <= maxY; y++) {
         for(let x = minX; x <= maxX; x++) {
           // A point is inside if it's on the "inside" of all edges

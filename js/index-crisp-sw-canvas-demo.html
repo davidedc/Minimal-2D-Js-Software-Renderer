@@ -89,13 +89,73 @@
             // clear the whole canvas
             ctx.clearRect(0, 0, 800, 600);
 
+            // test clipping
             ctx.fillStyle = "rgba(255, 0, 0, 0.5)";
-            ctx.fillRect(20, 20, 150, 100);
+
+            ctx.save()
+            ctx.save();
+            ctx.rect(50, 50, 100, 100);
+            ctx.clip();
+            ctx.fillRect(0, 0, 100, 100);
+            ctx.restore();
+            ctx.translate(20,20);
+            ctx.save();
+            //ctx.beginPath();
+            ctx.rect(50, 50, 100, 100);
+            ctx.clip();
+            ctx.fillRect(0, 0, 100, 100);
+            ctx.restore();
+
+            ctx.translate(140,-20);
+
+            ctx.save();
+            ctx.rect(50, 50, 100, 100);
+            ctx.clip();
+            ctx.fillRect(0, 0, 100, 100);
+            ctx.restore();
+            ctx.translate(20,20);
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(50, 50, 100, 100);
+            ctx.clip();
+            ctx.fillRect(0, 0, 100, 100);
+            ctx.restore();
+
+            ctx.translate(140,-20);
+
+            ctx.save();
+            ctx.rect(50, 50, 100, 100);
+            ctx.clip();
+            ctx.fillRect(0, 0, 100, 100);
+            ctx.restore();
+            ctx.rotate(Math.PI / 16);
+            ctx.save();
+            //ctx.beginPath();
+            ctx.rect(50, 50, 100, 100);
+            ctx.clip();
+            ctx.fillRect(0, 0, 100, 100);
+            ctx.restore();
+
+            ctx.translate(140,-20);
+
+            ctx.save();
+            ctx.rect(50, 50, 100, 100);
+            ctx.clip();
+            ctx.fillRect(0, 0, 100, 100);
+            ctx.restore();
+            ctx.translate(20,20);
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(50, 50, 100, 100);
+            ctx.clip();
+            ctx.fillRect(0, 0, 100, 100);
+            ctx.restore();
+            ctx.restore();
 
             // Stroked rectangle with crisp lines
             ctx.strokeStyle = "rgb(0, 0, 255)";
             ctx.lineWidth = 1;
-            ctx.strokeRect(20.5, 20.5, 149, 99);
+            ctx.strokeRect(20.5, 20.5, 249, 199);
 
             ctx.rotate(Math.PI / 16);
 
@@ -152,7 +212,6 @@
             ctx.fillStyle = "rgb(0, 0, 255)";
             ctx.globalAlpha = 0.25;
             ctx.fillRect(0, 0, 100, 100);
-            
             ctx.restore();
         }
 
