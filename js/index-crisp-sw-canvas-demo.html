@@ -12,6 +12,9 @@
             border: 2px solid #000;
             margin: 10px;
         }
+        #targetCanvas, #standardCanvas {
+            cursor: crosshair;
+        }
         .container {
             display: flex;
             flex-direction: column;
@@ -43,6 +46,14 @@
             background-size: 20px 20px;
             background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
         }
+        .magnifier-container {
+            margin-top: 20px;
+            text-align: center;
+        }
+        
+        #magnifierCanvas {
+            border: 2px solid #000;
+        }
     </style>
 </head>
 <body>
@@ -61,6 +72,10 @@
                 <div class="canvas-label">Standard HTML5 Canvas</div>
                 <canvas id="standardCanvas" width="800" height="600"></canvas>
             </div>
+        </div>
+        <div class="magnifier-container">
+            <div class="canvas-label">Pixel Magnifier</div>
+            <canvas id="magnifierCanvas" width="400" height="200"></canvas>
         </div>
     </div>
 
@@ -239,6 +254,191 @@
             } else {
                 document.body.classList.remove('show-transparency');
             }
+        });
+
+        // Add magnifier functionality
+        const magnifierCanvas = document.getElementById('magnifierCanvas');
+        const magnifierCtx = magnifierCanvas.getContext('2d');
+        const GRID_SIZE = 10;
+        const GRID_HEIGHT = 10;
+        
+        function drawEmptyGrid() {
+            // Clear magnifier canvas
+            magnifierCtx.clearRect(0, 0, magnifierCanvas.width, magnifierCanvas.height);
+            
+            const pixelSize = (magnifierCanvas.width / 2) / GRID_SIZE;
+            
+            // Draw grid for both sides
+            [0, magnifierCanvas.width / 2].forEach(offsetX => {
+                // Draw grid lines
+                magnifierCtx.strokeStyle = 'rgba(128,128,128,0.5)';
+                magnifierCtx.lineWidth = 1;
+                
+                // Vertical lines
+                for (let px = 0; px <= GRID_SIZE; px++) {
+                    magnifierCtx.beginPath();
+                    magnifierCtx.moveTo(offsetX + px * pixelSize, 0);
+                    magnifierCtx.lineTo(offsetX + px * pixelSize, GRID_HEIGHT * 2 * pixelSize);
+                    magnifierCtx.stroke();
+                }
+                
+                // Horizontal lines
+                for (let py = 0; py <= GRID_HEIGHT * 2; py++) {
+                    magnifierCtx.beginPath();
+                    magnifierCtx.moveTo(offsetX, py * pixelSize);
+                    magnifierCtx.lineTo(offsetX + GRID_SIZE * pixelSize, py * pixelSize);
+                    magnifierCtx.stroke();
+                }
+            });
+            
+            // Draw separator line
+            magnifierCtx.strokeStyle = 'rgba(128,128,128,0.8)';
+            magnifierCtx.lineWidth = 6;
+            magnifierCtx.beginPath();
+            magnifierCtx.moveTo(magnifierCanvas.width / 2, 0);
+            magnifierCtx.lineTo(magnifierCanvas.width / 2, magnifierCanvas.height);
+            magnifierCtx.stroke();
+        }
+        
+        // Draw initial empty grid
+        drawEmptyGrid();
+        
+        function handleCanvasHover(event, sourceCanvas, sourceCtx) {
+            const rect = sourceCanvas.getBoundingClientRect();
+            const x = Math.floor(event.clientX - rect.left);
+            const y = Math.floor(event.clientY - rect.top);
+            
+            // Get the pixels around the cursor from both canvases
+            const halfGrid = Math.floor(GRID_SIZE / 2);
+            const crispImageData = targetCanvas.getContext('2d').getImageData(
+                Math.max(0, x - halfGrid),
+                Math.max(0, y - GRID_HEIGHT / 2),
+                GRID_SIZE,
+                GRID_HEIGHT * 2
+            );
+            const standardImageData = standardCtx.getImageData(
+                Math.max(0, x - halfGrid),
+                Math.max(0, y - GRID_HEIGHT / 2),
+                GRID_SIZE,
+                GRID_HEIGHT * 2
+            );
+            
+            // Calculate pixel size for magnified view
+            const pixelSize = (magnifierCanvas.width / 2) / GRID_SIZE;
+            
+            // Clear magnifier canvas
+            magnifierCtx.clearRect(0, 0, magnifierCanvas.width, magnifierCanvas.height);
+            
+            // Function to draw grid for each side
+            const drawGrid = (imageData, offsetX) => {
+                const sourceX = x - halfGrid;
+                const sourceY = y - GRID_HEIGHT / 2;
+                
+                for (let py = 0; py < GRID_HEIGHT * 2; py++) {
+                    for (let px = 0; px < GRID_SIZE; px++) {
+                        // Calculate actual source coordinates
+                        const actualX = sourceX + px;
+                        const actualY = sourceY + py;
+                        
+                        // Check if pixel is within canvas bounds
+                        const isOutOfBounds = actualX < 0 || actualY < 0 || 
+                                            actualX >= sourceCanvas.width || 
+                                            actualY >= sourceCanvas.height;
+                        
+                        if (isOutOfBounds) {
+                            magnifierCtx.fillStyle = 'rgb(128,128,128)';
+                        } else {
+                            const i = (py * imageData.width + px) * 4;
+                            const r = imageData.data[i];
+                            const g = imageData.data[i + 1];
+                            const b = imageData.data[i + 2];
+                            const a = imageData.data[i + 3];
+                            magnifierCtx.fillStyle = `rgba(${r},${g},${b},${a/255})`;
+                        }
+                        
+                        // Draw pixel
+                        magnifierCtx.fillRect(
+                            offsetX + px * pixelSize,
+                            py * pixelSize,
+                            pixelSize,
+                            pixelSize
+                        );
+                    }
+                }
+                
+                // Draw grid lines after pixels
+                magnifierCtx.strokeStyle = 'rgba(128,128,128,0.5)';
+                magnifierCtx.lineWidth = 1;
+                // Vertical lines
+                for (let px = 0; px <= GRID_SIZE; px++) {
+                    magnifierCtx.beginPath();
+                    magnifierCtx.moveTo(offsetX + px * pixelSize, 0);
+                    magnifierCtx.lineTo(offsetX + px * pixelSize, GRID_HEIGHT * 2 * pixelSize);
+                    magnifierCtx.stroke();
+                }
+                // Horizontal lines
+                for (let py = 0; py <= GRID_HEIGHT * 2; py++) {
+                    magnifierCtx.beginPath();
+                    magnifierCtx.moveTo(offsetX, py * pixelSize);
+                    magnifierCtx.lineTo(offsetX + GRID_SIZE * pixelSize, py * pixelSize);
+                    magnifierCtx.stroke();
+                }
+                
+                // Draw crosshair
+                magnifierCtx.strokeStyle = 'red';
+                magnifierCtx.lineWidth = 2;
+                
+                // Vertical line
+                magnifierCtx.beginPath();
+                magnifierCtx.moveTo(offsetX + halfGrid * pixelSize, 0);
+                magnifierCtx.lineTo(offsetX + halfGrid * pixelSize, GRID_HEIGHT * 2 * pixelSize);
+                magnifierCtx.stroke();
+                
+                // Horizontal line
+                magnifierCtx.beginPath();
+                magnifierCtx.moveTo(offsetX, GRID_HEIGHT * pixelSize / 2);
+                magnifierCtx.lineTo(offsetX + GRID_SIZE * pixelSize, GRID_HEIGHT * pixelSize / 2);
+                magnifierCtx.stroke();
+            };
+            
+            // Draw left side (CrispSwCanvas)
+            drawGrid(crispImageData, 0);
+            
+            // Draw right side (Standard Canvas)
+            drawGrid(standardImageData, magnifierCanvas.width / 2);
+            
+            // Draw separator line
+            magnifierCtx.strokeStyle = 'rgba(128,128,128,0.8)';
+            magnifierCtx.lineWidth = 6;
+            magnifierCtx.beginPath();
+            magnifierCtx.moveTo(magnifierCanvas.width / 2, 0);
+            magnifierCtx.lineTo(magnifierCanvas.width / 2, magnifierCanvas.height);
+            magnifierCtx.stroke();
+            
+            // Draw coordinates
+            magnifierCtx.font = '14px monospace';
+            magnifierCtx.textAlign = 'center';
+            magnifierCtx.textBaseline = 'top';
+            magnifierCtx.fillStyle = 'black';
+            magnifierCtx.fillText(`(${x}, ${y})`, magnifierCanvas.width / 2, 5);
+        }
+        
+        // Add event listeners for both canvases
+        const handleMouseMove = (e) => {
+            const sourceCanvas = e.target;
+            handleCanvasHover(e, sourceCanvas);
+        };
+        
+        targetCanvas.addEventListener('mousemove', handleMouseMove);
+        standardCanvas.addEventListener('mousemove', handleMouseMove);
+        
+        // Clear magnifier when mouse leaves canvases
+        targetCanvas.addEventListener('mouseout', () => {
+            drawEmptyGrid();
+        });
+        
+        standardCanvas.addEventListener('mouseout', () => {
+            drawEmptyGrid();
         });
     </script>
 </body>
