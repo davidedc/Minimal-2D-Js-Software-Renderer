@@ -24,6 +24,7 @@
             display: flex;
             flex-direction: row;
             gap: 20px;
+            align-items: flex-start;
         }
         .canvas-label {
             text-align: center;
@@ -47,7 +48,7 @@
             background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
         }
         .magnifier-container {
-            margin-top: 20px;
+            margin-top: 0;
             text-align: center;
         }
         
@@ -66,16 +67,16 @@
         <div class="canvas-container">
             <div>
                 <div class="canvas-label">CrispSwCanvas</div>
-                <canvas id="targetCanvas" width="800" height="600"></canvas>
+                <canvas id="targetCanvas" width="600" height="600"></canvas>
             </div>
             <div>
                 <div class="canvas-label">Standard HTML5 Canvas</div>
-                <canvas id="standardCanvas" width="800" height="600"></canvas>
+                <canvas id="standardCanvas" width="600" height="600"></canvas>
             </div>
-        </div>
-        <div class="magnifier-container">
-            <div class="canvas-label">Pixel Magnifier</div>
-            <canvas id="magnifierCanvas" width="400" height="200"></canvas>
+            <div class="magnifier-container">
+                <div class="canvas-label">Pixel Magnifier</div>
+                <canvas id="magnifierCanvas" width="400" height="200"></canvas>
+            </div>
         </div>
     </div>
 
@@ -176,7 +177,7 @@
 
             // Demonstrate transformations
             ctx.save();
-            ctx.translate(200, 200);
+            ctx.translate(150, 150);
             ctx.rotate(Math.PI / 16);
             ctx.scale(2, 2);
             ctx.fillStyle = "rgba(0, 255, 0, 0.5)";
@@ -185,19 +186,19 @@
 
             // Example of overlapping shapes
             ctx.fillStyle = "rgba(255, 255, 0, 0.5)";
-            ctx.fillRect(300, 50, 100, 100);
+            ctx.fillRect(250, 80, 100, 100);
             
             ctx.fillStyle = "rgba(0, 255, 255, 0.5)";
-            ctx.fillRect(350, 100, 100, 100);
+            ctx.fillRect(300, 130, 100, 100);
 
             // Example of clearing a region
             ctx.fillStyle = "rgba(128, 0, 128, 1)";
-            ctx.fillRect(500, 50, 200, 200);
-            ctx.clearRect(550, 100, 100, 100);
+            ctx.fillRect(450, 50, 200, 200);
+            ctx.clearRect(500, 100, 100, 100);
 
             // Example of nested transformations
             ctx.save();
-            ctx.translate(400, 400);
+            ctx.translate(350, 350);
             
             ctx.fillStyle = "rgba(255, 0, 0, 0.5)";
             ctx.fillRect(-25, -25, 50, 50);
@@ -213,7 +214,7 @@
             ctx.restore();
 
             ctx.save();
-            ctx.translate(600, 400);
+            ctx.translate(500, 350);
             
             // Draw three overlapping rectangles with different globalAlpha values
             ctx.fillStyle = "rgb(255, 0, 0)";
