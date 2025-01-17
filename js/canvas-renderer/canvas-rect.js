@@ -1,45 +1,26 @@
 function drawAxisAlignedRectCanvas(ctx, centerX, centerY, width, height,
   strokeWidth, strokeR, strokeG, strokeB, strokeA,
   fillR, fillG, fillB, fillA) {
-
-  const roundedWidth = Math.round(width);
-  const roundedHeight = Math.round(height);
-
-  const roundedCenterX = Math.round(centerX);
-  const roundedCenterY = Math.round(centerY);
-
-  const roundedStrokeWidth = Math.round(strokeWidth);
-
-  const halfWidth = Math.floor(roundedWidth / 2);
-  const halfHeight = Math.floor(roundedHeight / 2);
   
-  const pathLeft = roundedCenterX - halfWidth;
-  const pathTop = roundedCenterY - halfHeight;
-
+  // Get fill geometry
+  let pos = getCornerBasedRepresentation(centerX, centerY, width, height, strokeWidth);
+  
+  // Draw fill first (if needed)
   if (fillA > 0) {
-      ctx.fillStyle = `rgba(${fillR}, ${fillG}, ${fillB}, ${fillA / 255})`;
-      const inset = Math.ceil(roundedStrokeWidth / 2) - 1;
-      ctx.fillRect(
-          pathLeft + inset + 1,
-          pathTop + inset + 1,
-          roundedWidth - 2 * (inset + 1),
-          roundedHeight - 2 * (inset + 1)
-      );
+    ctx.fillStyle = `rgba(${fillR}, ${fillG}, ${fillB}, ${fillA / 255})`;
+    ctx.fillRect(pos.x, pos.y, pos.w, pos.h);
   }
-
-  if (strokeA > 0 && roundedStrokeWidth > 0) {
-      ctx.lineWidth = roundedStrokeWidth;
-      ctx.strokeStyle = `rgba(${strokeR}, ${strokeG}, ${strokeB}, ${strokeA / 255})`;
-      
-      const strokeOffset = roundedStrokeWidth % 2 === 0 ? 0 : 0.5;
-      ctx.strokeRect(
-          pathLeft + strokeOffset,
-          pathTop + strokeOffset,
-          roundedWidth - 2 * strokeOffset,
-          roundedHeight - 2 * strokeOffset
-      );
+  
+  // Get stroke geometry
+  pos = getCrispStrokeGeometry(pos.x, pos.y, width, height, strokeWidth);
+  
+  // Draw stroke (if needed)
+  if (strokeA > 0 && strokeWidth > 0) {
+    ctx.lineWidth = strokeWidth;
+    ctx.strokeStyle = `rgba(${strokeR}, ${strokeG}, ${strokeB}, ${strokeA / 255})`;
+    ctx.strokeRect(pos.x, pos.y, pos.w, pos.h);
   }
-}
+} 
 
 function drawRectCanvas(ctx, shape) {
   const {
