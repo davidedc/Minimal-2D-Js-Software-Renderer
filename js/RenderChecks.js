@@ -105,22 +105,22 @@ class RenderChecks {
       
       const edgeResults = [];
       if (actualLeftX !== edges.leftX) {
-        const message = `Left edge expected at ${edges.leftX}, found at ${actualLeftX}`;
+        const message = `${name}: Left edge expected at ${edges.leftX}, found at ${actualLeftX}`;
         edgeResults.push(message);
         this.comparison.showError(message);
       }
       if (actualRightX !== edges.rightX) {
-        const message = `Right edge expected at ${edges.rightX}, found at ${actualRightX}`;
+        const message = `${name}: Right edge expected at ${edges.rightX}, found at ${actualRightX}`;
         edgeResults.push(message);
         this.comparison.showError(message);
       }
       if (actualTopY !== edges.topY) {
-        const message = `Top edge expected at ${edges.topY}, found at ${actualTopY}`;
+        const message = `${name}: Top edge expected at ${edges.topY}, found at ${actualTopY}`;
         edgeResults.push(message);
         this.comparison.showError(message);
       }
       if (actualBottomY !== edges.bottomY) {
-        const message = `Bottom edge expected at ${edges.bottomY}, found at ${actualBottomY}`;
+        const message = `${name}: Bottom edge expected at ${edges.bottomY}, found at ${actualBottomY}`;
         edgeResults.push(message);
         this.comparison.showError(message);
       }
