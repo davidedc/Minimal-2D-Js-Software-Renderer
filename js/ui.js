@@ -45,6 +45,8 @@ function addRenderComparisons() {
   addBlackLinesComparison(3);  // 3px lines
   addBlackLinesComparison(5);  // 5px lines
   addBlackLinesComparison(10); // 10px lines
+  add1PxStrokedRectCenteredAtGridComparison();
+  add1PxStrokedRectCenteredAtPixelComparison();
   add1PxStrokedRoundedRectCenteredAtGridComparison();
   add1PxStrokedRoundedRectCenteredAtPixelComparison();
   addCenteredRoundedRectComparison();

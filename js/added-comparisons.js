@@ -103,3 +103,23 @@ function add2PxHorizontalLineCenteredAtGridComparison() {
     .withExtremesCheck()
     .build();
 }
+
+function add1PxStrokedRectCenteredAtGridComparison() {
+  return new RenderComparisonBuilder()
+    .withId('centered-1px-rect')
+    .withTitle('Single 1px Stroked Rectangle centered at grid')
+    .withDescription('Tests crisp rendering of a 1px stroked rectangle where the center is at a crossing in the grid')
+    .addShapes(add1PxStrokeCenteredRectAtGrid)
+    .withPlacementCheck()
+    .build();
+}
+
+function add1PxStrokedRectCenteredAtPixelComparison() {
+  return new RenderComparisonBuilder()
+    .withId('centered-1px-rect')
+    .withTitle('Single 1px Stroked Rectangle centered at pixel')
+    .withDescription('Tests crisp rendering of a 1px stroked rectangle where the center is in the middle of a pixel')
+    .addShapes(add1PxStrokeCenteredRectAtPixel)
+    .withPlacementCheck()
+    .build();
+}
