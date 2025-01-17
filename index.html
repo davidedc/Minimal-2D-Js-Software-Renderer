@@ -30,33 +30,35 @@
     </style>
 </head>
 <body>
-    <h1>Canvas Rendering Tests & Demos</h1>
+    <h1>2D JS SW Renderer Tests & Demos</h1>
 
     <div class="demo-link">
-        <h2><a href="js/index-crisp-sw-canvas-demo.html">CrispSwCanvas Demo</a></h2>
+        <h2><a href="index-low-level-renderer-tests.html">Low-level SW Renderer routines tests</a></h2>
+        <p>
+            Comprehensive tests for the low-level software renderer routines.
+            Tests low-level primitives like lines, rectangles, rounded rectangles, arcs and circles,
+            comparing them with the equivalent canvas rendering methods. <br>
+            <br>
+            These tests only cover strokes/fills with transparency in absolute coordinates (i.e. no transformations), no clipping.
+        </p>
+    </div>
+
+    <div class="demo-link">
+        <h2><a href="js/index-crisp-sw-canvas-demo.html">CrispSwCanvas tests</a></h2>
         <p>
             A side-by-side comparison between CrispSwCanvas and standard HTML5 Canvas.
-            Demonstrates various drawing operations including rectangles, transformations,
-            and transparency handling.
+            CrispSwCanvas provides transformations, globalAlpha and clipping on top of the low-level renderer routines.
         </p>
     </div>
 
     <div class="demo-link">
-        <h2><a href="index-low-level-renderer-tests.html">Low Level Renderer Tests</a></h2>
+        <h2><a href="canvas-crispness-tests/canvas-crispness-tests.html">HTML5 Canvas Crispness examples</a></h2>
         <p>
-            Comprehensive tests for the low-level software renderer components.
-            Tests various primitives like lines, rectangles, circles, and arcs,
-            comparing them with canvas rendering.
-        </p>
-    </div>
-
-    <div class="demo-link">
-        <h2><a href="canvas-crispness-tests/canvas-crispness-tests.html">Canvas Crispness Tests</a></h2>
-        <p>
-            Detailed exploration of canvas rendering crispness, including pixel-perfect
+            Detailed exploration of HTML5 Canvas rendering crispness, including pixel-perfect
             drawing techniques, coordinate system explanations, and various examples
-            of strokes and fills. Features interactive zoom functionality to examine
-            pixel-level details.
+            of strokes and fills. <br>
+            <br>
+            This helps understanding how HTML5 Canvas drawing works in respect to the precise positioning of strokes and fills, specifically for the cases useful for GUI drawing where one wants to draw axis-aligned fills and strokes (thin or thick) crisply.
         </p>
     </div>
 </body>
