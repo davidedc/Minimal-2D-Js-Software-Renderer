@@ -56,7 +56,7 @@ function drawCrispAxisAlignedRoundedRectCanvas(ctx, shape) {
   let pos = getCornerBasedRepresentation(centerX, centerY, rectWidth, rectHeight, strokeWidth);
   let r = Math.round(Math.min(radius, Math.min(pos.w, pos.h) / 2));
 
-  // Create fill path aligned strictly to whole pixels
+  // Create path aligned strictly to whole pixels
   const createPath = () => {
       ctx.beginPath();
 
