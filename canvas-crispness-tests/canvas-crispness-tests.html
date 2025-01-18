@@ -242,6 +242,14 @@
                 }
             },
             {
+                title: "strokeRect (1px) [5.5,5.5,5,5]",
+                label: "???",
+                draw: (ctx) => {
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(5.5, 5.5, 5, 5);
+                }
+            },
+            {
                 title: "fillRect + strokeRect (1px) [20,20,50,30]",
                 label: "Analogous to the example at the top of the page.",
                 draw: (ctx) => {
