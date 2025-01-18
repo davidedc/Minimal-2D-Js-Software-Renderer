@@ -124,69 +124,54 @@ class SWRendererRect {
   drawAxisAlignedRect(centerX, centerY, rectWidth, rectHeight, clippingOnly,
     strokeWidth, strokeR, strokeG, strokeB, strokeA,
     fillR, fillG, fillB, fillA) {
-    centerX = Math.round(centerX);
-    centerY = Math.round(centerY);
-    rectWidth = Math.round(rectWidth);
-    rectHeight = Math.round(rectHeight);
-    strokeWidth = Math.round(strokeWidth);
+    
+    // Round inputs for consistency
+    //centerX = Math.round(centerX);
+    //centerY = Math.round(centerY);
+    //rectWidth = Math.round(rectWidth);
+    //rectHeight = Math.round(rectHeight);
+    //strokeWidth = Math.round(strokeWidth);
     if (clippingOnly) {strokeWidth = 0;}
-
-    const halfWidth = Math.floor(rectWidth / 2);
-    const halfHeight = Math.floor(rectHeight / 2);
+  
+    // Get fill geometry
+    let fillPos = getCornerBasedRepresentation(centerX, centerY, rectWidth, rectHeight, strokeWidth);
     
-    const pathLeft = centerX - halfWidth;
-    const pathTop = centerY - halfHeight;
-    const pathRight = pathLeft + rectWidth;
-    const pathBottom = pathTop + rectHeight;
-    
-
-    // draw fill first
+    // Draw fill first
     if (clippingOnly || fillA > 0) {
-      const inset = Math.ceil(strokeWidth / 2) - 1;
-      const fillLeft = pathLeft + inset + 1;
-      const fillRight = pathRight - inset - 1;
-      const fillTop = pathTop + inset + 1;
-      const fillBottom = pathBottom - inset - 1;
-      
       if (clippingOnly) {
-        for (let y = fillTop; y < fillBottom; y++) {
-          for (let x = fillLeft; x < fillRight; x++) {
+        for (let y = Math.floor(fillPos.y); y < Math.ceil(fillPos.y + fillPos.h); y++) {
+          for (let x = Math.floor(fillPos.x); x < Math.ceil(fillPos.x + fillPos.w); x++) {
             this.pixelRenderer.clipPixel(x, y);
           }
         }
         return;
       }
-
-      for (let y = fillTop; y < fillBottom; y++) {
-        for (let x = fillLeft; x < fillRight; x++) {
+  
+      for (let y = Math.floor(fillPos.y); y < Math.ceil(fillPos.y + fillPos.h); y++) {
+        for (let x = Math.floor(fillPos.x); x < Math.ceil(fillPos.x + fillPos.w); x++) {
           this.pixelRenderer.setPixel(x, y, fillR, fillG, fillB, fillA);
         }
       }
     }
-
+  
+    // Draw stroke if needed
     if (strokeA > 0 && strokeWidth > 0) {
-      const outsetStroke = Math.floor(strokeWidth / 2);
-      const insetStroke = Math.ceil(strokeWidth / 2);
-
-      const strokeOuterLeft = pathLeft - outsetStroke;
-      const strokeOuterRight = pathRight + outsetStroke;
-      const strokeOuterTop = pathTop - outsetStroke;
-      const strokeOuterBottom = pathBottom + outsetStroke;
-
-      const strokeInnerLeft = pathLeft + insetStroke;
-      const strokeInnerRight = pathRight - insetStroke;
-      const strokeInnerTop = pathTop + insetStroke;
-      const strokeInnerBottom = pathBottom - insetStroke;
-
-      // Draw all pixels that are within stroke distance of the path
-      for (let y = strokeOuterTop; y < strokeOuterBottom; y++) {
-        for (let x = strokeOuterLeft; x < strokeOuterRight; x++) {
-          // Skip the inner rectangle (area beyond stroke width)
-          if (x >= strokeInnerLeft && x < strokeInnerRight && 
-            y >= strokeInnerTop && y < strokeInnerBottom) {
-            continue;
-          }
-          this.pixelRenderer.setPixel(x, y, strokeR, strokeG, strokeB, strokeA);
+      let strokePos = getCrispStrokeGeometry(fillPos.x, fillPos.y, rectWidth, rectHeight, strokeWidth);
+      const halfStroke = strokeWidth / 2;
+  
+      // Draw horizontal strokes
+      for (let x = Math.floor(strokePos.x); x < strokePos.x + strokePos.w; x++) {
+        for (let t = -halfStroke; t < halfStroke; t++) {
+          this.pixelRenderer.setPixel(x, strokePos.y + t, strokeR, strokeG, strokeB, strokeA);
+          this.pixelRenderer.setPixel(x, strokePos.y + strokePos.h + t, strokeR, strokeG, strokeB, strokeA);
+        }
+      }
+  
+      // Draw vertical strokes
+      for (let y = Math.floor(strokePos.y); y < strokePos.y + strokePos.h; y++) {
+        for (let t = -halfStroke; t < halfStroke; t++) {
+          this.pixelRenderer.setPixel(strokePos.x + t, y, strokeR, strokeG, strokeB, strokeA);
+          this.pixelRenderer.setPixel(strokePos.x + strokePos.w + t, y, strokeR, strokeG, strokeB, strokeA);
         }
       }
     }
