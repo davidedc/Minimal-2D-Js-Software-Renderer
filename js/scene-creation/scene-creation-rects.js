@@ -31,11 +31,18 @@ function addRotatedRectangles(shapes, log, count = 5) {
 function add1PxStrokeCenteredRectAtGrid(shapes, log) {
   checkCanvasHasEvenDimensions();
 
-  // TODO rectHeight and rectWidth should only
+  let rectWidth = Math.floor(20 + Math.random() * 130);
+  let rectHeight = Math.floor(20 + Math.random() * 130);
+
+  // rectHeight and rectWidth should only
   // be odd numbers in order to have a 1-px stroke to be crisp
   // when the center is at the grid.
-  const rectWidth = Math.floor(20 + Math.random() * 130);
-  const rectHeight = Math.floor(20 + Math.random() * 130);
+  if (rectWidth % 2 === 0) {
+    rectWidth++;
+  }
+  if (rectHeight % 2 === 0) {
+    rectHeight++;
+  }
 
   const centerX = Math.floor(renderComparisonWidth / 2);
   const centerY = Math.floor(renderComparisonHeight / 2);
@@ -46,12 +53,19 @@ function add1PxStrokeCenteredRectAtGrid(shapes, log) {
 function add1PxStrokeCenteredRectAtPixel(shapes, log) {
   checkCanvasHasEvenDimensions();
 
-  // TODO rectHeight and rectWidth should only
+  let rectWidth = Math.floor(20 + Math.random() * 130);
+  let rectHeight = Math.floor(20 + Math.random() * 130);
+
+  // rectHeight and rectWidth should only
   // be even numbers in order to have a 1-px stroke to be crisp
   // when the center is at a pixel.
-  const rectWidth = Math.floor(20 + Math.random() * 130);
-  const rectHeight = Math.floor(20 + Math.random() * 130);
-  
+  if (rectWidth % 2 !== 0) {
+    rectWidth++;
+  }
+  if (rectHeight % 2 !== 0) {
+    rectHeight++;
+  }
+
   const centerX = Math.floor(renderComparisonWidth / 2) + 0.5;
   const centerY = Math.floor(renderComparisonHeight / 2) + 0.5;
   
@@ -60,9 +74,9 @@ function add1PxStrokeCenteredRectAtPixel(shapes, log) {
 
 function add1PxStrokeCenteredRect(centerX, centerY, rectWidth, rectHeight, shapes, log) {
   const leftX = Math.floor(centerX - rectWidth/2);
-  const rightX = leftX + rectWidth - 1;
+  const rightX = leftX + rectWidth;
   const topY = Math.floor(centerY - rectHeight/2);
-  const bottomY = topY + rectHeight - 1;
+  const bottomY = topY + rectHeight;
   
   shapes.push({
     type: 'rect',

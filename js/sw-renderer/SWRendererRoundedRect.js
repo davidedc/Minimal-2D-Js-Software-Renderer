@@ -88,7 +88,7 @@ class SWRendererRoundedRect {
     }
 
     if (strokeA > 0) {
-      pos = getCrispStrokeGeometry(pos.x, pos.y, rectWidth, rectHeight, strokeWidth);
+      pos = getCrispStrokeGeometry(centerX, centerY, rectWidth, rectHeight, strokeWidth);
       let r = Math.round(Math.min(cornerRadius, Math.min(pos.w, pos.h) / 2));
 
       // Draw horizontal strokes
@@ -185,7 +185,7 @@ class SWRendererRoundedRect {
 
     // Stroke - using PixelSet to handle overdraw
     if (strokeA > 0) {
-      pos = getCrispStrokeGeometry(pos.x, pos.y, rectWidth, rectHeight, strokeWidth);
+      pos = getCrispStrokeGeometry(centerX, centerY, rectWidth, rectHeight, strokeWidth);
       let r = Math.round(Math.min(cornerRadius, Math.min(pos.w, pos.h) / 2));
 
       const strokePixels = new PixelSet(this.pixelRenderer);

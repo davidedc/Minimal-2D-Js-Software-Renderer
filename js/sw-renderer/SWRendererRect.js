@@ -156,7 +156,7 @@ class SWRendererRect {
   
     // Draw stroke if needed
     if (strokeA > 0 && strokeWidth > 0) {
-      let strokePos = getCrispStrokeGeometry(fillPos.x, fillPos.y, rectWidth, rectHeight, strokeWidth);
+      let strokePos = getCrispStrokeGeometry(centerX, centerY, rectWidth, rectHeight, strokeWidth);
       const halfStroke = strokeWidth / 2;
   
       // Draw horizontal strokes

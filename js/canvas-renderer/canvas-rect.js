@@ -1,3 +1,6 @@
+// Maps pretty directly to fillRect and strokeRect, which is important because
+// we want the sw renderer routines to behave like the HTML5 Canvas routines
+// as much as possible.
 function drawAxisAlignedRectCanvas(ctx, centerX, centerY, width, height,
   strokeWidth, strokeR, strokeG, strokeB, strokeA,
   fillR, fillG, fillB, fillA) {
@@ -12,7 +15,7 @@ function drawAxisAlignedRectCanvas(ctx, centerX, centerY, width, height,
   }
   
   // Get stroke geometry
-  pos = getCrispStrokeGeometry(pos.x, pos.y, width, height, strokeWidth);
+  pos = getCrispStrokeGeometry(centerX, centerY, width, height, strokeWidth);
   
   // Draw stroke (if needed)
   if (strokeA > 0 && strokeWidth > 0) {

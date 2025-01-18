@@ -142,10 +142,6 @@ class CrispSwContext {
         const state = this.currentState;
         const scaledLineWidth = getScaledLineWidth(state.transform.elements, state.lineWidth);
 
-        // TODO pretty sure that this is a hack.
-        width += scaledLineWidth;
-        height += scaledLineWidth;
-
         const center = transformPoint(x + width / 2, y + height / 2, state.transform.elements);
         const rotation = getRotationAngle(state.transform.elements);
         const { scaleX, scaleY } = getScaleFactors(state.transform.elements);

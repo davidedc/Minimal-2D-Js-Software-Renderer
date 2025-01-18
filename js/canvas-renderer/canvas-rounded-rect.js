@@ -85,7 +85,7 @@ function drawCrispAxisAlignedRoundedRectCanvas(ctx, shape) {
     ctx.fill();
   }
   
-  pos = getCrispStrokeGeometry(pos.x, pos.y, rectWidth, rectHeight, strokeWidth);
+  pos = getCrispStrokeGeometry(centerX, centerY, rectWidth, rectHeight, strokeWidth);
   r = Math.round(Math.min(radius, Math.min(pos.w, pos.h) / 2));
 
   // Draw stroke (if needed)

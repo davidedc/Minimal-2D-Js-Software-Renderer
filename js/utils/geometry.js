@@ -94,6 +94,9 @@ function roundPoint({x, y}) {
 // they produce a whole origin x. If they don't, we fix it for them by snapping
 // the origin x to the column to the left.
 // (and same for y/height/row above).
+//
+// TODO this should have "fill" in the name, and you should highlight that
+// in case of a non-crisp fill in an HTML5 Canvas, you'll have a discrepancy.
 function getCornerBasedRepresentation(centerX, centerY, width, height) {
   const x = Math.floor(centerX - width/2);
   const y = Math.floor(centerY - height/2);
@@ -102,11 +105,8 @@ function getCornerBasedRepresentation(centerX, centerY, width, height) {
 
 // The intent here is to draw a *crisp* stroke that is aligned with the fill, with
 // some overlap (at least half of the stroke width is made to overlap the fill).
-// Given the center and width/height of a rectangle, not only we fix everything
-// as we do in getCornerBasedRepresentation, but we also we tell where exactly the stroke
-// should.
-function getCrispStrokeGeometry(x, y, width, height, strokeWidth) {
-  // if strokeWidth is odd, we need to align the stroke to the pixel grid i.e. inset it by 0.5
-  const offset = strokeWidth % 2 ? 0.5 : 0;
-  return { x: x + offset, y: y + offset, w: width - 2 * offset, h: height - 2 * offset};
+function getCrispStrokeGeometry(centerX, centerY, width, height, strokeWidth) {
+  const x = centerX - width/2;
+  const y = centerY - height/2;
+  return { x: x, y, w: width, h: height};
 }
