@@ -24,21 +24,12 @@ function addThinStrokeRoundedRectangles(shapes, log, count = 10) {
     // the starting initialisation of center is a random point at a grid crossing
     let center = roundPoint(getRandomPoint());
 
-    // to get the 1px stroke to be drawn crisply, we need to adjust the center according to width and height
-    // so each coordinate falls either on a grid crossing or a pixel boundary.
-    
-    if (width % 2 === 0) {
-      // if width is even, we need to move the center by 0.5 so it falls in the middle of a pixel
-      center.x += 0.5;
-    }
-    if (height % 2 === 0) {
-      // if height is even, we need to move the center by 0.5 so it falls in the middle of a pixel
-      center.y += 0.5;
-    }
+    const adjustedCenter = adjustCenterForCrispStrokeRendering(center.x, center.y, width, height, 1);
+
 
     shapes.push({
       type: 'roundedRect',
-      center: center,
+      center: adjustedCenter,
       width,
       height,
       radius: Math.round(Math.random() * Math.min(width, height) * 0.2),
@@ -110,38 +101,20 @@ function addCenteredRoundedRect(shapes, log) {
 
   // center is an even number divided by 2, so it's an integer,
   // so the center is at a grid crossing.
+  const center = { x: renderComparisonWidth/2, y: renderComparisonHeight/2 };
 
   
   let rectWidth = Math.round(50 + Math.random() * maxWidth);
   let rectHeight = Math.round(50 + Math.random() * maxHeight);
 
-  // so if the stroke width is odd, we need to make the rect width and height
-  // odd to have a odd-px stroke to be crisp.
-  if (strokeWidth % 2 !== 0) {
-    if (rectWidth % 2 === 0) {
-      rectWidth++;
-    }
-    if (rectHeight % 2 === 0) {
-      rectHeight++;
-    }
-  }
-  else { // stroke width is even
-    // we need to make the rect width and height
-    // even to have a even-px stroke to be crisp.
-    if (rectWidth % 2 !== 0) {
-      rectWidth++;
-    }
-    if (rectHeight % 2 !== 0) {
-      rectHeight++;
-    }
-  }
+  const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(rectWidth, rectHeight, strokeWidth, center);
 
   
   shapes.push({
     type: 'roundedRect',
-    center: { x: renderComparisonWidth/2, y: renderComparisonHeight/2 },
-    width: rectWidth,
-    height: rectHeight,
+    center: center,
+    width: adjustedDimensions.width,
+    height: adjustedDimensions.height,
     radius: Math.round(Math.random() * Math.min(rectWidth, rectHeight) * 0.2),
     rotation: 0,
     strokeWidth: strokeWidth,
@@ -153,45 +126,29 @@ function addCenteredRoundedRect(shapes, log) {
 function add1PxStrokeCenteredRoundedRectAtGrid(shapes, log) {
   checkCanvasHasEvenDimensions();
 
+  const centerX = Math.floor(renderComparisonWidth / 2);
+  const centerY = Math.floor(renderComparisonHeight / 2);
+
   let rectWidth = Math.floor(20 + Math.random() * 130);
   let rectHeight = Math.floor(20 + Math.random() * 130);
 
-  // rectHeight and rectWidth should only
-  // be odd numbers in order to have a 1-px stroke to be crisp
-  // when the center is at the grid.
-  if (rectWidth % 2 === 0) {
-    rectWidth++;
-  }
-  if (rectHeight % 2 === 0) {
-    rectHeight++;
-  }
+  const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(rectWidth, rectHeight, 1, {x:centerX, y:centerY});
 
-  const centerX = Math.floor(renderComparisonWidth / 2);
-  const centerY = Math.floor(renderComparisonHeight / 2);
-  
-  return add1PxStrokeCenteredRoundedRect(centerX, centerY, rectWidth, rectHeight, shapes, log);
+  return add1PxStrokeCenteredRoundedRect(centerX, centerY, adjustedDimensions.width, adjustedDimensions.height, shapes, log);
 }
 
 function add1PxStrokeCenteredRoundedRectAtPixel(shapes, log) {
   checkCanvasHasEvenDimensions();
 
+  let centerX = Math.floor(renderComparisonWidth / 2);
+  let centerY = Math.floor(renderComparisonHeight / 2);
+
   let rectWidth = Math.floor(20 + Math.random() * 130);
   let rectHeight = Math.floor(20 + Math.random() * 130);
-
-  // rectHeight and rectWidth should only
-  // be even numbers in order to have a 1-px stroke to be crisp
-  // when the center is at a pixel.
-  if (rectWidth % 2 !== 0) {
-    rectWidth++;
-  }
-  if (rectHeight % 2 !== 0) {
-    rectHeight++;
-  }
-
-  const centerX = Math.floor(renderComparisonWidth / 2) + 0.5;
-  const centerY = Math.floor(renderComparisonHeight / 2) + 0.5;
   
-  return add1PxStrokeCenteredRoundedRect(centerX, centerY, rectWidth, rectHeight, shapes, log);
+  const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(rectWidth, rectHeight, 1, {x:centerX, y:centerY});
+
+  return add1PxStrokeCenteredRoundedRect(centerX, centerY, adjustedDimensions.width, adjustedDimensions.height, shapes, log);
 }
 
 function add1PxStrokeCenteredRoundedRect(centerX, centerY, rectWidth, rectHeight, shapes, log) {

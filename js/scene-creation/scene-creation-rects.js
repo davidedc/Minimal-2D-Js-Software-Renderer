@@ -31,45 +31,29 @@ function addRotatedRectangles(shapes, log, count = 5) {
 function add1PxStrokeCenteredRectAtGrid(shapes, log) {
   checkCanvasHasEvenDimensions();
 
+  const centerX = Math.floor(renderComparisonWidth / 2);
+  const centerY = Math.floor(renderComparisonHeight / 2);
+
   let rectWidth = Math.floor(20 + Math.random() * 130);
   let rectHeight = Math.floor(20 + Math.random() * 130);
 
-  // rectHeight and rectWidth should only
-  // be odd numbers in order to have a 1-px stroke to be crisp
-  // when the center is at the grid.
-  if (rectWidth % 2 === 0) {
-    rectWidth++;
-  }
-  if (rectHeight % 2 === 0) {
-    rectHeight++;
-  }
+  const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(rectWidth, rectHeight, 1, {x:centerX, y:centerY});
 
-  const centerX = Math.floor(renderComparisonWidth / 2);
-  const centerY = Math.floor(renderComparisonHeight / 2);
-  
-  return add1PxStrokeCenteredRect(centerX, centerY, rectWidth, rectHeight, shapes, log);
+  return add1PxStrokeCenteredRect(centerX, centerY, adjustedDimensions.width, adjustedDimensions.height, shapes, log);
 }
 
 function add1PxStrokeCenteredRectAtPixel(shapes, log) {
   checkCanvasHasEvenDimensions();
 
+  let centerX = Math.floor(renderComparisonWidth / 2);
+  let centerY = Math.floor(renderComparisonHeight / 2);
+
   let rectWidth = Math.floor(20 + Math.random() * 130);
   let rectHeight = Math.floor(20 + Math.random() * 130);
-
-  // rectHeight and rectWidth should only
-  // be even numbers in order to have a 1-px stroke to be crisp
-  // when the center is at a pixel.
-  if (rectWidth % 2 !== 0) {
-    rectWidth++;
-  }
-  if (rectHeight % 2 !== 0) {
-    rectHeight++;
-  }
-
-  const centerX = Math.floor(renderComparisonWidth / 2) + 0.5;
-  const centerY = Math.floor(renderComparisonHeight / 2) + 0.5;
   
-  return add1PxStrokeCenteredRect(centerX, centerY, rectWidth, rectHeight, shapes, log);
+  const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(rectWidth, rectHeight, 1, {x:centerX, y:centerY});
+
+  return add1PxStrokeCenteredRect(centerX, centerY, adjustedDimensions.width, adjustedDimensions.height, shapes, log);
 }
 
 function add1PxStrokeCenteredRect(centerX, centerY, rectWidth, rectHeight, shapes, log) {
