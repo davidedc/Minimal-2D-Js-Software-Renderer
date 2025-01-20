@@ -2,14 +2,20 @@ function addAxisAlignedRoundedRectangles(shapes, log, count = 10) {
   for (let i = 0; i < count; i++) {
     const width = Math.round(50 + Math.random() * 100);
     const height = Math.round(50 + Math.random() * 100);
+
+    const strokeWidth = Math.round(Math.random() * 10 + 1);
+    let center = roundPoint(getRandomPoint());
+
+    const adjustedCenter = adjustCenterForCrispStrokeRendering(center.x, center.y, width, height, strokeWidth);
+
     shapes.push({
       type: 'roundedRect',
-      center: roundPoint(getRandomPoint()),
+      center: adjustedCenter,
       width,
       height,
       radius: Math.round(Math.random() * Math.min(width, height) * 0.2),
       rotation: 0,
-      strokeWidth: Math.round(Math.random() * 10 + 1),
+      strokeWidth: strokeWidth,
       strokeColor: getRandomColor(200, 255),
       fillColor: getRandomColor(100, 200)
     });
