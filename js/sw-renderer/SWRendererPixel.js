@@ -25,6 +25,13 @@ class SWRendererPixel {
 
   // Blending happens in sRGB space for performance reasons
   setPixel(x, y, r, g, b, a) {
+    // emit a warning if x or y are not integers
+    if (!Number.isInteger(x) || !Number.isInteger(y)) {
+      console.warn(`setPixel called with non-integer coordinates: x=${x}, y=${y}`);
+    }
+    // fix x and y to be integers
+    x = Math.round(x);
+    y = Math.round(y);
     if (x < 0 || x >= this.width || y < 0 || y >= this.height) return;
     
     // check for clipping
