@@ -1,12 +1,26 @@
 function addAxisAlignedRectangles(shapes, log, count = 5) {
+
   for (let i = 0; i < count; i++) {
+    const center = roundPoint(getRandomPoint());
+    const strokeWidth = Math.floor(Math.random() * 10 + 5);
+  
+    const rectWidth = Math.floor(30 + Math.random() * 100);
+    const rectHeight = Math.floor(30 + Math.random() * 100);
+
+    // We pick a size and a stroke width, and then we adjust the center
+    // of the rect so that the fill and stroke are both crisp.
+    // That's all well and good, but note that in this way we can't always center the stroke
+    // around the fill: in case the stroke is larger by an odd number of pixels, that is.
+
+    const adjustedCenter = adjustCenterForCrispStrokeRendering(center.x, center.y, rectWidth, rectHeight, strokeWidth);
+
     shapes.push({
       type: 'rect',
-      center: getRandomPoint(),
-      width: 30 + Math.random() * 100,
-      height: 30 + Math.random() * 100,
+      center: adjustedCenter,
+      width: rectWidth,
+      height: rectHeight,
       rotation: 0,
-      strokeWidth: Math.random() * 10 + 1,
+      strokeWidth: strokeWidth,
       strokeColor: getRandomColor(200, 255),
       fillColor: getRandomColor(100, 200)
     });

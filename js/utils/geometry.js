@@ -98,8 +98,8 @@ function roundPoint({x, y}) {
 // TODO this should have "fill" in the name, and you should highlight that
 // in case of a non-crisp fill in an HTML5 Canvas, you'll have a discrepancy.
 function getCornerBasedRepresentation(centerX, centerY, width, height) {
-  const x = Math.floor(centerX - width/2);
-  const y = Math.floor(centerY - height/2);
+  const x = Math.round(centerX - width/2);
+  const y = Math.round(centerY - height/2);
   return { x, y, w: width, h: height };
 }
 

@@ -154,13 +154,14 @@ class SWRendererRect {
       }
     }
   
-    // Draw stroke if needed
+    // Draw stroke if needed. Note that the stroke can't always be precisely centered on the fill
+    // i.e. in case the stroke is larger by an odd number of pixels.
     if (strokeA > 0 && strokeWidth > 0) {
       let strokePos = getCrispStrokeGeometry(centerX, centerY, rectWidth, rectHeight, strokeWidth);
       const halfStroke = strokeWidth / 2;
   
       // Draw horizontal strokes
-      for (let x = Math.floor(strokePos.x); x < strokePos.x + strokePos.w; x++) {
+      for (let x = Math.floor(strokePos.x - halfStroke); x < strokePos.x + strokePos.w + halfStroke; x++) {
         for (let t = -halfStroke; t < halfStroke; t++) {
           this.pixelRenderer.setPixel(x, strokePos.y + t, strokeR, strokeG, strokeB, strokeA);
           this.pixelRenderer.setPixel(x, strokePos.y + strokePos.h + t, strokeR, strokeG, strokeB, strokeA);
@@ -168,7 +169,7 @@ class SWRendererRect {
       }
   
       // Draw vertical strokes
-      for (let y = Math.floor(strokePos.y); y < strokePos.y + strokePos.h; y++) {
+      for (let y = Math.floor(strokePos.y + halfStroke); y < strokePos.y + strokePos.h - halfStroke; y++) {
         for (let t = -halfStroke; t < halfStroke; t++) {
           this.pixelRenderer.setPixel(strokePos.x + t, y, strokeR, strokeG, strokeB, strokeA);
           this.pixelRenderer.setPixel(strokePos.x + strokePos.w + t, y, strokeR, strokeG, strokeB, strokeA);
