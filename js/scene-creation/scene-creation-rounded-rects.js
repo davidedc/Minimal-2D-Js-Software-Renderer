@@ -48,14 +48,20 @@ function addThinStrokeRoundedRectangles(shapes, log, count = 10) {
 
 function addLargeTransparentRoundedRectangles(shapes, log, count = 10) {
   for (let i = 0; i < count; i++) {
+    // the starting initialisation of center is a random point at a grid crossing
+    const center = roundPoint(getRandomPoint());
+    const strokeWidth = Math.round(10 + Math.random() * 30);
+
+    const adjustedCenter = adjustCenterForCrispStrokeRendering(center.x, center.y, 200, 200, strokeWidth);
+
     shapes.push({
       type: 'roundedRect',
-      center: roundPoint(getRandomPoint()),
+      center: adjustedCenter,
       width: 200,
       height: 200,
       radius: 40,
       rotation: 0,
-      strokeWidth: Math.round(10 + Math.random() * 30),
+      strokeWidth: strokeWidth,
       strokeColor: { r: 0, g: 0, b: 0, a: 50 },
       fillColor: getRandomColor(100, 200)
     });
