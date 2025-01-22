@@ -28,10 +28,9 @@ function addThinStrokeRoundedRectangles(shapes, log, count = 10) {
     const height = Math.round(50 + Math.random() * 100);
     
     // the starting initialisation of center is a random point at a grid crossing
-    let center = roundPoint(getRandomPoint());
+    const center = roundPoint(getRandomPoint());
 
     const adjustedCenter = adjustCenterForCrispStrokeRendering(center.x, center.y, width, height, 1);
-
 
     shapes.push({
       type: 'roundedRect',
