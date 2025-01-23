@@ -43,7 +43,7 @@ class SWRendererRoundedRect {
       throw new Error('Width and height must be integers');
     }
 
-    let pos = getCornerBasedRepresentation(centerX, centerY, rectWidth, rectHeight, strokeWidth);
+    let pos = getRectangularFillGeometry(centerX, centerY, rectWidth, rectHeight, strokeWidth);
     let r = Math.round(Math.min(cornerRadius, Math.min(pos.w, pos.h) / 2));
     const halfStroke = strokeWidth / 2;
 
@@ -88,7 +88,7 @@ class SWRendererRoundedRect {
     }
 
     if (strokeA > 0) {
-      pos = getCrispStrokeGeometry(centerX, centerY, rectWidth, rectHeight, strokeWidth);
+      pos = getRectangularStrokeGeometry(centerX, centerY, rectWidth, rectHeight, strokeWidth);
       let r = Math.round(Math.min(cornerRadius, Math.min(pos.w, pos.h) / 2));
 
       // Draw horizontal strokes
@@ -138,7 +138,7 @@ class SWRendererRoundedRect {
       throw new Error('Width and height must be integers');
     }
 
-    let pos = getCornerBasedRepresentation(centerX, centerY, rectWidth, rectHeight, strokeWidth);
+    let pos = getRectangularFillGeometry(centerX, centerY, rectWidth, rectHeight, strokeWidth);
     let r = Math.round(Math.min(cornerRadius, Math.min(pos.w, pos.h) / 2));
     const halfStroke = strokeWidth / 2;
 
@@ -185,7 +185,7 @@ class SWRendererRoundedRect {
 
     // Stroke - using PixelSet to handle overdraw
     if (strokeA > 0) {
-      pos = getCrispStrokeGeometry(centerX, centerY, rectWidth, rectHeight, strokeWidth);
+      pos = getRectangularStrokeGeometry(centerX, centerY, rectWidth, rectHeight, strokeWidth);
       let r = Math.round(Math.min(cornerRadius, Math.min(pos.w, pos.h) / 2));
 
       const strokePixels = new PixelSet(this.pixelRenderer);

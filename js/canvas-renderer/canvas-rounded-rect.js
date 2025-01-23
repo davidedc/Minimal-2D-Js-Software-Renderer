@@ -53,7 +53,7 @@ function drawCrispAxisAlignedRoundedRectCanvas(ctx, shape) {
     throw new Error('Width and height must be integers');
   }
 
-  let pos = getCornerBasedRepresentation(centerX, centerY, rectWidth, rectHeight, strokeWidth);
+  let pos = getRectangularFillGeometry(centerX, centerY, rectWidth, rectHeight, strokeWidth);
   let r = Math.round(Math.min(radius, Math.min(pos.w, pos.h) / 2));
 
   // Create path aligned strictly to whole pixels
@@ -85,7 +85,7 @@ function drawCrispAxisAlignedRoundedRectCanvas(ctx, shape) {
     ctx.fill();
   }
   
-  pos = getCrispStrokeGeometry(centerX, centerY, rectWidth, rectHeight, strokeWidth);
+  pos = getRectangularStrokeGeometry(centerX, centerY, rectWidth, rectHeight, strokeWidth);
   r = Math.round(Math.min(radius, Math.min(pos.w, pos.h) / 2));
 
   // Draw stroke (if needed)

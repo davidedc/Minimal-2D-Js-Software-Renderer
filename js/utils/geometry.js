@@ -97,7 +97,13 @@ function roundPoint({x, y}) {
 //
 // TODO this should have "fill" in the name, and you should highlight that
 // in case of a non-crisp fill in an HTML5 Canvas, you'll have a discrepancy.
-function getCornerBasedRepresentation(centerX, centerY, width, height) {
+function getRectangularFillGeometry(centerX, centerY, width, height) {
+  // TODO remove the Math.round, because you want to see this drawn with blur if needed in the canvas.
+  // The SW renderer should take the result from getRectangularFillGeometry and round it, giving a warning
+  // that it's going to be different from the canvas renderer, as the sw renderer does not support sub-pixel drawing.
+  // Note that this means that any rectangle filled and stroked (WITH SEMI-TRANSPARENT STROKE) with the same path and with stroke of with 1 will
+  // necessarily have a blurred fill, that will show through the semi-transparent stroke, and hence it will be impossible to get the same rendering
+  // in the SW renderer as in the canvas renderer (I mean in theory you could for this one case, however it would be complex and a little bit of a hack).
   const x = Math.round(centerX - width/2);
   const y = Math.round(centerY - height/2);
   return { x, y, w: width, h: height };
@@ -105,7 +111,7 @@ function getCornerBasedRepresentation(centerX, centerY, width, height) {
 
 // The intent here is to draw a *crisp* stroke that is aligned with the fill, with
 // some overlap (at least half of the stroke width is made to overlap the fill).
-function getCrispStrokeGeometry(centerX, centerY, width, height, strokeWidth) {
+function getRectangularStrokeGeometry(centerX, centerY, width, height, strokeWidth) {
   const x = centerX - width/2;
   const y = centerY - height/2;
   return { x: x, y, w: width, h: height};
