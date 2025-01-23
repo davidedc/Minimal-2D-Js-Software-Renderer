@@ -80,7 +80,7 @@ class RenderComparisonBuilder {
       const edges = comparison.builderReturnValue;
       if (!edges) return "No edges data available";
       
-      return comparison.renderChecks.checkPlacementOf4Sides(
+      return comparison.renderChecks.checkPlacementOf4SidesAlongMiddleLines(
         comparison.swCtx,
         comparison.canvasCtx,
         edges
