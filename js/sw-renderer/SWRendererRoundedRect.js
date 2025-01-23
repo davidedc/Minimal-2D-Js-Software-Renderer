@@ -43,41 +43,42 @@ class SWRendererRoundedRect {
       throw new Error('Width and height must be integers');
     }
 
-    let pos = getRectangularFillGeometry(centerX, centerY, rectWidth, rectHeight, strokeWidth);
-    let r = Math.round(Math.min(cornerRadius, Math.min(pos.w, pos.h) / 2));
     const halfStroke = strokeWidth / 2;
 
-    function isInsideRoundedRect(px, py) {
-      // Test if point is inside main rectangle
-      if (px >= pos.x + r && px < pos.x + pos.w - r && 
-          py >= pos.y && py < pos.y + pos.h) {
-        return true;
-      }
-      if (px >= pos.x && px < pos.x + pos.w && 
-          py >= pos.y + r && py < pos.y + pos.h - r) {
-        return true;
-      }
+    if (fillA > 0) {
+      let pos = roundCornerOfRectangularGeometryWithWarning(getRectangularFillGeometry(centerX, centerY, rectWidth, rectHeight, strokeWidth));
+      let r = Math.round(Math.min(cornerRadius, Math.min(pos.w, pos.h) / 2));
 
-      // Test if point is inside rounded corners
-      const corners = [
-        { x: pos.x + r, y: pos.y + r },
-        { x: pos.x + pos.w - r, y: pos.y + r },
-        { x: pos.x + pos.w - r, y: pos.y + pos.h - r },
-        { x: pos.x + r, y: pos.y + pos.h - r }
-      ];
-      
-      for (const corner of corners) {
-        const dx = px - corner.x;
-        const dy = py - corner.y;
-        if (dx * dx + dy * dy <= r * r) {
+      function isInsideRoundedRect(px, py) {
+        // Test if point is inside main rectangle
+        if (px >= pos.x + r && px < pos.x + pos.w - r && 
+            py >= pos.y && py < pos.y + pos.h) {
           return true;
         }
-      }
-      
-      return false;
-    }
+        if (px >= pos.x && px < pos.x + pos.w && 
+            py >= pos.y + r && py < pos.y + pos.h - r) {
+          return true;
+        }
 
-    if (fillA > 0) {
+        // Test if point is inside rounded corners
+        const corners = [
+          { x: pos.x + r, y: pos.y + r },
+          { x: pos.x + pos.w - r, y: pos.y + r },
+          { x: pos.x + pos.w - r, y: pos.y + pos.h - r },
+          { x: pos.x + r, y: pos.y + pos.h - r }
+        ];
+        
+        for (const corner of corners) {
+          const dx = px - corner.x;
+          const dy = py - corner.y;
+          if (dx * dx + dy * dy <= r * r) {
+            return true;
+          }
+        }
+        
+        return false;
+      }
+
       for (let yy = Math.floor(pos.y); yy <= Math.ceil(pos.y + pos.h); yy++) {
         for (let xx = Math.floor(pos.x); xx <= Math.ceil(pos.x + pos.w); xx++) {
           if (isInsideRoundedRect(xx, yy)) {
@@ -88,7 +89,7 @@ class SWRendererRoundedRect {
     }
 
     if (strokeA > 0) {
-      pos = getRectangularStrokeGeometry(centerX, centerY, rectWidth, rectHeight, strokeWidth);
+      let pos = getRectangularStrokeGeometry(centerX, centerY, rectWidth, rectHeight, strokeWidth);
       let r = Math.round(Math.min(cornerRadius, Math.min(pos.w, pos.h) / 2));
 
       // Draw horizontal strokes
@@ -138,42 +139,44 @@ class SWRendererRoundedRect {
       throw new Error('Width and height must be integers');
     }
 
-    let pos = getRectangularFillGeometry(centerX, centerY, rectWidth, rectHeight, strokeWidth);
-    let r = Math.round(Math.min(cornerRadius, Math.min(pos.w, pos.h) / 2));
     const halfStroke = strokeWidth / 2;
-
-    function isInsideRoundedRect(px, py) {
-      // Test if point is inside main rectangle
-      if (px >= pos.x + r && px < pos.x + pos.w - r && 
-          py >= pos.y && py < pos.y + pos.h) {
-        return true;
-      }
-      if (px >= pos.x && px < pos.x + pos.w && 
-          py >= pos.y + r && py < pos.y + pos.h - r) {
-        return true;
-      }
-
-      // Test if point is inside rounded corners
-      const corners = [
-        { x: pos.x + r, y: pos.y + r },
-        { x: pos.x + pos.w - r, y: pos.y + r },
-        { x: pos.x + pos.w - r, y: pos.y + pos.h - r },
-        { x: pos.x + r, y: pos.y + pos.h - r }
-      ];
-      
-      for (const corner of corners) {
-        const dx = px - corner.x;
-        const dy = py - corner.y;
-        if (dx * dx + dy * dy <= r * r) {
-          return true;
-        }
-      }
-      
-      return false;
-    }
 
     // Fill - direct to buffer
     if (fillA > 0) {
+
+      let pos = roundCornerOfRectangularGeometryWithWarning(getRectangularFillGeometry(centerX, centerY, rectWidth, rectHeight, strokeWidth));
+      let r = Math.round(Math.min(cornerRadius, Math.min(pos.w, pos.h) / 2));
+
+      function isInsideRoundedRect(px, py) {
+        // Test if point is inside main rectangle
+        if (px >= pos.x + r && px < pos.x + pos.w - r && 
+            py >= pos.y && py < pos.y + pos.h) {
+          return true;
+        }
+        if (px >= pos.x && px < pos.x + pos.w && 
+            py >= pos.y + r && py < pos.y + pos.h - r) {
+          return true;
+        }
+
+        // Test if point is inside rounded corners
+        const corners = [
+          { x: pos.x + r, y: pos.y + r },
+          { x: pos.x + pos.w - r, y: pos.y + r },
+          { x: pos.x + pos.w - r, y: pos.y + pos.h - r },
+          { x: pos.x + r, y: pos.y + pos.h - r }
+        ];
+        
+        for (const corner of corners) {
+          const dx = px - corner.x;
+          const dy = py - corner.y;
+          if (dx * dx + dy * dy <= r * r) {
+            return true;
+          }
+        }
+        
+        return false;
+      }
+
       for (let yy = Math.floor(pos.y); yy <= Math.ceil(pos.y + pos.h); yy++) {
         for (let xx = Math.floor(pos.x); xx <= Math.ceil(pos.x + pos.w); xx++) {
           if (isInsideRoundedRect(xx, yy)) {
@@ -185,7 +188,7 @@ class SWRendererRoundedRect {
 
     // Stroke - using PixelSet to handle overdraw
     if (strokeA > 0) {
-      pos = getRectangularStrokeGeometry(centerX, centerY, rectWidth, rectHeight, strokeWidth);
+      let pos = getRectangularStrokeGeometry(centerX, centerY, rectWidth, rectHeight, strokeWidth);
       let r = Math.round(Math.min(cornerRadius, Math.min(pos.w, pos.h) / 2));
 
       const strokePixels = new PixelSet(this.pixelRenderer);

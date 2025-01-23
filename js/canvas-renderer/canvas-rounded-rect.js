@@ -53,11 +53,9 @@ function drawCrispAxisAlignedRoundedRectCanvas(ctx, shape) {
     throw new Error('Width and height must be integers');
   }
 
-  let pos = getRectangularFillGeometry(centerX, centerY, rectWidth, rectHeight, strokeWidth);
-  let r = Math.round(Math.min(radius, Math.min(pos.w, pos.h) / 2));
 
   // Create path aligned strictly to whole pixels
-  const createPath = () => {
+  const createPath = (pos, r) => {
       ctx.beginPath();
 
       const fx = pos.x;
@@ -80,19 +78,20 @@ function drawCrispAxisAlignedRoundedRectCanvas(ctx, shape) {
 
   // Draw fill first (if needed)
   if (fillA > 0) {
-    createPath();
+    let pos = getRectangularFillGeometry(centerX, centerY, rectWidth, rectHeight, strokeWidth);
+    let r = Math.round(Math.min(radius, Math.min(pos.w, pos.h) / 2));
+    createPath(pos, r);
     ctx.fillStyle = `rgba(${fillR}, ${fillG}, ${fillB}, ${fillA/255})`;
     ctx.fill();
   }
   
-  pos = getRectangularStrokeGeometry(centerX, centerY, rectWidth, rectHeight, strokeWidth);
-  r = Math.round(Math.min(radius, Math.min(pos.w, pos.h) / 2));
-
   // Draw stroke (if needed)
   if (strokeWidth > 0 && strokeA > 0) {
-      createPath();
-      ctx.strokeStyle = `rgba(${strokeR}, ${strokeG}, ${strokeB}, ${strokeA/255})`;
-      ctx.lineWidth = strokeWidth;
-      ctx.stroke();
+    let pos = getRectangularStrokeGeometry(centerX, centerY, rectWidth, rectHeight, strokeWidth);
+    let r = Math.round(Math.min(radius, Math.min(pos.w, pos.h) / 2));
+    createPath(pos, r);
+    ctx.strokeStyle = `rgba(${strokeR}, ${strokeG}, ${strokeB}, ${strokeA/255})`;
+    ctx.lineWidth = strokeWidth;
+    ctx.stroke();
   }
 }

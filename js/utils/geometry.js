@@ -89,6 +89,25 @@ function roundPoint({x, y}) {
   };
 }
 
+function roundCornerOfRectangularGeometry(rectGeometry) {
+  const {x, y, w, h} = rectGeometry;
+  // round x, y , while leaving w and h as they are
+  return {
+    x: Math.round(x),
+    y: Math.round(y),
+    w: w,
+    h: h
+  };
+}
+
+function roundCornerOfRectangularGeometryWithWarning(rectGeometry) {
+  const rounded = roundCornerOfRectangularGeometry(rectGeometry);
+  if (rounded.x !== rectGeometry.x || rounded.y !== rectGeometry.y) {
+    console.warn('Rectangular geometry is not at a grid point, rounding to nearest grid point. When this happens, HTML5 Canvas would do a non-crisp fill, while the SW renderer will do a crisp fill.');
+  }
+  return rounded;
+}
+
 // The intent here is to draw a *crisp* shape.
 // If the user knows what they are doing, they pass centerX and width such that
 // they produce a whole origin x. If they don't, we fix it for them by snapping
@@ -104,8 +123,8 @@ function getRectangularFillGeometry(centerX, centerY, width, height) {
   // Note that this means that any rectangle filled and stroked (WITH SEMI-TRANSPARENT STROKE) with the same path and with stroke of with 1 will
   // necessarily have a blurred fill, that will show through the semi-transparent stroke, and hence it will be impossible to get the same rendering
   // in the SW renderer as in the canvas renderer (I mean in theory you could for this one case, however it would be complex and a little bit of a hack).
-  const x = Math.round(centerX - width/2);
-  const y = Math.round(centerY - height/2);
+  const x = centerX - width/2;
+  const y = centerY - height/2;
   return { x, y, w: width, h: height };
 }
 

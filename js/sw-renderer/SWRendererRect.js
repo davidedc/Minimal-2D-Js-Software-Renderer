@@ -133,11 +133,11 @@ class SWRendererRect {
     //strokeWidth = Math.round(strokeWidth);
     if (clippingOnly) {strokeWidth = 0;}
   
-    // Get fill geometry
-    let fillPos = getRectangularFillGeometry(centerX, centerY, rectWidth, rectHeight, strokeWidth);
     
     // Draw fill first
     if (clippingOnly || fillA > 0) {
+      // Get fill geometry
+      let fillPos = roundCornerOfRectangularGeometryWithWarning(getRectangularFillGeometry(centerX, centerY, rectWidth, rectHeight, strokeWidth));
       if (clippingOnly) {
         for (let y = Math.floor(fillPos.y); y < Math.ceil(fillPos.y + fillPos.h); y++) {
           for (let x = Math.floor(fillPos.x); x < Math.ceil(fillPos.x + fillPos.w); x++) {
