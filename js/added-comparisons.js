@@ -19,18 +19,18 @@ function addEverythingTogetherComparison() {
 function addThinRoundedRectsComparison() {
   return new RenderComparisonBuilder()
     .withId('thin-rounded-rects')
-    .withTitle('10 thin-stroke rounded rectangles (line width 1px)')
+    .withTitle('10 thin-opaque-stroke rounded rectangles (line width 1px)')
     .withDescription('Tests rendering of 10 rounded rectangles with thin stroke widths (line width 1px)')
-    .addShapes(addThinStrokeRoundedRectangles, 10)
+    .addShapes(addThinOpaqueStrokeRoundedRectangles, 10)
     .build();
 }
 
 function addCenteredRoundedRectComparison() {
   return new RenderComparisonBuilder()
     .withId('centered-rounded-rect')
-    .withTitle('Single Centered Rounded Rectangle centered at grid')
+    .withTitle('Single Centered Rounded Rectangle of different stroke widths - opaque stroke - centered at grid')
     .withDescription('A single rounded rectangle with different stroke widths and colors, centered at a grid crossing')
-    .addShapes(addCenteredRoundedRect)
+    .addShapes(addCenteredRoundedRectOpaqueStrokesRandomStrokeWidth)
     .withColorCheckMiddleRow({ expectedUniqueColors: 2 })
     .withColorCheckMiddleColumn({ expectedUniqueColors: 2 })
     .build();

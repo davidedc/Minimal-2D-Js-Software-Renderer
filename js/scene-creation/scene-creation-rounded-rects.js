@@ -22,7 +22,7 @@ function addAxisAlignedRoundedRectangles(shapes, log, count = 10) {
   }
 }
 
-function addThinStrokeRoundedRectangles(shapes, log, count = 10) {
+function addThinOpaqueStrokeRoundedRectangles(shapes, log, count = 10) {
   for (let i = 0; i < count; i++) {
     const width = Math.round(50 + Math.random() * 100);
     const height = Math.round(50 + Math.random() * 100);
@@ -102,7 +102,7 @@ function addRotatedRoundedRectangles(shapes, log, count = 3) {
   }
 }
 
-function addCenteredRoundedRect(shapes, log) {
+function addCenteredRoundedRectOpaqueStrokesRandomStrokeWidth(shapes, log) {
   checkCanvasHasEvenDimensions();
 
   const maxWidth = renderComparisonWidth * 0.6;
