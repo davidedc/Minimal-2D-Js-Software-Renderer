@@ -47,7 +47,7 @@ class RenderChecks {
   }
 
   // note that these first two parameters are both CanvasRenderingContext2D
-  // TODO this should really check the leftmost and rightmost and topmost and bottommost pixels
+  // NOT USED AT THE MOMENT, we rather check the leftmost and rightmost and topmost and bottommost pixels
   // that are not transparent, because there are some defects like protruding pixels in rounded rects
   // that get missed if one just checks the middle lines.
   checkPlacementOf4SidesAlongMiddleLines(swCtx, canvasCtx, edges) {
