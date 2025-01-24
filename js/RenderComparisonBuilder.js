@@ -75,19 +75,22 @@ class RenderComparisonBuilder {
     return this;
   }
 
-  withPlacementCheck() {
-    this._checks.push((comparison) => {
-      const edges = comparison.builderReturnValue;
-      if (!edges) return "No edges data available";
+  // NOT USED, we rather check the leftmost and rightmost and topmost and bottommost pixels
+  // that are not transparent, because there are some defects like protruding pixels in rounded rects
+  // that get missed if one just checks the middle lines.
+  // withPlacementCheck() {
+  //   this._checks.push((comparison) => {
+  //     const edges = comparison.builderReturnValue;
+  //     if (!edges) return "No edges data available";
       
-      return comparison.renderChecks.checkExtremes(
-        comparison.swCtx,
-        comparison.canvasCtx,
-        edges
-      );
-    });
-    return this;
-  }
+  //     return comparison.renderChecks.checkPlacementOf4SidesAlongMiddleLines(
+  //       comparison.swCtx,
+  //       comparison.canvasCtx,
+  //       edges
+  //     );
+  //   });
+  //   return this;
+  // }
 
   build() {
     if (!this._id || !this._title || !this._shapeBuilder) {

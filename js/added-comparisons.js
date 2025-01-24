@@ -42,7 +42,7 @@ function add1PxStrokedRoundedRectCenteredAtGridComparison() {
     .withTitle('Single 1px Stroked Rounded Rectangle centered at grid')
     .withDescription('Tests crisp rendering of a 1px stroked rounded rectangle where the center is at a crossing in the grid')
     .addShapes(add1PxStrokeCenteredRoundedRectAtGrid)
-    .withPlacementCheck()
+    .withExtremesCheck()
     .build();
 }
 
@@ -52,7 +52,7 @@ function add1PxStrokedRoundedRectCenteredAtPixelComparison() {
     .withTitle('Single 1px Stroked Rounded Rectangle centered at pixel')
     .withDescription('Tests crisp rendering of a 1px stroked rounded rectangle where the center is in the middle of a pixel')
     .addShapes(add1PxStrokeCenteredRoundedRectAtPixel)
-    .withPlacementCheck()
+    .withExtremesCheck()
     .build();
 }
 
@@ -110,7 +110,7 @@ function add1PxStrokedRectCenteredAtGridComparison() {
     .withTitle('Single 1px Stroked Rectangle centered at grid')
     .withDescription('Tests crisp rendering of a 1px stroked rectangle where the center is at a crossing in the grid')
     .addShapes(add1PxStrokeCenteredRectAtGrid)
-    .withPlacementCheck()
+    .withExtremesCheck()
     .build();
 }
 
@@ -120,6 +120,6 @@ function add1PxStrokedRectCenteredAtPixelComparison() {
     .withTitle('Single 1px Stroked Rectangle centered at pixel')
     .withDescription('Tests crisp rendering of a 1px stroked rectangle where the center is in the middle of a pixel')
     .addShapes(add1PxStrokeCenteredRectAtPixel)
-    .withPlacementCheck()
+    .withExtremesCheck()
     .build();
 }
