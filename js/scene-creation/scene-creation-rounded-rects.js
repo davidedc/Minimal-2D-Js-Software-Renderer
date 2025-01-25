@@ -179,6 +179,8 @@ function add1PxStrokeCenteredRoundedRect(centerX, centerY, rectWidth, rectHeight
     strokeColor: { r: 255, g: 0, b: 0, a: 255 },
     fillColor: { r: 0, g: 0, b: 0, a: 0 }
   });
+
+  log.innerHTML += `Added 1px stroke centered rounded rect at ${centerX}, ${centerY} with width ${rectWidth} and height ${rectHeight} and radius ${Math.round(Math.random() * Math.min(rectWidth, rectHeight) * 0.2)}`;
   
   return { leftX, rightX, topY, bottomY };
 }

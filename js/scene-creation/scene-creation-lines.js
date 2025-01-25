@@ -58,7 +58,7 @@ function add2PxVerticalLineCenteredAtGrid(shapes, log) {
   const result = add2PxVerticalLine(centerX, centerY, lineHeight, shapes, log);
   
   if (log) {
-    log.push(`2px vertical line from (${centerX}, ${result.topY}) to (${centerX}, ${result.bottomY}) of height ${lineHeight}`);
+    log.innerHTML += (`2px vertical line from (${centerX}, ${result.topY}) to (${centerX}, ${result.bottomY}) of height ${lineHeight}`);
   }
   
   return result;

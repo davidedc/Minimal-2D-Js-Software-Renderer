@@ -109,6 +109,11 @@ class RenderComparison {
     buttonContainer.appendChild(flipButton);
     this.container.appendChild(buttonContainer);
     
+    // Add a container for the log
+    this.logContainer = document.createElement('div');
+    this.logContainer.className = 'log-container';
+    this.container.appendChild(this.logContainer);
+
     // Add metrics container
     this.metricsContainer = document.createElement('div');
     this.metricsContainer.className = 'metrics-container';
@@ -208,12 +213,13 @@ class RenderComparison {
     }
   }
 
+
   render(buildShapesFn) {
     this.buildShapesFn = buildShapesFn; // Store the function for later use
     this.shapes = [];
-
+    this.logContainer.innerHTML = '';
     // this returned value is used in the metrics/tests
-    this.builderReturnValue = buildShapesFn(this.shapes);
+    this.builderReturnValue = buildShapesFn(this.shapes, this.logContainer);
     
     this.drawSceneSW();
     this.updateSWRenderOutput();
