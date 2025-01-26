@@ -234,11 +234,17 @@ class RenderComparison {
 
   runMultipleExamples(count) {
     let current = 0;
+    const initialErrorCount = this.errorsContainer.children.length;
     const runFrame = () => {
-      this.render(this.buildShapesFn);
-      current++;
-      if (current < count) {
-        requestAnimationFrame(runFrame);
+      try {
+        this.render(this.buildShapesFn);
+        current++;
+        // if there are no new errors, run the next example in the next frame
+        if (current < count && this.errorsContainer.children.length === initialErrorCount) {
+          requestAnimationFrame(runFrame);
+        }
+      } catch (error) {
+        this.showError(`Error during multiple examples: ${error.message}`);
       }
     };
     requestAnimationFrame(runFrame);
