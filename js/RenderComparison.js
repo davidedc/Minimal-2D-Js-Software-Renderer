@@ -234,13 +234,14 @@ class RenderComparison {
 
   runMultipleExamples(count) {
     let current = 0;
-    const intervalId = setInterval(() => {
+    const runFrame = () => {
       this.render(this.buildShapesFn);
       current++;
-      if (current >= count) {
-        clearInterval(intervalId);
+      if (current < count) {
+        requestAnimationFrame(runFrame);
       }
-    }, 100); // Run a new example every 100ms
+    };
+    requestAnimationFrame(runFrame);
   }
 
   static createNavigation() {
