@@ -69,9 +69,9 @@ class SWRendererRoundedRect {
         ];
         
         for (const corner of corners) {
-          const dx = px - corner.x;
-          const dy = py - corner.y;
-          if (dx * dx + dy * dy <= r * r) {
+          const dx = px - corner.x + 1;
+          const dy = py - corner.y + 1;
+          if (dx * dx + dy * dy < r * r) {
             return true;
           }
         }
@@ -167,9 +167,9 @@ class SWRendererRoundedRect {
         ];
         
         for (const corner of corners) {
-          const dx = px - corner.x;
-          const dy = py - corner.y;
-          if (dx * dx + dy * dy <= r * r) {
+          const dx = px - corner.x + 1;
+          const dy = py - corner.y + 1;
+          if (dx * dx + dy * dy < r * r) {
             return true;
           }
         }
