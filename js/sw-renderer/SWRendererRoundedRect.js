@@ -113,7 +113,7 @@ class SWRendererRoundedRect {
             const sr = r + t;
             const px = cx + sr * Math.cos(angle);
             const py = cy + sr * Math.sin(angle);
-            this.pixelRenderer.setPixel(Math.round(px), Math.round(py), strokeR, strokeG, strokeB, strokeA);
+            this.pixelRenderer.setPixel(Math.floor(px), Math.floor(py), strokeR, strokeG, strokeB, strokeA);
           }
         }
       };
@@ -179,7 +179,7 @@ class SWRendererRoundedRect {
 
       for (let yy = Math.floor(pos.y); yy <= Math.ceil(pos.y + pos.h); yy++) {
         for (let xx = Math.floor(pos.x); xx <= Math.ceil(pos.x + pos.w); xx++) {
-          if (isInsideRoundedRect(xx, yy)) {
+          if (isInsideRoundedRect(Math.ceil(xx), Math.ceil(yy))) {
             this.pixelRenderer.setPixel(xx, yy, fillR, fillG, fillB, fillA);
           }
         }
@@ -226,7 +226,7 @@ class SWRendererRoundedRect {
             const sr = r + t;
             const px = cx + sr * Math.cos(angle);
             const py = cy + sr * Math.sin(angle);
-            cornerSpans.addPixel(px, py);
+            cornerSpans.addPixel(Math.floor(px), Math.floor(py));
           }
         }
         cornerSpans.addToPixelSet(strokePixels, strokeR, strokeG, strokeB, strokeA);
