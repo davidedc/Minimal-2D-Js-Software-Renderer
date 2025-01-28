@@ -36,6 +36,15 @@ function addCenteredRoundedRectMixedOpaqueStrokeWidthsComparison() {
     .build();
 }
 
+function addCenteredRoundedRectMixedTransparentStrokeWidthsComparison() {
+  return new RenderComparisonBuilder()
+    .withId('centered-rounded-rect-transparent')
+    .withTitle('Single Centered Rounded Rectangle - semi-transparent stroke and fill')
+    .withDescription('A single rounded rectangle with different stroke widths and semi-transparent colors, centered at a grid crossing')
+    .addShapes(addCenteredRoundedRectTransparentStrokesRandomStrokeWidth)
+    .build();
+}
+
 function add1PxStrokedRoundedRectCenteredAtGridComparison() {
   return new RenderComparisonBuilder()
     .withId('centered-1px-rounded-rect')

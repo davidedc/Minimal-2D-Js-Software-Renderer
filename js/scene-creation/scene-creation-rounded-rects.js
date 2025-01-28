@@ -134,6 +134,39 @@ function addCenteredRoundedRectOpaqueStrokesRandomStrokeWidth(shapes, log) {
   });
 }
 
+// TODO to work out exactly when the main features of the rounded rect
+// are identical in the sw renderer and the canvas renderer.
+function addCenteredRoundedRectTransparentStrokesRandomStrokeWidth(shapes, log) {
+  checkCanvasHasEvenDimensions();
+
+  const maxWidth = renderComparisonWidth * 0.6;
+  const maxHeight = renderComparisonHeight * 0.6;
+
+  const strokeWidth = Math.round(Math.random() * 10 + 1);
+
+  // center is an even number divided by 2, so it's an integer,
+  // so the center is at a grid crossing.
+  const center = { x: renderComparisonWidth/2, y: renderComparisonHeight/2 };
+
+  let rectWidth = Math.round(50 + Math.random() * maxWidth);
+  let rectHeight = Math.round(50 + Math.random() * maxHeight);
+
+  const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(rectWidth, rectHeight, strokeWidth, center);
+  
+  shapes.push({
+    type: 'roundedRect',
+    center: center,
+    width: adjustedDimensions.width,
+    height: adjustedDimensions.height,
+    radius: Math.round(Math.random() * Math.min(rectWidth, rectHeight) * 0.2),
+    rotation: 0,
+    strokeWidth: strokeWidth,
+    strokeColor: getRandomColor(50, 150), // Alpha between 50 and 150
+    fillColor: getRandomColor(50, 150)    // Alpha between 50 and 150
+  });
+}
+
+
 function add1PxStrokeCenteredRoundedRectAtGrid(shapes, log) {
   checkCanvasHasEvenDimensions();
 
