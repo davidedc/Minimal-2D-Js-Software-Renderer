@@ -49,7 +49,7 @@ function addRenderComparisons() {
   add1PxStrokedRectCenteredAtPixelComparison();
   add1PxStrokedRoundedRectCenteredAtGridComparison();
   add1PxStrokedRoundedRectCenteredAtPixelComparison();
-  addCenteredRoundedRectComparison();
+  addCenteredRoundedRectMixedOpaqueStrokeWidthsComparison();
   addThinRoundedRectsComparison();
   addEverythingTogetherComparison();
 }

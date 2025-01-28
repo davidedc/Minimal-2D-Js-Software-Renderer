@@ -25,7 +25,7 @@ function addThinRoundedRectsComparison() {
     .build();
 }
 
-function addCenteredRoundedRectComparison() {
+function addCenteredRoundedRectMixedOpaqueStrokeWidthsComparison() {
   return new RenderComparisonBuilder()
     .withId('centered-rounded-rect')
     .withTitle('Single Centered Rounded Rectangle of different stroke widths - opaque stroke - centered at grid')
