@@ -42,6 +42,8 @@ function addCenteredRoundedRectMixedTransparentStrokeWidthsComparison() {
     .withTitle('Single Centered Rounded Rectangle - semi-transparent stroke and fill')
     .withDescription('A single rounded rectangle with different stroke widths and semi-transparent colors, centered at a grid crossing')
     .addShapes(addCenteredRoundedRectTransparentStrokesRandomStrokeWidth)
+    .withColorCheckMiddleRow({ expectedUniqueColors: 3 })
+    .withColorCheckMiddleColumn({ expectedUniqueColors: 3 })
     .build();
 }
 

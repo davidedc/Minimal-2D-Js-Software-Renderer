@@ -135,19 +135,31 @@ function addCenteredRoundedRectOpaqueStrokesRandomStrokeWidth(shapes, log) {
 }
 
 // TODO to work out exactly when the main features of the rounded rect
-// are identical in the sw renderer and the canvas renderer.
+// are identical in the sw renderer and the canvas renderer. 
 function addCenteredRoundedRectTransparentStrokesRandomStrokeWidth(shapes, log) {
   checkCanvasHasEvenDimensions();
 
   const maxWidth = renderComparisonWidth * 0.6;
   const maxHeight = renderComparisonHeight * 0.6;
 
-  const strokeWidth = Math.round(Math.random() * 10 + 1);
+  let strokeWidth = Math.round(Math.random() * 10 + 1);
+
+  // the only way to make both the fill and the stroke crisp with the same path
+  // is if the fill path runs all around grid lines, and the stroke falls half on one side
+  // of the path and the other half on the other side. I.e. the strokeWidth must be even.
+  strokeWidth = strokeWidth % 2 === 0 ? strokeWidth : strokeWidth + 1;
 
   // center is an even number divided by 2, so it's an integer,
   // so the center is at a grid crossing.
-  const center = { x: renderComparisonWidth/2, y: renderComparisonHeight/2 };
+  let center = { x: renderComparisonWidth/2, y: renderComparisonHeight/2 };
 
+  // 50% of the times, move the center by half pixel so we also test the case where the
+  // center is not at a grid crossing.
+  if (Math.random() < 0.5) {
+    center = { x: center.x + 0.5, y: center.y + 0.5 };
+  }
+
+  // get a random starting dimension, we'll adjust it soon after
   let rectWidth = Math.round(50 + Math.random() * maxWidth);
   let rectHeight = Math.round(50 + Math.random() * maxHeight);
 
