@@ -3,24 +3,33 @@ class RenderChecks {
     this.comparison = comparison;
   }
 
-  checkCountOfUniqueColorsInMiddleRow(ctx, expectedColors = null) {
+  checkCountOfUniqueColorsInLine(ctx, expectedColors, isRow) {
     const imageData = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
     const data = imageData.data;
-    const middleY = Math.floor(ctx.canvas.height / 2);
+    const width = ctx.canvas.width;
     const uniqueColors = new Set();
     
-    // Scan middle row
-    for(let x = 0; x < ctx.canvas.width; x++) {
-      const i = (middleY * ctx.canvas.width + x) * 4;
-      if(data[i+3] === 0) continue;
-      const colorKey = `${data[i]},${data[i+1]},${data[i+2]},${data[i+3]}`;
-      uniqueColors.add(colorKey);
+    if (isRow) {
+      const middleY = Math.floor(ctx.canvas.height / 2);
+      for(let x = 0; x < width; x++) {
+        const i = (middleY * width + x) * 4;
+        if(data[i+3] === 0) continue;
+        const colorKey = `${data[i]},${data[i+1]},${data[i+2]},${data[i+3]}`;
+        uniqueColors.add(colorKey);
+      }
+    } else {
+      const middleX = Math.floor(width / 2);
+      for(let y = 0; y < ctx.canvas.height; y++) {
+        const i = (y * width + middleX) * 4;
+        if(data[i+3] === 0) continue;
+        const colorKey = `${data[i]},${data[i+1]},${data[i+2]},${data[i+3]}`;
+        uniqueColors.add(colorKey);
+      }
     }
     
     const count = uniqueColors.size;
     if (expectedColors !== null && count !== expectedColors) {
-      let message = `Expected ${expectedColors} colors but found ${count} colors in middle row of ${ctx.canvas.title}`;
-      // add to the message also the colors
+      let message = `Expected ${expectedColors} colors but found ${count} colors in middle ${isRow ? 'row' : 'column'} of ${ctx.canvas.title}`;
       uniqueColors.forEach(color => {
         message += `\n- ${color}`;
       });
@@ -30,29 +39,12 @@ class RenderChecks {
     return count;
   }
 
+  checkCountOfUniqueColorsInMiddleRow(ctx, expectedColors = null) {
+    return this.checkCountOfUniqueColorsInLine(ctx, expectedColors, true);
+  }
+
   checkCountOfUniqueColorsInMiddleColumn(ctx, expectedColors = null) {
-    const imageData = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
-    const data = imageData.data;
-    const middleX = Math.floor(ctx.canvas.width / 2);
-    const uniqueColors = new Set();
-    
-    for(let y = 0; y < ctx.canvas.height; y++) {
-      const i = (y * ctx.canvas.width + middleX) * 4;
-      if(data[i+3] === 0) continue;
-      const colorKey = `${data[i]},${data[i+1]},${data[i+2]},${data[i+3]}`;
-      uniqueColors.add(colorKey);
-    }
-    
-    const count = uniqueColors.size;
-    if (expectedColors !== null && count !== expectedColors) {
-      let message = `Expected ${expectedColors} colors but found ${count} colors in middle column of ${ctx.canvas.title}`;
-      uniqueColors.forEach(color => {
-        message += `\n- ${color}`;
-      });
-      this.comparison.showError(message);
-    }
-    
-    return count;
+    return this.checkCountOfUniqueColorsInLine(ctx, expectedColors, false);
   }
 
   // note that these first two parameters are both CanvasRenderingContext2D
