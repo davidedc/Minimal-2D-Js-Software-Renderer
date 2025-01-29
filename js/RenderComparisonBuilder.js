@@ -46,6 +46,15 @@ class RenderComparisonBuilder {
     return this;
   }
 
+  withSpecklesCheck() {
+    this._checks.push((comparison) => {
+      // check both SW and Canvas
+      const speckleCountSW = comparison.renderChecks.checkForSpeckles(comparison.swCtx);
+      return `Speckle count: SW: ${speckleCountSW}`;
+    });
+    return this;
+  }
+
   withColorCheckMiddleColumn(options) {
     this._checks.push((comparison) => {
       const swColors = comparison.renderChecks.checkCountOfUniqueColorsInMiddleColumn(

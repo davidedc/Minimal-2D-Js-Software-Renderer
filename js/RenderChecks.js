@@ -210,4 +210,49 @@ class RenderChecks {
     
     return results.join('\n');
   }
+
+  checkForSpeckles(ctx) {
+    const imageData = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
+    const data = imageData.data;
+    const width = ctx.canvas.width;
+    const height = ctx.canvas.height;
+    
+    let speckleCount = 0;
+    
+    // Check each pixel (except edges)
+    for (let y = 0; y < height; y++) {
+      for (let x = 1; x < width - 1; x++) {
+        const currentIdx = (y * width + x) * 4;
+        const leftIdx = (y * width + (x - 1)) * 4;
+        const rightIdx = (y * width + (x + 1)) * 4;
+                
+        // Check if left and right pixels have the same color
+        const leftMatchesRight = 
+          data[leftIdx] === data[rightIdx] &&
+          data[leftIdx + 1] === data[rightIdx + 1] &&
+          data[leftIdx + 2] === data[rightIdx + 2] &&
+          data[leftIdx + 3] === data[rightIdx + 3];
+        
+        // Check if current pixel is different from neighbors
+        const currentDifferent = 
+          data[currentIdx] !== data[leftIdx] ||
+          data[currentIdx + 1] !== data[leftIdx + 1] ||
+          data[currentIdx + 2] !== data[leftIdx + 2] ||
+          data[currentIdx + 3] !== data[leftIdx + 3];
+        
+        if (leftMatchesRight && currentDifferent) {
+          speckleCount++;
+        }
+      }
+    }
+    
+    if (speckleCount > 0) {
+      this.comparison.showError(
+        `Found ${speckleCount} speckle${speckleCount === 1 ? '' : 's'} in ${ctx.canvas.title} ` +
+        '(single pixels with different color from matching left and right neighbors)'
+      );
+    }
+    
+    return speckleCount;
+  }
 }
