@@ -46,7 +46,7 @@ class RenderComparisonBuilder {
     return this;
   }
 
-  withSpecklesCheck() {
+  withSpecklesCheckOnSwCanvas() {
     this._checks.push((comparison) => {
       // check both SW and Canvas
       const speckleCountSW = comparison.renderChecks.checkForSpeckles(comparison.swCtx);

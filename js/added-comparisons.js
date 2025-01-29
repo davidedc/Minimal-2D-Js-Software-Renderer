@@ -33,7 +33,7 @@ function addCenteredRoundedRectMixedOpaqueStrokeWidthsComparison() {
     .addShapes(addCenteredRoundedRectOpaqueStrokesRandomStrokeWidth)
     .withColorCheckMiddleRow({ expectedUniqueColors: 2 })
     .withColorCheckMiddleColumn({ expectedUniqueColors: 2 })
-    .withSpecklesCheck()
+    .withSpecklesCheckOnSwCanvas()
     .build();
 }
 
@@ -45,7 +45,7 @@ function addCenteredRoundedRectMixedTransparentStrokeWidthsComparison() {
     .addShapes(addCenteredRoundedRectTransparentStrokesRandomStrokeWidth)
     .withColorCheckMiddleRow({ expectedUniqueColors: 3 })
     .withColorCheckMiddleColumn({ expectedUniqueColors: 3 })
-    .withSpecklesCheck()
+    .withSpecklesCheckOnSwCanvas()
     .build();
 }
 
