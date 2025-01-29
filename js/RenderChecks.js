@@ -12,14 +12,19 @@ class RenderChecks {
     // Scan middle row
     for(let x = 0; x < ctx.canvas.width; x++) {
       const i = (middleY * ctx.canvas.width + x) * 4;
-      if(data[i+3] === 255) continue;
+      if(data[i+3] === 0) continue;
       const colorKey = `${data[i]},${data[i+1]},${data[i+2]},${data[i+3]}`;
       uniqueColors.add(colorKey);
     }
     
     const count = uniqueColors.size;
     if (expectedColors !== null && count !== expectedColors) {
-      this.comparison.showError(`Expected ${expectedColors} colors but found ${count} colors in middle row of ${ctx.canvas.title}`);
+      let message = `Expected ${expectedColors} colors but found ${count} colors in middle row of ${ctx.canvas.title}`;
+      // add to the message also the colors
+      uniqueColors.forEach(color => {
+        message += `\n- ${color}`;
+      });
+      this.comparison.showError(message);
     }
     
     return count;
@@ -33,14 +38,18 @@ class RenderChecks {
     
     for(let y = 0; y < ctx.canvas.height; y++) {
       const i = (y * ctx.canvas.width + middleX) * 4;
-      if(data[i+3] === 255) continue;
+      if(data[i+3] === 0) continue;
       const colorKey = `${data[i]},${data[i+1]},${data[i+2]},${data[i+3]}`;
       uniqueColors.add(colorKey);
     }
     
     const count = uniqueColors.size;
     if (expectedColors !== null && count !== expectedColors) {
-      this.comparison.showError(`Expected ${expectedColors} colors but found ${count} colors in middle column of ${ctx.canvas.title}`);
+      let message = `Expected ${expectedColors} colors but found ${count} colors in middle column of ${ctx.canvas.title}`;
+      uniqueColors.forEach(color => {
+        message += `\n- ${color}`;
+      });
+      this.comparison.showError(message);
     }
     
     return count;
