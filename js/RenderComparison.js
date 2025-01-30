@@ -270,8 +270,52 @@ class RenderComparison {
       link.className = 'nav-link';
       nav.appendChild(link);
     });
+
+    // Add background control
+    const backgroundControl = document.createElement('div');
+    backgroundControl.style.marginTop = '10px';
+    
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.id = 'showTransparencyPatternBackground';
+    checkbox.checked = false; // Changed to false - default to white background
+    
+    const label = document.createElement('label');
+    label.htmlFor = 'showTransparencyPatternBackground';
+    label.textContent = 'Show transparency pattern';
+    label.style.marginLeft = '5px';
+    
+    checkbox.addEventListener('change', (e) => {
+      if (e.target.checked) {
+        document.body.classList.add('transparency-pattern');
+      } else {
+        document.body.classList.remove('transparency-pattern');
+      }
+    });
+    
+    backgroundControl.appendChild(checkbox);
+    backgroundControl.appendChild(label);
+    nav.appendChild(backgroundControl);
     
     document.body.insertBefore(nav, document.body.firstChild);
+    
+    // Add required CSS
+    const style = document.createElement('style');
+    style.textContent = `
+      body {
+        background: white;
+      }
+      .transparency-pattern {
+        background-image:
+          linear-gradient(45deg, #eee 25%, transparent 25%),
+          linear-gradient(-45deg, #eee 25%, transparent 25%),
+          linear-gradient(45deg, transparent 75%, #eee 75%),
+          linear-gradient(-45deg, transparent 75%, #eee 75%);
+        background-size: 20px 20px;
+        background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+      }
+    `;
+    document.head.appendChild(style);
   }
 
   handleMouseMove(event, canvas) {
