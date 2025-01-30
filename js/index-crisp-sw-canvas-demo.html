@@ -34,7 +34,7 @@
         .background-toggle {
             margin-bottom: 15px;
         }
-        .show-transparency {
+        .transparency-pattern {
             /*
             Background pattern a-la photoshop transparency grid pattern
             so we can check where the canvas is being drawn and where it's
@@ -77,8 +77,8 @@
     <div class="container">
         <h1>CrispSwCanvas Demo</h1>
         <div class="background-toggle">
-            <input type="checkbox" id="showBackground" checked>
-            <label for="showBackground">Show background transparency pattern</label>
+            <input type="checkbox" id="showTransparencyPatternBackground" checked>
+            <label for="showTransparencyPatternBackground">Show background transparency pattern</label>
         </div>
         <div id="canvasTripletsContainer"></div>
     </div>
@@ -473,14 +473,14 @@
 
         
         // Add transparency grid toggle functionality
-        const checkbox = document.getElementById('showBackground');
-        document.body.classList.add('show-transparency');
+        const checkbox = document.getElementById('showTransparencyPatternBackground');
+        document.body.classList.add('transparency-pattern');
         
         checkbox.addEventListener('change', (e) => {
             if (e.target.checked) {
-                document.body.classList.add('show-transparency');
+                document.body.classList.add('transparency-pattern');
             } else {
-                document.body.classList.remove('show-transparency');
+                document.body.classList.remove('transparency-pattern');
             }
         });
     </script>
