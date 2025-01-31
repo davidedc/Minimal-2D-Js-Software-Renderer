@@ -6,7 +6,7 @@ class RenderComparison {
   static GRID_COLUMNS = 11;
   static GRID_ROWS = 21;
 
-  constructor(id, title, buildShapesFn, metricsFunction = null, comparisonDescription = '') {
+  constructor(id, title, buildShapesFn, canvasCodeFn = null, metricsFunction = null, comparisonDescription = '') {
     this.width = renderComparisonWidth;
     this.height = renderComparisonHeight;
     this.frameBuffer = new Uint8ClampedArray(this.width * this.height * 4);
@@ -17,7 +17,7 @@ class RenderComparison {
     this.flipState = true;
     this.shapes = [];
     this.metricsFunction = metricsFunction;
-    
+    this.canvasCodeFn = canvasCodeFn;
     // Create container with anchor
     this.container = document.createElement('div');
     this.container.className = 'comparison-container';
@@ -82,7 +82,7 @@ class RenderComparison {
     // Add New Example button first
     const runButton = document.createElement('button');
     runButton.textContent = 'New Example';
-    runButton.onclick = () => this.render(buildShapesFn);
+    runButton.onclick = () => this.render(buildShapesFn, canvasCodeFn);
     runButton.className = 'action-button';
     
     // Add run 10 examples button
@@ -130,8 +130,14 @@ class RenderComparison {
     // Initialize RenderChecks
     this.renderChecks = new RenderChecks(this);
 
+    // Add CrispSwCanvas instance if we have a canvasCodeFn
+    if (canvasCodeFn) {
+        this.crispSwCanvas = new CrispSwCanvas(this.width, this.height);
+        this.crispSwCtx = this.crispSwCanvas.getContext('2d');
+    }
+
     // Render initial scene
-    this.render(buildShapesFn);
+    this.render(buildShapesFn, canvasCodeFn);
   }
 
   createCanvas(name) {
@@ -214,17 +220,31 @@ class RenderComparison {
   }
 
 
-  render(buildShapesFn) {
+  render(buildShapesFn, canvasCodeFn = null) {
     this.buildShapesFn = buildShapesFn; // Store the function for later use
     this.shapes = [];
     this.logContainer.innerHTML = '';
-    // this returned value is used in the metrics/tests
-    this.builderReturnValue = buildShapesFn(this.shapes, this.logContainer);
     
-    this.drawSceneSW();
-    this.updateSWRenderOutput();
-    
-    this.drawSceneCanvas();
+    if (buildShapesFn) {
+      // this returned value is used in the metrics/tests
+      this.builderReturnValue = buildShapesFn(this.shapes, this.logContainer);
+      this.drawSceneSW();
+      this.updateSWRenderOutput();
+      this.drawSceneCanvas();
+    }
+    else if (canvasCodeFn) {
+      // clear both canvases (to transparent black)
+      this.canvasCtx.clearRect(0, 0, this.canvasCanvas.width, this.canvasCanvas.height);
+      this.crispSwCtx.clearRect(0, 0, this.swCanvas.width, this.swCanvas.height);
+      
+      // For the software-rendered side, use CrispSwCanvas
+      canvasCodeFn(this.crispSwCtx);
+      // Blit the result to the SW canvas
+      this.crispSwCtx.blitToCanvas(this.swCanvas);
+      
+      // For the canvas side, use regular canvas
+      canvasCodeFn(this.canvasCtx);
+    }
     
     this.flipState = true;
     this.updateFlipOutput();
@@ -237,7 +257,7 @@ class RenderComparison {
     const initialErrorCount = this.errorsContainer.children.length;
     const runFrame = () => {
       try {
-        this.render(this.buildShapesFn);
+        this.render(this.buildShapesFn, this.canvasCodeFn);
         current++;
         // if there are no new errors, run the next example in the next frame
         if (current < count && this.errorsContainer.children.length === initialErrorCount) {

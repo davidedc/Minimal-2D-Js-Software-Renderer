@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CrispSwCanvas Demo</title>
+    <style>
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background-color: #fff;
+        }
+        canvas {
+            border: 2px solid #000;
+            margin: 10px;
+        }
+        #targetCanvas, #standardCanvas {
+            cursor: crosshair;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .canvas-container {
+            display: flex;
+            flex-direction: row;
+            gap: 20px;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+        .canvas-label {
+            text-align: center;
+            margin-bottom: 5px;
+        }
+        .background-toggle {
+            margin-bottom: 15px;
+        }
+        .transparency-pattern {
+            /*
+            Background pattern a-la photoshop transparency grid pattern
+            so we can check where the canvas is being drawn and where it's
+            left transparent.
+            */
+            background-image:
+                linear-gradient(45deg, #eee 25%, transparent 25%),
+                linear-gradient(-45deg, #eee 25%, transparent 25%),
+                linear-gradient(45deg, transparent 75%, #eee 75%),
+                linear-gradient(-45deg, transparent 75%, #eee 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+        }
+        .magnifier-container {
+            margin-top: 0;
+            text-align: center;
+        }
+        #magnifierCanvas {
+            border: 2px solid #000;
+        }
+        .separator {
+            width: 100%;
+            height: 2px;
+            background-color: #ccc;
+            margin: 20px 0;
+        }
+        .example-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .example-description {
+            font-size: 0.9em;
+            margin-bottom: 10px;
+            text-align: left;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>CrispSwCanvas Demo</h1>
+        <div class="background-toggle">
+            <input type="checkbox" id="showTransparencyPatternBackground" checked>
+            <label for="showTransparencyPatternBackground">Show background transparency pattern</label>
+        </div>
+        <div id="canvasTripletsContainer"></div>
+    </div>
+
+    <script src="utils/geometry.js"></script>
+    <script src="sw-renderer/SWRendererPixel.js"></script>
+    <script src="sw-renderer/SWRendererLine.js"></script>
+    <script src="sw-renderer/SWRendererRect.js"></script>
+
+    <script src="crisp-sw-canvas/color-utils.js"></script>
+    <script src="crisp-sw-canvas/transform-utils.js"></script>
+    <script src="crisp-sw-canvas/ContextState.js"></script>
+    <script src="crisp-sw-canvas/CrispSwCanvas.js"></script>
+    <script src="crisp-sw-canvas/CrispSwContext.js"></script>
+    <script src="crisp-sw-canvas/TransformationMatrix.js"></script>
+
+    <script src="../js/RenderChecks.js"></script>
+    <script src="../js/RenderComparison.js"></script>
+    <script src="../js/RenderComparisonBuilder.js"></script>
+    <script src="../js/added-comparisons.js"></script>
+  
+    <script>
+        function createCanvasTriplet(drawSceneFunction, title, description) {
+            const container = document.getElementById('canvasTripletsContainer');
+            
+            const exampleDiv = document.createElement('div');
+            exampleDiv.className = 'example';
+
+            const titleElement = document.createElement('div');
+            titleElement.className = 'example-title';
+            titleElement.textContent = title;
+
+            const descriptionElement = document.createElement('div');
+            descriptionElement.className = 'example-description';
+            descriptionElement.textContent = description;
+
+            const tripletDiv = document.createElement('div');
+            tripletDiv.className = 'canvas-container';
+
+            const crispCanvasDiv = document.createElement('div');
+            const standardCanvasDiv = document.createElement('div');
+            const magnifierDiv = document.createElement('div');
+            magnifierDiv.className = 'magnifier-container';
+
+            crispCanvasDiv.innerHTML = `
+                <div class="canvas-label">CrispSwCanvas</div>
+                <canvas width="600" height="600"></canvas>
+            `;
+            standardCanvasDiv.innerHTML = `
+                <div class="canvas-label">Standard HTML5 Canvas</div>
+                <canvas width="600" height="600"></canvas>
+            `;
+            magnifierDiv.innerHTML = `
+                <div class="canvas-label">Pixel Magnifier</div>
+                <canvas width="400" height="200"></canvas>
+            `;
+
+            tripletDiv.appendChild(crispCanvasDiv);
+            tripletDiv.appendChild(standardCanvasDiv);
+            tripletDiv.appendChild(magnifierDiv);
+
+            exampleDiv.appendChild(titleElement);
+            exampleDiv.appendChild(descriptionElement);
+            exampleDiv.appendChild(tripletDiv);
+
+            container.appendChild(exampleDiv);
+
+            const crispCanvas = new CrispSwCanvas(800, 600);
+            const ctx = crispCanvas.getContext('2d');
+            drawSceneFunction(ctx);
+
+            const standardCanvas = standardCanvasDiv.querySelector('canvas');
+            const standardCtx = standardCanvas.getContext('2d');
+            drawSceneFunction(standardCtx);
+
+            // Get the target canvas and blit our content to it
+            const targetCanvas = crispCanvasDiv.querySelector('canvas');
+            ctx.blitToCanvas(targetCanvas);
+
+            const magnifierCanvas = magnifierDiv.querySelector('canvas');
+            const magnifierCtx = magnifierCanvas.getContext('2d');
+            const GRID_SIZE = 10;
+            const GRID_HEIGHT = 10;
+
+            function drawEmptyGrid() {
+                // Clear magnifier canvas
+                magnifierCtx.clearRect(0, 0, magnifierCanvas.width, magnifierCanvas.height);
+                const pixelSize = (magnifierCanvas.width / 2) / GRID_SIZE;
+                // Draw grid for both sides
+                [0, magnifierCanvas.width / 2].forEach(offsetX => {
+                    magnifierCtx.strokeStyle = 'rgba(128,128,128,0.5)';
+                    magnifierCtx.lineWidth = 1;
+                    // vertical lines
+                    for (let px = 0; px <= GRID_SIZE; px++) {
+                        magnifierCtx.beginPath();
+                        magnifierCtx.moveTo(offsetX + px * pixelSize, 0);
+                        magnifierCtx.lineTo(offsetX + px * pixelSize, GRID_HEIGHT * 2 * pixelSize);
+                        magnifierCtx.stroke();
+                    }
+                    // horizontal lines
+                    for (let py = 0; py <= GRID_HEIGHT * 2; py++) {
+                        magnifierCtx.beginPath();
+                        magnifierCtx.moveTo(offsetX, py * pixelSize);
+                        magnifierCtx.lineTo(offsetX + GRID_SIZE * pixelSize, py * pixelSize);
+                        magnifierCtx.stroke();
+                    }
+                });
+                // Draw separator line
+                magnifierCtx.strokeStyle = 'rgba(128,128,128,0.8)';
+                magnifierCtx.lineWidth = 6;
+                magnifierCtx.beginPath();
+                magnifierCtx.moveTo(magnifierCanvas.width / 2, 0);
+                magnifierCtx.lineTo(magnifierCanvas.width / 2, magnifierCanvas.height);
+                magnifierCtx.stroke();
+            }
+
+            drawEmptyGrid();
+
+            function handleCanvasHover(event, sourceCanvas, sourceCtx) {
+                const rect = sourceCanvas.getBoundingClientRect();
+                const x = Math.floor(event.clientX - rect.left);
+                const y = Math.floor(event.clientY - rect.top);
+                const halfGrid = Math.floor(GRID_SIZE / 2);
+                const crispImageData = targetCanvas.getContext('2d').getImageData(
+                    Math.max(0, x - halfGrid),
+                    Math.max(0, y - GRID_HEIGHT / 2),
+                    GRID_SIZE,
+                    GRID_HEIGHT * 2
+                );
+                const standardImageData = standardCtx.getImageData(
+                    Math.max(0, x - halfGrid),
+                    Math.max(0, y - GRID_HEIGHT / 2),
+                    GRID_SIZE,
+                    GRID_HEIGHT * 2
+                );
+                const pixelSize = (magnifierCanvas.width / 2) / GRID_SIZE;
+                magnifierCtx.clearRect(0, 0, magnifierCanvas.width, magnifierCanvas.height);
+
+                // Function to draw grid for each side
+                const drawGrid = (imageData, offsetX) => {
+                    const sourceX = x - halfGrid;
+                    const sourceY = y - GRID_HEIGHT / 2;
+                    for (let py = 0; py < GRID_HEIGHT * 2; py++) {
+                        for (let px = 0; px < GRID_SIZE; px++) {
+                            // Calculate actual source coordinates
+                            const actualX = sourceX + px;
+                            const actualY = sourceY + py;
+                            const isOutOfBounds = actualX < 0 || actualY < 0 || 
+                                                actualX >= sourceCanvas.width || 
+                                                actualY >= sourceCanvas.height;
+                            // Check if pixel is within canvas bounds
+                            if (isOutOfBounds) {
+                                magnifierCtx.fillStyle = 'rgb(128,128,128)';
+                            } else {
+                                const i = (py * imageData.width + px) * 4;
+                                const r = imageData.data[i];
+                                const g = imageData.data[i + 1];
+                                const b = imageData.data[i + 2];
+                                const a = imageData.data[i + 3];
+                                magnifierCtx.fillStyle = `rgba(${r},${g},${b},${a/255})`;
+                            }
+                            // draw pixel
+                            magnifierCtx.fillRect(
+                                offsetX + px * pixelSize,
+                                py * pixelSize,
+                                pixelSize,
+                                pixelSize
+                            );
+                        }
+                    }
+                    
+                    // Draw grid lines after pixels
+                    magnifierCtx.strokeStyle = 'rgba(128,128,128,0.5)';
+                    magnifierCtx.lineWidth = 1;
+                    // Vertical lines
+                    for (let px = 0; px <= GRID_SIZE; px++) {
+                        magnifierCtx.beginPath();
+                        magnifierCtx.moveTo(offsetX + px * pixelSize, 0);
+                        magnifierCtx.lineTo(offsetX + px * pixelSize, GRID_HEIGHT * 2 * pixelSize);
+                        magnifierCtx.stroke();
+                    }
+                    // Horizontal lines
+                    for (let py = 0; py <= GRID_HEIGHT * 2; py++) {
+                        magnifierCtx.beginPath();
+                        magnifierCtx.moveTo(offsetX, py * pixelSize);
+                        magnifierCtx.lineTo(offsetX + GRID_SIZE * pixelSize, py * pixelSize);
+                        magnifierCtx.stroke();
+                    }
+                    // draw crosshair
+                    magnifierCtx.strokeStyle = 'red';
+                    magnifierCtx.lineWidth = 2;
+                    magnifierCtx.beginPath();
+                    magnifierCtx.moveTo(offsetX + halfGrid * pixelSize, 0);
+                    magnifierCtx.lineTo(offsetX + halfGrid * pixelSize, GRID_HEIGHT * 2 * pixelSize);
+                    magnifierCtx.stroke();
+                    magnifierCtx.beginPath();
+                    magnifierCtx.moveTo(offsetX, GRID_HEIGHT * pixelSize / 2);
+                    magnifierCtx.lineTo(offsetX + GRID_SIZE * pixelSize, GRID_HEIGHT * pixelSize / 2);
+                    magnifierCtx.stroke();
+                };
+
+                // Draw left side (CrispSwCanvas)
+                drawGrid(crispImageData, 0);
+                
+                // Draw right side (Standard Canvas)
+                drawGrid(standardImageData, magnifierCanvas.width / 2);
+
+                // Draw separator line
+                magnifierCtx.strokeStyle = 'rgba(128,128,128,0.8)';
+                magnifierCtx.lineWidth = 6;
+                magnifierCtx.beginPath();
+                magnifierCtx.moveTo(magnifierCanvas.width / 2, 0);
+                magnifierCtx.lineTo(magnifierCanvas.width / 2, magnifierCanvas.height);
+                magnifierCtx.stroke();
+
+                // Draw coordinates
+                magnifierCtx.font = '14px monospace';
+                magnifierCtx.textAlign = 'center';
+                magnifierCtx.textBaseline = 'top';
+                magnifierCtx.fillStyle = 'black';
+                magnifierCtx.fillText(`(${x}, ${y})`, magnifierCanvas.width / 2, 5);
+            }
+
+            // Add event listeners for both canvases
+            const handleMouseMove = (e) => {
+                const sourceCanvas = e.target;
+                handleCanvasHover(e, sourceCanvas);
+            };
+
+            targetCanvas.addEventListener('mousemove', handleMouseMove);
+            standardCanvas.addEventListener('mousemove', handleMouseMove);
+
+            // Clear magnifier when mouse leaves canvases
+            targetCanvas.addEventListener('mouseout', () => {
+                drawEmptyGrid();
+            });
+
+            standardCanvas.addEventListener('mouseout', () => {
+                drawEmptyGrid();
+            });
+
+            // Add separator line after each example
+            const separator = document.createElement('div');
+            separator.className = 'separator';
+            container.appendChild(separator);
+        }
+
+        function drawScene1(ctx) {
+            // Basic red rectangle with fill
+            // however we are not going to see it
+            // because we are going to clear the whole canvas
+            // after drawing it
+            ctx.fillStyle = "rgb(255, 0, 0)";
+            ctx.fillRect(100, 100, 150, 100);
+            // clear the whole canvas
+            ctx.clearRect(0, 0, 800, 600);
+
+            // test clipping
+            ctx.fillStyle = "rgba(255, 0, 0, 0.5)";
+
+            ctx.save()
+            ctx.save();
+            ctx.rect(50, 50, 100, 100);
+            ctx.clip();
+            ctx.fillRect(0, 0, 100, 100);
+            ctx.restore();
+            ctx.translate(20,20);
+            ctx.save();
+            //ctx.beginPath();
+            ctx.rect(50, 50, 100, 100);
+            ctx.clip();
+            ctx.fillRect(0, 0, 100, 100);
+            ctx.restore();
+
+            ctx.translate(140,-20);
+
+            ctx.save();
+            ctx.rect(50, 50, 100, 100);
+            ctx.clip();
+            ctx.fillRect(0, 0, 100, 100);
+            ctx.restore();
+            ctx.translate(20,20);
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(50, 50, 100, 100);
+            ctx.clip();
+            ctx.fillRect(0, 0, 100, 100);
+            ctx.restore();
+
+            ctx.translate(140,-20);
+
+            ctx.save();
+            ctx.rect(50, 50, 100, 100);
+            ctx.clip();
+            ctx.fillRect(0, 0, 100, 100);
+            ctx.restore();
+            ctx.rotate(Math.PI / 16);
+            ctx.save();
+            //ctx.beginPath();
+            ctx.rect(50, 50, 100, 100);
+            ctx.clip();
+            ctx.fillRect(0, 0, 100, 100);
+            ctx.restore();
+
+            ctx.translate(140,-20);
+
+            ctx.save();
+            ctx.rect(50, 50, 100, 100);
+            ctx.clip();
+            ctx.fillRect(0, 0, 100, 100);
+            ctx.restore();
+            ctx.translate(20,20);
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(50, 50, 100, 100);
+            ctx.clip();
+            ctx.fillRect(0, 0, 100, 100);
+            ctx.restore();
+            ctx.restore();
+
+            // Stroked rectangle with crisp lines
+            ctx.strokeStyle = "rgb(0, 0, 255)";
+
+            ctx.lineWidth = 1;
+            ctx.strokeRect(1.5, 1.5, 5, 5);
+            ctx.strokeRect(20.5, 20.5, 249, 199);
+
+            ctx.rotate(Math.PI / 16);
+
+            // Demonstrate transformations
+            ctx.save();
+            ctx.translate(150, 150);
+            ctx.rotate(Math.PI / 16);
+            ctx.scale(2, 2);
+            ctx.fillStyle = "rgba(0, 255, 0, 0.5)";
+            ctx.fillRect(0, 0, 50, 50);
+            ctx.restore();
+
+            // Example of overlapping shapes
+            ctx.fillStyle = "rgba(255, 255, 0, 0.5)";
+            ctx.fillRect(250, 80, 100, 100);
+            
+            ctx.fillStyle = "rgba(0, 255, 255, 0.5)";
+            ctx.fillRect(300, 130, 100, 100);
+
+            // Example of clearing a region
+            ctx.fillStyle = "rgba(128, 0, 128, 1)";
+            ctx.fillRect(450, 50, 200, 200);
+            ctx.clearRect(500, 100, 100, 100);
+
+            // Example of nested transformations
+            ctx.save();
+            ctx.translate(350, 350);
+            
+            ctx.fillStyle = "rgba(255, 0, 0, 0.5)";
+            ctx.fillRect(-25, -25, 50, 50);
+            
+            ctx.rotate(Math.PI / 16);
+            ctx.fillStyle = "rgba(0, 255, 0, 0.5)";
+            ctx.fillRect(-25, -25, 50, 50);
+            
+            ctx.scale(1.5, 1.5);
+            ctx.fillStyle = "rgba(0, 0, 255, 0.5)";
+            ctx.fillRect(-25, -25, 50, 50);
+            
+            ctx.restore();
+
+            ctx.save();
+            ctx.translate(500, 350);
+            
+            // Draw three overlapping rectangles with different globalAlpha values
+            ctx.fillStyle = "rgb(255, 0, 0)";
+            ctx.globalAlpha = 1.0;
+            ctx.fillRect(-50, -50, 100, 100);
+            
+            ctx.fillStyle = "rgb(0, 255, 0)";
+            ctx.globalAlpha = 0.5;
+            ctx.fillRect(-25, -25, 100, 100);
+            
+            ctx.fillStyle = "rgb(0, 0, 255)";
+            ctx.globalAlpha = 0.25;
+            ctx.fillRect(0, 0, 100, 100);
+            ctx.restore();
+        }
+
+        function drawScene2(ctx) {
+            ctx.fillStyle = "rgb(0, 0, 255)";
+            ctx.fillRect(50, 50, 200, 200);
+            ctx.fillStyle = "rgb(0, 255, 0)";
+            ctx.fillRect(100, 100, 200, 200);
+            ctx.fillStyle = "rgb(255, 0, 0)";
+            ctx.fillRect(150, 150, 200, 200);
+            // create a yellow rectangle in a random position
+            const randomX = Math.floor(Math.random() * 800);
+            const randomY = Math.floor(Math.random() * 600);
+            ctx.fillStyle = "rgb(255, 255, 0)";
+            ctx.fillRect(randomX, randomY, 100, 100);
+        }
+
+        
+        // Add transparency grid toggle functionality
+        const checkbox = document.getElementById('showTransparencyPatternBackground');
+        document.body.classList.add('transparency-pattern');
+        
+        checkbox.addEventListener('change', (e) => {
+            if (e.target.checked) {
+                document.body.classList.add('transparency-pattern');
+            } else {
+                document.body.classList.remove('transparency-pattern');
+            }
+        });
+
+        // Initialize when DOM is ready
+        addRenderComparisons();
+        // Create navigation after all sections are added
+        RenderComparison.createNavigation();
+
+        function test1() {
+            return new RenderComparisonBuilder()
+                .withId('centered-1px-horizontal-line')
+                .withTitle('Single 1px Horizontal Line centered at pixel')
+                .withDescription('Tests crisp rendering of a 1px horizontal line centered at pixel')
+                .runCanvasCode(drawScene1)
+                .build();
+        }
+
+        function test2() {
+            return new RenderComparisonBuilder()
+                .withId('centered-1px-horizontal-line')
+                .withTitle('Single 1px Horizontal Line centered at pixel')
+                .withDescription('Tests crisp rendering of a 1px horizontal line centered at pixel')
+                .runCanvasCode(drawScene2)
+                .build();
+        }
+
+        function addRenderComparisons() {
+            test1();
+            test2();
+        }
+
+</script>
+</body>
+</html>

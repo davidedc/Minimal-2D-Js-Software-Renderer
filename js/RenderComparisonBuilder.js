@@ -6,6 +6,7 @@ class RenderComparisonBuilder {
     this._shapeBuilder = null;
     this._checks = [];
     this._buildLog = [];
+    this._canvasCodeFn = null;
   }
 
   withId(id) {
@@ -84,6 +85,14 @@ class RenderComparisonBuilder {
     return this;
   }
 
+  // you can pass a function that runs canvas code
+  // so instead of passing shapes, you pass a function that runs canvas code
+  // and then you can use the canvas code to create the shapes
+  runCanvasCode(canvasCodeFn) {
+    this._canvasCodeFn = canvasCodeFn;
+    return this;
+  }
+
   // NOT USED, we rather check the leftmost and rightmost and topmost and bottommost pixels
   // that are not transparent, because there are some defects like protruding pixels in rounded rects
   // that get missed if one just checks the middle lines.
@@ -102,8 +111,8 @@ class RenderComparisonBuilder {
   // }
 
   build() {
-    if (!this._id || !this._title || !this._shapeBuilder) {
-      throw new Error('RenderComparisonBuilder requires id, title, and shape builder function');
+    if (!this._id || !this._title || (!this._shapeBuilder && !this._canvasCodeFn)) {
+      throw new Error('RenderComparisonBuilder requires id, title, and shape builder function or canvas code function');
     }
 
     // Create metrics function that runs all configured checks
@@ -117,6 +126,7 @@ class RenderComparisonBuilder {
       this._id,
       this._title,
       this._shapeBuilder,
+      this._canvasCodeFn,
       metricsFunction,
       this._description
     );
