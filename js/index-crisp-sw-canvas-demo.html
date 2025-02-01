@@ -73,13 +73,9 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
-        <h1>CrispSwCanvas Demo</h1>
-        <div class="background-toggle">
-            <input type="checkbox" id="showTransparencyPatternBackground" checked>
-            <label for="showTransparencyPatternBackground">Show background transparency pattern</label>
-        </div>
         <div id="canvasTripletsContainer"></div>
     </div>
 
@@ -95,6 +91,11 @@
     <script src="crisp-sw-canvas/CrispSwContext.js"></script>
     <script src="crisp-sw-canvas/TransformationMatrix.js"></script>
 
+    <script src="../js/RenderChecks.js"></script>
+    <script src="../js/RenderComparison.js"></script>
+    <script src="../js/RenderComparisonBuilder.js"></script>
+    <script src="../js/added-comparisons.js"></script>
+  
     <script>
         function createCanvasTriplet(drawSceneFunction, title, description) {
             const container = document.getElementById('canvasTripletsContainer');
@@ -466,23 +467,41 @@
             ctx.fillRect(100, 100, 200, 200);
             ctx.fillStyle = "rgb(255, 0, 0)";
             ctx.fillRect(150, 150, 200, 200);
+            // create a yellow rectangle in a random position
+            const randomX = Math.floor(Math.random() * 800);
+            const randomY = Math.floor(Math.random() * 600);
+            ctx.fillStyle = "rgb(255, 255, 0)";
+            ctx.fillRect(randomX, randomY, 100, 100);
+        }
+        
+        // Initialize when DOM is ready
+        addRenderComparisons();
+        // Create navigation after all sections are added
+        RenderComparison.createNavigation("CrispSwCanvas tests");
+
+        function test1() {
+            return new RenderComparisonBuilder()
+                .withId('centered-1px-horizontal-line')
+                .withTitle('Single 1px Horizontal Line centered at pixel')
+                .withDescription('Tests crisp rendering of a 1px horizontal line centered at pixel')
+                .runCanvasCode(drawScene1)
+                .build();
         }
 
-        createCanvasTriplet(drawScene1, "Test 1: Complex Shapes", "This test demonstrates complex shapes with various transformations and clipping.");
-        createCanvasTriplet(drawScene2, "Test 2: Simple Overlapping Rectangles", "This test shows simple overlapping rectangles with different colors.");
+        function test2() {
+            return new RenderComparisonBuilder()
+                .withId('centered-1px-horizontal-line')
+                .withTitle('Single 1px Horizontal Line centered at pixel')
+                .withDescription('Tests crisp rendering of a 1px horizontal line centered at pixel')
+                .runCanvasCode(drawScene2)
+                .build();
+        }
 
-        
-        // Add transparency grid toggle functionality
-        const checkbox = document.getElementById('showTransparencyPatternBackground');
-        document.body.classList.add('transparency-pattern');
-        
-        checkbox.addEventListener('change', (e) => {
-            if (e.target.checked) {
-                document.body.classList.add('transparency-pattern');
-            } else {
-                document.body.classList.remove('transparency-pattern');
-            }
-        });
-    </script>
+        function addRenderComparisons() {
+            test1();
+            test2();
+        }
+
+</script>
 </body>
 </html>

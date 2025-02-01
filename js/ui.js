@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
   addRenderComparisons();
 
   // Create navigation after all sections are added
-  RenderComparison.createNavigation();
+  RenderComparison.createNavigation("Low level sw renderer tests");
 });
 
 function addRenderComparisons() {

@@ -270,12 +270,12 @@ class RenderComparison {
     requestAnimationFrame(runFrame);
   }
 
-  static createNavigation() {
+  static createNavigation(theTitle) {
     const nav = document.createElement('div');
     nav.className = 'nav-container';
     
     const title = document.createElement('h1');
-    title.textContent = 'All Tests';
+    title.textContent = theTitle;
     title.className = 'nav-title';
     nav.appendChild(title);
     
@@ -298,7 +298,8 @@ class RenderComparison {
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
     checkbox.id = 'showTransparencyPatternBackground';
-    checkbox.checked = false; // Changed to false - default to white background
+    checkbox.checked = true; // default to transparent pattern background
+    document.body.classList.add('transparency-pattern');
     
     const label = document.createElement('label');
     label.htmlFor = 'showTransparencyPatternBackground';

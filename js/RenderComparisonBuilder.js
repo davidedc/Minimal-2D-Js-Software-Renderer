@@ -115,6 +115,11 @@ class RenderComparisonBuilder {
       throw new Error('RenderComparisonBuilder requires id, title, and shape builder function or canvas code function');
     }
 
+    // if both shapeBuilder and canvasCodeFn are defined, throw an error as well
+    if (this._shapeBuilder && this._canvasCodeFn) {
+      throw new Error('RenderComparisonBuilder cannot have both shape builder function and canvas code function');
+    }
+
     // Create metrics function that runs all configured checks
     const metricsFunction = this._checks.length > 0 ? 
       (comparison) => {
