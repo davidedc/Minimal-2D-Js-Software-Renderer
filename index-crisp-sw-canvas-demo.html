@@ -34,191 +34,22 @@
     <script src="js/RenderComparisonBuilder.js"></script>
     <script src="js/added-comparisons.js"></script>
   
+    <script src="js/crisp-sw-canvas-tests/test-organic.js"></script>
+    <script src="js/crisp-sw-canvas-tests/test-overlapping-rectangles.js"></script>
+
     <script>
         const CANVAS_WIDTH = 800;
         const CANVAS_HEIGHT = 600;
 
-        function drawScene1(ctx) {
-            // Basic red rectangle with fill
-            // however we are not going to see it
-            // because we are going to clear the whole canvas
-            // after drawing it
-            ctx.fillStyle = "rgb(255, 0, 0)";
-            ctx.fillRect(100, 100, 150, 100);
-            // clear the whole canvas
-            ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-
-            // test clipping
-            ctx.fillStyle = "rgba(255, 0, 0, 0.5)";
-
-            ctx.save()
-            ctx.save();
-            ctx.rect(50, 50, 100, 100);
-            ctx.clip();
-            ctx.fillRect(0, 0, 100, 100);
-            ctx.restore();
-            ctx.translate(20,20);
-            ctx.save();
-            //ctx.beginPath();
-            ctx.rect(50, 50, 100, 100);
-            ctx.clip();
-            ctx.fillRect(0, 0, 100, 100);
-            ctx.restore();
-
-            ctx.translate(140,-20);
-
-            ctx.save();
-            ctx.rect(50, 50, 100, 100);
-            ctx.clip();
-            ctx.fillRect(0, 0, 100, 100);
-            ctx.restore();
-            ctx.translate(20,20);
-            ctx.save();
-            ctx.beginPath();
-            ctx.rect(50, 50, 100, 100);
-            ctx.clip();
-            ctx.fillRect(0, 0, 100, 100);
-            ctx.restore();
-
-            ctx.translate(140,-20);
-
-            ctx.save();
-            ctx.rect(50, 50, 100, 100);
-            ctx.clip();
-            ctx.fillRect(0, 0, 100, 100);
-            ctx.restore();
-            ctx.rotate(Math.PI / 16);
-            ctx.save();
-            //ctx.beginPath();
-            ctx.rect(50, 50, 100, 100);
-            ctx.clip();
-            ctx.fillRect(0, 0, 100, 100);
-            ctx.restore();
-
-            ctx.translate(140,-20);
-
-            ctx.save();
-            ctx.rect(50, 50, 100, 100);
-            ctx.clip();
-            ctx.fillRect(0, 0, 100, 100);
-            ctx.restore();
-            ctx.translate(20,20);
-            ctx.save();
-            ctx.beginPath();
-            ctx.rect(50, 50, 100, 100);
-            ctx.clip();
-            ctx.fillRect(0, 0, 100, 100);
-            ctx.restore();
-            ctx.restore();
-
-            // Stroked rectangle with crisp lines
-            ctx.strokeStyle = "rgb(0, 0, 255)";
-
-            ctx.lineWidth = 1;
-            ctx.strokeRect(1.5, 1.5, 5, 5);
-            ctx.strokeRect(20.5, 20.5, 249, 199);
-
-            ctx.rotate(Math.PI / 16);
-
-            // Demonstrate transformations
-            ctx.save();
-            ctx.translate(150, 150);
-            ctx.rotate(Math.PI / 16);
-            ctx.scale(2, 2);
-            ctx.fillStyle = "rgba(0, 255, 0, 0.5)";
-            ctx.fillRect(0, 0, 50, 50);
-            ctx.restore();
-
-            // Example of overlapping shapes
-            ctx.fillStyle = "rgba(255, 255, 0, 0.5)";
-            ctx.fillRect(250, 80, 100, 100);
-            
-            ctx.fillStyle = "rgba(0, 255, 255, 0.5)";
-            ctx.fillRect(300, 130, 100, 100);
-
-            // Example of clearing a region
-            ctx.fillStyle = "rgba(128, 0, 128, 1)";
-            ctx.fillRect(450, 50, 200, 200);
-            ctx.clearRect(500, 100, 100, 100);
-
-            // Example of nested transformations
-            ctx.save();
-            ctx.translate(350, 350);
-            
-            ctx.fillStyle = "rgba(255, 0, 0, 0.5)";
-            ctx.fillRect(-25, -25, 50, 50);
-            
-            ctx.rotate(Math.PI / 16);
-            ctx.fillStyle = "rgba(0, 255, 0, 0.5)";
-            ctx.fillRect(-25, -25, 50, 50);
-            
-            ctx.scale(1.5, 1.5);
-            ctx.fillStyle = "rgba(0, 0, 255, 0.5)";
-            ctx.fillRect(-25, -25, 50, 50);
-            
-            ctx.restore();
-
-            ctx.save();
-            ctx.translate(500, 350);
-            
-            // Draw three overlapping rectangles with different globalAlpha values
-            ctx.fillStyle = "rgb(255, 0, 0)";
-            ctx.globalAlpha = 1.0;
-            ctx.fillRect(-50, -50, 100, 100);
-            
-            ctx.fillStyle = "rgb(0, 255, 0)";
-            ctx.globalAlpha = 0.5;
-            ctx.fillRect(-25, -25, 100, 100);
-            
-            ctx.fillStyle = "rgb(0, 0, 255)";
-            ctx.globalAlpha = 0.25;
-            ctx.fillRect(0, 0, 100, 100);
-            ctx.restore();
-        }
-
-        function drawScene2(ctx) {
-            ctx.fillStyle = "rgb(0, 0, 255)";
-            ctx.fillRect(50, 50, 200, 200);
-            ctx.fillStyle = "rgb(0, 255, 0)";
-            ctx.fillRect(100, 100, 200, 200);
-            ctx.fillStyle = "rgb(255, 0, 0)";
-            ctx.fillRect(150, 150, 200, 200);
-            // create a yellow rectangle in a random position
-            const randomX = Math.floor(Math.random() * CANVAS_WIDTH);
-            const randomY = Math.floor(Math.random() * CANVAS_HEIGHT);
-            ctx.fillStyle = "rgb(255, 255, 0)";
-            ctx.fillRect(randomX, randomY, 100, 100);
-        }
-        
-
-        function test1() {
-            return new RenderComparisonBuilder()
-                .withId('centered-1px-horizontal-line')
-                .withTitle('Single 1px Horizontal Line centered at pixel')
-                .withDescription('Tests crisp rendering of a 1px horizontal line centered at pixel')
-                .runCanvasCode(drawScene1)
-                .build();
-        }
-
-        function test2() {
-            return new RenderComparisonBuilder()
-                .withId('centered-1px-horizontal-line')
-                .withTitle('Single 1px Horizontal Line centered at pixel')
-                .withDescription('Tests crisp rendering of a 1px horizontal line centered at pixel')
-                .runCanvasCode(drawScene2)
-                .build();
-        }
-
         function addRenderComparisons() {
-            test1();
-            test2();
+            createOrganicTest();
+            createOverlappingRectanglesTest();
         }
 
         document.addEventListener('DOMContentLoaded', () => {
             addRenderComparisons();
             RenderComparison.createNavigation("CrispSwCanvas tests");
         });
-
-</script>
+    </script>
 </body>
 </html>
