@@ -129,7 +129,7 @@ class SWRendererRoundedRect {
   // overdraw that happens when drawing the stroke at the corners. Simply, if the stoke is thin or opaque, then
   // you don't see the overdraw. However, if the stroke is thick and/or transparent, then you do see the overdraw,
   // so there is a complex system where the pixels of the stroke are first collected in a set, and then drawn to the
-  // screen. Not only that, but the stoke of the corners is actually kept in a set of scanlines, this is to avoid
+  // screen. Not only that, but the stroke of the corners is actually kept in a set of scanlines, this is to avoid
   // internal gaps that one can see using the current algorithm. Using scanlines, the internal gaps are filled in.
   drawCrispAxisAlignedRoundedRectThickTrasparentStroke(centerX, centerY, rectWidth, rectHeight, cornerRadius, 
     strokeWidth, strokeR, strokeG, strokeB, strokeA, 
