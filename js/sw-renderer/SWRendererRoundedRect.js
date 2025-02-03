@@ -162,30 +162,39 @@ class SWRendererRoundedRect {
   // The pixels of the stroke are first collected in a set, and then drawn to the
   // screen. Not only that, but the stroke of the corners is actually kept in a set of scanlines, this is to avoid
   // internal gaps that one can see using the current algorithm. Using scanlines, the internal gaps are filled in.
+  // Draws the stroke (outline) of a rounded rectangle by collecting pixels in a set first,
+  // then drawing them all at once. Uses scanlines to avoid internal gaps in the stroke.
   drawRoundedRectStroke(centerX, centerY, rectWidth, rectHeight, cornerRadius, strokeWidth,
     strokeR, strokeG, strokeB, strokeA) {
     const halfStroke = strokeWidth / 2;
     let pos = getRectangularStrokeGeometry(centerX, centerY, rectWidth, rectHeight, strokeWidth);
     let r = Math.round(Math.min(cornerRadius, Math.min(pos.w, pos.h) / 2));
 
+    // Create a set to collect all stroke pixels before drawing
     const strokePixels = new PixelSet(this.pixelRenderer);
     
+    // Draw horizontal strokes (top and bottom edges)
     const horizontalStrokes = new ScanlineSpans();
+    // Add spans for top edge
     for (let y = pos.y - halfStroke; y < pos.y + halfStroke; y++) {
       horizontalStrokes.addSpan(y, pos.x + r, pos.x + pos.w - r);
     }
+    // Add spans for bottom edge
     for (let y = pos.y + pos.h - halfStroke; y < pos.y + pos.h + halfStroke; y++) {
       horizontalStrokes.addSpan(y, pos.x + r, pos.x + pos.w - r);
     }
     horizontalStrokes.addToPixelSet(strokePixels, strokeR, strokeG, strokeB, strokeA);
 
+    // Draw vertical strokes (left and right edges)
     const leftVerticalStrokes = new ScanlineSpans();
     const rightVerticalStrokes = new ScanlineSpans();
     
     for (let y = pos.y + r; y < pos.y + pos.h - r; y++) {
+      // Add pixels for left edge
       for (let x = pos.x - halfStroke; x < pos.x + halfStroke; x++) {
         leftVerticalStrokes.addPixel(x, y);
       }
+      // Add pixels for right edge
       for (let x = pos.x + pos.w - halfStroke; x < pos.x + pos.w + halfStroke; x++) {
         rightVerticalStrokes.addPixel(x, y);
       }
@@ -193,12 +202,14 @@ class SWRendererRoundedRect {
     leftVerticalStrokes.addToPixelSet(strokePixels, strokeR, strokeG, strokeB, strokeA);
     rightVerticalStrokes.addToPixelSet(strokePixels, strokeR, strokeG, strokeB, strokeA);
 
+    // Helper function to draw rounded corners using circular arcs
     const drawCornerSpans = (cx, cy, startAngle, endAngle) => {
       const cornerSpans = new ScanlineSpans();
-      const angleStep = Math.PI / 180;     
+      const angleStep = Math.PI / 180;  // 1 degree steps for smooth corners
       for (let angle = startAngle; angle <= endAngle; angle += angleStep) {
+        // Add pixels along the stroke width
         for (let t = -halfStroke; t < halfStroke; t ++) {
-          const sr = r + t;
+          const sr = r + t;  // Radius adjusted for stroke width
           const px = cx + sr * Math.cos(angle);
           const py = cy + sr * Math.sin(angle);
           cornerSpans.addPixel(Math.floor(px), Math.floor(py));
@@ -207,12 +218,13 @@ class SWRendererRoundedRect {
       cornerSpans.addToPixelSet(strokePixels, strokeR, strokeG, strokeB, strokeA);
     };
 
-    drawCornerSpans(pos.x + r, pos.y + r, Math.PI, Math.PI * 3/2);
-    drawCornerSpans(pos.x + pos.w - r, pos.y + r, Math.PI * 3/2, Math.PI * 2);
-    drawCornerSpans(pos.x + pos.w - r, pos.y + pos.h - r, 0, Math.PI/2);
-    drawCornerSpans(pos.x + r, pos.y + pos.h - r, Math.PI/2, Math.PI);
+    // Draw all four corners with appropriate arc angles
+    drawCornerSpans(pos.x + r, pos.y + r, Math.PI, Math.PI * 3/2);           // Top-left
+    drawCornerSpans(pos.x + pos.w - r, pos.y + r, Math.PI * 3/2, Math.PI * 2); // Top-right
+    drawCornerSpans(pos.x + pos.w - r, pos.y + pos.h - r, 0, Math.PI/2);     // Bottom-right
+    drawCornerSpans(pos.x + r, pos.y + pos.h - r, Math.PI/2, Math.PI);       // Bottom-left
 
-    // Paint all stroke pixels after collecting them
+    // Finally, paint all collected stroke pixels to the screen
     strokePixels.paint();
   }
 
