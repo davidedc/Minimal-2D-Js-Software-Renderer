@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CrispSwCanvas minimal example</title>
+    <style>
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background-color: #fff;
+        }
+        canvas {
+            border: 2px solid #000;
+            margin: 10px;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .canvas-container {
+            display: flex;
+            flex-direction: row;
+            gap: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>CrispSwCanvas minimal example</h1>
+        <div class="canvas-container">
+            <div>
+                <canvas id="targetCanvas" width="800" height="600"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/added-comparisons.js"></script>
+    <script src="js/sw-renderer/SWRendererPixel.js"></script>
+    <script src="js/sw-renderer/SWRendererLine.js"></script>
+    <script src="js/sw-renderer/SWRendererRect.js"></script>
+
+    <script src="js/crisp-sw-canvas/color-utils.js"></script>
+    <script src="js/crisp-sw-canvas/transform-utils.js"></script>
+    <script src="js/crisp-sw-canvas/ContextState.js"></script>
+    <script src="js/crisp-sw-canvas/CrispSwCanvas.js"></script>
+    <script src="js/crisp-sw-canvas/CrispSwContext.js"></script>
+    <script src="js/crisp-sw-canvas/TransformationMatrix.js"></script>
+    <script src="js/utils/geometry.js"></script>
+
+    <script>
+        // Function to run the same drawing commands on both canvases
+        function drawScene(ctx) {
+
+            // Basic red rectangle with fill
+            // however we are not going to see it
+            // because we are going to clear the whole canvas
+            // after drawing it
+            ctx.fillStyle = "rgba(255, 0, 0, 0.5)";
+            ctx.fillRect(20, 20, 150, 100);
+
+
+
+
+        }
+
+        // Create our CrispSwCanvas
+        const crispCanvas = new CrispSwCanvas(800, 600);
+        const ctx = crispCanvas.getContext('2d');
+        drawScene(ctx);
+
+
+        // Get the target canvas and blit our content to it
+        const targetCanvas = document.getElementById('targetCanvas');
+        ctx.blitToCanvas(targetCanvas);
+
+        
+    </script>
+</body>
+</html>
