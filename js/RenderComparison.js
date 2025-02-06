@@ -66,9 +66,34 @@ class RenderComparison {
     this.swCanvas.style.cursor = 'crosshair';
     this.canvasCanvas.style.cursor = 'crosshair';
     
-    this.container.appendChild(this.swCanvas);
-    this.container.appendChild(this.canvasCanvas);
-    this.container.appendChild(this.displayCanvas);
+    // Create wrapper divs and hash containers
+    this.swWrapper = document.createElement('div');
+    this.swWrapper.className = 'canvas-wrapper';
+    this.canvasWrapper = document.createElement('div');
+    this.canvasWrapper.className = 'canvas-wrapper';
+    this.displayWrapper = document.createElement('div');
+    this.displayWrapper.className = 'canvas-wrapper';
+    
+    // Create hash containers
+    this.swHashContainer = document.createElement('div');
+    this.swHashContainer.className = 'hash-container';
+    
+    this.canvasHashContainer = document.createElement('div');
+    this.canvasHashContainer.className = 'hash-container';
+    
+    // Add canvases and hashes to their wrappers
+    this.swWrapper.appendChild(this.swCanvas);
+    this.swWrapper.appendChild(this.swHashContainer);
+    
+    this.canvasWrapper.appendChild(this.canvasCanvas);
+    this.canvasWrapper.appendChild(this.canvasHashContainer);
+    
+    this.displayWrapper.appendChild(this.displayCanvas);
+    
+    // Add wrappers to container
+    this.container.appendChild(this.swWrapper);
+    this.container.appendChild(this.canvasWrapper);
+    this.container.appendChild(this.displayWrapper);
     
     // Get contexts
     this.swCtx = this.swCanvas.getContext('2d');
@@ -136,6 +161,27 @@ class RenderComparison {
         this.crispSwCtx = this.crispSwCanvas.getContext('2d');
     }
 
+    // Add required CSS
+    const style = document.createElement('style');
+    style.textContent = `
+      .canvas-wrapper {
+        display: inline-block;
+        vertical-align: top;
+      }
+      .hash-container {
+        font-family: monospace;
+        font-size: 12px;
+        margin: -5px 0 10px 10px;
+        color: #666;
+        background: white;
+        padding: 2px 5px;
+        display: block;
+        border-radius: 3px;
+        width: fit-content;
+      }
+    `;
+    document.head.appendChild(style);
+
     // Render initial scene
     this.render(buildShapesFn, canvasCodeFn);
   }
@@ -156,12 +202,14 @@ class RenderComparison {
   updateSWRenderOutput() {
     const imageData = new ImageData(this.frameBuffer, this.width, this.height);
     this.swCtx.putImageData(imageData, 0, 0);
+    if (this.swCtx.getHashString) this.updateHashes();
   }
 
   drawSceneCanvas() {
     this.canvasCtx.setTransform(1, 0, 0, 1, 0, 0);
     this.canvasCtx.clearRect(0, 0, this.canvasCanvas.width, this.canvasCanvas.height);
     drawShapesImpl(this.shapes, true, this.canvasCtx);
+    if (this.swCtx.getHashString) this.updateHashes();
   }
 
   drawSceneSW() {
@@ -219,6 +267,10 @@ class RenderComparison {
     }
   }
 
+  updateHashes() {
+    this.swHashContainer.textContent = `Hash: ${this.swCtx.getHashString()}`;
+    this.canvasHashContainer.textContent = `Hash: ${this.canvasCtx.getHashString()}`;
+  }
 
   render(buildShapesFn, canvasCodeFn = null) {
     this.buildShapesFn = buildShapesFn; // Store the function for later use
@@ -244,6 +296,8 @@ class RenderComparison {
       
       // For the canvas side, use regular canvas
       canvasCodeFn(this.canvasCtx);
+      
+      if (this.swCtx.getHashString) this.updateHashes();
     }
     
     this.flipState = true;
