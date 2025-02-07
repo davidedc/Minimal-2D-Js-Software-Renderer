@@ -136,3 +136,15 @@ function add1PxStrokedRectCenteredAtPixelComparison() {
     .withExtremesCheck()
     .build();
 }
+
+// ----------------------------------------------------------------------
+// New comparison: Single 1px Stroked Circle centered at grid
+function add1PxStrokedCircleCenteredAtGridComparison() {
+  return new RenderComparisonBuilder()
+    .withId('centered-1px-circle')
+    .withTitle('Single 1px Stroked Circle centered at grid')
+    .withDescription('Tests crisp rendering of a 1px stroked circle where the center is at a crossing in the grid')
+    .addShapes(add1PxStrokeCenteredCircleAtGrid)
+    .withExtremesCheck()
+    .build();
+}
