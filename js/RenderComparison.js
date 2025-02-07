@@ -491,6 +491,28 @@ class RenderComparison {
       this.displayCtx.moveTo(offsetX, (RenderComparison.GRID_ROWS/2) * pixelSize);
       this.displayCtx.lineTo(offsetX + RenderComparison.GRID_COLUMNS * pixelSize, (RenderComparison.GRID_ROWS/2) * pixelSize);
       this.displayCtx.stroke();
+
+      // Compute the local mouse coordinates within this grid.
+      let localMouseX = Math.floor(RenderComparison.GRID_COLUMNS/2);
+      let localMouseY = Math.floor(RenderComparison.GRID_ROWS/2);
+      // Clamp to valid indices
+      localMouseX = Math.min(Math.floor(localMouseX), RenderComparison.GRID_COLUMNS - 1);
+      localMouseY = Math.min(Math.floor(localMouseY), RenderComparison.GRID_ROWS - 1);
+      const idx = (localMouseY * RenderComparison.GRID_COLUMNS + localMouseX) * 4;
+      const r = imageData.data[idx];
+      const g = imageData.data[idx + 1]; 
+      const b = imageData.data[idx + 2];
+      const a = imageData.data[idx + 3];
+      const rgbaText = `rgba(${r}, ${g}, ${b}, ${(a/255).toFixed(2)})`;
+
+      // Draw color text below grid
+      this.displayCtx.font = '12px monospace';
+      this.displayCtx.textAlign = 'center';
+      this.displayCtx.textBaseline = 'middle';
+      const textX = offsetX + (RenderComparison.GRID_COLUMNS * pixelSize) / 2;
+      const textY = (RenderComparison.GRID_ROWS) * pixelSize + pixelSize/2;
+      this.displayCtx.fillStyle = 'black';
+      this.displayCtx.fillText(rgbaText, textX, textY);
     };
 
     // Draw left side (SW renderer)
