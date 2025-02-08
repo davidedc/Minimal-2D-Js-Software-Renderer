@@ -139,7 +139,7 @@ class RenderChecks {
     return results.join('\n\n');
   }
 
-  checkExtremes(swCtx, canvasCtx, expectedExtremes) {
+  checkExtremes(swCtx, canvasCtx, expectedExtremes, alphaTolerance = 0) {
     const contexts = [
       { name: 'Software Renderer', ctx: swCtx },
       { name: 'Canvas', ctx: canvasCtx }
@@ -162,7 +162,7 @@ class RenderChecks {
       for (let y = 0; y < height; y++) {
         for (let x = 0; x < width; x++) {
           const i = (y * width + x) * 4;
-          if (data[i + 3] > 0) {  // If pixel is not fully transparent
+          if (data[i + 3]/255 > alphaTolerance) {  // If pixel is not fully transparent (or very close, depending on alphaTolerance)
             minX = Math.min(minX, x);
             maxX = Math.max(maxX, x);
             minY = Math.min(minY, y);

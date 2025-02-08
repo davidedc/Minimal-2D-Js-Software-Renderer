@@ -71,7 +71,7 @@ class RenderComparisonBuilder {
     return this;
   }
 
-  withExtremesCheck() {
+  withExtremesCheck(alphaTolerance = 0) {
     this._checks.push((comparison) => {
       const extremes = comparison.builderReturnValue;
       if (!extremes) return "No extremes data available";
@@ -79,7 +79,8 @@ class RenderComparisonBuilder {
       return comparison.renderChecks.checkExtremes(
         comparison.swCtx,
         comparison.canvasCtx,
-        extremes
+        extremes,
+        alphaTolerance
       );
     });
     return this;

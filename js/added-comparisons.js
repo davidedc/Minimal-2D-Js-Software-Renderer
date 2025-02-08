@@ -145,7 +145,9 @@ function add1PxStrokedCircleCenteredAtGridComparison() {
     .withTitle('Single 1px Stroked Circle centered at grid')
     .withDescription('Tests crisp rendering of a 1px stroked circle where the center is at a crossing in the grid')
     .addShapes(add1PxStrokeCenteredCircleAtGrid)
-    .withExtremesCheck()
+    // Adding a tolerance because for some strange reason, at least in Safari, the canvas render overflows
+    // the drawing of the stroke ever so slightly (completely invisible to the human eye, but it is there).
+    .withExtremesCheck(0.03)
     .build();
 }
 
@@ -157,6 +159,8 @@ function add1PxStrokedCircleCenteredAtPixelComparison() {
     .withTitle('Single 1px Stroked Circle centered at pixel')
     .withDescription('Tests crisp rendering of a 1px stroked circle where the center is in the middle of a pixel')
     .addShapes(add1PxStrokeCenteredCircleAtPixel)
-    .withExtremesCheck()
+    // Adding a tolerance because for some strange reason, at least in Safari, the canvas render overflows
+    // the drawing of the stroke ever so slightly (completely invisible to the human eye, but it is there).
+    .withExtremesCheck(0.03)
     .build();
 }
