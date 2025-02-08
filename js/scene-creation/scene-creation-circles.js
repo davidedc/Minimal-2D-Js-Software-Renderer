@@ -14,7 +14,7 @@ function addRandomCircles(shapes, log, count = 5) {
 }
 
 // ----------------------------------------------------------------------
-// New function: Single 1px Stroked Circle centered at grid
+// Single 1px Stroked Circle centered at grid
 function add1PxStrokeCenteredCircleAtGrid(shapes, log) {
   // Ensure canvas dimensions are even for proper grid alignment
   checkCanvasHasEvenDimensions();

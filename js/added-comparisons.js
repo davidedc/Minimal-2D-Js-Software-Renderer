@@ -138,7 +138,7 @@ function add1PxStrokedRectCenteredAtPixelComparison() {
 }
 
 // ----------------------------------------------------------------------
-// New comparison: Single 1px Stroked Circle centered at grid
+// Single 1px Stroked Circle centered at grid
 function add1PxStrokedCircleCenteredAtGridComparison() {
   return new RenderComparisonBuilder()
     .withId('centered-1px-circle')
