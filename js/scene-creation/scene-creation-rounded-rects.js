@@ -196,8 +196,8 @@ function add1PxStrokeCenteredRoundedRectAtGrid(shapes, log) {
 function add1PxStrokeCenteredRoundedRectAtPixel(shapes, log) {
   checkCanvasHasEvenDimensions();
 
-  let centerX = Math.floor(renderComparisonWidth / 2);
-  let centerY = Math.floor(renderComparisonHeight / 2);
+  const centerX = Math.floor(renderComparisonWidth / 2) + 0.5;
+  const centerY = Math.floor(renderComparisonHeight / 2) + 0.5;
 
   let rectWidth = Math.floor(20 + Math.random() * 130);
   let rectHeight = Math.floor(20 + Math.random() * 130);
