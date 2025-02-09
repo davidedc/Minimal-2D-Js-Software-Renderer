@@ -58,9 +58,8 @@ function add1PxStrokeCenteredCircleAtPixel(shapes, log) {
   // Ensure canvas dimensions are even for proper pixel alignment
   checkCanvasHasEvenDimensions();
 
-  // Compute pixel-centered center (shifted by 0.5)
-  const centerX = Math.floor(renderComparisonWidth / 2) + 0.5;
-  const centerY = Math.floor(renderComparisonHeight / 2) + 0.5;
+  // Replace direct calculation with new function
+  const { centerX, centerY } = placeCloseToCenterAtPixel(renderComparisonWidth, renderComparisonHeight);
 
   // Generate a random diameter (similar range as the rectangle dimensions)
   let diameter = Math.floor(20 + Math.random() * 130);

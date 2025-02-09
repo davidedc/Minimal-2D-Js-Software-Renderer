@@ -279,3 +279,10 @@ function checkBasicConditionsForCrispRendering(centerX, centerY, width, height, 
     console.warn("Center Y must be an integer or *.5 for crisp rendering ");
   }
 }
+
+function placeCloseToCenterAtPixel(width, height) {
+  return {
+    centerX: Math.floor(width / 2) + 0.5,
+    centerY: Math.floor(height / 2) + 0.5
+  };
+}
