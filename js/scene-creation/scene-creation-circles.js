@@ -19,9 +19,7 @@ function add1PxStrokeCenteredCircleAtGrid(shapes, log) {
   // Ensure canvas dimensions are even for proper grid alignment
   checkCanvasHasEvenDimensions();
 
-  // Compute grid-aligned center
-  const centerX = Math.floor(renderComparisonWidth / 2);
-  const centerY = Math.floor(renderComparisonHeight / 2);
+  const { centerX, centerY } = placeCloseToCenterAtGrid(renderComparisonWidth, renderComparisonHeight);
 
   // Generate a random diameter (similar range as the rectangle dimensions)
   let diameter = Math.floor(20 + Math.random() * 130);

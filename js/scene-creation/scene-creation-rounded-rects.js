@@ -182,8 +182,7 @@ function addCenteredRoundedRectTransparentStrokesRandomStrokeWidth(shapes, log) 
 function add1PxStrokeCenteredRoundedRectAtGrid(shapes, log) {
   checkCanvasHasEvenDimensions();
 
-  const centerX = Math.floor(renderComparisonWidth / 2);
-  const centerY = Math.floor(renderComparisonHeight / 2);
+  const { centerX, centerY } = placeCloseToCenterAtGrid(renderComparisonWidth, renderComparisonHeight);
 
   let rectWidth = Math.floor(20 + Math.random() * 130);
   let rectHeight = Math.floor(20 + Math.random() * 130);

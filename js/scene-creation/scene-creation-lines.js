@@ -52,8 +52,7 @@ function add2PxVerticalLineCenteredAtGrid(shapes, log) {
   checkCanvasHasEvenDimensions();
 
   const lineHeight = Math.floor(20 + Math.random() * 130);
-  const centerX = Math.floor(renderComparisonWidth / 2);
-  const centerY = Math.floor(renderComparisonHeight / 2);
+  const { centerX, centerY } = placeCloseToCenterAtGrid(renderComparisonWidth, renderComparisonHeight);
   
   const result = add2PxVerticalLine(centerX, centerY, lineHeight, shapes, log);
   
@@ -164,8 +163,7 @@ function add2PxHorizontalLineCenteredAtGrid(shapes, log) {
   checkCanvasHasEvenDimensions();
 
   const lineWidth = Math.floor(20 + Math.random() * 130);
-  const centerX = Math.floor(renderComparisonWidth / 2);
-  const centerY = Math.floor(renderComparisonHeight / 2);
+  const { centerX, centerY } = placeCloseToCenterAtGrid(renderComparisonWidth, renderComparisonHeight);
   
   return add2PxHorizontalLine(centerX, centerY, lineWidth, shapes, log);
 }
