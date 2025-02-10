@@ -121,7 +121,13 @@ class RenderComparison {
     run100Button.textContent = 'Run 100 Examples';
     run100Button.onclick = () => this.runMultipleExamples(100);
     run100Button.className = 'action-button';
-    
+
+    // Add a button to collect defects on 1000 examples
+    const run1000Button = document.createElement('button');
+    run1000Button.textContent = 'Collect defects / 1k examples';
+    run1000Button.onclick = () => this.runMultipleExamples(1000, false);
+    run1000Button.className = 'action-button';
+
     // Add flip button last
     const flipButton = document.createElement('button');
     flipButton.textContent = 'Flip alternating view';
@@ -131,6 +137,7 @@ class RenderComparison {
     buttonContainer.appendChild(runButton);
     buttonContainer.appendChild(run10Button);
     buttonContainer.appendChild(run100Button);
+    buttonContainer.appendChild(run1000Button);
     buttonContainer.appendChild(flipButton);
     this.container.appendChild(buttonContainer);
     
@@ -306,19 +313,23 @@ class RenderComparison {
     this.showMetrics(this.metricsFunction);
   }
 
-  runMultipleExamples(count) {
+  runMultipleExamples(count, stopAtError = true) {
     let current = 0;
     const initialErrorCount = this.errorsContainer.children.length;
     const runFrame = () => {
       try {
         this.render(this.buildShapesFn, this.canvasCodeFn);
         current++;
-        // if there are no new errors, run the next example in the next frame
-        if (current < count && this.errorsContainer.children.length === initialErrorCount) {
+        // Continue if under count and either not stopping at errors or no new errors
+        if (current < count && (!stopAtError || this.errorsContainer.children.length === initialErrorCount)) {
           requestAnimationFrame(runFrame);
         }
       } catch (error) {
         this.showError(`Error during multiple examples: ${error.message}`);
+        // Continue if not stopping at errors
+        if (!stopAtError && current < count) {
+          requestAnimationFrame(runFrame);
+        }
       }
     };
     requestAnimationFrame(runFrame);
