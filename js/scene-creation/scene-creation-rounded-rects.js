@@ -2,23 +2,26 @@ function addAxisAlignedRoundedRectangles(shapes, log, count = 10) {
   for (let i = 0; i < count; i++) {
     const width = Math.round(50 + Math.random() * 100);
     const height = Math.round(50 + Math.random() * 100);
-
     const strokeWidth = Math.round(Math.random() * 10 + 1);
     let center = roundPoint(getRandomPoint());
-
     const adjustedCenter = adjustCenterForCrispStrokeRendering(center.x, center.y, width, height, strokeWidth);
+    const radius = Math.round(Math.random() * Math.min(width, height) * 0.2);
+    const strokeColor = getRandomColor(200, 255);
+    const fillColor = getRandomColor(100, 200);
 
     shapes.push({
       type: 'roundedRect',
       center: adjustedCenter,
       width,
       height,
-      radius: Math.round(Math.random() * Math.min(width, height) * 0.2),
+      radius,
       rotation: 0,
-      strokeWidth: strokeWidth,
-      strokeColor: getRandomColor(200, 255),
-      fillColor: getRandomColor(100, 200)
+      strokeWidth,
+      strokeColor,
+      fillColor
     });
+
+    log.innerHTML += `&#x25A2; Axis-aligned rounded rect at (${adjustedCenter.x}, ${adjustedCenter.y}) with width ${width}, height ${height}, radius ${radius}, stroke width ${strokeWidth}, stroke color ${strokeColor}, and fill color ${fillColor}<br>`;
   }
 }
 
@@ -43,6 +46,8 @@ function addThinOpaqueStrokeRoundedRectangles(shapes, log, count = 10) {
       strokeColor: getRandomColor(200, 255),
       fillColor: getRandomColor(100, 200)
     });
+
+    log.innerHTML += `&#x25A2; Thin opaque stroke rounded rect at (${adjustedCenter.x}, ${adjustedCenter.y}) with width ${width}, height ${height}, and radius ${Math.round(Math.random() * Math.min(width, height) * 0.2)}<br>`;
   }
 }
 
@@ -53,6 +58,8 @@ function addLargeTransparentRoundedRectangles(shapes, log, count = 10) {
     const strokeWidth = Math.round(10 + Math.random() * 30);
 
     const adjustedCenter = adjustCenterForCrispStrokeRendering(center.x, center.y, 200, 200, strokeWidth);
+    const strokeColor = { r: 0, g: 0, b: 0, a: 50 };
+    const fillColor = getRandomColor(100, 200);
 
     shapes.push({
       type: 'roundedRect',
@@ -61,18 +68,21 @@ function addLargeTransparentRoundedRectangles(shapes, log, count = 10) {
       height: 200,
       radius: 40,
       rotation: 0,
-      strokeWidth: strokeWidth,
-      strokeColor: { r: 0, g: 0, b: 0, a: 50 },
-      fillColor: getRandomColor(100, 200)
+      strokeWidth,
+      strokeColor,
+      fillColor
     });
+
+    log.innerHTML += `&#x25A2; Large transparent rounded rect at (${adjustedCenter.x}, ${adjustedCenter.y}) with width 200, height 200, radius 40, stroke width ${strokeWidth}, stroke color ${strokeColor}, and fill color ${fillColor}<br>`;
   }
 }
 
 function addNoStrokeRoundedRectangles(shapes, log, count = 10) {
   for (let i = 0; i < count; i++) {
+    const center = roundPoint(getRandomPoint());
     shapes.push({
       type: 'roundedRect',
-      center: roundPoint(getRandomPoint()),
+      center,
       width: 200,
       height: 200,
       radius: 40,
@@ -81,6 +91,8 @@ function addNoStrokeRoundedRectangles(shapes, log, count = 10) {
       strokeColor: { r: 0, g: 0, b: 0, a: 0 },
       fillColor: getRandomColor(100, 200)
     });
+
+    log.innerHTML += `&#x25A2; No-stroke rounded rect at (${center.x}, ${center.y}) with width 200, height 200, and radius 40<br>`;
   }
 }
 
@@ -88,17 +100,24 @@ function addRotatedRoundedRectangles(shapes, log, count = 3) {
   for (let i = 0; i < count; i++) {
     const width = 50 + Math.random() * 100;
     const height = 50 + Math.random() * 100;
+    const center = getRandomPoint();
+    const radius = Math.min(width, height) * 0.2;
+    const rotation = Math.random() * Math.PI * 2;
+    const strokeWidth = Math.random() * 10 + 1;
+
     shapes.push({
       type: 'roundedRect',
-      center: getRandomPoint(),
+      center,
       width,
       height,
-      radius: Math.min(width, height) * 0.2,
-      rotation: Math.random() * Math.PI * 2,
-      strokeWidth: Math.random() * 10 + 1,
+      radius,
+      rotation,
+      strokeWidth,
       strokeColor: getRandomColor(200, 255),
       fillColor: getRandomColor(100, 200)
     });
+
+    log.innerHTML += `&#x25A2; Rotated rounded rect at (${center.x}, ${center.y}) with width ${width.toFixed(1)}, height ${height.toFixed(1)}, radius ${radius.toFixed(1)}, rotation ${(rotation * 180 / Math.PI).toFixed(1)}°, and stroke width ${strokeWidth.toFixed(1)}<br>`;
   }
 }
 
@@ -119,19 +138,23 @@ function addCenteredRoundedRectOpaqueStrokesRandomStrokeWidth(shapes, log) {
   let rectHeight = Math.round(50 + Math.random() * maxHeight);
 
   const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(rectWidth, rectHeight, strokeWidth, center);
-
+  const radius = Math.round(Math.random() * Math.min(rectWidth, rectHeight) * 0.2);
+  const strokeColor = getRandomColor(255, 255, 0, 2);
+  const fillColor = getRandomColor(100, 200, 1, 2);
   
   shapes.push({
     type: 'roundedRect',
-    center: center,
+    center,
     width: adjustedDimensions.width,
     height: adjustedDimensions.height,
-    radius: Math.round(Math.random() * Math.min(rectWidth, rectHeight) * 0.2),
+    radius,
     rotation: 0,
-    strokeWidth: strokeWidth,
-    strokeColor: getRandomColor(255, 255, 0, 2),
-    fillColor: getRandomColor(100, 200, 1, 2)
+    strokeWidth,
+    strokeColor,
+    fillColor
   });
+
+  log.innerHTML += `&#x25A2; Centered rounded rect with opaque stroke at (${center.x}, ${center.y}) with width ${adjustedDimensions.width}, height ${adjustedDimensions.height}, radius ${radius}, stroke width ${strokeWidth}, stroke color ${strokeColor}, and fill color ${fillColor}`;
 }
 
 // TODO to work out exactly when the main features of the rounded rect
@@ -164,18 +187,23 @@ function addCenteredRoundedRectTransparentStrokesRandomStrokeWidth(shapes, log) 
   let rectHeight = Math.round(50 + Math.random() * maxHeight);
 
   const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(rectWidth, rectHeight, strokeWidth, center);
+  const strokeColor = getRandomColor(50, 150);
+  const fillColor = getRandomColor(50, 150);
+  const radius = Math.round(Math.random() * Math.min(rectWidth, rectHeight) * 0.2);
   
   shapes.push({
     type: 'roundedRect',
-    center: center,
+    center,
     width: adjustedDimensions.width,
     height: adjustedDimensions.height,
-    radius: Math.round(Math.random() * Math.min(rectWidth, rectHeight) * 0.2),
+    radius,
     rotation: 0,
-    strokeWidth: strokeWidth,
-    strokeColor: getRandomColor(50, 150), // Alpha between 50 and 150
-    fillColor: getRandomColor(50, 150)    // Alpha between 50 and 150
+    strokeWidth,
+    strokeColor,
+    fillColor
   });
+
+  log.innerHTML += `&#x25A2; Centered rounded rect with transparent stroke at (${center.x}, ${center.y}) with width ${adjustedDimensions.width}, height ${adjustedDimensions.height}, radius ${radius}, stroke width ${strokeWidth}, stroke color ${strokeColor}, and fill color ${fillColor}`;
 }
 
 
@@ -223,7 +251,7 @@ function add1PxStrokeCenteredRoundedRect(centerX, centerY, rectWidth, rectHeight
     fillColor: { r: 0, g: 0, b: 0, a: 0 }
   });
 
-  log.innerHTML += `Added 1px stroke centered rounded rect at ${centerX}, ${centerY} with width ${rectWidth} and height ${rectHeight} and radius ${Math.round(Math.random() * Math.min(rectWidth, rectHeight) * 0.2)}`;
+  log.innerHTML += `&#x25A2; 1px stroke centered rounded rect at ${centerX}, ${centerY} with width ${rectWidth} and height ${rectHeight} and radius ${Math.round(Math.random() * Math.min(rectWidth, rectHeight) * 0.2)}`;
   
   return { leftX, rightX, topY, bottomY };
 }

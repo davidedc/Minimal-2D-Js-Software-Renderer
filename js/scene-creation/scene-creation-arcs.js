@@ -24,16 +24,16 @@ function addNinetyDegreeArcs(shapes, log) {
   const radii = [20, 40, 60];
   let xOffset = 150;
 
-  for (const strokeSize of strokeSizes) {
+  for (const strokeWidth of strokeSizes) {
     let yOffset = 150;
     for (const radius of radii) {
       shapes.push({
         type: 'arc',
         center: { x: xOffset, y: yOffset },
-        radius: radius,
+        radius,
         startAngle: 0,
         endAngle: 90,
-        strokeWidth: strokeSize,
+        strokeWidth,
         strokeColor: { r: 200, g: 100, b: 100, a: 255 },
         fillColor: { r: 0, g: 0, b: 0, a: 0 }
       });

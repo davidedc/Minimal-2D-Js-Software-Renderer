@@ -20,7 +20,7 @@ function addAxisAlignedRectangles(shapes, log, count = 5) {
       width: rectWidth,
       height: rectHeight,
       rotation: 0,
-      strokeWidth: strokeWidth,
+      strokeWidth,
       strokeColor: getRandomColor(200, 255),
       fillColor: getRandomColor(100, 200)
     });

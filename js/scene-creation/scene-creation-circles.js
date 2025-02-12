@@ -32,7 +32,7 @@ function add1PxStrokeCenteredCircleAtGrid(shapes, log) {
   shapes.push({
     type: 'circle',
     center: { x: centerX, y: centerY },
-    radius: radius,
+    radius,
     strokeWidth: 1,
     strokeColor: { r: 255, g: 0, b: 0, a: 255 },
     fillColor: { r: 0, g: 0, b: 0, a: 0 },
@@ -70,7 +70,7 @@ function add1PxStrokeCenteredCircleAtPixel(shapes, log) {
   shapes.push({
     type: 'circle',
     center: { x: centerX, y: centerY },
-    radius: radius,
+    radius,
     strokeWidth: 1,
     strokeColor: { r: 255, g: 0, b: 0, a: 255 },
     fillColor: { r: 0, g: 0, b: 0, a: 0 },
