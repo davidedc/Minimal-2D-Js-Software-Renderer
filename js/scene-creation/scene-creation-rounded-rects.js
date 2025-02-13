@@ -21,7 +21,7 @@ function addAxisAlignedRoundedRectangles(shapes, log, count = 10) {
       fillColor
     });
 
-    log.innerHTML += `&#x25A2; Axis-aligned rounded rect at (${adjustedCenter.x}, ${adjustedCenter.y}) with width ${width}, height ${height}, radius ${radius}, stroke width ${strokeWidth}, stroke color ${strokeColor}, and fill color ${fillColor}<br>`;
+    log.innerHTML += `&#x25A2; Axis-aligned rounded rect at (${adjustedCenter.x}, ${adjustedCenter.y}) with width ${width}, height ${height}, radius ${radius}, stroke width ${strokeWidth}, stroke color ${colorToString(strokeColor)}, and fill color ${colorToString(fillColor)}<br>`;
   }
 }
 
@@ -73,7 +73,7 @@ function addLargeTransparentRoundedRectangles(shapes, log, count = 10) {
       fillColor
     });
 
-    log.innerHTML += `&#x25A2; Large transparent rounded rect at (${adjustedCenter.x}, ${adjustedCenter.y}) with width 200, height 200, radius 40, stroke width ${strokeWidth}, stroke color ${strokeColor}, and fill color ${fillColor}<br>`;
+    log.innerHTML += `&#x25A2; Large transparent rounded rect at (${adjustedCenter.x}, ${adjustedCenter.y}) with width 200, height 200, radius 40, stroke width ${strokeWidth}, stroke color ${colorToString(strokeColor)}, and fill color ${colorToString(fillColor)}<br>`;
   }
 }
 
@@ -154,7 +154,7 @@ function addCenteredRoundedRectOpaqueStrokesRandomStrokeWidth(shapes, log) {
     fillColor
   });
 
-  log.innerHTML += `&#x25A2; Centered rounded rect with opaque stroke at (${center.x}, ${center.y}) with width ${adjustedDimensions.width}, height ${adjustedDimensions.height}, radius ${radius}, stroke width ${strokeWidth}, stroke color ${strokeColor}, and fill color ${fillColor}`;
+  log.innerHTML += `&#x25A2; Centered rounded rect with opaque stroke at (${center.x}, ${center.y}) with width ${adjustedDimensions.width}, height ${adjustedDimensions.height}, radius ${radius}, stroke width ${strokeWidth}, stroke color ${colorToString(strokeColor)}, and fill color ${colorToString(fillColor)}`;
 }
 
 // TODO to work out exactly when the main features of the rounded rect
@@ -203,7 +203,7 @@ function addCenteredRoundedRectTransparentStrokesRandomStrokeWidth(shapes, log) 
     fillColor
   });
 
-  log.innerHTML += `&#x25A2; Centered rounded rect with transparent stroke at (${center.x}, ${center.y}) with width ${adjustedDimensions.width}, height ${adjustedDimensions.height}, radius ${radius}, stroke width ${strokeWidth}, stroke color ${strokeColor}, and fill color ${fillColor}`;
+  log.innerHTML += `&#x25A2; Centered rounded rect with transparent stroke at (${center.x}, ${center.y}) with width ${adjustedDimensions.width}, height ${adjustedDimensions.height}, radius ${radius}, stroke width ${strokeWidth}, stroke color ${colorToString(strokeColor)}, and fill color ${colorToString(fillColor)}`;
 }
 
 

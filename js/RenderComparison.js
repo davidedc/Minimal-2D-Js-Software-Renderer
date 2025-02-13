@@ -466,7 +466,7 @@ class RenderComparison {
             const g = imageData.data[i + 1];
             const b = imageData.data[i + 2];
             const a = imageData.data[i + 3];
-            this.displayCtx.fillStyle = `rgba(${r},${g},${b},${a/255})`;
+            this.displayCtx.fillStyle = colorToString(r, g, b, a);
           }
 
           this.displayCtx.fillRect(
@@ -514,7 +514,7 @@ class RenderComparison {
       const g = imageData.data[idx + 1]; 
       const b = imageData.data[idx + 2];
       const a = imageData.data[idx + 3];
-      const rgbaText = `rgba(${r}, ${g}, ${b}, ${(a/255).toFixed(2)})`;
+      const rgbaText = colorToString(r, g, b, a);
 
       // Draw color text below grid
       this.displayCtx.font = '12px monospace';

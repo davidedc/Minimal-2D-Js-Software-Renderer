@@ -16,12 +16,12 @@ function drawRoundedRectCanvas(ctx, shape) {
       roundedRectPath(ctx, -width/2, -height/2, width, height, radius);
 
       if (fillA > 0) {
-          ctx.fillStyle = `rgba(${fillR}, ${fillG}, ${fillB}, ${fillA / 255})`;
+          ctx.fillStyle = colorToString(fillR, fillG, fillB, fillA);
           ctx.fill();
       }
       if (strokeA > 0 && strokeWidth > 0) {
           ctx.lineWidth = strokeWidth;
-          ctx.strokeStyle = `rgba(${strokeR}, ${strokeG}, ${strokeB}, ${strokeA / 255})`;
+          ctx.strokeStyle = colorToString(strokeR, strokeG, strokeB, strokeA);
           ctx.stroke();
       }
       ctx.restore();
@@ -81,7 +81,7 @@ function drawCrispAxisAlignedRoundedRectCanvas(ctx, shape) {
     let pos = getRectangularFillGeometry(centerX, centerY, rectWidth, rectHeight, strokeWidth);
     let r = Math.round(Math.min(radius, Math.min(pos.w, pos.h) / 2));
     createPath(pos, r);
-    ctx.fillStyle = `rgba(${fillR}, ${fillG}, ${fillB}, ${fillA/255})`;
+    ctx.fillStyle = colorToString(fillR, fillG, fillB, fillA);
     ctx.fill();
   }
   
@@ -90,7 +90,7 @@ function drawCrispAxisAlignedRoundedRectCanvas(ctx, shape) {
     let pos = getRectangularStrokeGeometry(centerX, centerY, rectWidth, rectHeight, strokeWidth);
     let r = Math.round(Math.min(radius, Math.min(pos.w, pos.h) / 2));
     createPath(pos, r);
-    ctx.strokeStyle = `rgba(${strokeR}, ${strokeG}, ${strokeB}, ${strokeA/255})`;
+    ctx.strokeStyle = colorToString(strokeR, strokeG, strokeB, strokeA);
     ctx.lineWidth = strokeWidth;
     ctx.stroke();
   }

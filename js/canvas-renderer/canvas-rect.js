@@ -10,7 +10,7 @@ function drawAxisAlignedRectCanvas(ctx, centerX, centerY, width, height,
   
   // Draw fill first (if needed)
   if (fillA > 0) {
-    ctx.fillStyle = `rgba(${fillR}, ${fillG}, ${fillB}, ${fillA / 255})`;
+    ctx.fillStyle = colorToString(fillR, fillG, fillB, fillA);
     ctx.fillRect(pos.x, pos.y, pos.w, pos.h);
   }
   
@@ -20,7 +20,7 @@ function drawAxisAlignedRectCanvas(ctx, centerX, centerY, width, height,
   // Draw stroke (if needed)
   if (strokeA > 0 && strokeWidth > 0) {
     ctx.lineWidth = strokeWidth;
-    ctx.strokeStyle = `rgba(${strokeR}, ${strokeG}, ${strokeB}, ${strokeA / 255})`;
+    ctx.strokeStyle = colorToString(strokeR, strokeG, strokeB, strokeA);
     ctx.strokeRect(pos.x, pos.y, pos.w, pos.h);
   }
 } 
@@ -41,12 +41,12 @@ function drawRectCanvas(ctx, shape) {
       ctx.translate(center.x, center.y);
       ctx.rotate(rotation);
       if (fillA > 0) {
-          ctx.fillStyle = `rgba(${fillR}, ${fillG}, ${fillB}, ${fillA / 255})`;
+          ctx.fillStyle = colorToString(fillR, fillG, fillB, fillA);
           ctx.fillRect(-width / 2, -height / 2, width, height);
       }
       if (strokeA > 0 && strokeWidth > 0) {
           ctx.lineWidth = strokeWidth;
-          ctx.strokeStyle = `rgba(${strokeR}, ${strokeG}, ${strokeB}, ${strokeA / 255})`;
+          ctx.strokeStyle = colorToString(strokeR, strokeG, strokeB, strokeA);
           ctx.strokeRect(-width / 2, -height / 2, width, height);
       }
       ctx.restore();

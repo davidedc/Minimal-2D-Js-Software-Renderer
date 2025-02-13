@@ -9,11 +9,11 @@ function drawCircleCanvas(ctx, shape) {
   ctx.arc(center.x, center.y, radius, 0, Math.PI * 2);
 
   if (fillA > 0) {
-      ctx.fillStyle = `rgba(${fillR}, ${fillG}, ${fillB}, ${fillA / 255})`;
+      ctx.fillStyle = colorToString(fillR, fillG, fillB, fillA);
       ctx.fill();
   }
   if (strokeA > 0 && strokeWidth > 0) {
-      ctx.strokeStyle = `rgba(${strokeR}, ${strokeG}, ${strokeB}, ${strokeA / 255})`;
+      ctx.strokeStyle = colorToString(strokeR, strokeG, strokeB, strokeA);
       ctx.lineWidth = strokeWidth;
       ctx.stroke();
   }
