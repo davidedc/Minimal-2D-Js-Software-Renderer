@@ -40,7 +40,7 @@ function add1PxStrokeCenteredCircleAtGrid(shapes, log) {
     endAngle: 360
   });
 
-  log.innerHTML += `Added 1px stroke centered circle at ${centerX}, ${centerY} with diameter ${adjustedDiameter} and radius ${radius}`;
+  log.innerHTML += `&#x20DD; 1px stroke centered circle at: (${centerX}, ${centerY}) diameter: ${adjustedDiameter} radius: ${radius}`;
   
   const leftX = centerX - radius - 0.5;
   const rightX = centerX + radius - 0.5;
@@ -78,7 +78,7 @@ function add1PxStrokeCenteredCircleAtPixel(shapes, log) {
     endAngle: 360
   });
 
-  log.innerHTML += `Added 1px stroke centered circle at ${centerX}, ${centerY} with diameter ${adjustedDiameter} and radius ${radius}`;
+  log.innerHTML += `&#x20DD; 1px stroke centered circle at: (${centerX}, ${centerY}) diameter: ${adjustedDiameter} radius: ${radius}`;
 
   const leftX = centerX - radius - 0.5;
   const rightX = centerX + radius - 0.5;
