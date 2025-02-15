@@ -9,7 +9,9 @@ function getRandomCircle() {
 
 function addRandomCircles(shapes, log, count = 5) {
   for (let i = 0; i < count; i++) {
-    shapes.push(getRandomCircle());
+    const circle = getRandomCircle();
+    shapes.push(circle);
+    log.innerHTML += `&#x20DD; Random circle at (${circle.center.x}, ${circle.center.y}) radius: ${circle.radius} strokeWidth: ${circle.strokeWidth} strokeColor: ${colorToString(circle.strokeColor)} fillColor: ${colorToString(circle.fillColor)}<br>`;
   }
 }
 

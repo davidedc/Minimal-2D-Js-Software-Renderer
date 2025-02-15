@@ -1,24 +1,32 @@
 function addBlackLines(shapes, log, lineWidth, count) {
   for (let i = 0; i < count; i++) {
+    const start = getRandomPoint();
+    const end = getRandomPoint();
     shapes.push({
       type: 'line',
-      start: getRandomPoint(),
-      end: getRandomPoint(),
+      start,
+      end,
       thickness: lineWidth,
       color: { r: 0, g: 0, b: 0, a: 255 }
     });
+    log.innerHTML += `&#x2500; Black line from (${start.x}, ${start.y}) to (${end.x}, ${end.y}) thickness: ${lineWidth}<br>`;
   }
 }
 
 function addRandomLines(shapes, log, count = 15) {
   for (let i = 0; i < count; i++) {
+    const start = getRandomPoint();
+    const end = getRandomPoint();
+    const thickness = Math.floor(Math.random() * 10) + 1;
+    const color = getRandomColor(150, 255);
     shapes.push({
       type: 'line',
-      start: getRandomPoint(),
-      end: getRandomPoint(),
-      thickness: Math.floor(Math.random() * 10) + 1,
-      color: getRandomColor(150, 255)
+      start,
+      end,
+      thickness,
+      color
     });
+    log.innerHTML += `&#x2500; Random line from (${start.x}, ${start.y}) to (${end.x}, ${end.y}) thickness: ${thickness} color: ${colorToString(color)}<br>`;
   }
 }
 
@@ -45,6 +53,8 @@ function add2PxVerticalLine(centerX, centerY, height, shapes, log) {
     color: { r: 255, g: 0, b: 0, a: 255 }
   });
 
+  log.innerHTML += `&#x2500; 2px vertical line from (${centerX}, ${startY}) to (${centerX}, ${endY}) height: ${height}<br>`;
+
   return { leftX, rightX, topY, bottomY: bottomY - 1};
 }
 
@@ -56,9 +66,7 @@ function add2PxVerticalLineCenteredAtGrid(shapes, log) {
   
   const result = add2PxVerticalLine(centerX, centerY, lineHeight, shapes, log);
   
-  if (log) {
-    log.innerHTML += (`2px vertical line from (${centerX}, ${result.topY}) to (${centerX}, ${result.bottomY}) of height ${lineHeight}`);
-  }
+  log.innerHTML += (`2px vertical line from (${centerX}, ${result.topY}) to (${centerX}, ${result.bottomY}) of height ${lineHeight}`);
   
   return result;
 }
@@ -84,6 +92,8 @@ function add1PxVerticalLine(centerX, centerY, height, shapes, log) {
     thickness: 1,
     color: { r: 255, g: 0, b: 0, a: 255 }
   });
+
+  log.innerHTML += `&#x2500; 1px vertical line from (${centerX}, ${startY}) to (${centerX}, ${endY}) height: ${height}<br>`;
 
   return { leftX: pixelX, rightX: pixelX, topY, bottomY: bottomY - 1};
 }
@@ -120,6 +130,8 @@ function add1PxHorizontalLine(centerX, centerY, width, shapes, log) {
     color: { r: 255, g: 0, b: 0, a: 255 }
   });
 
+  log.innerHTML += `&#x2500; 1px horizontal line from (${startX}, ${centerY}) to (${endX}, ${centerY}) width: ${width}<br>`;
+
   return { topY: pixelY, bottomY: pixelY, leftX, rightX: rightX - 1};
 }
 
@@ -155,6 +167,8 @@ function add2PxHorizontalLine(centerX, centerY, width, shapes, log) {
     thickness: 2,
     color: { r: 255, g: 0, b: 0, a: 255 }
   });
+
+  log.innerHTML += `&#x2500; 2px horizontal line from (${startX}, ${centerY}) to (${endX}, ${centerY}) width: ${width}<br>`;
 
   return { topY, bottomY, leftX, rightX: rightX - 1};
 }

@@ -1,18 +1,12 @@
 function addAxisAlignedRectangles(shapes, log, count = 5) {
-
   for (let i = 0; i < count; i++) {
     const center = roundPoint(getRandomPoint());
     const strokeWidth = Math.floor(Math.random() * 10 + 5);
-  
     const rectWidth = Math.floor(30 + Math.random() * 100);
     const rectHeight = Math.floor(30 + Math.random() * 100);
-
-    // We pick a size and a stroke width, and then we adjust the center
-    // of the rect so that the fill and stroke are both crisp.
-    // That's all well and good, but note that in this way we can't always center the stroke
-    // around the fill: in case the stroke is larger by an odd number of pixels, that is.
-
     const adjustedCenter = adjustCenterForCrispStrokeRendering(center.x, center.y, rectWidth, rectHeight, strokeWidth);
+    const strokeColor = getRandomColor(200, 255);
+    const fillColor = getRandomColor(100, 200);
 
     shapes.push({
       type: 'rect',
@@ -21,24 +15,36 @@ function addAxisAlignedRectangles(shapes, log, count = 5) {
       height: rectHeight,
       rotation: 0,
       strokeWidth,
-      strokeColor: getRandomColor(200, 255),
-      fillColor: getRandomColor(100, 200)
+      strokeColor,
+      fillColor
     });
+
+    log.innerHTML += `&#x25A1; Axis-aligned rect at (${adjustedCenter.x}, ${adjustedCenter.y}) width: ${rectWidth} height: ${rectHeight} strokeWidth: ${strokeWidth} strokeColor: ${colorToString(strokeColor)} fillColor: ${colorToString(fillColor)}<br>`;
   }
 }
 
 function addRotatedRectangles(shapes, log, count = 5) {
   for (let i = 0; i < count; i++) {
+    const center = getRandomPoint();
+    const width = 30 + Math.random() * 100;
+    const height = 30 + Math.random() * 100;
+    const rotation = Math.random() * Math.PI * 2;
+    const strokeWidth = Math.random() * 10 + 1;
+    const strokeColor = getRandomColor(200, 255);
+    const fillColor = getRandomColor(100, 200);
+
     shapes.push({
       type: 'rect',
-      center: getRandomPoint(),
-      width: 30 + Math.random() * 100,
-      height: 30 + Math.random() * 100,
-      rotation: Math.random() * Math.PI * 2,
-      strokeWidth: Math.random() * 10 + 1,
-      strokeColor: getRandomColor(200, 255),
-      fillColor: getRandomColor(100, 200)
+      center,
+      width,
+      height,
+      rotation,
+      strokeWidth,
+      strokeColor,
+      fillColor
     });
+
+    log.innerHTML += `&#x25A1; Rotated rect at (${center.x}, ${center.y}) width: ${width.toFixed(1)} height: ${height.toFixed(1)} rotation: ${(rotation * 180 / Math.PI).toFixed(1)}&deg; strokeWidth: ${strokeWidth.toFixed(1)} strokeColor: ${colorToString(strokeColor)} fillColor: ${colorToString(fillColor)}<br>`;
   }
 }
 
@@ -84,6 +90,8 @@ function add1PxStrokeCenteredRect(centerX, centerY, rectWidth, rectHeight, shape
     strokeColor: { r: 255, g: 0, b: 0, a: 255 },
     fillColor: { r: 0, g: 0, b: 0, a: 0 }
   });
+  
+  log.innerHTML += `&#x25A1; 1px stroke centered rect at (${centerX}, ${centerY}) width: ${rectWidth} height: ${rectHeight}<br>`;
   
   return { leftX, rightX, topY, bottomY };
 }

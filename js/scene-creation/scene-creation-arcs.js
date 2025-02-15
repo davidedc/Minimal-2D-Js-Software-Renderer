@@ -37,6 +37,7 @@ function addNinetyDegreeArcs(shapes, log) {
         strokeColor: { r: 200, g: 100, b: 100, a: 255 },
         fillColor: { r: 0, g: 0, b: 0, a: 0 }
       });
+      log.innerHTML += `&#x25DC; 90&deg; arc at (${xOffset}, ${yOffset}) radius: ${radius} strokeWidth: ${strokeWidth}<br>`;
       yOffset += radius * 2 + 20;
     }
     xOffset += 120;
@@ -45,6 +46,8 @@ function addNinetyDegreeArcs(shapes, log) {
 
 function addRandomArcs(shapes, log, count = 3) {
   for (let i = 0; i < count; i++) {
-    shapes.push(getRandomArc());
+    const arc = getRandomArc();
+    shapes.push(arc);
+    log.innerHTML += `&#x25DC; Arc at (${arc.center.x}, ${arc.center.y}) radius: ${arc.radius} angles: ${arc.startAngle}&deg; to ${arc.endAngle}&deg; strokeWidth: ${arc.strokeWidth} strokeColor: ${colorToString(arc.strokeColor)} fillColor: ${colorToString(arc.fillColor)}<br>`;
   }
 }
