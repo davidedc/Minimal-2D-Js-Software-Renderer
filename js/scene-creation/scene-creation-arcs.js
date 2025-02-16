@@ -1,5 +1,5 @@
 function getRandomArc() {
-  const center = getRandomPoint();
+  const center = getRandomPoint(1);
   const radius = 15 + Math.random() * 50;
   const startAngle = Math.random() * 360;
   const endAngle = startAngle + Math.random() * 270 + 90;

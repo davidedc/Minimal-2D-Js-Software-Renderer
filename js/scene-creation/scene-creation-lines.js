@@ -1,7 +1,7 @@
 function addBlackLines(shapes, log, lineWidth, count) {
   for (let i = 0; i < count; i++) {
-    const start = getRandomPoint();
-    const end = getRandomPoint();
+    const start = getRandomPoint(1);
+    const end = getRandomPoint(1);
     shapes.push({
       type: 'line',
       start,
@@ -15,8 +15,8 @@ function addBlackLines(shapes, log, lineWidth, count) {
 
 function addRandomLines(shapes, log, count = 15) {
   for (let i = 0; i < count; i++) {
-    const start = getRandomPoint();
-    const end = getRandomPoint();
+    const start = getRandomPoint(1);
+    const end = getRandomPoint(1);
     const thickness = Math.floor(Math.random() * 10) + 1;
     const color = getRandomColor(150, 255);
     shapes.push({

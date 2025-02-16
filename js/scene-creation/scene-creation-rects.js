@@ -1,6 +1,6 @@
 function addAxisAlignedRectangles(shapes, log, count = 5) {
   for (let i = 0; i < count; i++) {
-    const center = roundPoint(getRandomPoint());
+    const center = roundPoint(getRandomPoint(1));
     const strokeWidth = Math.floor(Math.random() * 10 + 5);
     const rectWidth = Math.floor(30 + Math.random() * 100);
     const rectHeight = Math.floor(30 + Math.random() * 100);
@@ -25,7 +25,7 @@ function addAxisAlignedRectangles(shapes, log, count = 5) {
 
 function addRotatedRectangles(shapes, log, count = 5) {
   for (let i = 0; i < count; i++) {
-    const center = getRandomPoint();
+    const center = getRandomPoint(1);
     const width = 30 + Math.random() * 100;
     const height = 30 + Math.random() * 100;
     const rotation = Math.random() * Math.PI * 2;

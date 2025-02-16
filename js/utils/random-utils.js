@@ -1,8 +1,15 @@
-function getRandomPoint() {
+function getRandomPoint(decimalPlaces = null) {
   const margin = 100;
+  const x = margin + Math.random() * (renderComparisonWidth - 2 * margin);
+  const y = margin + Math.random() * (renderComparisonHeight - 2 * margin);
+  
+  if (decimalPlaces === null) {
+    return { x, y };
+  }
+  
   return {
-    x: margin + Math.random() * (renderComparisonWidth - 2 * margin),
-    y: margin + Math.random() * (renderComparisonHeight - 2 * margin)
+    x: Number(x.toFixed(decimalPlaces)),
+    y: Number(y.toFixed(decimalPlaces))
   };
 }
 

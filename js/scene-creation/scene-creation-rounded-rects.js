@@ -3,7 +3,7 @@ function addAxisAlignedRoundedRectangles(shapes, log, count = 10) {
     const width = Math.round(50 + Math.random() * 100);
     const height = Math.round(50 + Math.random() * 100);
     const strokeWidth = Math.round(Math.random() * 10 + 1);
-    let center = roundPoint(getRandomPoint());
+    let center = roundPoint(getRandomPoint(1));
     const adjustedCenter = adjustCenterForCrispStrokeRendering(center.x, center.y, width, height, strokeWidth);
     const radius = Math.round(Math.random() * Math.min(width, height) * 0.2);
     const strokeColor = getRandomColor(200, 255);
@@ -31,7 +31,7 @@ function addThinOpaqueStrokeRoundedRectangles(shapes, log, count = 10) {
     const height = Math.round(50 + Math.random() * 100);
     
     // the starting initialisation of center is a random point at a grid crossing
-    const center = roundPoint(getRandomPoint());
+    const center = roundPoint(getRandomPoint(1));
 
     const adjustedCenter = adjustCenterForCrispStrokeRendering(center.x, center.y, width, height, 1);
 
@@ -54,7 +54,7 @@ function addThinOpaqueStrokeRoundedRectangles(shapes, log, count = 10) {
 function addLargeTransparentRoundedRectangles(shapes, log, count = 10) {
   for (let i = 0; i < count; i++) {
     // the starting initialisation of center is a random point at a grid crossing
-    const center = roundPoint(getRandomPoint());
+    const center = roundPoint(getRandomPoint(1));
     const strokeWidth = Math.round(10 + Math.random() * 30);
 
     const adjustedCenter = adjustCenterForCrispStrokeRendering(center.x, center.y, 200, 200, strokeWidth);
@@ -79,7 +79,7 @@ function addLargeTransparentRoundedRectangles(shapes, log, count = 10) {
 
 function addNoStrokeRoundedRectangles(shapes, log, count = 10) {
   for (let i = 0; i < count; i++) {
-    const center = roundPoint(getRandomPoint());
+    const center = roundPoint(getRandomPoint(1));
     shapes.push({
       type: 'roundedRect',
       center,
@@ -100,7 +100,7 @@ function addRotatedRoundedRectangles(shapes, log, count = 3) {
   for (let i = 0; i < count; i++) {
     const width = 50 + Math.random() * 100;
     const height = 50 + Math.random() * 100;
-    const center = getRandomPoint();
+    const center = getRandomPoint(1);
     const radius = Math.min(width, height) * 0.2;
     const rotation = Math.random() * Math.PI * 2;
     const strokeWidth = Math.random() * 10 + 1;
