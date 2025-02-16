@@ -100,10 +100,14 @@ class RenderComparison {
     this.canvasCtx = this.canvasCanvas.getContext('2d');
     this.displayCtx = this.displayCanvas.getContext('2d');
     
-    // Add example counter before the button container
+    // Create outer container for counter and buttons
+    const controlsContainer = document.createElement('div');
+    controlsContainer.style.display = 'flex';
+    controlsContainer.style.alignItems = 'center';
+    controlsContainer.style.gap = '20px';
+    
+    // Create counter container
     const counterContainer = document.createElement('div');
-    counterContainer.className = 'counter-container';
-    counterContainer.style.marginBottom = '10px';
     
     const counterLabel = document.createElement('label');
     counterLabel.textContent = 'Next example #: ';
@@ -116,13 +120,16 @@ class RenderComparison {
     this.exampleCounter.style.marginLeft = '5px';
     counterContainer.appendChild(this.exampleCounter);
     
-    this.container.appendChild(counterContainer);
+    controlsContainer.appendChild(counterContainer);
     
     // Create button container
     const buttonContainer = document.createElement('div');
     buttonContainer.className = 'button-container';
+    buttonContainer.style.display = 'flex';
+    buttonContainer.style.alignItems = 'center';
+    buttonContainer.style.gap = '10px';
     
-    // Add New Example button first
+    // Add buttons to button container
     const runButton = document.createElement('button');
     runButton.textContent = 'New Example';
     runButton.onclick = () => this.render(buildShapesFn, canvasCodeFn);
@@ -157,7 +164,9 @@ class RenderComparison {
     buttonContainer.appendChild(run100Button);
     buttonContainer.appendChild(run1000Button);
     buttonContainer.appendChild(flipButton);
-    this.container.appendChild(buttonContainer);
+    controlsContainer.appendChild(buttonContainer);
+    
+    this.container.appendChild(controlsContainer);
     
     // Add a container for the log
     this.logContainer = document.createElement('div');
