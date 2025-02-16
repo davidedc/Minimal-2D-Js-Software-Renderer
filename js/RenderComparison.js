@@ -100,6 +100,24 @@ class RenderComparison {
     this.canvasCtx = this.canvasCanvas.getContext('2d');
     this.displayCtx = this.displayCanvas.getContext('2d');
     
+    // Add example counter before the button container
+    const counterContainer = document.createElement('div');
+    counterContainer.className = 'counter-container';
+    counterContainer.style.marginBottom = '10px';
+    
+    const counterLabel = document.createElement('label');
+    counterLabel.textContent = 'Next example #: ';
+    counterContainer.appendChild(counterLabel);
+    
+    this.exampleCounter = document.createElement('input');
+    this.exampleCounter.type = 'text';
+    this.exampleCounter.value = '1';
+    this.exampleCounter.style.width = '70px';
+    this.exampleCounter.style.marginLeft = '5px';
+    counterContainer.appendChild(this.exampleCounter);
+    
+    this.container.appendChild(counterContainer);
+    
     // Create button container
     const buttonContainer = document.createElement('div');
     buttonContainer.className = 'button-container';
@@ -280,6 +298,10 @@ class RenderComparison {
   }
 
   render(buildShapesFn, canvasCodeFn = null) {
+    // Increment counter at start of render
+    const currentCount = parseInt(this.exampleCounter.value) || 1;
+    this.exampleCounter.value = (currentCount + 1).toString();
+    
     this.buildShapesFn = buildShapesFn; // Store the function for later use
     this.shapes = [];
     this.logContainer.innerHTML = '';
