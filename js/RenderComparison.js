@@ -131,19 +131,19 @@ class RenderComparison {
     
     // Add buttons to button container
     const runButton = document.createElement('button');
-    runButton.textContent = 'New Example';
+    runButton.textContent = '1 example';
     runButton.onclick = () => this.render(buildShapesFn, canvasCodeFn);
     runButton.className = 'action-button';
     
     // Add run 10 examples button
     const run10Button = document.createElement('button');
-    run10Button.textContent = 'Run 10 Examples';
+    run10Button.textContent = '10 examples';
     run10Button.onclick = () => this.runMultipleExamples(10);
     run10Button.className = 'action-button';
 
     // Add run 100 examples button
     const run100Button = document.createElement('button');
-    run100Button.textContent = 'Run 100 Examples';
+    run100Button.textContent = '100 examples';
     run100Button.onclick = () => this.runMultipleExamples(100);
     run100Button.className = 'action-button';
 
