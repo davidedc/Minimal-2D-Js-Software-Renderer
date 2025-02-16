@@ -6,10 +6,9 @@ function drawOverlappingRectanglesScene(ctx) {
   ctx.fillStyle = "rgb(255, 0, 0)";
   ctx.fillRect(150, 150, 200, 200);
   // create a yellow rectangle in a random position
-  const randomX = Math.floor(Math.random() * CANVAS_WIDTH);
-  const randomY = Math.floor(Math.random() * CANVAS_HEIGHT);
+  const randomPoint = getRandomPoint();
   ctx.fillStyle = "rgb(255, 255, 0)";
-  ctx.fillRect(randomX, randomY, 100, 100);
+  ctx.fillRect(randomPoint.x, randomPoint.y, 100, 100);
 }
 
 function createOverlappingRectanglesTest() {
