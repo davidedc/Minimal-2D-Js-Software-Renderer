@@ -109,6 +109,13 @@ class RenderComparison {
     // Create counter container
     const counterContainer = document.createElement('div');
     
+    // Add current example label
+    const currentLabel = document.createElement('label');
+    currentLabel.textContent = 'Current Example #1 | ';
+    currentLabel.style.marginRight = '10px';
+    this.currentLabel = currentLabel;  // Store reference to update it later
+    counterContainer.appendChild(currentLabel);
+    
     const counterLabel = document.createElement('label');
     counterLabel.textContent = 'Next example #: ';
     counterContainer.appendChild(counterLabel);
@@ -307,8 +314,11 @@ class RenderComparison {
   }
 
   render(buildShapesFn, canvasCodeFn = null) {
-    // Increment counter at start of render
+    // Update current example label to match the next example number
     const currentCount = parseInt(this.exampleCounter.value) || 1;
+    this.currentLabel.textContent = `Current Example #${currentCount}`;
+    
+    // Increment counter for next example
     this.exampleCounter.value = (currentCount + 1).toString();
     
     this.buildShapesFn = buildShapesFn; // Store the function for later use
