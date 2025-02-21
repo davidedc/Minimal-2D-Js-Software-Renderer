@@ -1,5 +1,7 @@
 // Main CrispSwCanvas class
 class CrispSwCanvas {
+    static version = '1.0.0';
+
     constructor(width, height) {
         this.width = width;
         this.height = height;
