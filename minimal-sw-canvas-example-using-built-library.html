@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CrispSwCanvas minimal example</title>
+    <style>
+        canvas {
+            border: 2px solid #000;
+            margin: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>CrispSwCanvas minimal example</h1>
+    <canvas id="targetCanvas" width="800" height="600"></canvas>
+
+    <script src="build/crisp-sw-canvas.min.js"></script>
+
+<script>
+        const crispCanvas = new CrispSwCanvas(800, 600);
+        const ctx = crispCanvas.getContext('2d');
+
+        ctx.fillStyle = "rgba(255, 0, 0, 0.5)";
+        ctx.fillRect(20, 20, 150, 100);
+
+        // Get the target canvas and blit our content to it
+        const targetCanvas = document.getElementById('targetCanvas');
+        ctx.blitToCanvas(targetCanvas);
+    </script>
+</body>
+</html>
