@@ -1,7 +1,7 @@
 function getRandomPoint(decimalPlaces = null) {
   const margin = 100;
-  const x = margin + Math.random() * (renderComparisonWidth - 2 * margin);
-  const y = margin + Math.random() * (renderComparisonHeight - 2 * margin);
+  const x = margin + SeededRandom.getRandom() * (renderComparisonWidth - 2 * margin);
+  const y = margin + SeededRandom.getRandom() * (renderComparisonHeight - 2 * margin);
   
   if (decimalPlaces === null) {
     return { x, y };
@@ -49,15 +49,15 @@ function getRandomColor(minAlpha = 0, maxAlpha = 255, whichPartition = null, num
   }
 
   // Generate random alpha value between minAlpha and maxAlpha (inclusive)
-  const alpha = Math.floor(minAlpha + Math.random() * (maxAlpha - minAlpha + 1));
+  const alpha = Math.floor(minAlpha + SeededRandom.getRandom() * (maxAlpha - minAlpha + 1));
 
   // If numberOfPartitions is null or whichPartition is null and numberOfPartitions is 1,
   // generate completely random RGB values
   if (numberOfPartitions == null || (whichPartition == null && numberOfPartitions === 1)) {
       return {
-          r: Math.floor(Math.random() * 256),
-          g: Math.floor(Math.random() * 256),
-          b: Math.floor(Math.random() * 256),
+          r: Math.floor(SeededRandom.getRandom() * 256),
+          g: Math.floor(SeededRandom.getRandom() * 256),
+          b: Math.floor(SeededRandom.getRandom() * 256),
           a: alpha
       };
   }
@@ -67,7 +67,7 @@ function getRandomColor(minAlpha = 0, maxAlpha = 255, whichPartition = null, num
 
   // If whichPartition is null, choose random partition
   if (whichPartition == null) {
-      whichPartition = Math.floor(Math.random() * numberOfPartitions);
+      whichPartition = Math.floor(SeededRandom.getRandom() * numberOfPartitions);
   }
 
   const bitsPerChannel = getBitsPerChannel(numberOfPartitions);
@@ -95,7 +95,7 @@ function getRandomColor(minAlpha = 0, maxAlpha = 255, whichPartition = null, num
   // Fill remaining bits with random values
   for(let i = 0; i < 3; i++) {
       const remainingBits = 8 - bitsPerChannel[i];
-      const randomBits = Math.floor(Math.random() * (1 << remainingBits));
+      const randomBits = Math.floor(SeededRandom.getRandom() * (1 << remainingBits));
       channels[i] |= randomBits;
   }
   

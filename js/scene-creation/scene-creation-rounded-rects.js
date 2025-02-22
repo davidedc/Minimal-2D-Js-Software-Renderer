@@ -1,11 +1,12 @@
-function addAxisAlignedRoundedRectangles(shapes, log, count = 10) {
+function addAxisAlignedRoundedRectangles(shapes, log, currentExampleNumber, count = 10) {
+  SeededRandom.seedWithInteger(currentExampleNumber);
   for (let i = 0; i < count; i++) {
-    const width = Math.round(50 + Math.random() * 100);
-    const height = Math.round(50 + Math.random() * 100);
-    const strokeWidth = Math.round(Math.random() * 10 + 1);
+    const width = Math.round(50 + SeededRandom.getRandom() * 100);
+    const height = Math.round(50 + SeededRandom.getRandom() * 100);
+    const strokeWidth = Math.round(SeededRandom.getRandom() * 10 + 1);
     let center = roundPoint(getRandomPoint(1));
     const adjustedCenter = adjustCenterForCrispStrokeRendering(center.x, center.y, width, height, strokeWidth);
-    const radius = Math.round(Math.random() * Math.min(width, height) * 0.2);
+    const radius = Math.round(SeededRandom.getRandom() * Math.min(width, height) * 0.2);
     const strokeColor = getRandomColor(200, 255);
     const fillColor = getRandomColor(100, 200);
 
@@ -25,10 +26,11 @@ function addAxisAlignedRoundedRectangles(shapes, log, count = 10) {
   }
 }
 
-function addThinOpaqueStrokeRoundedRectangles(shapes, log, count = 10) {
+function addThinOpaqueStrokeRoundedRectangles(shapes, log, currentExampleNumber, count = 10) {
+  SeededRandom.seedWithInteger(currentExampleNumber);
   for (let i = 0; i < count; i++) {
-    const width = Math.round(50 + Math.random() * 100);
-    const height = Math.round(50 + Math.random() * 100);
+    const width = Math.round(50 + SeededRandom.getRandom() * 100);
+    const height = Math.round(50 + SeededRandom.getRandom() * 100);
     
     // the starting initialisation of center is a random point at a grid crossing
     const center = roundPoint(getRandomPoint(1));
@@ -40,22 +42,23 @@ function addThinOpaqueStrokeRoundedRectangles(shapes, log, count = 10) {
       center: adjustedCenter,
       width,
       height,
-      radius: Math.round(Math.random() * Math.min(width, height) * 0.2),
+      radius: Math.round(SeededRandom.getRandom() * Math.min(width, height) * 0.2),
       rotation: 0,
       strokeWidth: 1,
       strokeColor: getRandomColor(200, 255),
       fillColor: getRandomColor(100, 200)
     });
 
-    log.innerHTML += `&#x25A2; Thin opaque stroke rounded rect at: (${adjustedCenter.x}, ${adjustedCenter.y}) width: ${width} height: ${height} radius: ${Math.round(Math.random() * Math.min(width, height) * 0.2)}<br>`;
+    log.innerHTML += `&#x25A2; Thin opaque stroke rounded rect at: (${adjustedCenter.x}, ${adjustedCenter.y}) width: ${width} height: ${height} radius: ${Math.round(SeededRandom.getRandom() * Math.min(width, height) * 0.2)}<br>`;
   }
 }
 
-function addLargeTransparentRoundedRectangles(shapes, log, count = 10) {
+function addLargeTransparentRoundedRectangles(shapes, log, currentExampleNumber, count = 10) {
+  SeededRandom.seedWithInteger(currentExampleNumber);
   for (let i = 0; i < count; i++) {
     // the starting initialisation of center is a random point at a grid crossing
     const center = roundPoint(getRandomPoint(1));
-    const strokeWidth = Math.round(10 + Math.random() * 30);
+    const strokeWidth = Math.round(10 + SeededRandom.getRandom() * 30);
 
     const adjustedCenter = adjustCenterForCrispStrokeRendering(center.x, center.y, 200, 200, strokeWidth);
     const strokeColor = { r: 0, g: 0, b: 0, a: 50 };
@@ -77,7 +80,8 @@ function addLargeTransparentRoundedRectangles(shapes, log, count = 10) {
   }
 }
 
-function addNoStrokeRoundedRectangles(shapes, log, count = 10) {
+function addNoStrokeRoundedRectangles(shapes, log, currentExampleNumber, count = 10) {
+  SeededRandom.seedWithInteger(currentExampleNumber);
   for (let i = 0; i < count; i++) {
     const center = roundPoint(getRandomPoint(1));
     shapes.push({
@@ -96,14 +100,15 @@ function addNoStrokeRoundedRectangles(shapes, log, count = 10) {
   }
 }
 
-function addRotatedRoundedRectangles(shapes, log, count = 3) {
+function addRotatedRoundedRectangles(shapes, log, currentExampleNumber, count = 3) {
+  SeededRandom.seedWithInteger(currentExampleNumber);
   for (let i = 0; i < count; i++) {
-    const width = 50 + Math.random() * 100;
-    const height = 50 + Math.random() * 100;
+    const width = 50 + SeededRandom.getRandom() * 100;
+    const height = 50 + SeededRandom.getRandom() * 100;
     const center = getRandomPoint(1);
     const radius = Math.min(width, height) * 0.2;
-    const rotation = Math.random() * Math.PI * 2;
-    const strokeWidth = Math.random() * 10 + 1;
+    const rotation = SeededRandom.getRandom() * Math.PI * 2;
+    const strokeWidth = SeededRandom.getRandom() * 10 + 1;
 
     shapes.push({
       type: 'roundedRect',
@@ -121,24 +126,25 @@ function addRotatedRoundedRectangles(shapes, log, count = 3) {
   }
 }
 
-function addCenteredRoundedRectOpaqueStrokesRandomStrokeWidth(shapes, log) {
+function addCenteredRoundedRectOpaqueStrokesRandomStrokeWidth(shapes, log, currentExampleNumber) {
   checkCanvasHasEvenDimensions();
+  SeededRandom.seedWithInteger(currentExampleNumber);
 
   const maxWidth = renderComparisonWidth * 0.6;
   const maxHeight = renderComparisonHeight * 0.6;
 
-  const strokeWidth = Math.round(Math.random() * 10 + 1);
+  const strokeWidth = Math.round(SeededRandom.getRandom() * 10 + 1);
 
   // center is an even number divided by 2, so it's an integer,
   // so the center is at a grid crossing.
   const center = { x: renderComparisonWidth/2, y: renderComparisonHeight/2 };
 
   
-  let rectWidth = Math.round(50 + Math.random() * maxWidth);
-  let rectHeight = Math.round(50 + Math.random() * maxHeight);
+  let rectWidth = Math.round(50 + SeededRandom.getRandom() * maxWidth);
+  let rectHeight = Math.round(50 + SeededRandom.getRandom() * maxHeight);
 
   const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(rectWidth, rectHeight, strokeWidth, center);
-  const radius = Math.round(Math.random() * Math.min(rectWidth, rectHeight) * 0.2);
+  const radius = Math.round(SeededRandom.getRandom() * Math.min(rectWidth, rectHeight) * 0.2);
   const strokeColor = getRandomColor(255, 255, 0, 2);
   const fillColor = getRandomColor(100, 200, 1, 2);
   
@@ -159,13 +165,14 @@ function addCenteredRoundedRectOpaqueStrokesRandomStrokeWidth(shapes, log) {
 
 // TODO to work out exactly when the main features of the rounded rect
 // are identical in the sw renderer and the canvas renderer. 
-function addCenteredRoundedRectTransparentStrokesRandomStrokeWidth(shapes, log) {
+function addCenteredRoundedRectTransparentStrokesRandomStrokeWidth(shapes, log, currentExampleNumber) {
   checkCanvasHasEvenDimensions();
+  SeededRandom.seedWithInteger(currentExampleNumber);
 
   const maxWidth = renderComparisonWidth * 0.6;
   const maxHeight = renderComparisonHeight * 0.6;
 
-  let strokeWidth = Math.round(Math.random() * 10 + 1);
+  let strokeWidth = Math.round(SeededRandom.getRandom() * 10 + 1);
 
   // the only way to make both the fill and the stroke crisp with the same path
   // is if the fill path runs all around grid lines, and the stroke falls half on one side
@@ -178,18 +185,18 @@ function addCenteredRoundedRectTransparentStrokesRandomStrokeWidth(shapes, log) 
 
   // 50% of the times, move the center by half pixel so we also test the case where the
   // center is not at a grid crossing.
-  if (Math.random() < 0.5) {
+  if (SeededRandom.getRandom() < 0.5) {
     center = { x: center.x + 0.5, y: center.y + 0.5 };
   }
 
   // get a random starting dimension, we'll adjust it soon after
-  let rectWidth = Math.round(50 + Math.random() * maxWidth);
-  let rectHeight = Math.round(50 + Math.random() * maxHeight);
+  let rectWidth = Math.round(50 + SeededRandom.getRandom() * maxWidth);
+  let rectHeight = Math.round(50 + SeededRandom.getRandom() * maxHeight);
 
   const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(rectWidth, rectHeight, strokeWidth, center);
   const strokeColor = getRandomColor(50, 150);
   const fillColor = getRandomColor(50, 150);
-  const radius = Math.round(Math.random() * Math.min(rectWidth, rectHeight) * 0.2);
+  const radius = Math.round(SeededRandom.getRandom() * Math.min(rectWidth, rectHeight) * 0.2);
   
   shapes.push({
     type: 'roundedRect',
@@ -207,26 +214,28 @@ function addCenteredRoundedRectTransparentStrokesRandomStrokeWidth(shapes, log) 
 }
 
 
-function add1PxStrokeCenteredRoundedRectAtGrid(shapes, log) {
+function add1PxStrokeCenteredRoundedRectAtGrid(shapes, log, currentExampleNumber) {
   checkCanvasHasEvenDimensions();
+  SeededRandom.seedWithInteger(currentExampleNumber);
 
   const { centerX, centerY } = placeCloseToCenterAtGrid(renderComparisonWidth, renderComparisonHeight);
 
-  let rectWidth = Math.floor(20 + Math.random() * 130);
-  let rectHeight = Math.floor(20 + Math.random() * 130);
+  let rectWidth = Math.floor(20 + SeededRandom.getRandom() * 130);
+  let rectHeight = Math.floor(20 + SeededRandom.getRandom() * 130);
 
   const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(rectWidth, rectHeight, 1, {x:centerX, y:centerY});
 
   return add1PxStrokeCenteredRoundedRect(centerX, centerY, adjustedDimensions.width, adjustedDimensions.height, shapes, log);
 }
 
-function add1PxStrokeCenteredRoundedRectAtPixel(shapes, log) {
+function add1PxStrokeCenteredRoundedRectAtPixel(shapes, log, currentExampleNumber) {
   checkCanvasHasEvenDimensions();
+  SeededRandom.seedWithInteger(currentExampleNumber);
 
   const { centerX, centerY } = placeCloseToCenterAtPixel(renderComparisonWidth, renderComparisonHeight);
 
-  let rectWidth = Math.floor(20 + Math.random() * 130);
-  let rectHeight = Math.floor(20 + Math.random() * 130);
+  let rectWidth = Math.floor(20 + SeededRandom.getRandom() * 130);
+  let rectHeight = Math.floor(20 + SeededRandom.getRandom() * 130);
   
   const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(rectWidth, rectHeight, 1, {x:centerX, y:centerY});
 
@@ -244,14 +253,14 @@ function add1PxStrokeCenteredRoundedRect(centerX, centerY, rectWidth, rectHeight
     center: { x: centerX, y: centerY },
     width: rectWidth,
     height: rectHeight,
-    radius: Math.round(Math.random() * Math.min(rectWidth, rectHeight) * 0.2),
+    radius: Math.round(SeededRandom.getRandom() * Math.min(rectWidth, rectHeight) * 0.2),
     rotation: 0,
     strokeWidth: 1,
     strokeColor: { r: 255, g: 0, b: 0, a: 255 },
     fillColor: { r: 0, g: 0, b: 0, a: 0 }
   });
 
-  log.innerHTML += `&#x25A2; 1px stroke centered rounded rect at: (${centerX}, ${centerY}) width: ${rectWidth} height: ${rectHeight} radius: ${Math.round(Math.random() * Math.min(rectWidth, rectHeight) * 0.2)}`;
+  log.innerHTML += `&#x25A2; 1px stroke centered rounded rect at: (${centerX}, ${centerY}) width: ${rectWidth} height: ${rectHeight} radius: ${Math.round(SeededRandom.getRandom() * Math.min(rectWidth, rectHeight) * 0.2)}`;
   
   return { leftX, rightX, topY, bottomY };
 }

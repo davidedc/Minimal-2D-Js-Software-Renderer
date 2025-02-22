@@ -1,9 +1,9 @@
 function getRandomArc() {
   const center = getRandomPoint(1);
-  const radius = 15 + Math.random() * 50;
-  const startAngle = Math.random() * 360;
-  const endAngle = startAngle + Math.random() * 270 + 90;
-  const strokeWidth = Math.random() * 10 + 1;
+  const radius = 15 + SeededRandom.getRandom() * 50;
+  const startAngle = SeededRandom.getRandom() * 360;
+  const endAngle = startAngle + SeededRandom.getRandom() * 270 + 90;
+  const strokeWidth = SeededRandom.getRandom() * 10 + 1;
   const strokeColor = getRandomColor(200, 255);
   const fillColor = getRandomColor(100, 200);
   
@@ -19,7 +19,10 @@ function getRandomArc() {
   };
 }
 
-function addNinetyDegreeArcs(shapes, log) {
+function addNinetyDegreeArcs(shapes, log, currentExampleNumber) {
+  // Not strictly needed as there is nothing random here
+  SeededRandom.seedWithInteger(currentExampleNumber);
+  
   const strokeSizes = [1, 2, 3, 4];
   const radii = [20, 40, 60];
   let xOffset = 150;
@@ -44,7 +47,8 @@ function addNinetyDegreeArcs(shapes, log) {
   }
 }
 
-function addRandomArcs(shapes, log, count = 3) {
+function addRandomArcs(shapes, log, currentExampleNumber, count = 3) {
+  SeededRandom.seedWithInteger(currentExampleNumber);
   for (let i = 0; i < count; i++) {
     const arc = getRandomArc();
     shapes.push(arc);

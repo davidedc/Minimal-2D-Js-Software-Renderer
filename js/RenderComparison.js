@@ -327,7 +327,7 @@ class RenderComparison {
     
     if (buildShapesFn) {
       // this returned value is used in the metrics/tests
-      this.builderReturnValue = buildShapesFn(this.shapes, this.logContainer);
+      this.builderReturnValue = buildShapesFn(this.shapes, this.logContainer, currentCount);
       this.drawSceneSW();
       this.updateSWRenderOutput();
       this.drawSceneCanvas();
@@ -337,12 +337,15 @@ class RenderComparison {
       this.canvasCtx.clearRect(0, 0, this.canvasCanvas.width, this.canvasCanvas.height);
       this.crispSwCtx.clearRect(0, 0, this.swCanvas.width, this.swCanvas.height);
       
+
       // For the software-rendered side, use CrispSwCanvas
+      SeededRandom.seedWithInteger(currentCount);
       canvasCodeFn(this.crispSwCtx);
       // Blit the result to the SW canvas
       this.crispSwCtx.blitToCanvas(this.swCanvas);
       
       // For the canvas side, use regular canvas
+      SeededRandom.seedWithInteger(currentCount);
       canvasCodeFn(this.canvasCtx);
       
       if (this.swCtx.getHashString) this.updateHashes();

@@ -4,16 +4,16 @@ function checkCanvasHasEvenDimensions() {
   }
 }
 
-function buildScene(shapes, log) {
-  addRandomLines(shapes, log, 15);
-  addAxisAlignedRectangles(shapes, log, 5); // fine
-  addRotatedRectangles(shapes, log, 5); // fine
-  addAxisAlignedRoundedRectangles(shapes, log, 10); // fine
-  addLargeTransparentRoundedRectangles(shapes, log, 10); // fine
-  addNoStrokeRoundedRectangles(shapes, log, 10); // fine because there is no stroke, the fills positions are handled by getRectangularFillGeometry, which always forces the corner to be at a grid, and the width and height are integers so everything is OK.
+function buildScene(shapes, log, currentExampleNumber) {
+  addRandomLines(shapes, log, currentExampleNumber, 15);
+  addAxisAlignedRectangles(shapes, log, currentExampleNumber, 5); // fine
+  addRotatedRectangles(shapes, log, currentExampleNumber, 5); // fine
+  addAxisAlignedRoundedRectangles(shapes, log, currentExampleNumber, 10); // fine
+  addLargeTransparentRoundedRectangles(shapes, log, currentExampleNumber, 10); // fine
+  addNoStrokeRoundedRectangles(shapes, log, currentExampleNumber, 10); // fine because there is no stroke, the fills positions are handled by getRectangularFillGeometry, which always forces the corner to be at a grid, and the width and height are integers so everything is OK.
   // addRotatedRoundedRectangles(shapes, log, 3); // TODO completely broken, "drawArcSWHelper" function is missing.
-  addNinetyDegreeArcs(shapes, log); // roughly fine.
-  addRandomArcs(shapes, log, 3); // roughly fine.
-  addRandomCircles(shapes, log, 5); // looks pretty horrible, but roughly fine.
-  addThinOpaqueStrokeRoundedRectangles(shapes, log, 10); // fine
+  addNinetyDegreeArcs(shapes, log, currentExampleNumber); // roughly fine.
+  addRandomArcs(shapes, log, currentExampleNumber, 3); // roughly fine.
+  addRandomCircles(shapes, log, currentExampleNumber, 5); // looks pretty horrible, but roughly fine.
+  addThinOpaqueStrokeRoundedRectangles(shapes, log, currentExampleNumber, 10); // fine
 }

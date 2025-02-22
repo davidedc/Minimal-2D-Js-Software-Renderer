@@ -1,9 +1,10 @@
-function addAxisAlignedRectangles(shapes, log, count = 5) {
+function addAxisAlignedRectangles(shapes, log, currentExampleNumber, count = 5) {
+  SeededRandom.seedWithInteger(currentExampleNumber);
   for (let i = 0; i < count; i++) {
     const center = roundPoint(getRandomPoint(1));
-    const strokeWidth = Math.floor(Math.random() * 10 + 5);
-    const rectWidth = Math.floor(30 + Math.random() * 100);
-    const rectHeight = Math.floor(30 + Math.random() * 100);
+    const strokeWidth = Math.floor(SeededRandom.getRandom() * 10 + 5);
+    const rectWidth = Math.floor(30 + SeededRandom.getRandom() * 100);
+    const rectHeight = Math.floor(30 + SeededRandom.getRandom() * 100);
     const adjustedCenter = adjustCenterForCrispStrokeRendering(center.x, center.y, rectWidth, rectHeight, strokeWidth);
     const strokeColor = getRandomColor(200, 255);
     const fillColor = getRandomColor(100, 200);
@@ -23,13 +24,14 @@ function addAxisAlignedRectangles(shapes, log, count = 5) {
   }
 }
 
-function addRotatedRectangles(shapes, log, count = 5) {
+function addRotatedRectangles(shapes, log, currentExampleNumber, count = 5) {
+  SeededRandom.seedWithInteger(currentExampleNumber);
   for (let i = 0; i < count; i++) {
     const center = getRandomPoint(1);
-    const width = 30 + Math.random() * 100;
-    const height = 30 + Math.random() * 100;
-    const rotation = Math.random() * Math.PI * 2;
-    const strokeWidth = Math.random() * 10 + 1;
+    const width = 30 + SeededRandom.getRandom() * 100;
+    const height = 30 + SeededRandom.getRandom() * 100;
+    const rotation = SeededRandom.getRandom() * Math.PI * 2;
+    const strokeWidth = SeededRandom.getRandom() * 10 + 1;
     const strokeColor = getRandomColor(200, 255);
     const fillColor = getRandomColor(100, 200);
 
@@ -48,26 +50,26 @@ function addRotatedRectangles(shapes, log, count = 5) {
   }
 }
 
-function add1PxStrokeCenteredRectAtGrid(shapes, log) {
+function add1PxStrokeCenteredRectAtGrid(shapes, log, currentExampleNumber) {
   checkCanvasHasEvenDimensions();
-
+  SeededRandom.seedWithInteger(currentExampleNumber);
   const { centerX, centerY } = placeCloseToCenterAtGrid(renderComparisonWidth, renderComparisonHeight);
 
-  let rectWidth = Math.floor(20 + Math.random() * 130);
-  let rectHeight = Math.floor(20 + Math.random() * 130);
+  let rectWidth = Math.floor(20 + SeededRandom.getRandom() * 130);
+  let rectHeight = Math.floor(20 + SeededRandom.getRandom() * 130);
 
   const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(rectWidth, rectHeight, 1, {x:centerX, y:centerY});
 
   return add1PxStrokeCenteredRect(centerX, centerY, adjustedDimensions.width, adjustedDimensions.height, shapes, log);
 }
 
-function add1PxStrokeCenteredRectAtPixel(shapes, log) {
+function add1PxStrokeCenteredRectAtPixel(shapes, log, currentExampleNumber) {
   checkCanvasHasEvenDimensions();
-
+  SeededRandom.seedWithInteger(currentExampleNumber);
   const { centerX, centerY } = placeCloseToCenterAtGrid(renderComparisonWidth, renderComparisonHeight);
 
-  let rectWidth = Math.floor(20 + Math.random() * 130);
-  let rectHeight = Math.floor(20 + Math.random() * 130);
+  let rectWidth = Math.floor(20 + SeededRandom.getRandom() * 130);
+  let rectHeight = Math.floor(20 + SeededRandom.getRandom() * 130);
   
   const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(rectWidth, rectHeight, 1, {x:centerX, y:centerY});
 

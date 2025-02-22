@@ -25,9 +25,9 @@ class RenderComparisonBuilder {
   }
 
   addShapes(shapeFunction, ...args) {
-    this._shapeBuilder = (shapes, log) => {
+    this._shapeBuilder = (shapes, log, currentExampleNumber) => {
       this._buildLog = [];
-      return shapeFunction(shapes, log, ...args);
+      return shapeFunction(shapes, log, currentExampleNumber, ...args);
     };
     return this;
   }

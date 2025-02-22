@@ -7,7 +7,8 @@ function getRandomCircle() {
   };
 }
 
-function addRandomCircles(shapes, log, count = 5) {
+function addRandomCircles(shapes, log, currentExampleNumber,count = 5) {
+  SeededRandom.seedWithInteger(currentExampleNumber);
   for (let i = 0; i < count; i++) {
     const circle = getRandomCircle();
     shapes.push(circle);
@@ -17,14 +18,15 @@ function addRandomCircles(shapes, log, count = 5) {
 
 // ----------------------------------------------------------------------
 // Single 1px Stroked Circle centered at grid
-function add1PxStrokeCenteredCircleAtGrid(shapes, log) {
+function add1PxStrokeCenteredCircleAtGrid(shapes, log, currentExampleNumber) {
+  SeededRandom.seedWithInteger(currentExampleNumber);
   // Ensure canvas dimensions are even for proper grid alignment
   checkCanvasHasEvenDimensions();
 
   const { centerX, centerY } = placeCloseToCenterAtGrid(renderComparisonWidth, renderComparisonHeight);
 
   // Generate a random diameter (similar range as the rectangle dimensions)
-  let diameter = Math.floor(20 + Math.random() * 130);
+  let diameter = Math.floor(20 + SeededRandom.getRandom() * 130);
   // Adjust the diameter for crisp stroke rendering (both width and height are the same)
   const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(diameter, diameter, 1, { x: centerX, y: centerY });
   const adjustedDiameter = adjustedDimensions.width; // (equals height)
@@ -54,7 +56,8 @@ function add1PxStrokeCenteredCircleAtGrid(shapes, log) {
 
 // ----------------------------------------------------------------------
 // Single 1px Stroked Circle centered at pixel
-function add1PxStrokeCenteredCircleAtPixel(shapes, log) {
+function add1PxStrokeCenteredCircleAtPixel(shapes, log, currentExampleNumber) {
+  SeededRandom.seedWithInteger(currentExampleNumber);
   // Ensure canvas dimensions are even for proper pixel alignment
   checkCanvasHasEvenDimensions();
 
@@ -62,7 +65,7 @@ function add1PxStrokeCenteredCircleAtPixel(shapes, log) {
   const { centerX, centerY } = placeCloseToCenterAtPixel(renderComparisonWidth, renderComparisonHeight);
 
   // Generate a random diameter (similar range as the rectangle dimensions)
-  let diameter = Math.floor(20 + Math.random() * 130);
+  let diameter = Math.floor(20 + SeededRandom.getRandom() * 130);
   // Adjust the diameter for crisp stroke rendering (both width and height are the same)
   const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(diameter, diameter, 1, { x: centerX, y: centerY });
   const adjustedDiameter = adjustedDimensions.width; // (width equals height)

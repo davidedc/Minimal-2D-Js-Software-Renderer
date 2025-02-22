@@ -1,4 +1,5 @@
-function addBlackLines(shapes, log, lineWidth, count) {
+function addBlackLines(shapes, log, currentExampleNumber, lineWidth, count) {
+  SeededRandom.seedWithInteger(currentExampleNumber);
   for (let i = 0; i < count; i++) {
     const start = getRandomPoint(1);
     const end = getRandomPoint(1);
@@ -13,11 +14,12 @@ function addBlackLines(shapes, log, lineWidth, count) {
   }
 }
 
-function addRandomLines(shapes, log, count = 15) {
+function addRandomLines(shapes, log, currentExampleNumber, count = 15) {
+  SeededRandom.seedWithInteger(currentExampleNumber);
   for (let i = 0; i < count; i++) {
     const start = getRandomPoint(1);
     const end = getRandomPoint(1);
-    const thickness = Math.floor(Math.random() * 10) + 1;
+    const thickness = Math.floor(SeededRandom.getRandom() * 10) + 1;
     const color = getRandomColor(150, 255);
     shapes.push({
       type: 'line',
@@ -37,7 +39,7 @@ function add2PxVerticalLine(centerX, centerY, height, shapes, log) {
   let startY = topY;
   let endY = bottomY;
 
-  if (Math.random() < 0.5) {
+  if (SeededRandom.getRandom() < 0.5) {
     startY = bottomY;
     endY = topY;
   }
@@ -58,10 +60,10 @@ function add2PxVerticalLine(centerX, centerY, height, shapes, log) {
   return { leftX, rightX, topY, bottomY: bottomY - 1};
 }
 
-function add2PxVerticalLineCenteredAtGrid(shapes, log) {
+function add2PxVerticalLineCenteredAtGrid(shapes, log, currentExampleNumber) {
   checkCanvasHasEvenDimensions();
-
-  const lineHeight = Math.floor(20 + Math.random() * 130);
+  SeededRandom.seedWithInteger(currentExampleNumber);
+  const lineHeight = Math.floor(20 + SeededRandom.getRandom() * 130);
   const { centerX, centerY } = placeCloseToCenterAtGrid(renderComparisonWidth, renderComparisonHeight);
   
   const result = add2PxVerticalLine(centerX, centerY, lineHeight, shapes, log);
@@ -78,7 +80,7 @@ function add1PxVerticalLine(centerX, centerY, height, shapes, log) {
   let startY = topY;
   let endY = bottomY;
 
-  if (Math.random() < 0.5) {
+  if (SeededRandom.getRandom() < 0.5) {
     startY = bottomY;
     endY = topY;
   }
@@ -98,10 +100,10 @@ function add1PxVerticalLine(centerX, centerY, height, shapes, log) {
   return { leftX: pixelX, rightX: pixelX, topY, bottomY: bottomY - 1};
 }
 
-function add1PxVerticalLineCenteredAtPixel(shapes, log) {
+function add1PxVerticalLineCenteredAtPixel(shapes, log, currentExampleNumber) {
   checkCanvasHasEvenDimensions();
-
-  const lineHeight = Math.floor(20 + Math.random() * 130);
+  SeededRandom.seedWithInteger(currentExampleNumber);
+  const lineHeight = Math.floor(20 + SeededRandom.getRandom() * 130);
   const centerX = Math.floor(renderComparisonWidth / 2) + 0.5;
   const centerY = Math.floor(renderComparisonHeight / 2);
   
@@ -115,7 +117,7 @@ function add1PxHorizontalLine(centerX, centerY, width, shapes, log) {
   let startX = leftX;
   let endX = rightX;
 
-  if (Math.random() < 0.5) {
+  if (SeededRandom.getRandom() < 0.5) {
     startX = rightX;
     endX = leftX;
   }
@@ -135,10 +137,10 @@ function add1PxHorizontalLine(centerX, centerY, width, shapes, log) {
   return { topY: pixelY, bottomY: pixelY, leftX, rightX: rightX - 1};
 }
 
-function add1PxHorizontalLineCenteredAtPixel(shapes, log) {
+function add1PxHorizontalLineCenteredAtPixel(shapes, log, currentExampleNumber) {
   checkCanvasHasEvenDimensions();
-
-  const lineWidth = Math.floor(20 + Math.random() * 130);
+  SeededRandom.seedWithInteger(currentExampleNumber);
+  const lineWidth = Math.floor(20 + SeededRandom.getRandom() * 130);
   const centerX = Math.floor(renderComparisonWidth / 2);
   const centerY = Math.floor(renderComparisonHeight / 2) + 0.5;
   
@@ -155,7 +157,7 @@ function add2PxHorizontalLine(centerX, centerY, width, shapes, log) {
   let startX = leftX;
   let endX = rightX;
 
-  if (Math.random() < 0.5) {
+  if (SeededRandom.getRandom() < 0.5) {
     startX = rightX;
     endX = leftX;
   }
@@ -173,10 +175,10 @@ function add2PxHorizontalLine(centerX, centerY, width, shapes, log) {
   return { topY, bottomY, leftX, rightX: rightX - 1};
 }
 
-function add2PxHorizontalLineCenteredAtGrid(shapes, log) {
+function add2PxHorizontalLineCenteredAtGrid(shapes, log, currentExampleNumber) {
   checkCanvasHasEvenDimensions();
-
-  const lineWidth = Math.floor(20 + Math.random() * 130);
+  SeededRandom.seedWithInteger(currentExampleNumber);
+  const lineWidth = Math.floor(20 + SeededRandom.getRandom() * 130);
   const { centerX, centerY } = placeCloseToCenterAtGrid(renderComparisonWidth, renderComparisonHeight);
   
   return add2PxHorizontalLine(centerX, centerY, lineWidth, shapes, log);
