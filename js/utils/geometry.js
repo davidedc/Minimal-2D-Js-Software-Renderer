@@ -116,11 +116,9 @@ function getRectangularFillGeometry(centerX, centerY, width, height) {
 
 // The intent here is to draw a *crisp* stroke that is aligned with the fill, with
 // some overlap (at least half of the stroke width is made to overlap the fill).
-function getRectangularStrokeGeometry(centerX, centerY, width, height, strokeWidth) {
-  const x = centerX - width/2;
-  const y = centerY - height/2;
-  return { x: x, y, w: width, h: height};
-}
+// As you can see the code is the same as getRectangularFillGeometry, however,
+// it is kept separate to keep the clearer separate semantics of the use.
+var getRectangularStrokeGeometry = getRectangularFillGeometry;
 
 
 // Not used anywhere yet.

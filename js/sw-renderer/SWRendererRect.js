@@ -137,7 +137,7 @@ class SWRendererRect {
     // Draw fill first
     if (clippingOnly || fillA > 0) {
       // Get fill geometry
-      let fillPos = roundCornerOfRectangularGeometryWithWarning(getRectangularFillGeometry(centerX, centerY, rectWidth, rectHeight, strokeWidth));
+      let fillPos = roundCornerOfRectangularGeometryWithWarning(getRectangularFillGeometry(centerX, centerY, rectWidth, rectHeight));
       if (clippingOnly) {
         for (let y = Math.floor(fillPos.y); y < Math.ceil(fillPos.y + fillPos.h); y++) {
           for (let x = Math.floor(fillPos.x); x < Math.ceil(fillPos.x + fillPos.w); x++) {
@@ -157,7 +157,7 @@ class SWRendererRect {
     // Draw stroke if needed. Note that the stroke can't always be precisely centered on the fill
     // i.e. in case the stroke is larger by an odd number of pixels.
     if (strokeA > 0 && strokeWidth > 0) {
-      let strokePos = getRectangularStrokeGeometry(centerX, centerY, rectWidth, rectHeight, strokeWidth);
+      let strokePos = getRectangularStrokeGeometry(centerX, centerY, rectWidth, rectHeight);
       const halfStroke = strokeWidth / 2;
   
       // Draw horizontal strokes

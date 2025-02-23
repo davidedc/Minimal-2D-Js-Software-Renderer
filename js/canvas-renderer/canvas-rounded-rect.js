@@ -78,7 +78,7 @@ function drawCrispAxisAlignedRoundedRectCanvas(ctx, shape) {
 
   // Draw fill first (if needed)
   if (fillA > 0) {
-    let pos = getRectangularFillGeometry(centerX, centerY, rectWidth, rectHeight, strokeWidth);
+    let pos = getRectangularFillGeometry(centerX, centerY, rectWidth, rectHeight);
     let r = Math.round(Math.min(radius, Math.min(pos.w, pos.h) / 2));
     createPath(pos, r);
     ctx.fillStyle = colorToString(fillR, fillG, fillB, fillA);
@@ -87,7 +87,7 @@ function drawCrispAxisAlignedRoundedRectCanvas(ctx, shape) {
   
   // Draw stroke (if needed)
   if (strokeWidth > 0 && strokeA > 0) {
-    let pos = getRectangularStrokeGeometry(centerX, centerY, rectWidth, rectHeight, strokeWidth);
+    let pos = getRectangularStrokeGeometry(centerX, centerY, rectWidth, rectHeight);
     let r = Math.round(Math.min(radius, Math.min(pos.w, pos.h) / 2));
     createPath(pos, r);
     ctx.strokeStyle = colorToString(strokeR, strokeG, strokeB, strokeA);

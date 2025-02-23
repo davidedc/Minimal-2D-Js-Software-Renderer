@@ -53,7 +53,7 @@ class SWRendererRoundedRect {
     if (strokeA > 0) {
       if (strokeWidth === 1) {
         // For very thin strokes, use the simple direct drawing approach
-        let pos = getRectangularStrokeGeometry(centerX, centerY, rectWidth, rectHeight, strokeWidth);
+        let pos = getRectangularStrokeGeometry(centerX, centerY, rectWidth, rectHeight);
         let r = Math.round(Math.min(cornerRadius, Math.min(pos.w, pos.h) / 2));
 
         // Draw horizontal strokes
@@ -115,7 +115,7 @@ class SWRendererRoundedRect {
   drawRoundedRectFill(centerX, centerY, rectWidth, rectHeight, cornerRadius, strokeWidth,
     fillR, fillG, fillB, fillA) {
     let pos = roundCornerOfRectangularGeometryWithWarning(
-      getRectangularFillGeometry(centerX, centerY, rectWidth, rectHeight, strokeWidth)
+      getRectangularFillGeometry(centerX, centerY, rectWidth, rectHeight)
     );
     let r = Math.round(Math.min(cornerRadius, Math.min(pos.w, pos.h) / 2));
 
@@ -167,7 +167,7 @@ class SWRendererRoundedRect {
   drawRoundedRectStroke(centerX, centerY, rectWidth, rectHeight, cornerRadius, strokeWidth,
     strokeR, strokeG, strokeB, strokeA) {
     const halfStroke = strokeWidth / 2;
-    let pos = getRectangularStrokeGeometry(centerX, centerY, rectWidth, rectHeight, strokeWidth);
+    let pos = getRectangularStrokeGeometry(centerX, centerY, rectWidth, rectHeight);
     let r = Math.round(Math.min(cornerRadius, Math.min(pos.w, pos.h) / 2));
 
     // Create a set to collect all stroke pixels before drawing

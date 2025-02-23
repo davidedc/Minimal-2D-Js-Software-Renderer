@@ -6,7 +6,7 @@ function drawAxisAlignedRectCanvas(ctx, centerX, centerY, width, height,
   fillR, fillG, fillB, fillA) {
   
   // Get fill geometry
-  let pos = getRectangularFillGeometry(centerX, centerY, width, height, strokeWidth);
+  let pos = getRectangularFillGeometry(centerX, centerY, width, height);
   
   // Draw fill first (if needed)
   if (fillA > 0) {
@@ -15,7 +15,7 @@ function drawAxisAlignedRectCanvas(ctx, centerX, centerY, width, height,
   }
   
   // Get stroke geometry
-  pos = getRectangularStrokeGeometry(centerX, centerY, width, height, strokeWidth);
+  pos = getRectangularStrokeGeometry(centerX, centerY, width, height);
   
   // Draw stroke (if needed)
   if (strokeA > 0 && strokeWidth > 0) {
