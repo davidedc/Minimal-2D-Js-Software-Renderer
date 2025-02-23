@@ -105,9 +105,7 @@ function roundCornerOfRectangularGeometryWithWarning(rectGeometry) {
 
 // The intent here is to draw a *crisp* shape.
 // If the user knows what they are doing, they pass centerX and width such that
-// they produce a whole origin x. If they don't, we fix it for them by snapping
-// the origin x to the column to the left.
-// (and same for y/height/row above).
+// they produce a whole origin x.
 function getRectangularFillGeometry(centerX, centerY, width, height) {
   const x = centerX - width/2;
   const y = centerY - height/2;
