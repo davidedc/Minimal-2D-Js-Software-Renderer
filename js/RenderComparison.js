@@ -360,21 +360,46 @@ class RenderComparison {
   runMultipleExamples(count, stopAtError = true) {
     let current = 0;
     const initialErrorCount = this.errorsContainer.children.length;
+
+    // Create progress bar element
+    const progressBar = document.createElement('div');
+    progressBar.className = 'progress-bar';
+    progressBar.style.fontFamily = 'monospace';
+    // Make all characters have the same width otherwise the grey and black blocks have different widths
+    progressBar.style.whiteSpace = 'pre';
+    // Insert before the current label
+    this.currentLabel.parentNode.insertBefore(progressBar, this.currentLabel);
+
+    const updateProgress = () => {
+        const percent = Math.floor((current / count) * 100);
+        const filledBoxes = Math.floor((current / count) * 10);
+        const progressText = '\u2593'.repeat(filledBoxes) + '\u2591'.repeat(10 - filledBoxes);
+        progressBar.textContent = `${progressText} ${percent}%`.padEnd(15);  // Ensure consistent width
+    };
+
     const runFrame = () => {
-      try {
-        this.render(this.buildShapesFn, this.canvasCodeFn);
-        current++;
-        // Continue if under count and either not stopping at errors or no new errors
-        if (current < count && (!stopAtError || this.errorsContainer.children.length === initialErrorCount)) {
-          requestAnimationFrame(runFrame);
+        try {
+            this.render(this.buildShapesFn, this.canvasCodeFn);
+            current++;
+            updateProgress();
+
+            // Continue if under count and either not stopping at errors or no new errors
+            if (current < count && (!stopAtError || this.errorsContainer.children.length === initialErrorCount)) {
+                requestAnimationFrame(runFrame);
+            } else {
+                // Remove progress bar when done
+                progressBar.remove();
+            }
+        } catch (error) {
+            this.showError(`Error during multiple examples: ${error.message}`);
+            // Remove progress bar on error if we're stopping
+            if (stopAtError) {
+                progressBar.remove();
+            } else if (current < count) {
+                // Continue if not stopping at errors
+                requestAnimationFrame(runFrame);
+            }
         }
-      } catch (error) {
-        this.showError(`Error during multiple examples: ${error.message}`);
-        // Continue if not stopping at errors
-        if (!stopAtError && current < count) {
-          requestAnimationFrame(runFrame);
-        }
-      }
     };
     requestAnimationFrame(runFrame);
   }
