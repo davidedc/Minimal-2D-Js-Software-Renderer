@@ -17,14 +17,14 @@ class SWRendererRoundedRect {
 
     // if the stroke is a) invisible (size zero or trasparent) OR b) opaque and thin,
     //  then use drawCrispAxisAlignedRoundedRectThinOpaqueStroke
-    //  otherwise use drawCrispAxisAlignedRoundedRectThickTrasparentStroke
+    //  otherwise use drawCrispAxisAlignedRoundedRectThickOrSemitrasparentStroke
     if (rotation === 0) {
       const correctedRadius = radius > 2 ? radius - 1 : radius;
       if (strokeWidth == 0 || strokeA === 255 || (strokeWidth < 5 && strokeA === 255)) {
         this.drawCrispAxisAlignedRoundedRectThinOpaqueStroke(center.x, center.y, width, height, correctedRadius,
           strokeWidth, strokeR, strokeG, strokeB, strokeA, fillR, fillG, fillB, fillA);
       } else {
-        this.drawCrispAxisAlignedRoundedRectThickTrasparentStroke(center.x, center.y, width, height, correctedRadius,
+        this.drawCrispAxisAlignedRoundedRectThickOrSemitrasparentStroke(center.x, center.y, width, height, correctedRadius,
           strokeWidth, strokeR, strokeG, strokeB, strokeA, fillR, fillG, fillB, fillA);
       }
     } else {
@@ -90,7 +90,7 @@ class SWRendererRoundedRect {
     }
   }
 
-  drawCrispAxisAlignedRoundedRectThickTrasparentStroke(centerX, centerY, rectWidth, rectHeight, cornerRadius, 
+  drawCrispAxisAlignedRoundedRectThickOrSemitrasparentStroke(centerX, centerY, rectWidth, rectHeight, cornerRadius, 
     strokeWidth, strokeR, strokeG, strokeB, strokeA, 
     fillR, fillG, fillB, fillA) {
 
