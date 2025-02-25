@@ -46,11 +46,11 @@ class SWRendererRoundedRect {
     // Handle fill
     if (fillA > 0) {
       this.drawRoundedRectFill(centerX, centerY, rectWidth, rectHeight, cornerRadius, strokeWidth, 
-        fillR, fillG, fillB, fillA);
+        fillR, fillG, fillB, fillA, strokeA == 255 && strokeWidth > 0);
     }
 
     // Handle stroke
-    if (strokeA > 0) {
+    if (strokeA > 0 && strokeWidth > 0) {
       if (strokeWidth === 1) {
         // For very thin strokes, use the simple direct drawing approach
         let pos = getRectangularStrokeGeometry(centerX, centerY, rectWidth, rectHeight);
@@ -101,11 +101,11 @@ class SWRendererRoundedRect {
     // Handle fill
     if (fillA > 0) {
       this.drawRoundedRectFill(centerX, centerY, rectWidth, rectHeight, cornerRadius, strokeWidth,
-        fillR, fillG, fillB, fillA);
+        fillR, fillG, fillB, fillA, strokeA == 255 && strokeWidth > 0);
     }
 
     // Handle stroke
-    if (strokeA > 0) {
+    if (strokeA > 0 && strokeWidth > 0) {
       this.drawRoundedRectStroke(centerX, centerY, rectWidth, rectHeight, cornerRadius, strokeWidth,
         strokeR, strokeG, strokeB, strokeA);
     }
@@ -113,10 +113,24 @@ class SWRendererRoundedRect {
 
   // Helper method for fill
   drawRoundedRectFill(centerX, centerY, rectWidth, rectHeight, cornerRadius, strokeWidth,
-    fillR, fillG, fillB, fillA) {
-    let pos = roundCornerOfRectangularGeometryWithWarning(
-      getRectangularFillGeometry(centerX, centerY, rectWidth, rectHeight)
-    );
+    fillR, fillG, fillB, fillA, alsoDrawingOpaqueStroke = false) {
+    let pos = null;
+
+    // If we are drawing the fill under a fully opaque stroke, then we can ignore some minor defects
+    // in positioning that would make the fill not crisp (and hence would show differently in the
+    // standard canvas renderer), as they will be covered by the stroke.
+    // If instead we are drawing the fill under a semi-transparent (or non existent) stroke, then we
+    // throw a warning, as the rendering would be different in the standard canvas renderer.
+    if (alsoDrawingOpaqueStroke) {
+      pos = roundCornerOfRectangularGeometry(
+        getRectangularFillGeometry(centerX, centerY, rectWidth, rectHeight)
+      );
+    } else {
+      pos = roundCornerOfRectangularGeometryWithWarning(
+        getRectangularFillGeometry(centerX, centerY, rectWidth, rectHeight)
+      );
+    }
+    
     let r = Math.round(Math.min(cornerRadius, Math.min(pos.w, pos.h) / 2));
 
     function isInsideRoundedRect(px, py) {

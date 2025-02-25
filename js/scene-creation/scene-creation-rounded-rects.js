@@ -56,19 +56,26 @@ function addThinOpaqueStrokeRoundedRectangles(shapes, log, currentExampleNumber,
 function addLargeTransparentRoundedRectangles(shapes, log, currentExampleNumber, count = 10) {
   SeededRandom.seedWithInteger(currentExampleNumber);
   for (let i = 0; i < count; i++) {
-    // the starting initialisation of center is a random point at a grid crossing
-    const center = roundPoint(getRandomPoint(1));
-    const strokeWidth = Math.round(10 + SeededRandom.getRandom() * 30);
-
-    const adjustedCenter = adjustCenterForCrispStrokeRendering(center.x, center.y, 200, 200, strokeWidth);
+    // Use placeRoundedRectWithFillAndStrokeBothCrisp to get a properly positioned rectangle
+    var { center, adjustedDimensions, strokeWidth } = placeRoundedRectWithFillAndStrokeBothCrisp();
+    
+    // Move the center randomly by an integer amount in both x and y
+    const xOffset = Math.floor(SeededRandom.getRandom() * 100) - 50; // Random integer between -50 and 49
+    const yOffset = Math.floor(SeededRandom.getRandom() * 100) - 50; // Random integer between -50 and 49
+    
+    center = {
+      x: center.x + xOffset,
+      y: center.y + yOffset
+    };
+    
     const strokeColor = { r: 0, g: 0, b: 0, a: 50 };
     const fillColor = getRandomColor(100, 200);
 
     shapes.push({
       type: 'roundedRect',
-      center: adjustedCenter,
-      width: 200,
-      height: 200,
+      center: center,
+      width: adjustedDimensions.width,
+      height: adjustedDimensions.height,
       radius: 40,
       rotation: 0,
       strokeWidth,
@@ -76,7 +83,7 @@ function addLargeTransparentRoundedRectangles(shapes, log, currentExampleNumber,
       fillColor
     });
 
-    log.innerHTML += `&#x25A2; Large transparent rounded rect at: (${adjustedCenter.x}, ${adjustedCenter.y}) width: 200 height: 200 radius: 40 strokeWidth: ${strokeWidth} strokeColor: ${colorToString(strokeColor)} fillColor: ${colorToString(fillColor)}<br>`;
+    log.innerHTML += `&#x25A2; Large transparent rounded rect at: (${center.x}, ${center.y}) width: ${adjustedDimensions.width} height: ${adjustedDimensions.height} radius: 40 strokeWidth: ${strokeWidth} strokeColor: ${colorToString(strokeColor)} fillColor: ${colorToString(fillColor)}<br>`;
   }
 }
 
@@ -169,34 +176,11 @@ function addCenteredRoundedRectTransparentStrokesRandomStrokeWidth(shapes, log, 
   checkCanvasHasEvenDimensions();
   SeededRandom.seedWithInteger(currentExampleNumber);
 
-  const maxWidth = renderComparisonWidth * 0.6;
-  const maxHeight = renderComparisonHeight * 0.6;
+  var { center, adjustedDimensions, strokeWidth } = placeRoundedRectWithFillAndStrokeBothCrisp();
 
-  let strokeWidth = Math.round(SeededRandom.getRandom() * 10 + 1);
-
-  // the only way to make both the fill and the stroke crisp with the same path
-  // is if the fill path runs all around grid lines, and the stroke falls half on one side
-  // of the path and the other half on the other side. I.e. the strokeWidth must be even.
-  strokeWidth = strokeWidth % 2 === 0 ? strokeWidth : strokeWidth + 1;
-
-  // center is an even number divided by 2, so it's an integer,
-  // so the center is at a grid crossing.
-  let center = { x: renderComparisonWidth/2, y: renderComparisonHeight/2 };
-
-  // 50% of the times, move the center by half pixel so we also test the case where the
-  // center is not at a grid crossing.
-  if (SeededRandom.getRandom() < 0.5) {
-    center = { x: center.x + 0.5, y: center.y + 0.5 };
-  }
-
-  // get a random starting dimension, we'll adjust it soon after
-  let rectWidth = Math.round(50 + SeededRandom.getRandom() * maxWidth);
-  let rectHeight = Math.round(50 + SeededRandom.getRandom() * maxHeight);
-
-  const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(rectWidth, rectHeight, strokeWidth, center);
   const strokeColor = getRandomColor(50, 150);
   const fillColor = getRandomColor(50, 150);
-  const radius = Math.round(SeededRandom.getRandom() * Math.min(rectWidth, rectHeight) * 0.2);
+  const radius = Math.round(SeededRandom.getRandom() * Math.min(adjustedDimensions.width , adjustedDimensions.height) * 0.2);
   
   shapes.push({
     type: 'roundedRect',
@@ -213,6 +197,40 @@ function addCenteredRoundedRectTransparentStrokesRandomStrokeWidth(shapes, log, 
   log.innerHTML += `&#x25A2; Centered rounded rect with transparent stroke at: (${center.x}, ${center.y}) width: ${adjustedDimensions.width} height: ${adjustedDimensions.height} radius: ${radius} strokeWidth: ${strokeWidth} strokeColor: ${colorToString(strokeColor)} fillColor: ${colorToString(fillColor)}`;
 }
 
+
+// The case of fill PLUS a semi-transparent stroke is actually slightly trickier because
+// both the stroke and fill are entirely visible, so they have to be
+// BOTH drawn crisply, and using one path only for both. This means that
+//  1) the fill needs to have its edges on the grid (hence width and height need to be adjusted depending on whether the center is at a grid crossing or not)
+//  2) the stroke has to be of even width,
+function placeRoundedRectWithFillAndStrokeBothCrisp() {
+  const maxWidth = renderComparisonWidth * 0.6;
+  const maxHeight = renderComparisonHeight * 0.6;
+
+  let strokeWidth = Math.round(SeededRandom.getRandom() * 40 + 1);
+
+  // the only way to make both the fill and the stroke crisp with the same path
+  // is if the fill path runs all around grid lines, and the stroke falls half on one side
+  // of the path and the other half on the other side. I.e. the strokeWidth must be even.
+  strokeWidth = strokeWidth % 2 === 0 ? strokeWidth : strokeWidth + 1;
+
+  // center is an even number divided by 2, so it's an integer,
+  // so the center is at a grid crossing.
+  let center = { x: renderComparisonWidth / 2, y: renderComparisonHeight / 2 };
+
+  // 50% of the times, move the center by half pixel so we also test the case where the
+  // center is not at a grid crossing.
+  if (SeededRandom.getRandom() < 0.5) {
+    center = { x: center.x + 0.5, y: center.y + 0.5 };
+  }
+
+  // get a random starting dimension, we'll adjust it soon after
+  let rectWidth = Math.round(50 + SeededRandom.getRandom() * maxWidth);
+  let rectHeight = Math.round(50 + SeededRandom.getRandom() * maxHeight);
+
+  const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(rectWidth, rectHeight, strokeWidth, center);
+  return { center, adjustedDimensions, strokeWidth };
+}
 
 function add1PxStrokeCenteredRoundedRectAtGrid(shapes, log, currentExampleNumber) {
   checkCanvasHasEvenDimensions();

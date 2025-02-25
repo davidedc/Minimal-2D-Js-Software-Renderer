@@ -137,7 +137,18 @@ class SWRendererRect {
     // Draw fill first
     if (clippingOnly || fillA > 0) {
       // Get fill geometry
-      let fillPos = roundCornerOfRectangularGeometryWithWarning(getRectangularFillGeometry(centerX, centerY, rectWidth, rectHeight));
+      let fillPos = null;
+
+      // If we are drawing the fill under a fully opaque stroke, then we can ignore some minor defects
+      // in positioning that would make the fill not crisp (and hence would show differently in the
+      // standard canvas renderer), as they will be covered by the stroke.
+      // If instead we are drawing the fill under a semi-transparent (or non existent) stroke, then we
+      // throw a warning, as the rendering would be different in the standard canvas renderer.
+      if (strokeA == 255 && strokeWidth > 0) {
+        fillPos = roundCornerOfRectangularGeometry(getRectangularFillGeometry(centerX, centerY, rectWidth, rectHeight));
+      } else {
+        fillPos = roundCornerOfRectangularGeometryWithWarning(getRectangularFillGeometry(centerX, centerY, rectWidth, rectHeight));
+      }
       if (clippingOnly) {
         for (let y = Math.floor(fillPos.y); y < Math.ceil(fillPos.y + fillPos.h); y++) {
           for (let x = Math.floor(fillPos.x); x < Math.ceil(fillPos.x + fillPos.w); x++) {
