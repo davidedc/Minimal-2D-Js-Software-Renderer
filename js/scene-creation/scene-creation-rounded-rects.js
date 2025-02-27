@@ -1,20 +1,27 @@
 function addAxisAlignedRoundedRectangles(shapes, log, currentExampleNumber, count = 10) {
   SeededRandom.seedWithInteger(currentExampleNumber);
   for (let i = 0; i < count; i++) {
-    const width = Math.round(50 + SeededRandom.getRandom() * 100);
-    const height = Math.round(50 + SeededRandom.getRandom() * 100);
-    const strokeWidth = Math.round(SeededRandom.getRandom() * 10 + 1);
-    let center = roundPoint(getRandomPoint(1));
-    const adjustedCenter = adjustCenterForCrispStrokeRendering(center.x, center.y, width, height, strokeWidth);
-    const radius = Math.round(SeededRandom.getRandom() * Math.min(width, height) * 0.2);
+    // Use placeRoundedRectWithFillAndStrokeBothCrisp to get a properly positioned rectangle
+    var { center, adjustedDimensions, strokeWidth } = placeRoundedRectWithFillAndStrokeBothCrisp(10);
+    
+    // Move the center randomly by an integer amount in both x and y
+    const xOffset = Math.floor(SeededRandom.getRandom() * 100) - 50; // Random integer between -50 and 49
+    const yOffset = Math.floor(SeededRandom.getRandom() * 100) - 50; // Random integer between -50 and 49
+    
+    center = {
+      x: center.x + xOffset,
+      y: center.y + yOffset
+    };
+    
+    const radius = Math.round(SeededRandom.getRandom() * Math.min(adjustedDimensions.width, adjustedDimensions.height) * 0.2);
     const strokeColor = getRandomColor(200, 255);
     const fillColor = getRandomColor(100, 200);
 
     shapes.push({
       type: 'roundedRect',
-      center: adjustedCenter,
-      width,
-      height,
+      center: center,
+      width: adjustedDimensions.width,
+      height: adjustedDimensions.height,
       radius,
       rotation: 0,
       strokeWidth,
@@ -22,7 +29,7 @@ function addAxisAlignedRoundedRectangles(shapes, log, currentExampleNumber, coun
       fillColor
     });
 
-    log.innerHTML += `&#x25A2; Axis-aligned rounded rect at: (${adjustedCenter.x}, ${adjustedCenter.y}) width: ${width} height: ${height} radius: ${radius} strokeWidth: ${strokeWidth} strokeColor: ${colorToString(strokeColor)} fillColor: ${colorToString(fillColor)}<br>`;
+    log.innerHTML += `&#x25A2; Axis-aligned rounded rect at: (${center.x}, ${center.y}) width: ${adjustedDimensions.width} height: ${adjustedDimensions.height} radius: ${radius} strokeWidth: ${strokeWidth} strokeColor: ${colorToString(strokeColor)} fillColor: ${colorToString(fillColor)}<br>`;
   }
 }
 
@@ -57,7 +64,7 @@ function addLargeTransparentRoundedRectangles(shapes, log, currentExampleNumber,
   SeededRandom.seedWithInteger(currentExampleNumber);
   for (let i = 0; i < count; i++) {
     // Use placeRoundedRectWithFillAndStrokeBothCrisp to get a properly positioned rectangle
-    var { center, adjustedDimensions, strokeWidth } = placeRoundedRectWithFillAndStrokeBothCrisp();
+    var { center, adjustedDimensions, strokeWidth } = placeRoundedRectWithFillAndStrokeBothCrisp(40);
     
     // Move the center randomly by an integer amount in both x and y
     const xOffset = Math.floor(SeededRandom.getRandom() * 100) - 50; // Random integer between -50 and 49
@@ -176,7 +183,7 @@ function addCenteredRoundedRectTransparentStrokesRandomStrokeWidth(shapes, log, 
   checkCanvasHasEvenDimensions();
   SeededRandom.seedWithInteger(currentExampleNumber);
 
-  var { center, adjustedDimensions, strokeWidth } = placeRoundedRectWithFillAndStrokeBothCrisp();
+  var { center, adjustedDimensions, strokeWidth } = placeRoundedRectWithFillAndStrokeBothCrisp(40);
 
   const strokeColor = getRandomColor(50, 150);
   const fillColor = getRandomColor(50, 150);
@@ -203,11 +210,11 @@ function addCenteredRoundedRectTransparentStrokesRandomStrokeWidth(shapes, log, 
 // BOTH drawn crisply, and using one path only for both. This means that
 //  1) the fill needs to have its edges on the grid (hence width and height need to be adjusted depending on whether the center is at a grid crossing or not)
 //  2) the stroke has to be of even width,
-function placeRoundedRectWithFillAndStrokeBothCrisp() {
+function placeRoundedRectWithFillAndStrokeBothCrisp(maxStrokeWidth = 40) {
   const maxWidth = renderComparisonWidth * 0.6;
   const maxHeight = renderComparisonHeight * 0.6;
 
-  let strokeWidth = Math.round(SeededRandom.getRandom() * 40 + 1);
+  let strokeWidth = Math.round(SeededRandom.getRandom() * maxStrokeWidth + 1);
 
   // the only way to make both the fill and the stroke crisp with the same path
   // is if the fill path runs all around grid lines, and the stroke falls half on one side

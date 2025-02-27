@@ -1,26 +1,31 @@
 function addAxisAlignedRectangles(shapes, log, currentExampleNumber, count = 5) {
   SeededRandom.seedWithInteger(currentExampleNumber);
   for (let i = 0; i < count; i++) {
-    const center = roundPoint(getRandomPoint(1));
-    const strokeWidth = Math.floor(SeededRandom.getRandom() * 10 + 5);
-    const rectWidth = Math.floor(30 + SeededRandom.getRandom() * 100);
-    const rectHeight = Math.floor(30 + SeededRandom.getRandom() * 100);
-    const adjustedCenter = adjustCenterForCrispStrokeRendering(center.x, center.y, rectWidth, rectHeight, strokeWidth);
+    var { center, adjustedDimensions, strokeWidth } = placeRoundedRectWithFillAndStrokeBothCrisp(10);
+    
+    const xOffset = Math.floor(SeededRandom.getRandom() * 100) - 50;
+    const yOffset = Math.floor(SeededRandom.getRandom() * 100) - 50;
+    
+    center = {
+      x: center.x + xOffset,
+      y: center.y + yOffset
+    };
+    
     const strokeColor = getRandomColor(200, 255);
     const fillColor = getRandomColor(100, 200);
 
     shapes.push({
       type: 'rect',
-      center: adjustedCenter,
-      width: rectWidth,
-      height: rectHeight,
+      center: center,
+      width: adjustedDimensions.width,
+      height: adjustedDimensions.height,
       rotation: 0,
       strokeWidth,
       strokeColor,
       fillColor
     });
 
-    log.innerHTML += `&#x25A1; Axis-aligned rect at (${adjustedCenter.x}, ${adjustedCenter.y}) width: ${rectWidth} height: ${rectHeight} strokeWidth: ${strokeWidth} strokeColor: ${colorToString(strokeColor)} fillColor: ${colorToString(fillColor)}<br>`;
+    log.innerHTML += `&#x25A1; Axis-aligned rect at (${center.x}, ${center.y}) width: ${adjustedDimensions.width} height: ${adjustedDimensions.height} strokeWidth: ${strokeWidth} strokeColor: ${colorToString(strokeColor)} fillColor: ${colorToString(fillColor)}<br>`;
   }
 }
 
