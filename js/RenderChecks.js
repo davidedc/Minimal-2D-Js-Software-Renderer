@@ -180,7 +180,7 @@ class RenderChecks {
       }
 
       const actualExtremes = { leftX: minX, rightX: maxX, topY: minY, bottomY: maxY };
-      console.log(`${name} found extremes:`, actualExtremes);
+      // console.log(`${name} found extremes:`, actualExtremes);
       
       if (expectedExtremes) {
         if (actualExtremes.leftX !== expectedExtremes.leftX) {
