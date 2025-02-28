@@ -40,19 +40,28 @@ function addRenderComparisons() {
   add1PxVerticalLineCenteredAtPixelComparison();
   add2PxHorizontalLineCenteredAtGridComparison();
   add2PxVerticalLineCenteredAtGridComparison();
+
   addBlackLinesComparison(1);  // 1px lines
   addBlackLinesComparison(2);  // 2px lines
   addBlackLinesComparison(3);  // 3px lines
   addBlackLinesComparison(5);  // 5px lines
   addBlackLinesComparison(10); // 10px lines
+
   add1PxStrokedRectCenteredAtGridComparison();
   add1PxStrokedRectCenteredAtPixelComparison();
+
+  // TODO to be renamed to show that the stroke can be thick
+  // and that the stroke and fill are semi-transparent
+  addSingleAxisAlignedRectangleComparison();
+  addAxisAlignedRectanglesComparison();
+
   add1PxStrokedRoundedRectCenteredAtGridComparison();
   add1PxStrokedRoundedRectCenteredAtPixelComparison();
-  add1PxStrokedCircleCenteredAtGridComparison();
-  add1PxStrokedCircleCenteredAtPixelComparison();
   addCenteredRoundedRectMixedOpaqueStrokeWidthsComparison();
   addCenteredRoundedRectMixedTransparentStrokeWidthsComparison();
   addThinRoundedRectsComparison();
+
+  add1PxStrokedCircleCenteredAtGridComparison();
+  add1PxStrokedCircleCenteredAtPixelComparison();
   addEverythingTogetherComparison();
 }

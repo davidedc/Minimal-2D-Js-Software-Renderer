@@ -164,3 +164,23 @@ function add1PxStrokedCircleCenteredAtPixelComparison() {
     .withExtremesCheck(0.03)
     .build();
 }
+
+function addSingleAxisAlignedRectangleComparison() {
+  return new RenderComparisonBuilder()
+    .withId('single-axis-aligned-rectangle')
+    .withTitle('Single Axis-Aligned Rectangle')
+    .withDescription('Tests rendering of a single axis-aligned rectangle with random stroke width and semi-transparent colors')
+    .addShapes(addAxisAlignedRectangles, 1)  // Using just 1 rectangle
+    .withExtremesCheck()
+    .build();
+}
+
+function addAxisAlignedRectanglesComparison() {
+  return new RenderComparisonBuilder()
+    .withId('axis-aligned-rectangles')
+    .withTitle('Axis-Aligned Rectangles')
+    .withDescription('Tests rendering of multiple axis-aligned rectangles with random positions, sizes, and colors')
+    .addShapes(addAxisAlignedRectangles, 10)  // Using 10 rectangles instead of the default 5
+    .withExtremesCheck()
+    .build();
+}
