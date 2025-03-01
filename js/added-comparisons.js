@@ -203,3 +203,13 @@ function addRandomLinesComparison() {
     .addShapes(addRandomLines, 15)  // Using 15 lines
     .build();
 }
+
+function addAxisAlignedRoundedRectanglesComparison() {
+  return new RenderComparisonBuilder()
+    .withId('axis-aligned-rounded-rectangles')
+    .withTitle('Axis-Aligned Rounded Rectangles')
+    .withDescription('Tests rendering of multiple axis-aligned rounded rectangles with random positions, sizes, and corner radii')
+    .addShapes(addAxisAlignedRoundedRectangles, 8)  // Using 8 rounded rectangles
+    .withExtremesCheck()
+    .build();
+}
