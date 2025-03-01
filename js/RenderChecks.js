@@ -316,10 +316,10 @@ class RenderChecks {
       const bHighlight = bDiff > RGBThreshold ? `<strong>${bDiff}</strong>` : bDiff;
       const aHighlight = aDiff > alphaThreshold ? `<strong>${aDiff}</strong>` : aDiff;
       
-      const message = `Found ${differenceCount} pixels with differences exceeding thresholds (RGB: ${RGBThreshold}, Alpha: ${alphaThreshold}).<br>` +
+      const message = `Found ${differenceCount} pixels with differences exceeding thresholds (RGB: ${RGBThreshold}, Alpha: ${alphaThreshold}). // ` +
                       `First difference at (${firstDiffX}, ${firstDiffY}): ` +
                       `SW Renderer: rgba(${swR}, ${swG}, ${swB}, ${swA}) // ` +
-                      `Canvas: rgba(${canvasR}, ${canvasG}, ${canvasB}, ${canvasA}) //` +
+                      `Canvas: rgba(${canvasR}, ${canvasG}, ${canvasB}, ${canvasA}) // ` +
                       `Difference: rgba(${rHighlight}, ${gHighlight}, ${bHighlight}, ${aHighlight})`;
       
       this.comparison.showError(message);
