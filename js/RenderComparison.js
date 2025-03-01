@@ -275,14 +275,35 @@ class RenderComparison {
   }
 
   showError(message) {
-    // Create and add clear errors button if not already present
+    // Track error count
+    if (!this.errorCount) {
+      this.errorCount = 0;
+    }
+    this.errorCount++;
+    
+    // Create and add clear errors button and error count display if not already present
     if (!this.clearErrorsButton) {
+      // Create error count element
+      this.errorCountDisplay = document.createElement('div');
+      this.errorCountDisplay.className = 'error-count';
+      this.errorCountDisplay.style.fontWeight = 'bold';
+      this.errorCountDisplay.style.marginTop = '10px';
+      this.errorCountDisplay.style.marginBottom = '5px';
+      this.updateErrorCountDisplay();
+      
+      // Create clear button
       this.clearErrorsButton = document.createElement('button');
       this.clearErrorsButton.textContent = 'Clear Errors';
       this.clearErrorsButton.className = 'action-button';
       this.clearErrorsButton.onclick = () => this.clearErrors();
+      
+      // Add elements to container
       this.errorsContainer.appendChild(document.createElement('br'));
+      this.errorsContainer.appendChild(this.errorCountDisplay);
       this.errorsContainer.appendChild(this.clearErrorsButton);
+    } else {
+      // Update the error count display
+      this.updateErrorCountDisplay();
     }
 
     // Get the current example number from the label
@@ -295,15 +316,25 @@ class RenderComparison {
     
     const errorMessage = document.createElement('div');
     errorMessage.innerHTML = prefixedMessage; // Using innerHTML to preserve HTML formatting
-    this.errorsContainer.insertBefore(errorMessage, this.clearErrorsButton);
+    this.errorsContainer.insertBefore(errorMessage, this.errorCountDisplay);
+  }
+
+  updateErrorCountDisplay() {
+    if (this.errorCountDisplay) {
+      this.errorCountDisplay.textContent = `Error count: ${this.errorCount}`;
+    }
   }
 
   clearErrors() {
-    this.errorsContainer.textContent = '';
-    if (this.clearErrorsButton) {
-      this.clearErrorsButton.remove();
-      this.clearErrorsButton = null;
-    }
+    // Reset error count
+    this.errorCount = 0;
+    
+    // Clear the error container
+    this.errorsContainer.innerHTML = '';
+    
+    // Clear references to the UI elements
+    this.errorCountDisplay = null;
+    this.clearErrorsButton = null;
   }
 
   showMetrics(metricsFunction) {
