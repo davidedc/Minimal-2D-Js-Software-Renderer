@@ -285,10 +285,17 @@ class RenderComparison {
       this.errorsContainer.appendChild(this.clearErrorsButton);
     }
 
-    const errorMessage = document.createElement('div');
-    errorMessage.textContent = message;
-    this.errorsContainer.insertBefore(errorMessage, this.clearErrorsButton);
+    // Get the current example number from the label
+    const currentExampleNum = this.currentLabel ? 
+      this.currentLabel.textContent.match(/Current Example #(\d+)/) ?
+      parseInt(this.currentLabel.textContent.match(/Current Example #(\d+)/)[1]) : 1 : 1;
     
+    // Prefix the message with the example number
+    const prefixedMessage = `Example #${currentExampleNum}: ${message}`;
+    
+    const errorMessage = document.createElement('div');
+    errorMessage.innerHTML = prefixedMessage; // Using innerHTML to preserve HTML formatting
+    this.errorsContainer.insertBefore(errorMessage, this.clearErrorsButton);
   }
 
   clearErrors() {
