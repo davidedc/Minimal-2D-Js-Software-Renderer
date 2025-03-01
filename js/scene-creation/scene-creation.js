@@ -6,8 +6,8 @@ function checkCanvasHasEvenDimensions() {
 
 function buildScene(shapes, log, currentExampleNumber) {
   addRandomLines(shapes, log, currentExampleNumber, 15);
-  addAxisAlignedRectangles(shapes, log, currentExampleNumber, 5); // fine
-  addRotatedRectangles(shapes, log, currentExampleNumber, 5); // fine
+  addAxisAlignedRectangles(shapes, log, currentExampleNumber, 5); // fine // also has its own comparison
+  addRotatedRectangles(shapes, log, currentExampleNumber, 5); // fine // also has its own comparison
   addAxisAlignedRoundedRectangles(shapes, log, currentExampleNumber, 10); // fine
   addLargeTransparentRoundedRectangles(shapes, log, currentExampleNumber, 10); // fine
   addNoStrokeRoundedRectangles(shapes, log, currentExampleNumber, 10); // fine because there is no stroke, the fills positions are handled by getRectangularFillGeometry, which always forces the corner to be at a grid, and the width and height are integers so everything is OK.

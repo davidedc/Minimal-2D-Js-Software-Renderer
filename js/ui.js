@@ -54,6 +54,7 @@ function addRenderComparisons() {
   // and that the stroke and fill are semi-transparent
   addSingleAxisAlignedRectangleComparison();
   addAxisAlignedRectanglesComparison();
+  addRotatedRectanglesComparison();
 
   add1PxStrokedRoundedRectCenteredAtGridComparison();
   add1PxStrokedRoundedRectCenteredAtPixelComparison();

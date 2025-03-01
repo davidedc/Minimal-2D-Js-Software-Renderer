@@ -185,3 +185,12 @@ function addAxisAlignedRectanglesComparison() {
     .withExtremesCheck()
     .build();
 }
+
+function addRotatedRectanglesComparison() {
+  return new RenderComparisonBuilder()
+    .withId('rotated-rectangles')
+    .withTitle('Rotated Rectangles')
+    .withDescription('Tests rendering of multiple rotated rectangles with random positions, sizes, angles, and colors')
+    .addShapes(addRotatedRectangles, 5)  // Using default count of 5 rectangles
+    .build();
+}
