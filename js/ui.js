@@ -68,5 +68,10 @@ function addRenderComparisons() {
 
   add1PxStrokedCircleCenteredAtGridComparison();
   add1PxStrokedCircleCenteredAtPixelComparison();
+  addRandomCirclesComparison();
+  
+  addNinetyDegreeArcsComparison();
+  addRandomArcsComparison();
+  
   addEverythingTogetherComparison();
 }

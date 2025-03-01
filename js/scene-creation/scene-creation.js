@@ -4,16 +4,17 @@ function checkCanvasHasEvenDimensions() {
   }
 }
 
+// adds many shapes. Each of these adds also has its own comparison.
 function buildScene(shapes, log, currentExampleNumber) {
-  addRandomLines(shapes, log, currentExampleNumber, 15); // also has its own comparison
-  addAxisAlignedRectangles(shapes, log, currentExampleNumber, 5); // fine // also has its own comparison
-  addRotatedRectangles(shapes, log, currentExampleNumber, 5); // fine // also has its own comparison
-  addAxisAlignedRoundedRectangles(shapes, log, currentExampleNumber, 10); // fine // also has its own comparison
-  addLargeTransparentRoundedRectangles(shapes, log, currentExampleNumber, 10); // fine // also has its own comparison
-  addNoStrokeRoundedRectangles(shapes, log, currentExampleNumber, 10); // fine because there is no stroke, the fills positions are handled by getRectangularFillGeometry, which always forces the corner to be at a grid, and the width and height are integers so everything is OK. // also has its own comparison
+  addRandomLines(shapes, log, currentExampleNumber, 15);
+  addAxisAlignedRectangles(shapes, log, currentExampleNumber, 5);
+  addRotatedRectangles(shapes, log, currentExampleNumber, 5);
+  addAxisAlignedRoundedRectangles(shapes, log, currentExampleNumber, 10);
+  addLargeTransparentRoundedRectangles(shapes, log, currentExampleNumber, 10);
+  addNoStrokeRoundedRectangles(shapes, log, currentExampleNumber, 10); // fine because there is no stroke, the fills positions are handled by getRectangularFillGeometry, which always forces the corner to be at a grid, and the width and height are integers so everything is OK.
   // addRotatedRoundedRectangles(shapes, log, 3); // TODO completely broken, "drawArcSWHelper" function is missing.
   addNinetyDegreeArcs(shapes, log, currentExampleNumber); // roughly fine.
   addRandomArcs(shapes, log, currentExampleNumber, 3); // roughly fine.
   addRandomCircles(shapes, log, currentExampleNumber, 5); // looks pretty horrible, but roughly fine.
-  addThinOpaqueStrokeRoundedRectangles(shapes, log, currentExampleNumber, 10); // fine
+  addThinOpaqueStrokeRoundedRectangles(shapes, log, currentExampleNumber, 10);
 }

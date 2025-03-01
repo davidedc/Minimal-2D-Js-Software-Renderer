@@ -231,3 +231,30 @@ function addNoStrokeRoundedRectanglesComparison() {
     .addShapes(addNoStrokeRoundedRectangles, 8)  // Using 8 rectangles with no stroke
     .build();
 }
+
+function addNinetyDegreeArcsComparison() {
+  return new RenderComparisonBuilder()
+    .withId('ninety-degree-arcs')
+    .withTitle('90° Arcs')
+    .withDescription('Tests rendering of 90-degree arcs with various radii and stroke widths')
+    .addShapes(addNinetyDegreeArcs)
+    .build();
+}
+
+function addRandomArcsComparison() {
+  return new RenderComparisonBuilder()
+    .withId('random-arcs')
+    .withTitle('Random Arcs')
+    .withDescription('Tests rendering of arcs with random positions, angles, and colors')
+    .addShapes(addRandomArcs, 5)  // Using 5 random arcs
+    .build();
+}
+
+function addRandomCirclesComparison() {
+  return new RenderComparisonBuilder()
+    .withId('random-circles')
+    .withTitle('Random Circles')
+    .withDescription('Tests rendering of circles with random positions, sizes, and colors')
+    .addShapes(addRandomCircles, 8)  // Using 8 random circles
+    .build();
+}
