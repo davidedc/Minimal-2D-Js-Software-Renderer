@@ -222,3 +222,12 @@ function addLargeTransparentRoundedRectanglesComparison() {
     .addShapes(addLargeTransparentRoundedRectangles, 6)  // Using 6 large transparent rounded rectangles
     .build();
 }
+
+function addNoStrokeRoundedRectanglesComparison() {
+  return new RenderComparisonBuilder()
+    .withId('no-stroke-rounded-rectangles')
+    .withTitle('Rounded Rectangles Without Stroke')
+    .withDescription('Tests rendering of rounded rectangles with no stroke, only fill')
+    .addShapes(addNoStrokeRoundedRectangles, 8)  // Using 8 rectangles with no stroke
+    .build();
+}

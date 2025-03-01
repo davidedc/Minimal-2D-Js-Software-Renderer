@@ -64,6 +64,7 @@ function addRenderComparisons() {
   addThinRoundedRectsComparison();
   addAxisAlignedRoundedRectanglesComparison();
   addLargeTransparentRoundedRectanglesComparison();
+  addNoStrokeRoundedRectanglesComparison();
 
   add1PxStrokedCircleCenteredAtGridComparison();
   add1PxStrokedCircleCenteredAtPixelComparison();
