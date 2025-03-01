@@ -172,6 +172,7 @@ function addSingleAxisAlignedRectangleComparison() {
     .withDescription('Tests rendering of a single axis-aligned rectangle with random stroke width and semi-transparent colors')
     .addShapes(addAxisAlignedRectangles, 1)  // Using just 1 rectangle
     .withExtremesCheck()
+    .compareWithThreshold(3, 1)  // Compare with RGB and alpha thresholds of 1
     .build();
 }
 

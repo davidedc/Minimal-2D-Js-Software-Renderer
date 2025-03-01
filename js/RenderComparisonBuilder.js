@@ -85,6 +85,19 @@ class RenderComparisonBuilder {
     });
     return this;
   }
+  
+  compareWithThreshold(RGBThreshold, alphaThreshold) {
+    this._checks.push((comparison) => {
+      const result = comparison.renderChecks.compareWithThreshold(
+        comparison.swCtx,
+        comparison.canvasCtx,
+        RGBThreshold,
+        alphaThreshold
+      );
+      return result;
+    });
+    return this;
+  }
 
   // you can pass a function that runs canvas code
   // so instead of passing shapes, you pass a function that runs canvas code

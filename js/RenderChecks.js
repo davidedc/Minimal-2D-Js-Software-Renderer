@@ -255,4 +255,77 @@ class RenderChecks {
     
     return speckleCount;
   }
+
+  compareWithThreshold(swCtx, canvasCtx, RGBThreshold, alphaThreshold) {
+    const swImageData = swCtx.getImageData(0, 0, swCtx.canvas.width, swCtx.canvas.height);
+    const canvasImageData = canvasCtx.getImageData(0, 0, canvasCtx.canvas.width, canvasCtx.canvas.height);
+    const swData = swImageData.data;
+    const canvasData = canvasImageData.data;
+    const width = swCtx.canvas.width;
+    const height = swCtx.canvas.height;
+    
+    let differenceCount = 0;
+    let firstDiffX = -1;
+    let firstDiffY = -1;
+    
+    // Compare each pixel
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const idx = (y * width + x) * 4;
+        
+        // Check if the color components are within the threshold
+        const rDiff = Math.abs(swData[idx] - canvasData[idx]);
+        const gDiff = Math.abs(swData[idx + 1] - canvasData[idx + 1]);
+        const bDiff = Math.abs(swData[idx + 2] - canvasData[idx + 2]);
+        const aDiff = Math.abs(swData[idx + 3] - canvasData[idx + 3]);
+        
+        if (rDiff > RGBThreshold || gDiff > RGBThreshold || bDiff > RGBThreshold || aDiff > alphaThreshold) {
+          differenceCount++;
+          
+          // Record first difference position
+          if (firstDiffX === -1) {
+            firstDiffX = x;
+            firstDiffY = y;
+          }
+        }
+      }
+    }
+    
+    if (differenceCount > 0) {
+      // Get the color values at the first difference point
+      const idx = (firstDiffY * width + firstDiffX) * 4;
+      const swR = swData[idx];
+      const swG = swData[idx + 1];
+      const swB = swData[idx + 2];
+      const swA = swData[idx + 3];
+      
+      const canvasR = canvasData[idx];
+      const canvasG = canvasData[idx + 1];
+      const canvasB = canvasData[idx + 2];
+      const canvasA = canvasData[idx + 3];
+      
+      // Calculate the differences
+      const rDiff = Math.abs(swR - canvasR);
+      const gDiff = Math.abs(swG - canvasG);
+      const bDiff = Math.abs(swB - canvasB);
+      const aDiff = Math.abs(swA - canvasA);
+      
+      // Highlight which component(s) exceeds the threshold
+      const rHighlight = rDiff > RGBThreshold ? `<strong>${rDiff}</strong>` : rDiff;
+      const gHighlight = gDiff > RGBThreshold ? `<strong>${gDiff}</strong>` : gDiff;
+      const bHighlight = bDiff > RGBThreshold ? `<strong>${bDiff}</strong>` : bDiff;
+      const aHighlight = aDiff > alphaThreshold ? `<strong>${aDiff}</strong>` : aDiff;
+      
+      const message = `Found ${differenceCount} pixels with differences exceeding thresholds (RGB: ${RGBThreshold}, Alpha: ${alphaThreshold}).<br>` +
+                      `First difference at (${firstDiffX}, ${firstDiffY}): ` +
+                      `SW Renderer: rgba(${swR}, ${swG}, ${swB}, ${swA}) // ` +
+                      `Canvas: rgba(${canvasR}, ${canvasG}, ${canvasB}, ${canvasA}) //` +
+                      `Difference: rgba(${rHighlight}, ${gHighlight}, ${bHighlight}, ${aHighlight})`;
+      
+      this.comparison.showError(message);
+      return message;
+    }
+    
+    return `All pixels are within thresholds (RGB: ${RGBThreshold}, Alpha: ${alphaThreshold})`;
+  }
 }
