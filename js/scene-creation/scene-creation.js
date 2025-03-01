@@ -9,7 +9,7 @@ function buildScene(shapes, log, currentExampleNumber) {
   addAxisAlignedRectangles(shapes, log, currentExampleNumber, 5); // fine // also has its own comparison
   addRotatedRectangles(shapes, log, currentExampleNumber, 5); // fine // also has its own comparison
   addAxisAlignedRoundedRectangles(shapes, log, currentExampleNumber, 10); // fine // also has its own comparison
-  addLargeTransparentRoundedRectangles(shapes, log, currentExampleNumber, 10); // fine
+  addLargeTransparentRoundedRectangles(shapes, log, currentExampleNumber, 10); // fine // also has its own comparison
   addNoStrokeRoundedRectangles(shapes, log, currentExampleNumber, 10); // fine because there is no stroke, the fills positions are handled by getRectangularFillGeometry, which always forces the corner to be at a grid, and the width and height are integers so everything is OK.
   // addRotatedRoundedRectangles(shapes, log, 3); // TODO completely broken, "drawArcSWHelper" function is missing.
   addNinetyDegreeArcs(shapes, log, currentExampleNumber); // roughly fine.

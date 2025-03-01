@@ -213,3 +213,12 @@ function addAxisAlignedRoundedRectanglesComparison() {
     .withExtremesCheck()
     .build();
 }
+
+function addLargeTransparentRoundedRectanglesComparison() {
+  return new RenderComparisonBuilder()
+    .withId('large-transparent-rounded-rectangles')
+    .withTitle('Large Transparent Rounded Rectangles')
+    .withDescription('Tests rendering of large rounded rectangles with transparent strokes and random colors')
+    .addShapes(addLargeTransparentRoundedRectangles, 6)  // Using 6 large transparent rounded rectangles
+    .build();
+}
