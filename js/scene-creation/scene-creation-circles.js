@@ -7,7 +7,7 @@ function getRandomCircle() {
   };
 }
 
-function addRandomCircles(shapes, log, currentExampleNumber,count = 5) {
+function addRandomCircles(shapes, log, currentExampleNumber, count = 5) {
   SeededRandom.seedWithInteger(currentExampleNumber);
   for (let i = 0; i < count; i++) {
     const circle = getRandomCircle();
