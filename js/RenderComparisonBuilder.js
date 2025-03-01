@@ -86,6 +86,7 @@ class RenderComparisonBuilder {
     return this;
   }
   
+  // Compare pixels with threshold values for RGB and alpha components
   compareWithThreshold(RGBThreshold, alphaThreshold) {
     this._checks.push((comparison) => {
       const result = comparison.renderChecks.compareWithThreshold(
