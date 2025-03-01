@@ -16,6 +16,39 @@ function addRandomCircles(shapes, log, currentExampleNumber, count = 5) {
   }
 }
 
+function addSingleRandomCircle(shapes, log, currentExampleNumber) {
+  SeededRandom.seedWithInteger(currentExampleNumber);
+  
+  const circle = getRandomCircle();
+  
+  // Ensure the circle is visible in the center area of the canvas
+  circle.center = {
+    x: Math.floor(renderComparisonWidth / 2 - 100 + SeededRandom.getRandom() * 200),
+    y: Math.floor(renderComparisonHeight / 2 - 100 + SeededRandom.getRandom() * 200)
+  };
+  
+  // Use a larger radius for better visibility
+  circle.radius = Math.floor(30 + SeededRandom.getRandom() * 80);
+  
+  // Add the circle to shapes
+  shapes.push(circle);
+  
+  // Log the circle details
+  log.innerHTML += `&#x20DD; Single random circle at (${circle.center.x}, ${circle.center.y}) radius: ${circle.radius} strokeWidth: ${circle.strokeWidth} strokeColor: ${colorToString(circle.strokeColor)} fillColor: ${colorToString(circle.fillColor)}<br>`;
+  
+  // Calculate and return extremes for the circle
+  // The extremes are the bounding box of the circle
+  const strokeHalfWidth = circle.strokeWidth / 2;
+  const totalRadius = circle.radius + strokeHalfWidth;
+  
+  return {
+    leftX: Math.floor(circle.center.x - totalRadius),
+    rightX: Math.ceil(circle.center.x + totalRadius),
+    topY: Math.floor(circle.center.y - totalRadius),
+    bottomY: Math.ceil(circle.center.y + totalRadius)
+  };
+}
+
 // ----------------------------------------------------------------------
 // Single 1px Stroked Circle centered at grid
 function add1PxStrokeCenteredCircleAtGrid(shapes, log, currentExampleNumber) {

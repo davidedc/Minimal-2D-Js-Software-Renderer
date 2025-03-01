@@ -258,3 +258,14 @@ function addRandomCirclesComparison() {
     .addShapes(addRandomCircles, 8)  // Using 8 random circles
     .build();
 }
+
+function addSingleRandomCircleComparison() {
+  return new RenderComparisonBuilder()
+    .withId('single-random-circle')
+    .withTitle('Single Random Circle')
+    .withDescription('Tests rendering of a single random circle with stroke and fill')
+    .addShapes(addSingleRandomCircle)  // Using the new function that returns extremes
+    .withExtremesCheck()
+    .compareWithThreshold(1, 1)
+    .build();
+}

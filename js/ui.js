@@ -68,6 +68,7 @@ function addRenderComparisons() {
 
   add1PxStrokedCircleCenteredAtGridComparison();
   add1PxStrokedCircleCenteredAtPixelComparison();
+  addSingleRandomCircleComparison(); // TODO the extremes really don't match the canvas results right now, needs fixing.
   addRandomCirclesComparison();
   
   addNinetyDegreeArcsComparison();
