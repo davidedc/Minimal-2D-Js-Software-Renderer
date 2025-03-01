@@ -5,7 +5,7 @@ function checkCanvasHasEvenDimensions() {
 }
 
 function buildScene(shapes, log, currentExampleNumber) {
-  addRandomLines(shapes, log, currentExampleNumber, 15);
+  addRandomLines(shapes, log, currentExampleNumber, 15); // also has its own comparison
   addAxisAlignedRectangles(shapes, log, currentExampleNumber, 5); // fine // also has its own comparison
   addRotatedRectangles(shapes, log, currentExampleNumber, 5); // fine // also has its own comparison
   addAxisAlignedRoundedRectangles(shapes, log, currentExampleNumber, 10); // fine

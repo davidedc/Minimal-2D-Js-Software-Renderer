@@ -194,3 +194,12 @@ function addRotatedRectanglesComparison() {
     .addShapes(addRotatedRectangles, 5)  // Using default count of 5 rectangles
     .build();
 }
+
+function addRandomLinesComparison() {
+  return new RenderComparisonBuilder()
+    .withId('random-lines')
+    .withTitle('Random Lines')
+    .withDescription('Tests rendering of multiple lines with random positions, thickness, and colors')
+    .addShapes(addRandomLines, 15)  // Using 15 lines
+    .build();
+}

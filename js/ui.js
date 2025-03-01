@@ -46,6 +46,7 @@ function addRenderComparisons() {
   addBlackLinesComparison(3);  // 3px lines
   addBlackLinesComparison(5);  // 5px lines
   addBlackLinesComparison(10); // 10px lines
+  addRandomLinesComparison();  // Random lines with various colors and thicknesses
 
   add1PxStrokedRectCenteredAtGridComparison();
   add1PxStrokedRectCenteredAtPixelComparison();
