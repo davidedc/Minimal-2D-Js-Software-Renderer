@@ -42,6 +42,7 @@
   
     <script src="js/crisp-sw-canvas-tests/test-organic.js"></script>
     <script src="js/crisp-sw-canvas-tests/test-overlapping-rectangles.js"></script>
+    <script src="js/crisp-sw-canvas-tests/test-rectangle-clip.js"></script>
 
     <script>
         const CANVAS_WIDTH = 800;
@@ -50,6 +51,7 @@
         function addRenderComparisons() {
             createOrganicTest();
             createOverlappingRectanglesTest();
+            createRectangleClipTest();
         }
 
         document.addEventListener('DOMContentLoaded', () => {
