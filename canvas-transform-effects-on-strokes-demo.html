@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canvas Transform Demo: Effects on Strokes</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f7;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .info-box {
+            background-color: #e8f4ff;
+            border-left: 4px solid #0066cc;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #0066cc;
+            text-decoration: none;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .canvas-container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+        canvas {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            display: block;
+            margin: 0 auto;
+        }
+        .controls {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+        .control-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .control {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        input[type="range"] {
+            flex-grow: 1;
+        }
+        .value-display {
+            width: 40px;
+            text-align: right;
+        }
+        .shape-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        button {
+            padding: 8px 12px;
+            background-color: #007aff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        button:hover {
+            background-color: #0055cc;
+        }
+        button.active {
+            background-color: #004499;
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back-link">← Back to Index</a>
+    <h1>Canvas Transform Demo: Effects on Strokes</h1>
+    
+    <div class="info-box">
+        <h3>Understanding Transform Effects on Strokes</h3>
+        <p>
+            This demo shows how transforms have complex effects on not only paths, but also on the exact shape of the strokes related to those paths.
+        </p>
+        <p>
+            For example, in a stroke of a rectangle on which a "scale x" is applied, not only the rectangle is stretched, but also the strokes, so the vertical strokes become thicker than the horizontal ones. Similar effects happen with rotation and skewing.
+        </p>
+        <p>
+            These transformations affect how strokes are rendered and must be considered when implementing a software renderer that aims to match Canvas behavior precisely.
+        </p>
+        <p>
+            Try adjusting the transformation controls below to see the effects on different shapes and their strokes.
+        </p>
+    </div>
+    
+    <div class="container">
+        <div class="canvas-container">
+            <canvas id="canvas" width="600" height="400"></canvas>
+        </div>
+        
+        <div class="controls">
+            <div class="control-group">
+                <div class="control">
+                    <label for="scaleX">Scale X:</label>
+                    <div class="slider-container">
+                        <input type="range" id="scaleX" min="0.1" max="3" step="0.1" value="1">
+                        <span id="scaleXValue" class="value-display">1.0</span>
+                    </div>
+                </div>
+                
+                <div class="control">
+                    <label for="scaleY">Scale Y:</label>
+                    <div class="slider-container">
+                        <input type="range" id="scaleY" min="0.1" max="3" step="0.1" value="1">
+                        <span id="scaleYValue" class="value-display">1.0</span>
+                    </div>
+                </div>
+                
+                <div class="control">
+                    <label for="shearX">Shear X:</label>
+                    <div class="slider-container">
+                        <input type="range" id="shearX" min="-1" max="1" step="0.1" value="0">
+                        <span id="shearXValue" class="value-display">0.0</span>
+                    </div>
+                </div>
+                
+                <div class="control">
+                    <label for="shearY">Shear Y:</label>
+                    <div class="slider-container">
+                        <input type="range" id="shearY" min="-1" max="1" step="0.1" value="0">
+                        <span id="shearYValue" class="value-display">0.0</span>
+                    </div>
+                </div>
+
+                <div class="control">
+                    <label for="strokeWidth">Stroke Width:</label>
+                    <div class="slider-container">
+                        <input type="range" id="strokeWidth" min="1" max="30" step="1" value="10">
+                        <span id="strokeWidthValue" class="value-display">10</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="shape-controls">
+                <button id="showRectangle" class="active">Rectangle</button>
+                <button id="showCircle">Circle</button>
+                <button id="showLine">Thick Line</button>
+                <button id="showGrid" class="active">Show Grid</button>
+                <button id="resetTransform">Reset Transform</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Get the canvas and its context
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Default values for transforms and shapes
+        let scaleX = 1;
+        let scaleY = 1;
+        let shearX = 0;
+        let shearY = 0;
+        let strokeWidth = 10;
+        
+        let showRectangle = true;
+        let showCircle = false;
+        let showLine = false;
+        let showGrid = true;
+        
+        // Initialize the shape position in the center of the canvas
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        
+        // Shape dimensions
+        const rectWidth = 150;
+        const rectHeight = 100;
+        const circleRadius = 75;
+        const lineLength = 150;
+        
+        // Function to draw the scene
+        function draw() {
+            // Clear the canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw grid for reference if enabled
+            if (showGrid) {
+                drawGrid();
+            }
+            
+            // Save the current context state
+            ctx.save();
+            
+            // Move to the center of the canvas
+            ctx.translate(centerX, centerY);
+            
+            // Apply the transformations
+            applyTransform();
+            
+            // Set the stroke style
+            ctx.strokeStyle = 'blue';
+            ctx.lineWidth = strokeWidth;
+            
+            // Draw the shapes
+            if (showRectangle) {
+                drawRectangle();
+            }
+            
+            if (showCircle) {
+                drawCircle();
+            }
+            
+            if (showLine) {
+                drawLine();
+            }
+            
+            // Restore the context state
+            ctx.restore();
+            
+            // Draw the original shape outline for reference
+            drawOriginalOutlines();
+        }
+        
+        // Function to draw the grid
+        function drawGrid() {
+            ctx.save();
+            
+            ctx.strokeStyle = '#ddd';
+            ctx.lineWidth = 1;
+            
+            // Draw horizontal lines
+            for (let y = 0; y < canvas.height; y += 20) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+            
+            // Draw vertical lines
+            for (let x = 0; x < canvas.width; x += 20) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+            
+            // Draw axes
+            ctx.strokeStyle = '#aaa';
+            ctx.lineWidth = 2;
+            
+            // X-axis
+            ctx.beginPath();
+            ctx.moveTo(0, centerY);
+            ctx.lineTo(canvas.width, centerY);
+            ctx.stroke();
+            
+            // Y-axis
+            ctx.beginPath();
+            ctx.moveTo(centerX, 0);
+            ctx.lineTo(centerX, canvas.height);
+            ctx.stroke();
+            
+            ctx.restore();
+        }
+        
+        // Function to apply the current transform to the context
+        function applyTransform() {
+            // Apply scale
+            ctx.scale(scaleX, scaleY);
+            
+            // Apply shear (this is done with the transform method)
+            ctx.transform(1, shearY, shearX, 1, 0, 0);
+        }
+        
+        // Function to draw a rectangle
+        function drawRectangle() {
+            const halfWidth = rectWidth / 2;
+            const halfHeight = rectHeight / 2;
+            
+            ctx.beginPath();
+            ctx.rect(-halfWidth, -halfHeight, rectWidth, rectHeight);
+            ctx.stroke();
+        }
+        
+        // Function to draw a circle
+        function drawCircle() {
+            ctx.beginPath();
+            ctx.arc(0, 0, circleRadius, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+        
+        // Function to draw a thick horizontal line
+        function drawLine() {
+            const halfLength = lineLength / 2;
+            
+            ctx.beginPath();
+            ctx.moveTo(-halfLength, 0);
+            ctx.lineTo(halfLength, 0);
+            ctx.stroke();
+        }
+        
+        // Function to draw the original shape outlines for reference
+        function drawOriginalOutlines() {
+            ctx.save();
+            
+            // Set the stroke style
+            ctx.strokeStyle = 'rgba(255, 0, 0, 0.3)';
+            ctx.lineWidth = 1;
+            
+            // Move to the center of the canvas
+            ctx.translate(centerX, centerY);
+            
+            // Draw the original rectangle outline
+            if (showRectangle) {
+                const halfWidth = rectWidth / 2;
+                const halfHeight = rectHeight / 2;
+                
+                ctx.beginPath();
+                ctx.rect(-halfWidth, -halfHeight, rectWidth, rectHeight);
+                ctx.stroke();
+            }
+            
+            // Draw the original circle outline
+            if (showCircle) {
+                ctx.beginPath();
+                ctx.arc(0, 0, circleRadius, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+            
+            // Draw the original line outline
+            if (showLine) {
+                const halfLength = lineLength / 2;
+                
+                ctx.beginPath();
+                ctx.moveTo(-halfLength, 0);
+                ctx.lineTo(halfLength, 0);
+                ctx.stroke();
+            }
+            
+            ctx.restore();
+        }
+        
+        // Event listeners for slider controls
+        document.getElementById('scaleX').addEventListener('input', function() {
+            scaleX = parseFloat(this.value);
+            document.getElementById('scaleXValue').textContent = scaleX.toFixed(1);
+            draw();
+        });
+        
+        document.getElementById('scaleY').addEventListener('input', function() {
+            scaleY = parseFloat(this.value);
+            document.getElementById('scaleYValue').textContent = scaleY.toFixed(1);
+            draw();
+        });
+        
+        document.getElementById('shearX').addEventListener('input', function() {
+            shearX = parseFloat(this.value);
+            document.getElementById('shearXValue').textContent = shearX.toFixed(1);
+            draw();
+        });
+        
+        document.getElementById('shearY').addEventListener('input', function() {
+            shearY = parseFloat(this.value);
+            document.getElementById('shearYValue').textContent = shearY.toFixed(1);
+            draw();
+        });
+        
+        document.getElementById('strokeWidth').addEventListener('input', function() {
+            strokeWidth = parseInt(this.value);
+            document.getElementById('strokeWidthValue').textContent = strokeWidth;
+            draw();
+        });
+        
+        // Event listeners for button controls
+        document.getElementById('showRectangle').addEventListener('click', function() {
+            showRectangle = !showRectangle;
+            this.classList.toggle('active');
+            draw();
+        });
+        
+        document.getElementById('showCircle').addEventListener('click', function() {
+            showCircle = !showCircle;
+            this.classList.toggle('active');
+            draw();
+        });
+        
+        document.getElementById('showLine').addEventListener('click', function() {
+            showLine = !showLine;
+            this.classList.toggle('active');
+            draw();
+        });
+        
+        document.getElementById('showGrid').addEventListener('click', function() {
+            showGrid = !showGrid;
+            this.classList.toggle('active');
+            draw();
+        });
+        
+        document.getElementById('resetTransform').addEventListener('click', function() {
+            // Reset all transform values
+            scaleX = 1;
+            scaleY = 1;
+            shearX = 0;
+            shearY = 0;
+            strokeWidth = 10;
+            
+            // Update UI
+            document.getElementById('scaleX').value = scaleX;
+            document.getElementById('scaleXValue').textContent = scaleX.toFixed(1);
+            
+            document.getElementById('scaleY').value = scaleY;
+            document.getElementById('scaleYValue').textContent = scaleY.toFixed(1);
+            
+            document.getElementById('shearX').value = shearX;
+            document.getElementById('shearXValue').textContent = shearX.toFixed(1);
+            
+            document.getElementById('shearY').value = shearY;
+            document.getElementById('shearYValue').textContent = shearY.toFixed(1);
+            
+            document.getElementById('strokeWidth').value = strokeWidth;
+            document.getElementById('strokeWidthValue').textContent = strokeWidth;
+            
+            draw();
+        });
+        
+        // Initial draw
+        draw();
+    </script>
+</body>
+</html>
