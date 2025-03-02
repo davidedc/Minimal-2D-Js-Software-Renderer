@@ -134,6 +134,49 @@ function drawOrganicTestScene(ctx) {
   ctx.globalAlpha = 0.25;
   ctx.fillRect(0, 0, 100, 100);
   ctx.restore();
+  
+  // Add lines to demonstrate the new strokeLine functionality
+  ctx.save();
+  ctx.globalAlpha = 1.0;
+  
+  // Draw a grid pattern
+  ctx.strokeStyle = "rgba(255, 0, 0, 0.7)";
+  ctx.lineWidth = 1;
+  
+  // Vertical lines
+  for (let x = 50; x <= 250; x += 50) {
+    ctx.strokeLine(x, 400, x, 550);
+  }
+  
+  // Horizontal lines
+  for (let y = 400; y <= 550; y += 50) {
+    ctx.strokeLine(50, y, 250, y);
+  }
+  
+  // Draw a star pattern with lines
+  ctx.save();
+  ctx.translate(650, 450);
+  
+  // Thick star lines
+  ctx.lineWidth = 3;
+  const colors = [
+    "rgb(255, 0, 0)",      // Red
+    "rgb(0, 255, 0)",      // Green
+    "rgb(0, 0, 255)",      // Blue
+    "rgba(255, 255, 0, 1)", // Yellow
+    "rgba(0, 255, 255, 1)"  // Cyan
+  ];
+  
+  for (let i = 0; i < 10; i++) {
+    ctx.strokeStyle = colors[i % colors.length];
+    const angle = (i / 10) * Math.PI * 2;
+    const x = Math.cos(angle) * 80;
+    const y = Math.sin(angle) * 80;
+    ctx.strokeLine(0, 0, x, y);
+  }
+  
+  ctx.restore();
+  ctx.restore();
 }
 
 function createOrganicTest() {

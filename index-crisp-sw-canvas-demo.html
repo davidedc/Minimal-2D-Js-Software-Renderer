@@ -35,6 +35,8 @@
     <script src="js/crisp-sw-canvas/CrispSwContext.js"></script>
     <script src="js/crisp-sw-canvas/TransformationMatrix.js"></script>
 
+    <script src="js/canvas-sw-polyfills.js"></script>
+
     <script src="js/RenderChecks.js"></script>
     <script src="js/RenderComparison.js"></script>
     <script src="js/RenderComparisonBuilder.js"></script>
@@ -43,6 +45,7 @@
     <script src="js/crisp-sw-canvas-tests/test-organic.js"></script>
     <script src="js/crisp-sw-canvas-tests/test-overlapping-rectangles.js"></script>
     <script src="js/crisp-sw-canvas-tests/test-rectangle-clip.js"></script>
+    <script src="js/crisp-sw-canvas-tests/test-lines.js"></script>
 
     <script>
         const CANVAS_WIDTH = 800;
@@ -52,6 +55,7 @@
             createOrganicTest();
             createOverlappingRectanglesTest();
             createRectangleClipTest();
+            createLinesTest();
         }
 
         document.addEventListener('DOMContentLoaded', () => {

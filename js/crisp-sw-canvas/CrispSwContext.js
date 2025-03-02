@@ -74,6 +74,22 @@ class CrispSwContext {
     stroke() {
         throw new Error("stroke() is not supported - use strokeRect() instead");
     }
+    
+    strokeLine(x1, y1, x2, y2) {
+        const state = this.currentState;
+        const scaledLineWidth = getScaledLineWidth(state.transform.elements, state.lineWidth);
+        
+        // Transform points according to current transformation matrix
+        const start = transformPoint(x1, y1, state.transform.elements);
+        const end = transformPoint(x2, y2, state.transform.elements);
+        
+        this.lineRenderer.drawLine({
+            start: { x: start.tx, y: start.ty },
+            end: { x: end.tx, y: end.ty },
+            thickness: scaledLineWidth,
+            color: state.strokeColor
+        });
+    }
 
     clearRect(x, y, width, height) {
         const state = this.currentState;
@@ -163,4 +179,5 @@ class CrispSwContext {
         const imageData = new ImageData(this.frameBuffer, this.canvas.width, this.canvas.height);
         ctx.putImageData(imageData, 0, 0);
     }
+    
 }
