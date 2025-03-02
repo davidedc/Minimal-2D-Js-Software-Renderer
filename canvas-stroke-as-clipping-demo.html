@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canvas Clipping Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        canvas {
+            border: 1px solid #ccc;
+            margin: 10px 0;
+            display: block;
+        }
+        textarea {
+            width: 100%;
+            height: 200px;
+            font-family: monospace;
+            padding: 10px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            resize: vertical;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .controls {
+            margin: 20px 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .control-group {
+            display: flex;
+            flex-direction: column;
+        }
+        button {
+            padding: 8px 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .test-variants {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+        .variant {
+            flex: 1;
+            min-width: 300px;
+        }
+        h3 {
+            margin-top: 10px;
+            margin-bottom: 5px;
+        }
+        .error {
+            color: red;
+            font-family: monospace;
+            white-space: pre-wrap;
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #ffeeee;
+            border-radius: 4px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Canvas Clipping Test: Shape Strokes as Clipping Areas</h1>
+    
+    <div class="intro">
+        <p>This demo tests whether the strokes of shapes in HTML5 Canvas can serve as clipping areas for subsequent drawings. The specific questions: 
+        <ul>
+            <li><strong>Can a thick line's stroke itself be used as a clipping path?</strong></li>
+            <li><strong>Can a rectangle's stroke be used as a clipping path?</strong></li>
+        </ul>
+        </p>
+        <p>You can edit the code for each test directly in the textareas below and click "Run Test" to see the results.</p>
+    </div>
+
+    <div class="controls">
+        <div class="control-group">
+            <label for="blackLineWidth">Black Line Width:</label>
+            <input type="range" id="blackLineWidth" min="5" max="50" value="30" onchange="updateLineValues()">
+            <span id="blackLineWidthValue">30</span>px
+        </div>
+        <div class="control-group">
+            <label for="redLineWidth">Red Line Width:</label>
+            <input type="range" id="redLineWidth" min="1" max="20" value="2" onchange="updateLineValues()">
+            <span id="redLineWidthValue">2</span>px
+        </div>
+    </div>
+
+    <div class="test-variants">
+        <div class="variant">
+            <h2>Test 1: Standard Line Clipping Attempt</h2>
+            <p>Here we try to use a line's stroke directly as a clipping path:</p>
+            <canvas id="canvas1" width="400" height="200"></canvas>
+            <div class="error" id="error1"></div>
+            <textarea id="code1">
+// Draw thick horizontal black line
+ctx.lineWidth = BLACK_LINE_WIDTH;
+ctx.strokeStyle = 'black';
+ctx.beginPath();
+ctx.moveTo(50, 100);
+ctx.lineTo(350, 100);
+ctx.stroke();
+
+// Try to use the line's stroke as a clipping path
+ctx.save();
+ctx.beginPath();
+ctx.moveTo(50, 100);
+ctx.lineTo(350, 100);
+ctx.clip(); // This will clip to the line path (nearly invisible)
+
+// Draw vertical red line
+ctx.lineWidth = RED_LINE_WIDTH;
+ctx.strokeStyle = 'red';
+ctx.beginPath();
+ctx.moveTo(200, 20);
+ctx.lineTo(200, 180);
+ctx.stroke();
+
+ctx.restore();
+
+// Add explanatory text
+ctx.fillStyle = 'black';
+ctx.font = '12px sans-serif';
+ctx.fillText('Result: Line path used for clipping', 50, 190);
+</textarea>
+            <button onclick="runTest(1)">Run Test 1</button>
+        </div>
+
+        <div class="variant">
+            <h2>Test 2: Alternative Approach</h2>
+            <p>Try different approaches to clipping with line strokes:</p>
+            <canvas id="canvas2" width="400" height="200"></canvas>
+            <div class="error" id="error2"></div>
+            <textarea id="code2">
+// Draw thick horizontal black line
+ctx.lineWidth = BLACK_LINE_WIDTH;
+ctx.strokeStyle = 'black';
+ctx.beginPath();
+ctx.moveTo(50, 100);
+ctx.lineTo(350, 100);
+ctx.stroke();
+
+// Create a rectangular path around the line for proper clipping
+ctx.save();
+ctx.beginPath();
+ctx.rect(50, 100 - BLACK_LINE_WIDTH/2, 300, BLACK_LINE_WIDTH);
+ctx.clip();
+
+// Draw vertical red line
+ctx.lineWidth = RED_LINE_WIDTH;
+ctx.strokeStyle = 'red';
+ctx.beginPath();
+ctx.moveTo(200, 20);
+ctx.lineTo(200, 180);
+ctx.stroke();
+
+ctx.restore();
+
+// Add explanatory text
+ctx.fillStyle = 'black';
+ctx.font = '12px sans-serif';
+ctx.fillText('Result: Rectangular path used for clipping', 50, 190);
+</textarea>
+            <button onclick="runTest(2)">Run Test 2</button>
+        </div>
+
+        <div class="variant">
+            <h2>Test 3: Rectangle with Stroke</h2>
+            <p>Testing if a rectangle's stroke is used as a clipping path (it isn't):</p>
+            <canvas id="canvas3" width="400" height="200"></canvas>
+            <div class="error" id="error3"></div>
+            <textarea id="code3">
+// Draw rectangle with thick black stroke
+ctx.lineWidth = BLACK_LINE_WIDTH;
+ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+ctx.fillStyle = 'rgba(200, 200, 255, 0.3)';
+ctx.beginPath();
+ctx.rect(100, 50, 200, 100);
+ctx.fill();
+ctx.stroke();
+
+// Try to clip to the rectangle (including its stroke)
+ctx.save();
+ctx.beginPath();
+ctx.rect(100, 50, 200, 100);
+ctx.clip();
+
+// Draw diagonal red line across the rectangle
+ctx.lineWidth = RED_LINE_WIDTH;
+ctx.strokeStyle = 'red';
+ctx.beginPath();
+ctx.moveTo(50, 50);
+ctx.lineTo(350, 150);
+ctx.stroke();
+
+ctx.restore();
+
+// Add explanatory text
+ctx.fillStyle = 'black';
+ctx.font = '12px sans-serif';
+ctx.fillText('Result: Rectangle path used for clipping', 50, 190);
+</textarea>
+            <button onclick="runTest(3)">Run Test 3</button>
+        </div>
+    </div>
+    
+    <div class="conclusion">
+        <h2>Conclusion</h2>
+        <p>Experiment with different approaches by modifying the code above. The tests demonstrate that neither line strokes nor rectangle strokes can be directly used as clipping paths - only the mathematical path (with no thickness) is used for clipping.</p>
+        <p>Key observations:</p>
+        <ul>
+            <li>Test 1 shows that when clipping to a line, only the infinitely thin mathematical line is used as the clipping path, not the visible stroke.</li>
+            <li>Test 2 demonstrates a workaround by creating a rectangular clipping path that matches the line's stroke dimensions.</li>
+            <li>Test 3 confirms that even with rectangles, the clipping path only follows the rectangle's path outline, not including its stroke area.</li>
+        </ul>
+        <p>Alternative approaches might include:</p>
+        <ul>
+            <li>Creating a rectangle or polygon that surrounds the line or shape</li>
+            <li>Using multiple line segments to create a closed path</li>
+            <li>Using other Canvas techniques like compositing operations</li>
+        </ul>
+    </div>
+
+    <script>
+        // Get the canvases
+        const canvas1 = document.getElementById('canvas1');
+        const ctx1 = canvas1.getContext('2d');
+        
+        const canvas2 = document.getElementById('canvas2');
+        const ctx2 = canvas2.getContext('2d');
+        
+        const canvas3 = document.getElementById('canvas3');
+        const ctx3 = canvas3.getContext('2d');
+
+        // Get current slider values
+        let blackLineWidth = parseInt(document.getElementById('blackLineWidth').value);
+        let redLineWidth = parseInt(document.getElementById('redLineWidth').value);
+
+        // Initialize
+        runTest(1);
+        runTest(2);
+        runTest(3);
+
+        function updateLineValues() {
+            blackLineWidth = parseInt(document.getElementById('blackLineWidth').value);
+            redLineWidth = parseInt(document.getElementById('redLineWidth').value);
+            
+            document.getElementById('blackLineWidthValue').textContent = blackLineWidth;
+            document.getElementById('redLineWidthValue').textContent = redLineWidth;
+            
+            // Re-run all tests with new values
+            runTest(1);
+            runTest(2);
+            runTest(3);
+        }
+
+        function runTest(testNumber) {
+            let canvas, ctx;
+            if (testNumber === 1) {
+                canvas = canvas1;
+                ctx = ctx1;
+            } else if (testNumber === 2) {
+                canvas = canvas2;
+                ctx = ctx2;
+            } else if (testNumber === 3) {
+                canvas = canvas3;
+                ctx = ctx3;
+            }
+            const codeElement = document.getElementById(`code${testNumber}`);
+            const errorElement = document.getElementById(`error${testNumber}`);
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Hide any previous error
+            errorElement.style.display = 'none';
+            
+            try {
+                // Replace placeholders with actual values
+                const code = codeElement.value
+                    .replace(/BLACK_LINE_WIDTH/g, blackLineWidth)
+                    .replace(/RED_LINE_WIDTH/g, redLineWidth);
+                
+                // Execute the code
+                eval(code);
+            } catch (error) {
+                // Display error message
+                errorElement.textContent = `Error executing code:\n${error}`;
+                errorElement.style.display = 'block';
+            }
+        }
+    </script>
+</body>
+</html>

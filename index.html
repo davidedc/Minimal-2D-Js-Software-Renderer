@@ -84,5 +84,13 @@
             For example, in a stroke of a rectangle on which a "scale x" is applied, not only the rectangle is stretched, but also the strokes, so the vertical strokes become thicker than the horizontal ones. This demo helps visualize these subtle effects that must be considered when implementing a software renderer.
         </p>
     </div>
+
+    <div class="demo-link">
+        <h2><a href="canvas-stroke-as-clipping-demo.html">Canvas Stroke as Clipping Test</a></h2>
+        <p>
+            Demonstrates that the strokes of shapes in HTML5 Canvas are NOT part of the clipping areas for subsequent drawings (only the fills are). <br>
+            I.e. when using clip() on a path, Canvas only uses the mathematical path (with no thickness) as the clipping region. The demo shows this behavior with lines and rectangles, confirming that even when a shape has a thick stroke, the clipping region only follows the path outline without including the stroke area.
+        </p>
+    </div>
 </body>
 </html>
