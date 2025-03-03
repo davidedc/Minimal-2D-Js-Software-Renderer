@@ -42,6 +42,8 @@ class SWRendererCircle {
     
     // Track visited pixels to avoid drawing any pixel multiple times
     const visitedPixels = new Set();
+    // Track cardinal points to fix spurious pixels
+    const cardinalPoints = new Set();
     
     // First pass: Draw fills
     if (fillA > 0 && innerRadius > 0) {
@@ -77,6 +79,13 @@ class SWRendererCircle {
       const outerRadiusSquared = outerRadius * outerRadius;
       const innerRadiusSquared = innerRadius * innerRadius;
       
+      // Calculate cardinal points (rightmost, leftmost, topmost, bottommost)
+      // These are the points we need to be extra careful with
+      const rightCardinal = Math.round(cX + outerRadius);
+      const leftCardinal = Math.round(cX - outerRadius);
+      const topCardinal = Math.round(cY - outerRadius);
+      const bottomCardinal = Math.round(cY + outerRadius);
+      
       // First process horizontal scan lines (constant y)
       for (let y = minY; y <= maxY; y++) {
         // Apply vertical adjustments based on position
@@ -94,6 +103,13 @@ class SWRendererCircle {
           const rightEdge = Math.ceil(cX + outerXDist + rightAdjust);
           
           for (let x = leftEdge; x <= rightEdge; x++) {
+            // Skip cardinal points - we'll handle these specially
+            if ((x === rightCardinal && Math.abs(y - cY) < 2) || 
+                (y === bottomCardinal && Math.abs(x - cX) < 2)) {
+              cardinalPoints.add(`${x},${y}`);
+              continue;
+            }
+            
             const pixelKey = `${x},${y}`;
             if (visitedPixels.has(pixelKey)) continue;
             
@@ -133,6 +149,9 @@ class SWRendererCircle {
           const bottomEdge = Math.ceil(cY + outerYDist + bottomAdjust);
           
           for (let y = topEdge; y <= bottomEdge; y++) {
+            // Skip cardinal points we've already marked
+            if (cardinalPoints.has(`${x},${y}`)) continue;
+            
             const pixelKey = `${x},${y}`;
             if (visitedPixels.has(pixelKey)) continue;
             
@@ -147,6 +166,19 @@ class SWRendererCircle {
             // Check if pixel is within the stroke area
             if (distFromCenterSquared <= outerRadiusSquared) {
               if (innerRadius <= 0 || distFromCenterSquared >= innerRadiusSquared) {
+                // Special case for rightmost and bottommost points
+                if ((x === rightCardinal || x === rightCardinal + 1) && 
+                    Math.abs(y - cY) < 1.5) {
+                  // Skip the rightmost spurious pixel
+                  if (x === rightCardinal + 1) continue;
+                }
+                
+                if ((y === bottomCardinal || y === bottomCardinal + 1) && 
+                    Math.abs(x - cX) < 1.5) {
+                  // Skip the bottommost spurious pixel
+                  if (y === bottomCardinal + 1) continue;
+                }
+                
                 this.pixelRenderer.setPixel(x, y, strokeR, strokeG, strokeB, strokeA);
                 visitedPixels.add(pixelKey);
               }
