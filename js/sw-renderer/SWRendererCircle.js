@@ -39,17 +39,14 @@ class SWRendererCircle {
     const minX = Math.floor(cX - outerRadius - 1);
     const maxX = Math.ceil(cX + outerRadius + 1);
     
-    // Track visited pixels to avoid drawing any pixel multiple times
-    const visitedPixels = new Set();
-    // Track fill pixels to ensure we don't draw outside the stroke
-    const fillPixels = new Set();
-    // Track cardinal points to fix spurious pixels
-    const cardinalPoints = new Set();
-    
-    // Calculate radius for path and fill
-    const pathRadius = (innerRadius + outerRadius) / 2; // The actual circle path
-    const fillRadius = pathRadius - 0.1; // Make fill slightly smaller to avoid protruding
+    // The path is the true mathematical circle (centered between innerRadius and outerRadius)
+    const pathRadius = (innerRadius + outerRadius) / 2;
+    // The fill should extend exactly to the path
+    const fillRadius = pathRadius;
     const fillRadiusSquared = fillRadius * fillRadius;
+    
+    // Track drawn pixels for proper stroke and fill management
+    const drawnPixels = new Map();
     
     // Calculate cardinal points for special handling
     const rightCardinal = Math.round(cX + outerRadius);
@@ -57,7 +54,7 @@ class SWRendererCircle {
     const rightFillCardinal = Math.round(cX + fillRadius);
     const bottomFillCardinal = Math.round(cY + fillRadius);
     
-    // First collect fill pixels but don't draw them yet
+    // Draw fill first (will be covered by stroke where they overlap)
     if (fillA > 0) {
       for (let y = minY; y <= maxY; y++) {
         // Apply vertical adjustments
@@ -73,7 +70,7 @@ class SWRendererCircle {
           
           // Apply adjusted scan bounds
           const leftFillX = Math.ceil(cX - fillXDist + leftAdjust);
-          const rightFillX = Math.floor(cX + fillXDist + rightAdjust * 0.5); // Reduce right adjustment to avoid protrusion
+          const rightFillX = Math.floor(cX + fillXDist + rightAdjust * 0.5); // Reduce right adjustment
           
           for (let x = leftFillX; x <= rightFillX; x++) {
             // Skip extreme cardinal points which cause protrusions
@@ -90,21 +87,24 @@ class SWRendererCircle {
             const dx = x - cX;
             const distFromCenterSquared = dx * dx + dy * dy;
             
-            // Check if pixel is truly within fill radius
+            // Check if pixel is within fill radius
             if (distFromCenterSquared <= fillRadiusSquared) {
-              fillPixels.add(`${x},${y}`);
+              const key = `${x},${y}`;
+              this.pixelRenderer.setPixel(x, y, fillR, fillG, fillB, fillA);
+              drawnPixels.set(key, { r: fillR, g: fillG, b: fillB, a: fillA });
             }
           }
         }
       }
     }
     
-    // Now draw strokes
+    // Then draw stroke on top of fill
     if (strokeA > 0 && outerRadius > innerRadius) {
       const outerRadiusSquared = outerRadius * outerRadius;
       const innerRadiusSquared = innerRadius * innerRadius;
+      const cardinalPoints = new Set();
       
-      // Process horizontal scan lines (constant y)
+      // First scan horizontal lines
       for (let y = minY; y <= maxY; y++) {
         // Apply vertical adjustments based on position
         let yAdjust = 0;
@@ -128,9 +128,6 @@ class SWRendererCircle {
               continue;
             }
             
-            const pixelKey = `${x},${y}`;
-            if (visitedPixels.has(pixelKey)) continue;
-            
             // Apply horizontal adjustments based on position
             let xAdjust = 0;
             if (x < cX) xAdjust = leftAdjust;
@@ -142,15 +139,28 @@ class SWRendererCircle {
             // Check if pixel is within the stroke area
             if (distFromCenterSquared <= outerRadiusSquared) {
               if (innerRadius <= 0 || distFromCenterSquared >= innerRadiusSquared) {
-                this.pixelRenderer.setPixel(x, y, strokeR, strokeG, strokeB, strokeA);
-                visitedPixels.add(pixelKey);
+                const key = `${x},${y}`;
+                
+                // If the pixel has fill and stroke is semi-transparent, we need to blend
+                if (drawnPixels.has(key) && strokeA < 255) {
+                  const fillColor = drawnPixels.get(key);
+                  const blendedColor = this.blendColors(
+                    fillColor.r, fillColor.g, fillColor.b, fillColor.a,
+                    strokeR, strokeG, strokeB, strokeA
+                  );
+                  this.pixelRenderer.setPixel(x, y, blendedColor.r, blendedColor.g, blendedColor.b, blendedColor.a);
+                } else {
+                  // Either no fill or fully opaque stroke - just draw the stroke
+                  this.pixelRenderer.setPixel(x, y, strokeR, strokeG, strokeB, strokeA);
+                }
+                drawnPixels.set(key, { r: strokeR, g: strokeG, b: strokeB, a: strokeA });
               }
             }
           }
         }
       }
       
-      // Process vertical scan lines (constant x) to catch any missed pixels
+      // Then scan vertical lines to catch any missed pixels
       for (let x = minX; x <= maxX; x++) {
         // Apply horizontal adjustments based on position
         let xAdjust = 0;
@@ -170,8 +180,12 @@ class SWRendererCircle {
             // Skip cardinal points we've already marked
             if (cardinalPoints.has(`${x},${y}`)) continue;
             
-            const pixelKey = `${x},${y}`;
-            if (visitedPixels.has(pixelKey)) continue;
+            const key = `${x},${y}`;
+            // Skip pixels we've already handled in the horizontal scan
+            if (drawnPixels.has(key) && drawnPixels.get(key).r === strokeR && 
+                drawnPixels.get(key).g === strokeG && drawnPixels.get(key).b === strokeB) {
+              continue;
+            }
             
             // Apply vertical adjustments based on position
             let yAdjust = 0;
@@ -197,24 +211,47 @@ class SWRendererCircle {
                   if (y === bottomCardinal + 1) continue;
                 }
                 
-                this.pixelRenderer.setPixel(x, y, strokeR, strokeG, strokeB, strokeA);
-                visitedPixels.add(pixelKey);
+                // If the pixel has fill and stroke is semi-transparent, we need to blend
+                if (drawnPixels.has(key) && strokeA < 255) {
+                  const fillColor = drawnPixels.get(key);
+                  const blendedColor = this.blendColors(
+                    fillColor.r, fillColor.g, fillColor.b, fillColor.a,
+                    strokeR, strokeG, strokeB, strokeA
+                  );
+                  this.pixelRenderer.setPixel(x, y, blendedColor.r, blendedColor.g, blendedColor.b, blendedColor.a);
+                } else {
+                  // Either no fill or fully opaque stroke - just draw the stroke
+                  this.pixelRenderer.setPixel(x, y, strokeR, strokeG, strokeB, strokeA);
+                }
+                drawnPixels.set(key, { r: strokeR, g: strokeG, b: strokeB, a: strokeA });
               }
             }
           }
         }
       }
     }
+  }
+  
+  // Helper function to blend colors when applying a semi-transparent stroke over a fill
+  blendColors(r1, g1, b1, a1, r2, g2, b2, a2) {
+    // Convert alpha from 0-255 to 0-1
+    const alpha1 = a1 / 255;
+    const alpha2 = a2 / 255;
     
-    // Finally, draw fill pixels that aren't covered by stroke
-    if (fillA > 0) {
-      for (const pixelKey of fillPixels) {
-        if (!visitedPixels.has(pixelKey)) {
-          const [x, y] = pixelKey.split(',').map(Number);
-          this.pixelRenderer.setPixel(x, y, fillR, fillG, fillB, fillA);
-          visitedPixels.add(pixelKey);
-        }
-      }
+    // Calculate the resulting alpha
+    const outAlpha = alpha1 + alpha2 * (1 - alpha1);
+    
+    // If resulting alpha is 0, return transparent color
+    if (outAlpha === 0) {
+      return { r: 0, g: 0, b: 0, a: 0 };
     }
+    
+    // Calculate the blended color components
+    const outR = Math.round((r1 * alpha1 * (1 - alpha2) + r2 * alpha2) / outAlpha);
+    const outG = Math.round((g1 * alpha1 * (1 - alpha2) + g2 * alpha2) / outAlpha);
+    const outB = Math.round((b1 * alpha1 * (1 - alpha2) + b2 * alpha2) / outAlpha);
+    const outA = Math.round(outAlpha * 255);
+    
+    return { r: outR, g: outG, b: outB, a: outA };
   }
 }
