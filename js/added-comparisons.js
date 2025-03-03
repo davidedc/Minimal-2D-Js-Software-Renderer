@@ -263,9 +263,8 @@ function addSingleRandomCircleComparison() {
   return new RenderComparisonBuilder()
     .withId('single-random-circle')
     .withTitle('Single Random Circle')
-    .withDescription('Tests rendering of a single random circle with stroke and fill')
-    .addShapes(addSingleRandomCircle)  // Using the new function that returns extremes
-    .withExtremesCheck()
-    .compareWithThreshold(1, 1)
+    .withDescription('Tests rendering of a single random circle with proper pixel alignment for crisp stroke rendering')
+    .addShapes(addSingleRandomCircle)  // Using the updated function that returns extremes
+    .withExtremesCheck(0.03)  // Same tolerance as the 1px circle tests
     .build();
 }

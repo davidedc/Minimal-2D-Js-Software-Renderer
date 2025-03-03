@@ -10,86 +10,149 @@ class SWRendererCircle {
       fillColor: { r: fillR, g: fillG, b: fillB, a: fillA }
     } = shape;
 
-    if (fillA > 0) {
-      this.drawCircleHelper(center.x, center.y, radius,
-        fillR, fillG, fillB, fillA, true);
-    }
-    if (strokeA > 0 && strokeWidth > 0) {
-      this.drawCircleHelper(center.x, center.y, radius,
-        strokeR, strokeG, strokeB, strokeA, false, strokeWidth);
-    }
+    const innerRadius = strokeWidth > 0 ? radius - strokeWidth / 2 : radius;
+    const outerRadius = radius + strokeWidth / 2;
+
+    // Draw row by row
+    this.drawPreciseCircle(
+      center.x, center.y, 
+      innerRadius, outerRadius,
+      fillR, fillG, fillB, fillA,
+      strokeR, strokeG, strokeB, strokeA
+    );
   }
 
-  circlePlotPoints(strokePixels, xc, yc, x, y, thickness) {
-    this.addThickPoint(strokePixels, xc + x, yc + y, thickness);
-    this.addThickPoint(strokePixels, xc - x, yc + y, thickness);
-    this.addThickPoint(strokePixels, xc + x, yc - y, thickness);
-    this.addThickPoint(strokePixels, xc - x, yc - y, thickness);
-    this.addThickPoint(strokePixels, xc + y, yc + x, thickness);
-    this.addThickPoint(strokePixels, xc - y, yc + x, thickness);
-    this.addThickPoint(strokePixels, xc + y, yc - x, thickness);
-    this.addThickPoint(strokePixels, xc - y, yc - x, thickness);
-  }
-
-  drawCircleHelper(centerX, centerY, radius, r, g, b, a, fill = false, thickness = 1) {
-    // tweaks to make the sw render more closely match the canvas render
-    if (thickness > 1)
-      thickness *= 0.75;
-    centerX -= 1;
-    centerY -= 1;
-    //radius *= 1.015;
-
-    if (fill) {
-      const radiusSquared = (radius - 0.5) * (radius - 0.5);
-      for (let y = -radius; y <= radius; y++) {
-        for (let x = -radius; x <= radius; x++) {
-          if (x * x + y * y <= radiusSquared) {
-            this.pixelRenderer.setPixel(
-              Math.round(centerX + x), 
-              Math.round(centerY + y), 
-              Math.round(r), g, b, a
-            );
+  drawPreciseCircle(centerX, centerY, innerRadius, outerRadius, fillR, fillG, fillB, fillA, strokeR, strokeG, strokeB, strokeA) {
+    // No initial offset adjustment - we'll handle positioning during pixel placement
+    const cX = centerX - 0.5;
+    const cY = centerY - 0.5;
+    
+    // Adjustment values for each edge to match canvas rendering
+    // These are manually tuned to align with canvas rendering
+    const leftAdjust = 0.0;
+    const rightAdjust = 0.5;
+    const topAdjust = 0.0;
+    const bottomAdjust = 0.5;
+    
+    // Calculate the bounds for processing
+    const minY = Math.floor(cY - outerRadius - 1);
+    const maxY = Math.ceil(cY + outerRadius + 1);
+    const minX = Math.floor(cX - outerRadius - 1);
+    const maxX = Math.ceil(cX + outerRadius + 1);
+    
+    // Track visited pixels to avoid drawing any pixel multiple times
+    const visitedPixels = new Set();
+    
+    // First pass: Draw fills
+    if (fillA > 0 && innerRadius > 0) {
+      const innerRadiusSquared = innerRadius * innerRadius;
+      
+      for (let y = minY; y <= maxY; y++) {
+        const dy = y - cY;
+        const distSquared = innerRadiusSquared - dy * dy;
+        
+        if (distSquared >= 0) {
+          const innerXDist = Math.sqrt(distSquared);
+          const leftFillX = Math.ceil(cX - innerXDist + leftAdjust);
+          const rightFillX = Math.floor(cX + innerXDist + rightAdjust);
+          
+          for (let x = leftFillX; x <= rightFillX; x++) {
+            const pixelKey = `${x},${y}`;
+            if (!visitedPixels.has(pixelKey)) {
+              const dx = x - cX;
+              const distFromCenterSquared = dx * dx + dy * dy;
+              
+              if (distFromCenterSquared <= innerRadiusSquared) {
+                this.pixelRenderer.setPixel(x, y, fillR, fillG, fillB, fillA);
+                visitedPixels.add(pixelKey);
+              }
+            }
           }
         }
       }
     }
-
-    if (!fill || thickness > 0) {
-      // Collect all stroke pixels first
-      const strokePixels = new Set();
-      let x = 0;
-      let y = radius;
-      let d = 3 - 2 * radius;
-
-      while (y >= x) {
-        this.circlePlotPoints(strokePixels, centerX, centerY, x, y, thickness);
-        x++;
-
-        if (d > 0) {
-          y--;
-          d = d + 4 * (x - y) + 10;
-        } else {
-          d = d + 4 * x + 6;
+    
+    // Second pass: Draw strokes
+    if (strokeA > 0 && outerRadius > innerRadius) {
+      const outerRadiusSquared = outerRadius * outerRadius;
+      const innerRadiusSquared = innerRadius * innerRadius;
+      
+      // First process horizontal scan lines (constant y)
+      for (let y = minY; y <= maxY; y++) {
+        // Apply vertical adjustments based on position
+        let yAdjust = 0;
+        if (y < cY) yAdjust = topAdjust;
+        else if (y > cY) yAdjust = bottomAdjust;
+        
+        const dy = y - (cY + yAdjust);
+        const distSquared = outerRadiusSquared - dy * dy;
+        
+        if (distSquared >= 0) {
+          const outerXDist = Math.sqrt(distSquared);
+          
+          const leftEdge = Math.floor(cX - outerXDist + leftAdjust);
+          const rightEdge = Math.ceil(cX + outerXDist + rightAdjust);
+          
+          for (let x = leftEdge; x <= rightEdge; x++) {
+            const pixelKey = `${x},${y}`;
+            if (visitedPixels.has(pixelKey)) continue;
+            
+            // Apply horizontal adjustments based on position
+            let xAdjust = 0;
+            if (x < cX) xAdjust = leftAdjust;
+            else if (x > cX) xAdjust = rightAdjust;
+            
+            const dx = x - (cX + xAdjust);
+            const distFromCenterSquared = dx * dx + dy * dy;
+            
+            // Check if pixel is within the stroke area
+            if (distFromCenterSquared <= outerRadiusSquared) {
+              if (innerRadius <= 0 || distFromCenterSquared >= innerRadiusSquared) {
+                this.pixelRenderer.setPixel(x, y, strokeR, strokeG, strokeB, strokeA);
+                visitedPixels.add(pixelKey);
+              }
+            }
+          }
         }
       }
-
-      // Now render each pixel exactly once
-      for (let pixel of strokePixels) {
-        const [x, y] = pixel.split(',').map(Number);
-        this.pixelRenderer.setPixel(x, y, r, g, b, a);
-      }
-    }
-  }
-
-  addStrokePixel(strokePixels, x, y) {
-    strokePixels.add(`${x},${y}`);
-  }
-
-  addThickPoint(strokePixels, x, y, thickness) {
-    const halfThick = Math.floor(thickness / 2);
-    for (let dy = -halfThick; dy < thickness - halfThick; dy++) {
-      for (let dx = -halfThick; dx < thickness - halfThick; dx++) {
-        this.addStrokePixel(strokePixels, Math.round(x + dx), Math.round(y + dy));
+      
+      // Then process vertical scan lines (constant x) to catch any missed pixels
+      for (let x = minX; x <= maxX; x++) {
+        // Apply horizontal adjustments based on position
+        let xAdjust = 0;
+        if (x < cX) xAdjust = leftAdjust;
+        else if (x > cX) xAdjust = rightAdjust;
+        
+        const dx = x - (cX + xAdjust);
+        const distSquared = outerRadiusSquared - dx * dx;
+        
+        if (distSquared >= 0) {
+          const outerYDist = Math.sqrt(distSquared);
+          
+          const topEdge = Math.floor(cY - outerYDist + topAdjust);
+          const bottomEdge = Math.ceil(cY + outerYDist + bottomAdjust);
+          
+          for (let y = topEdge; y <= bottomEdge; y++) {
+            const pixelKey = `${x},${y}`;
+            if (visitedPixels.has(pixelKey)) continue;
+            
+            // Apply vertical adjustments based on position
+            let yAdjust = 0;
+            if (y < cY) yAdjust = topAdjust;
+            else if (y > cY) yAdjust = bottomAdjust;
+            
+            const dy = y - (cY + yAdjust);
+            const distFromCenterSquared = dx * dx + dy * dy;
+            
+            // Check if pixel is within the stroke area
+            if (distFromCenterSquared <= outerRadiusSquared) {
+              if (innerRadius <= 0 || distFromCenterSquared >= innerRadiusSquared) {
+                this.pixelRenderer.setPixel(x, y, strokeR, strokeG, strokeB, strokeA);
+                visitedPixels.add(pixelKey);
+              }
+            }
+          }
+        }
       }
     }
   }
