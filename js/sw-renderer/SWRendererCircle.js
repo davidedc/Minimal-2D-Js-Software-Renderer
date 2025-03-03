@@ -23,12 +23,11 @@ class SWRendererCircle {
   }
 
   drawPreciseCircle(centerX, centerY, innerRadius, outerRadius, fillR, fillG, fillB, fillA, strokeR, strokeG, strokeB, strokeA) {
-    // No initial offset adjustment - we'll handle positioning during pixel placement
+    // Apply base offset adjustment
     const cX = centerX - 0.5;
     const cY = centerY - 0.5;
     
     // Adjustment values for each edge to match canvas rendering
-    // These are manually tuned to align with canvas rendering
     const leftAdjust = 0.0;
     const rightAdjust = 0.5;
     const topAdjust = 0.0;
@@ -42,51 +41,70 @@ class SWRendererCircle {
     
     // Track visited pixels to avoid drawing any pixel multiple times
     const visitedPixels = new Set();
+    // Track fill pixels to ensure we don't draw outside the stroke
+    const fillPixels = new Set();
     // Track cardinal points to fix spurious pixels
     const cardinalPoints = new Set();
     
-    // First pass: Draw fills
-    if (fillA > 0 && innerRadius > 0) {
-      const innerRadiusSquared = innerRadius * innerRadius;
-      
+    // Calculate radius for path and fill
+    const pathRadius = (innerRadius + outerRadius) / 2; // The actual circle path
+    const fillRadius = pathRadius - 0.1; // Make fill slightly smaller to avoid protruding
+    const fillRadiusSquared = fillRadius * fillRadius;
+    
+    // Calculate cardinal points for special handling
+    const rightCardinal = Math.round(cX + outerRadius);
+    const bottomCardinal = Math.round(cY + outerRadius);
+    const rightFillCardinal = Math.round(cX + fillRadius);
+    const bottomFillCardinal = Math.round(cY + fillRadius);
+    
+    // First collect fill pixels but don't draw them yet
+    if (fillA > 0) {
       for (let y = minY; y <= maxY; y++) {
-        const dy = y - cY;
-        const distSquared = innerRadiusSquared - dy * dy;
+        // Apply vertical adjustments
+        let yAdjust = 0;
+        if (y < cY) yAdjust = topAdjust;
+        else if (y > cY) yAdjust = bottomAdjust;
+        
+        const dy = y - (cY + yAdjust);
+        const distSquared = fillRadiusSquared - dy * dy;
         
         if (distSquared >= 0) {
-          const innerXDist = Math.sqrt(distSquared);
-          const leftFillX = Math.ceil(cX - innerXDist + leftAdjust);
-          const rightFillX = Math.floor(cX + innerXDist + rightAdjust);
+          const fillXDist = Math.sqrt(distSquared);
+          
+          // Apply adjusted scan bounds
+          const leftFillX = Math.ceil(cX - fillXDist + leftAdjust);
+          const rightFillX = Math.floor(cX + fillXDist + rightAdjust * 0.5); // Reduce right adjustment to avoid protrusion
           
           for (let x = leftFillX; x <= rightFillX; x++) {
-            const pixelKey = `${x},${y}`;
-            if (!visitedPixels.has(pixelKey)) {
-              const dx = x - cX;
-              const distFromCenterSquared = dx * dx + dy * dy;
-              
-              if (distFromCenterSquared <= innerRadiusSquared) {
-                this.pixelRenderer.setPixel(x, y, fillR, fillG, fillB, fillA);
-                visitedPixels.add(pixelKey);
-              }
+            // Skip extreme cardinal points which cause protrusions
+            if ((x === rightFillCardinal && Math.abs(y - cY) < 2) || 
+                (y === bottomFillCardinal && Math.abs(x - cX) < 2)) {
+              continue;
+            }
+            
+            // Apply specialized fixes for the extreme right and bottom pixels
+            if (x === rightFillCardinal + 1 || y === bottomFillCardinal + 1) {
+              continue;
+            }
+            
+            const dx = x - cX;
+            const distFromCenterSquared = dx * dx + dy * dy;
+            
+            // Check if pixel is truly within fill radius
+            if (distFromCenterSquared <= fillRadiusSquared) {
+              fillPixels.add(`${x},${y}`);
             }
           }
         }
       }
     }
     
-    // Second pass: Draw strokes
+    // Now draw strokes
     if (strokeA > 0 && outerRadius > innerRadius) {
       const outerRadiusSquared = outerRadius * outerRadius;
       const innerRadiusSquared = innerRadius * innerRadius;
       
-      // Calculate cardinal points (rightmost, leftmost, topmost, bottommost)
-      // These are the points we need to be extra careful with
-      const rightCardinal = Math.round(cX + outerRadius);
-      const leftCardinal = Math.round(cX - outerRadius);
-      const topCardinal = Math.round(cY - outerRadius);
-      const bottomCardinal = Math.round(cY + outerRadius);
-      
-      // First process horizontal scan lines (constant y)
+      // Process horizontal scan lines (constant y)
       for (let y = minY; y <= maxY; y++) {
         // Apply vertical adjustments based on position
         let yAdjust = 0;
@@ -132,7 +150,7 @@ class SWRendererCircle {
         }
       }
       
-      // Then process vertical scan lines (constant x) to catch any missed pixels
+      // Process vertical scan lines (constant x) to catch any missed pixels
       for (let x = minX; x <= maxX; x++) {
         // Apply horizontal adjustments based on position
         let xAdjust = 0;
@@ -184,6 +202,17 @@ class SWRendererCircle {
               }
             }
           }
+        }
+      }
+    }
+    
+    // Finally, draw fill pixels that aren't covered by stroke
+    if (fillA > 0) {
+      for (const pixelKey of fillPixels) {
+        if (!visitedPixels.has(pixelKey)) {
+          const [x, y] = pixelKey.split(',').map(Number);
+          this.pixelRenderer.setPixel(x, y, fillR, fillG, fillB, fillA);
+          visitedPixels.add(pixelKey);
         }
       }
     }

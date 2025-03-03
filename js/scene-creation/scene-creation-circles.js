@@ -48,7 +48,7 @@ function addSingleRandomCircle(shapes, log, currentExampleNumber) {
     center: { x: centerX, y: centerY },
     radius,
     strokeWidth,
-    strokeColor: { r: 255, g: 0, b: 0, a: 255 }, // Red stroke for visibility
+    strokeColor: getRandomColor(100, 200), // Red stroke for visibility
     fillColor: getRandomColor(100, 200), // Random semi-transparent fill
     startAngle: 0,
     endAngle: 360
