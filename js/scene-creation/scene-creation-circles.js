@@ -32,10 +32,10 @@ function addSingleRandomCircle(shapes, log, currentExampleNumber) {
     : placeCloseToCenterAtGrid(renderComparisonWidth, renderComparisonHeight);
   
   // Generate a random stroke width (integer value)
-  const strokeWidth = 1 + Math.floor(SeededRandom.getRandom() * 4);
+  const strokeWidth = 1 + Math.floor(SeededRandom.getRandom() * 30);
   
   // Generate a random diameter (similar range as the 1px test cases)
-  let diameter = Math.floor(20 + SeededRandom.getRandom() * 130);
+  let diameter = Math.floor(20 + SeededRandom.getRandom() * 450);
   
   // Adjust the diameter for crisp stroke rendering
   const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(diameter, diameter, strokeWidth, { x: centerX, y: centerY });
