@@ -33,11 +33,11 @@ class SWRendererCircle {
     const topAdjust = 0.0;
     const bottomAdjust = 0.5;
     
-    // Calculate the bounds for processing
-    const minY = Math.floor(cY - outerRadius - 1);
-    const maxY = Math.ceil(cY + outerRadius + 1);
-    const minX = Math.floor(cX - outerRadius - 1);
-    const maxX = Math.ceil(cX + outerRadius + 1);
+    // Calculate the bounds for processing with boundary checking
+    const minY = Math.max(0, Math.floor(cY - outerRadius - 1));
+    const maxY = Math.min(this.pixelRenderer.height - 1, Math.ceil(cY + outerRadius + 1));
+    const minX = Math.max(0, Math.floor(cX - outerRadius - 1));
+    const maxX = Math.min(this.pixelRenderer.width - 1, Math.ceil(cX + outerRadius + 1));
     
     // The path is the true mathematical circle (centered between innerRadius and outerRadius)
     const pathRadius = (innerRadius + outerRadius) / 2;
@@ -45,8 +45,9 @@ class SWRendererCircle {
     const fillRadius = pathRadius;
     const fillRadiusSquared = fillRadius * fillRadius;
     
-    // Track drawn pixels for proper stroke and fill management
-    const drawnPixels = new Map();
+    // Check if we need pixel tracking for blending
+    const needsPixelTracking = fillA > 0 && strokeA > 0 && outerRadius > innerRadius && strokeA < 255;
+    const drawnPixels = needsPixelTracking ? new Map() : null;
     
     // Calculate cardinal points for special handling
     const rightCardinal = Math.round(cX + outerRadius);
@@ -54,23 +55,27 @@ class SWRendererCircle {
     const rightFillCardinal = Math.round(cX + fillRadius);
     const bottomFillCardinal = Math.round(cY + fillRadius);
     
-    // Draw fill first (will be covered by stroke where they overlap)
-    if (fillA > 0) {
-      for (let y = minY; y <= maxY; y++) {
-        // Apply vertical adjustments
-        let yAdjust = 0;
-        if (y < cY) yAdjust = topAdjust;
-        else if (y > cY) yAdjust = bottomAdjust;
+    // Process each row in a single pass
+    for (let y = minY; y <= maxY; y++) {
+      // Apply vertical adjustments
+      let yAdjust = 0;
+      if (y < cY) yAdjust = topAdjust;
+      else if (y > cY) yAdjust = bottomAdjust;
+      
+      // Precompute and reuse distance calculation
+      const dy = y - (cY + yAdjust);
+      const dySquared = dy * dy;
+      
+      // Process fill for this row
+      if (fillA > 0) {
+        const fillDistSquared = fillRadiusSquared - dySquared;
         
-        const dy = y - (cY + yAdjust);
-        const distSquared = fillRadiusSquared - dy * dy;
-        
-        if (distSquared >= 0) {
-          const fillXDist = Math.sqrt(distSquared);
+        if (fillDistSquared >= 0) {
+          const fillXDist = Math.sqrt(fillDistSquared);
           
-          // Apply adjusted scan bounds
-          const leftFillX = Math.ceil(cX - fillXDist + leftAdjust);
-          const rightFillX = Math.floor(cX + fillXDist + rightAdjust * 0.5); // Reduce right adjustment
+          // Apply adjusted scan bounds with boundary checking
+          const leftFillX = Math.max(0, Math.ceil(cX - fillXDist + leftAdjust));
+          const rightFillX = Math.min(this.pixelRenderer.width - 1, Math.floor(cX + fillXDist + rightAdjust * 0.5));
           
           for (let x = leftFillX; x <= rightFillX; x++) {
             // Skip extreme cardinal points which cause protrusions
@@ -85,13 +90,15 @@ class SWRendererCircle {
             }
             
             const dx = x - cX;
-            const distFromCenterSquared = dx * dx + dy * dy;
+            const distFromCenterSquared = dx * dx + dySquared; // Reuse dySquared
             
             // Check if pixel is within fill radius
             if (distFromCenterSquared <= fillRadiusSquared) {
-              const key = `${x},${y}`;
               this.pixelRenderer.setPixel(x, y, fillR, fillG, fillB, fillA);
-              drawnPixels.set(key, { r: fillR, g: fillG, b: fillB, a: fillA });
+              if (needsPixelTracking) {
+                const key = `${x},${y}`;
+                drawnPixels.set(key, { r: fillR, g: fillG, b: fillB, a: fillA });
+              }
             }
           }
         }
@@ -111,14 +118,17 @@ class SWRendererCircle {
         if (y < cY) yAdjust = topAdjust;
         else if (y > cY) yAdjust = bottomAdjust;
         
+        // Reuse dy calculation
         const dy = y - (cY + yAdjust);
-        const distSquared = outerRadiusSquared - dy * dy;
+        const dySquared = dy * dy;
+        const distSquared = outerRadiusSquared - dySquared;
         
         if (distSquared >= 0) {
           const outerXDist = Math.sqrt(distSquared);
           
-          const leftEdge = Math.floor(cX - outerXDist + leftAdjust);
-          const rightEdge = Math.ceil(cX + outerXDist + rightAdjust);
+          // Apply boundary checking
+          const leftEdge = Math.max(0, Math.floor(cX - outerXDist + leftAdjust));
+          const rightEdge = Math.min(this.pixelRenderer.width - 1, Math.ceil(cX + outerXDist + rightAdjust));
           
           for (let x = leftEdge; x <= rightEdge; x++) {
             // Skip cardinal points - we'll handle these specially
@@ -134,7 +144,7 @@ class SWRendererCircle {
             else if (x > cX) xAdjust = rightAdjust;
             
             const dx = x - (cX + xAdjust);
-            const distFromCenterSquared = dx * dx + dy * dy;
+            const distFromCenterSquared = dx * dx + dySquared; // Reuse dySquared
             
             // Check if pixel is within the stroke area
             if (distFromCenterSquared <= outerRadiusSquared) {
@@ -142,7 +152,7 @@ class SWRendererCircle {
                 const key = `${x},${y}`;
                 
                 // If the pixel has fill and stroke is semi-transparent, we need to blend
-                if (drawnPixels.has(key) && strokeA < 255) {
+                if (needsPixelTracking && drawnPixels.has(key)) {
                   const fillColor = drawnPixels.get(key);
                   const blendedColor = this.blendColors(
                     fillColor.r, fillColor.g, fillColor.b, fillColor.a,
@@ -153,7 +163,9 @@ class SWRendererCircle {
                   // Either no fill or fully opaque stroke - just draw the stroke
                   this.pixelRenderer.setPixel(x, y, strokeR, strokeG, strokeB, strokeA);
                 }
-                drawnPixels.set(key, { r: strokeR, g: strokeG, b: strokeB, a: strokeA });
+                if (needsPixelTracking) {
+                  drawnPixels.set(key, { r: strokeR, g: strokeG, b: strokeB, a: strokeA });
+                }
               }
             }
           }
@@ -168,13 +180,15 @@ class SWRendererCircle {
         else if (x > cX) xAdjust = rightAdjust;
         
         const dx = x - (cX + xAdjust);
-        const distSquared = outerRadiusSquared - dx * dx;
+        const dxSquared = dx * dx;
+        const distSquared = outerRadiusSquared - dxSquared;
         
         if (distSquared >= 0) {
           const outerYDist = Math.sqrt(distSquared);
           
-          const topEdge = Math.floor(cY - outerYDist + topAdjust);
-          const bottomEdge = Math.ceil(cY + outerYDist + bottomAdjust);
+          // Apply boundary checking
+          const topEdge = Math.max(0, Math.floor(cY - outerYDist + topAdjust));
+          const bottomEdge = Math.min(this.pixelRenderer.height - 1, Math.ceil(cY + outerYDist + bottomAdjust));
           
           for (let y = topEdge; y <= bottomEdge; y++) {
             // Skip cardinal points we've already marked
@@ -182,8 +196,10 @@ class SWRendererCircle {
             
             const key = `${x},${y}`;
             // Skip pixels we've already handled in the horizontal scan
-            if (drawnPixels.has(key) && drawnPixels.get(key).r === strokeR && 
-                drawnPixels.get(key).g === strokeG && drawnPixels.get(key).b === strokeB) {
+            if (needsPixelTracking && drawnPixels.has(key) && 
+                drawnPixels.get(key).r === strokeR && 
+                drawnPixels.get(key).g === strokeG && 
+                drawnPixels.get(key).b === strokeB) {
               continue;
             }
             
@@ -193,7 +209,7 @@ class SWRendererCircle {
             else if (y > cY) yAdjust = bottomAdjust;
             
             const dy = y - (cY + yAdjust);
-            const distFromCenterSquared = dx * dx + dy * dy;
+            const distFromCenterSquared = dxSquared + dy * dy; // Reuse dxSquared
             
             // Check if pixel is within the stroke area
             if (distFromCenterSquared <= outerRadiusSquared) {
@@ -212,7 +228,7 @@ class SWRendererCircle {
                 }
                 
                 // If the pixel has fill and stroke is semi-transparent, we need to blend
-                if (drawnPixels.has(key) && strokeA < 255) {
+                if (needsPixelTracking && drawnPixels.has(key)) {
                   const fillColor = drawnPixels.get(key);
                   const blendedColor = this.blendColors(
                     fillColor.r, fillColor.g, fillColor.b, fillColor.a,
@@ -223,7 +239,9 @@ class SWRendererCircle {
                   // Either no fill or fully opaque stroke - just draw the stroke
                   this.pixelRenderer.setPixel(x, y, strokeR, strokeG, strokeB, strokeA);
                 }
-                drawnPixels.set(key, { r: strokeR, g: strokeG, b: strokeB, a: strokeA });
+                if (needsPixelTracking) {
+                  drawnPixels.set(key, { r: strokeR, g: strokeG, b: strokeB, a: strokeA });
+                }
               }
             }
           }
