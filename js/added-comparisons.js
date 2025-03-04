@@ -268,3 +268,31 @@ function addSingleRandomCircleComparison() {
     .withExtremesCheck(0.03)  // Same tolerance as the 1px circle tests
     .build();
 }
+
+function addSingleNoStrokeCircleComparison() {
+  return new RenderComparisonBuilder()
+    .withId('single-no-stroke-circle')
+    .withTitle('Single Circle Without Stroke')
+    .withDescription('Tests rendering of a single circle with no stroke, only fill, to validate fill accuracy')
+    .addShapes(addSingleNoStrokeCircle)  // Using the no-stroke version
+    .withExtremesCheck(0.03)  // Same tolerance as the circle tests
+    .build();
+}
+
+function addMultiplePreciseRandomCirclesComparison() {
+  return new RenderComparisonBuilder()
+    .withId('multiple-precise-random-circles')
+    .withTitle('Multiple Precise Random Circles')
+    .withDescription('Tests rendering of multiple circles with precise pixel alignment, varied strokes and fills')
+    .addShapes(addMultiplePreciseRandomCircles, 12)  // Create 12 circles
+    .build();
+}
+
+function addMultiplePreciseNoStrokeCirclesComparison() {
+  return new RenderComparisonBuilder()
+    .withId('multiple-precise-no-stroke-circles')
+    .withTitle('Multiple Precise Fill-Only Circles')
+    .withDescription('Tests rendering of multiple circles with no strokes, only fills, to validate the fill algorithm')
+    .addShapes(addMultiplePreciseNoStrokeCircles, 12)  // Create 12 circles
+    .build();
+}

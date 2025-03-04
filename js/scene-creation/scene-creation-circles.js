@@ -78,6 +78,242 @@ function addSingleRandomCircle(shapes, log, currentExampleNumber) {
   };
 }
 
+function addSingleNoStrokeCircle(shapes, log, currentExampleNumber) {
+  SeededRandom.seedWithInteger(currentExampleNumber);
+  
+  // Ensure canvas dimensions are even for proper alignment
+  checkCanvasHasEvenDimensions();
+  
+  // Randomly choose between grid-centered and pixel-centered
+  const atPixel = SeededRandom.getRandom() < 0.5;
+  
+  // Get a center point (either at grid or at pixel)
+  const {centerX, centerY} = atPixel
+    ? placeCloseToCenterAtPixel(renderComparisonWidth, renderComparisonHeight)
+    : placeCloseToCenterAtGrid(renderComparisonWidth, renderComparisonHeight);
+  
+  // Generate a random diameter (similar range as the 1px test cases)
+  let diameter = Math.floor(20 + SeededRandom.getRandom() * 450);
+  
+  // Adjust the diameter for crisp rendering
+  const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(diameter, diameter, 0, { x: centerX, y: centerY });
+  const adjustedDiameter = adjustedDimensions.width; // width equals height for circle
+  const radius = adjustedDiameter / 2;
+  
+  // Create the circle with the calculated parameters, no stroke
+  const circle = {
+    type: 'circle',
+    center: { x: centerX, y: centerY },
+    radius,
+    strokeWidth: 0,
+    strokeColor: { r: 0, g: 0, b: 0, a: 0 }, // Transparent stroke (no stroke)
+    fillColor: getRandomColor(100, 200), // Random semi-transparent fill
+    startAngle: 0,
+    endAngle: 360
+  };
+  
+  // Add the circle to shapes
+  shapes.push(circle);
+  
+  // Log the circle details
+  log.innerHTML += `&#x20DD; Single circle with no stroke at (${centerX}, ${centerY}) radius: ${radius} ` + 
+                  `diameter: ${adjustedDiameter} ` +
+                  `centered at: ${atPixel ? 'pixel' : 'grid'} ` + 
+                  `fillColor: ${colorToString(circle.fillColor)}<br>`;
+  
+  // Calculate and return extremes for the circle
+  return {
+    leftX: Math.floor(circle.center.x - radius),
+    rightX: Math.floor(circle.center.x - radius) + radius * 2 - 1,
+    topY: Math.floor(circle.center.y - radius),
+    bottomY: Math.floor(circle.center.y - radius) + radius * 2 - 1
+  };
+}
+
+/**
+ * Helper function to generate multiple circles with smart placement
+ * @param {Array} shapes - Array to add shapes to
+ * @param {HTMLElement} log - Log element to add descriptions
+ * @param {number} count - Number of circles to create
+ * @param {boolean} includeStrokes - Whether to include strokes on circles
+ * @param {string} description - Description to log
+ * @returns {void}
+ */
+function generateMultiplePreciseCircles(shapes, log, currentExampleNumber, count, includeStrokes, description) {
+  SeededRandom.seedWithInteger(currentExampleNumber);
+  
+  // Ensure canvas dimensions are even for proper alignment
+  checkCanvasHasEvenDimensions();
+  
+  // Safe margins to keep circles fully visible within canvas
+  const margin = 60;
+  const safeWidth = renderComparisonWidth - 2 * margin;
+  const safeHeight = renderComparisonHeight - 2 * margin;
+  
+  log.innerHTML += `${description} (${count} circles)<br>`;
+  
+  // Pre-calculate several circle sizes to ensure a good mix
+  // but prevent the largest circles from obscuring everything
+  const sizes = [];
+  for (let i = 0; i < count; i++) {
+    // Mix of smaller and larger circles
+    const radius = 8 + Math.floor(SeededRandom.getRandom() * 35);
+    sizes.push(radius);
+  }
+  
+  // Sort sizes in descending order so we place larger circles first
+  sizes.sort((a, b) => b - a);
+  
+  // Track placed circles to avoid excessive overlap
+  const placedCircles = [];
+  
+  for (let i = 0; i < count; i++) {
+    // Get pre-calculated radius
+    const radius = sizes[i];
+    const diameter = radius * 2;
+    
+    // Generate a random stroke width (varied range for visual interest)
+    // Use 0 if not including strokes
+    const strokeWidth = includeStrokes ? (1 + Math.floor(SeededRandom.getRandom() * 4)) : 0;
+    
+    // Generate multiple position candidates and pick the one with least overlap
+    let bestX, bestY;
+    let bestOverlapScore = Infinity;
+    
+    // Try several positions to find a good spot
+    const attempts = 8;
+    for (let attempt = 0; attempt < attempts; attempt++) {
+      // True random positioning within the safe area
+      // Use integer positions for precise pixel alignment
+      const candidateX = Math.floor(margin + SeededRandom.getRandom() * safeWidth);
+      const candidateY = Math.floor(margin + SeededRandom.getRandom() * safeHeight);
+      
+      // Calculate overlap score with existing circles
+      let overlapScore = 0;
+      for (const placed of placedCircles) {
+        // Calculate distance between circle centers
+        const dx = candidateX - placed.x;
+        const dy = candidateY - placed.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        // If circles would overlap significantly, increase score
+        const minDistance = radius + placed.radius;
+        if (distance < minDistance) {
+          // More penalty for more overlap
+          overlapScore += (minDistance - distance) * 2;
+        }
+      }
+      
+      // Check if this position is better than previous attempts
+      if (overlapScore < bestOverlapScore) {
+        bestOverlapScore = overlapScore;
+        bestX = candidateX;
+        bestY = candidateY;
+        
+        // If we found a position with no significant overlap, use it right away
+        if (overlapScore < radius * 0.5) {
+          break;
+        }
+      }
+    }
+    
+    // Adjust dimensions for crisp rendering
+    const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(
+      diameter, diameter, strokeWidth, { x: bestX, y: bestY }
+    );
+    const adjustedDiameter = adjustedDimensions.width;
+    const finalRadius = adjustedDiameter / 2;
+    
+    // Choose center type - either at grid point or pixel center
+    const atPixel = SeededRandom.getRandom() < 0.5;
+    let centerX = bestX;
+    let centerY = bestY;
+    
+    // Adjust center if needed to be either at grid or pixel center
+    if (atPixel && centerX % 1 !== 0.5) {
+      centerX = Math.floor(centerX) + 0.5;
+    } else if (!atPixel && centerX % 1 === 0.5) {
+      centerX = Math.floor(centerX);
+    }
+    
+    if (atPixel && centerY % 1 !== 0.5) {
+      centerY = Math.floor(centerY) + 0.5;
+    } else if (!atPixel && centerY % 1 === 0.5) {
+      centerY = Math.floor(centerY);
+    }
+    
+    // Create the circle with distinct colors (using partitioning to ensure variety)
+    const circle = {
+      type: 'circle',
+      center: { x: centerX, y: centerY },
+      radius: finalRadius,
+      strokeWidth,
+      // If not including strokes, use transparent stroke color
+      strokeColor: includeStrokes ? 
+                  getRandomColor(200, 255, i, count) : 
+                  { r: 0, g: 0, b: 0, a: 0 },
+      // Use more opaque fills if no stroke to make them more visible
+      fillColor: getRandomColor(includeStrokes ? 150 : 200, 
+                              includeStrokes ? 200 : 255, 
+                              count - i - 1, count),
+      startAngle: 0,
+      endAngle: 360
+    };
+    
+    // Track placed circle for overlap prevention
+    placedCircles.push({
+      x: centerX,
+      y: centerY,
+      radius: finalRadius + strokeWidth
+    });
+    
+    // Add the circle to shapes
+    shapes.push(circle);
+    
+    // Log only the first few circles to avoid cluttering the log
+    if (i < 3) {
+      log.innerHTML += `&#x20DD; Circle ${i} at (${centerX}, ${centerY}) radius: ${finalRadius} ` + 
+                      (includeStrokes ? `strokeWidth: ${strokeWidth} ` : `no stroke `) +
+                      `center type: ${atPixel ? 'pixel' : 'grid'} ` +
+                      (includeStrokes ? `strokeColor: ${colorToString(circle.strokeColor)} ` : ``) +
+                      `fillColor: ${colorToString(circle.fillColor)}<br>`;
+    }
+  }
+  
+  // Log message if we truncated the output
+  if (count > 3) {
+    log.innerHTML += `... and ${count - 3} more circles<br>`;
+  }
+}
+
+/**
+ * Add multiple precise random circles with strokes
+ */
+function addMultiplePreciseRandomCircles(shapes, log, currentExampleNumber, count = 10) {
+  generateMultiplePreciseCircles(
+    shapes, 
+    log, 
+    currentExampleNumber, 
+    count, 
+    true, 
+    "Adding multiple precise random circles with strokes"
+  );
+}
+
+/**
+ * Add multiple precise random circles without strokes (fill only)
+ */
+function addMultiplePreciseNoStrokeCircles(shapes, log, currentExampleNumber, count = 10) {
+  generateMultiplePreciseCircles(
+    shapes, 
+    log, 
+    currentExampleNumber, 
+    count, 
+    false, 
+    "Adding multiple precise random circles without strokes (fill only)"
+  );
+}
+
 // ----------------------------------------------------------------------
 // Single 1px Stroked Circle centered at grid
 function add1PxStrokeCenteredCircleAtGrid(shapes, log, currentExampleNumber) {

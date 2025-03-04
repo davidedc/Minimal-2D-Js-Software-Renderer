@@ -68,7 +68,10 @@ function addRenderComparisons() {
 
   add1PxStrokedCircleCenteredAtGridComparison();
   add1PxStrokedCircleCenteredAtPixelComparison();
-  addSingleRandomCircleComparison(); // TODO the extremes really don't match the canvas results right now, needs fixing.
+  addSingleRandomCircleComparison(); 
+  addSingleNoStrokeCircleComparison(); // Test case for circles with no stroke
+  addMultiplePreciseRandomCirclesComparison(); // Multiple precise pixel-aligned circles with strokes
+  addMultiplePreciseNoStrokeCirclesComparison(); // Multiple precise pixel-aligned circles without strokes
   addRandomCirclesComparison();
   
   addNinetyDegreeArcsComparison();
