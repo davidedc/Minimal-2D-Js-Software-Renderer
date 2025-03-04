@@ -36,8 +36,12 @@ function createTestCircle(currentExampleNumber, hasStroke = true, randomPosition
     : placeCloseToCenterAtGrid(renderComparisonWidth, renderComparisonHeight);
   
   // Initialize stroke width and diameter
-  const strokeWidth = hasStroke ? (1 + Math.floor(SeededRandom.getRandom() * 30)) : 0;
   let diameter = Math.floor(20 + SeededRandom.getRandom() * 450);
+  
+  // Calculate maximum allowed stroke width based on diameter
+  // Use 1/3 of radius as maximum to ensure fill is visible
+  const maxStrokeWidth = Math.floor((diameter / 2)/1);
+  const strokeWidth = hasStroke ? (1 + Math.floor(SeededRandom.getRandom() * Math.min(30, maxStrokeWidth))) : 0;
   
   // Apply random position offset if requested
   if (randomPosition) {
