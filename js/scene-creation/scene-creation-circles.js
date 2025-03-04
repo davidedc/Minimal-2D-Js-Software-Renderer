@@ -16,62 +16,74 @@ function addRandomCircles(shapes, log, currentExampleNumber, count = 5) {
   }
 }
 
-
 /**
- * Helper function to create a circle with calculated parameters
- * Can be used for both stroke and no-stroke circles, and allows for random position offsets
+ * Utility function to calculate circle parameters with proper positioning and dimensions
+ * @param {Object} options - Configuration options for circle creation
+ * @param {number} options.minRadius - Minimum radius for the circle
+ * @param {number} options.maxRadius - Maximum radius for the circle
+ * @param {boolean} options.hasStroke - Whether the circle has a stroke
+ * @param {number} options.minStrokeWidth - Minimum stroke width (if hasStroke is true)
+ * @param {number} options.maxStrokeWidth - Maximum stroke width (if hasStroke is true)
+ * @param {boolean} options.randomPosition - Whether to use random positioning
+ * @param {number} options.marginX - Horizontal margin from canvas edges
+ * @param {number} options.marginY - Vertical margin from canvas edges
+ * @returns {Object} Calculated circle parameters
  */
-function createTestCircle(currentExampleNumber, hasStroke = true, randomPosition = false) {
-  SeededRandom.seedWithInteger(currentExampleNumber);
-  
-  // Ensure canvas dimensions are even for proper alignment
-  checkCanvasHasEvenDimensions();
-  
+function calculateCircleParameters(options) {
+  const {
+    minRadius = 8,
+    maxRadius = 225,
+    hasStroke = true,
+    minStrokeWidth = 1,
+    maxStrokeWidth = 30,
+    randomPosition = false,
+    marginX = 10,
+    marginY = 10
+  } = options;
+
   // Randomly choose between grid-centered and pixel-centered
   const atPixel = SeededRandom.getRandom() < 0.5;
   
-  // Get a center point (either at grid or at pixel)
+  // Get initial center point
   let {centerX, centerY} = atPixel
     ? placeCloseToCenterAtPixel(renderComparisonWidth, renderComparisonHeight)
     : placeCloseToCenterAtGrid(renderComparisonWidth, renderComparisonHeight);
   
-  // Initialize stroke width and diameter
-  let diameter = Math.floor(20 + SeededRandom.getRandom() * 450);
+  // Calculate base diameter
+  const diameter = Math.floor(minRadius * 2 + SeededRandom.getRandom() * (maxRadius * 2 - minRadius * 2));
+  const baseRadius = diameter / 2;
   
-  // Calculate maximum allowed stroke width based on diameter
-  // Use 1/3 of radius as maximum to ensure fill is visible
-  const maxStrokeWidth = Math.floor((diameter / 2)/1);
-  const strokeWidth = hasStroke ? (1 + Math.floor(SeededRandom.getRandom() * Math.min(30, maxStrokeWidth))) : 0;
+  // Calculate stroke width
+  const maxAllowedStrokeWidth = Math.floor(baseRadius / 1);
+  const strokeWidth = hasStroke 
+    ? (minStrokeWidth + Math.floor(SeededRandom.getRandom() * Math.min(maxStrokeWidth - minStrokeWidth + 1, maxAllowedStrokeWidth)))
+    : 0;
   
-  // Apply random position offset if requested
+  // Handle random positioning if requested
   if (randomPosition) {
-    // Pre-calculate approximate radius (this is an estimation before adjustment)
-    const estimatedRadius = diameter / 2;
-    // Calculate the total radius including stroke
-    const totalRadius = estimatedRadius + (strokeWidth / 2);
+    const totalRadius = baseRadius + (strokeWidth / 2);
     
-    // Calculate safe bounds to ensure circle stays completely inside canvas
-    const minX = Math.ceil(totalRadius + 10); // +10 for extra safety margin
-    const maxX = Math.floor(renderComparisonWidth - totalRadius - 10);
-    const minY = Math.ceil(totalRadius + 10);
-    const maxY = Math.floor(renderComparisonHeight - totalRadius - 10);
+    // Calculate safe bounds
+    const minX = Math.ceil(totalRadius + marginX);
+    const maxX = Math.floor(renderComparisonWidth - totalRadius - marginX);
+    const minY = Math.ceil(totalRadius + marginY);
+    const maxY = Math.floor(renderComparisonHeight - totalRadius - marginY);
     
-    // For very large circles, we might need to reduce the diameter to fit
+    // Adjust diameter if circle is too large
+    let adjustedDiameter = diameter;
     if (maxX <= minX || maxY <= minY) {
       // Circle is too large, reduce diameter to 1/4 of canvas size
-      diameter = Math.min(
-        Math.floor(renderComparisonWidth / 4), 
+      adjustedDiameter = Math.min(
+        Math.floor(renderComparisonWidth / 4),
         Math.floor(renderComparisonHeight / 4)
       );
       
       // Recalculate bounds with reduced diameter
-      const newEstimatedRadius = diameter / 2;
-      const newTotalRadius = newEstimatedRadius + (strokeWidth / 2);
-      
-      const newMinX = Math.ceil(newTotalRadius + 10);
-      const newMaxX = Math.floor(renderComparisonWidth - newTotalRadius - 10);
-      const newMinY = Math.ceil(newTotalRadius + 10);
-      const newMaxY = Math.floor(renderComparisonHeight - newTotalRadius - 10);
+      const newTotalRadius = (adjustedDiameter / 2) + (strokeWidth / 2);
+      const newMinX = Math.ceil(newTotalRadius + marginX);
+      const newMaxX = Math.floor(renderComparisonWidth - newTotalRadius - marginX);
+      const newMinY = Math.ceil(newTotalRadius + marginY);
+      const newMaxY = Math.floor(renderComparisonHeight - newTotalRadius - marginY);
       
       // Generate random position within new safe bounds
       centerX = newMinX + Math.floor(SeededRandom.getRandom() * (newMaxX - newMinX + 1));
@@ -83,21 +95,47 @@ function createTestCircle(currentExampleNumber, hasStroke = true, randomPosition
     }
   }
   
-  // Adjust the diameter for crisp rendering
+  // Adjust dimensions for crisp rendering
   const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(
     diameter, diameter, strokeWidth, { x: centerX, y: centerY }
   );
-  const adjustedDiameter = adjustedDimensions.width; // width equals height for circle
+  const adjustedDiameter = adjustedDimensions.width;
   const radius = adjustedDiameter / 2;
   
-  // Create the circle with calculated parameters
+  return {
+    centerX,
+    centerY,
+    radius,
+    strokeWidth,
+    adjustedDiameter,
+    atPixel
+  };
+}
+
+function createTestCircle(currentExampleNumber, hasStroke = true, randomPosition = false) {
+  SeededRandom.seedWithInteger(currentExampleNumber);
+  checkCanvasHasEvenDimensions();
+  
+  const params = calculateCircleParameters({
+    minRadius: 10,
+    maxRadius: 225,
+    hasStroke,
+    minStrokeWidth: 1,
+    maxStrokeWidth: 30,
+    randomPosition,
+    marginX: 10,
+    marginY: 10
+  });
+  
+  const { centerX, centerY, radius, strokeWidth, adjustedDiameter, atPixel } = params;
+  
   const circle = {
     type: 'circle',
     center: { x: centerX, y: centerY },
     radius,
     strokeWidth,
-    strokeColor: hasStroke ? getRandomColor(150, 230) : { r: 0, g: 0, b: 0, a: 0 }, // More opaque stroke for visibility
-    fillColor: getRandomColor(100, 200), // Semi-transparent fill
+    strokeColor: hasStroke ? getRandomColor(150, 230) : { r: 0, g: 0, b: 0, a: 0 },
+    fillColor: getRandomColor(100, 200),
     startAngle: 0,
     endAngle: 360
   };
@@ -201,69 +239,29 @@ function addRandomPositionNoStrokeCircle(shapes, log, currentExampleNumber) {
  */
 function generateMultiplePreciseCircles(shapes, log, currentExampleNumber, count, includeStrokes, description) {
   SeededRandom.seedWithInteger(currentExampleNumber);
-  
-  // Ensure canvas dimensions are even for proper alignment
   checkCanvasHasEvenDimensions();
-  
-  // Safe margins to keep circles fully visible within canvas
-  const margin = 60;
-  const safeWidth = renderComparisonWidth - 2 * margin;
-  const safeHeight = renderComparisonHeight - 2 * margin;
   
   log.innerHTML += `${description} (${count} circles)<br>`;
   
   for (let i = 0; i < count; i++) {
-    // Generate random radius (8-42 pixels)
-    const radius = 8 + Math.floor(SeededRandom.getRandom() * 35);
-    const diameter = radius * 2;
+    const params = calculateCircleParameters({
+      minRadius: 8,
+      maxRadius: 42,
+      hasStroke: includeStrokes,
+      minStrokeWidth: 1,
+      maxStrokeWidth: 4,
+      randomPosition: true,
+      marginX: 60,
+      marginY: 60
+    });
     
-    // Generate a random stroke width (varied range for visual interest)
-    // Use 0 if not including strokes
-    let strokeWidth = includeStrokes ? (1 + Math.floor(SeededRandom.getRandom() * 4)) : 0;
-    
-    // Calculate safe bounds to ensure circle stays completely inside canvas
-    const minX = Math.ceil(margin + radius + strokeWidth/2);
-    const maxX = Math.floor(renderComparisonWidth - margin - radius - strokeWidth/2);
-    const minY = Math.ceil(margin + radius + strokeWidth/2);
-    const maxY = Math.floor(renderComparisonHeight - margin - radius - strokeWidth/2);
-    
-    // Generate random position within safe bounds
-    const randX = Math.floor(minX + SeededRandom.getRandom() * (maxX - minX + 1));
-    const randY = Math.floor(minY + SeededRandom.getRandom() * (maxY - minY + 1));
-    
-
-    // Choose center type - either at grid point or pixel center
-    const atPixel = SeededRandom.getRandom() < 0.5;
-    let centerX = randX;
-    let centerY = randY;
-    
-    // Adjust center if needed to be either at grid or pixel center
-    if (atPixel && centerX % 1 !== 0.5) {
-      centerX = Math.floor(centerX) + 0.5;
-    } else if (!atPixel && centerX % 1 === 0.5) {
-      centerX = Math.floor(centerX);
-    }
-    
-    if (atPixel && centerY % 1 !== 0.5) {
-      centerY = Math.floor(centerY) + 0.5;
-    } else if (!atPixel && centerY % 1 === 0.5) {
-      centerY = Math.floor(centerY);
-    }
-
-
-    // Adjust dimensions for crisp rendering
-    const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(
-      diameter, diameter, strokeWidth, { x: centerX, y: centerY }
-    );
-    const adjustedDiameter = adjustedDimensions.width;
-    const finalRadius = adjustedDiameter / 2;
-    
+    const { centerX, centerY, radius, strokeWidth, atPixel } = params;
     
     // Create the circle with distinct colors (using partitioning to ensure variety)
     const circle = {
       type: 'circle',
       center: { x: centerX, y: centerY },
-      radius: finalRadius,
+      radius,
       strokeWidth,
       // If not including strokes, use transparent stroke color
       strokeColor: includeStrokes ? 
@@ -282,7 +280,7 @@ function generateMultiplePreciseCircles(shapes, log, currentExampleNumber, count
     
     // Log only the first few circles to avoid cluttering the log
     if (i < 3) {
-      log.innerHTML += `&#x20DD; Circle ${i} at (${centerX}, ${centerY}) radius: ${finalRadius} ` + 
+      log.innerHTML += `&#x20DD; Circle ${i} at (${centerX}, ${centerY}) radius: ${radius} ` + 
                       (includeStrokes ? `strokeWidth: ${strokeWidth} ` : `no stroke `) +
                       `center type: ${atPixel ? 'pixel' : 'grid'} ` +
                       (includeStrokes ? `strokeColor: ${colorToString(circle.strokeColor)} ` : ``) +
