@@ -95,11 +95,12 @@ class SWRendererCircle {
       }
     }
     
-    // Then draw stroke on top of fill
+    // Then draw stroke on top of fill - use a Set to track drawn pixels to prevent overdraw
     if (strokeA > 0 && outerRadius > innerRadius) {
       const outerRadiusSquared = outerRadius * outerRadius;
       const innerRadiusSquared = innerRadius * innerRadius;
       const cardinalPoints = new Set();
+      const drawnStrokePixels = new Set(); // Track drawn stroke pixels to prevent double-drawing
       
       // First scan horizontal lines
       for (let y = minY; y <= maxY; y++) {
@@ -139,8 +140,13 @@ class SWRendererCircle {
             // Check if pixel is within the stroke area
             if (distFromCenterSquared <= outerRadiusSquared) {
               if (innerRadius <= 0 || distFromCenterSquared >= innerRadiusSquared) {
-                // Just draw the stroke - setPixel will handle blending
-                this.pixelRenderer.setPixel(x, y, strokeR, strokeG, strokeB, strokeA);
+                const pixelKey = `${x},${y}`;
+                
+                // Only draw if not already drawn
+                if (!drawnStrokePixels.has(pixelKey)) {
+                  this.pixelRenderer.setPixel(x, y, strokeR, strokeG, strokeB, strokeA);
+                  drawnStrokePixels.add(pixelKey);
+                }
               }
             }
           }
@@ -169,6 +175,10 @@ class SWRendererCircle {
             // Skip cardinal points we've already marked
             if (cardinalPoints.has(`${x},${y}`)) continue;
             
+            const pixelKey = `${x},${y}`;
+            // Skip pixels we've already drawn
+            if (drawnStrokePixels.has(pixelKey)) continue;
+            
             // Apply vertical adjustments based on position
             let yAdjust = 0;
             if (y < cY) yAdjust = topAdjust;
@@ -193,8 +203,9 @@ class SWRendererCircle {
                   if (y === bottomCardinal + 1) continue;
                 }
                 
-                // Just draw the stroke - setPixel will handle blending
+                // Draw the stroke
                 this.pixelRenderer.setPixel(x, y, strokeR, strokeG, strokeB, strokeA);
+                drawnStrokePixels.add(pixelKey);
               }
             }
           }
