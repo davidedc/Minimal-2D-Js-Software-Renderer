@@ -149,6 +149,7 @@ function add1PxStrokedCircleCenteredAtGridComparison() {
     // the drawing of the stroke ever so slightly (completely invisible to the human eye, but it is there).
     .withExtremesCheck(0.03)
     .withNoGapsInStrokeEdgesCheck() // Check that the stroke has no gaps
+    .withUniqueColorsCheck(1) // Check that there's exactly one unique color
     .build();
 }
 
@@ -164,6 +165,7 @@ function add1PxStrokedCircleCenteredAtPixelComparison() {
     // the drawing of the stroke ever so slightly (completely invisible to the human eye, but it is there).
     .withExtremesCheck(0.03)
     .withNoGapsInStrokeEdgesCheck() // Check that the stroke has no gaps
+    .withUniqueColorsCheck(1) // Check that there's exactly one unique color
     .build();
 }
 
@@ -269,6 +271,7 @@ function addSingleRandomCircleComparison() {
     .addShapes(addSingleRandomCircle)  // Using the updated function that returns extremes
     .withExtremesCheck(0.03)  // Same tolerance as the 1px circle tests
     .withNoGapsInStrokeEdgesCheck() // Check that the stroke has no gaps
+    .withUniqueColorsCheck(3)  // Check that there are exactly three unique colors (fill, stroke, and blended edge)
     .build();
 }
 
@@ -280,6 +283,7 @@ function addSingleNoStrokeCircleComparison() {
     .addShapes(addSingleNoStrokeCircle)  // Using the no-stroke version
     .withExtremesCheck(0.03)  // Same tolerance as the circle tests
     .withNoGapsInFillEdgesCheck()  // Check that the fill has no gaps
+    .withUniqueColorsCheck(1)  // Check that there's exactly one unique color
     .build();
 }
 
@@ -291,6 +295,7 @@ function addRandomPositionCircleComparison() {
     .addShapes(addRandomPositionCircle)  // Using the random position version
     .withExtremesCheck(0.03)  // Same tolerance as the circle tests
     .withNoGapsInStrokeEdgesCheck()  // Check that the stroke has no gaps
+    .withUniqueColorsCheck(3)  // Check that there are exactly three unique colors (fill, stroke, and blended edge)
     .build();
 }
 
@@ -302,6 +307,7 @@ function addRandomPositionNoStrokeCircleComparison() {
     .addShapes(addRandomPositionNoStrokeCircle)  // Using the random position no-stroke version
     .withExtremesCheck(0.03)  // Same tolerance as the circle tests
     .withNoGapsInFillEdgesCheck()  // Check that the fill has no gaps
+    .withUniqueColorsCheck(1)  // Check that there's exactly one unique color
     .build();
 }
 

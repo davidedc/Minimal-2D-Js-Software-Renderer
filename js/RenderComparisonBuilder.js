@@ -46,6 +46,18 @@ class RenderComparisonBuilder {
     });
     return this;
   }
+  
+  withUniqueColorsCheck(expectedColors) {
+    this._checks.push((comparison) => {
+      // Only check the software renderer as specified
+      const swColors = comparison.renderChecks.checkCountOfUniqueColorsInImage(
+        comparison.swCtx, 
+        expectedColors
+      );
+      return `Total unique colors in SW renderer: ${swColors}`;
+    });
+    return this;
+  }
 
   withSpecklesCheckOnSwCanvas() {
     this._checks.push((comparison) => {

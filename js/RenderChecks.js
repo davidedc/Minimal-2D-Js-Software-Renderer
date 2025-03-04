@@ -337,6 +337,35 @@ class RenderChecks {
     return `Edge gap check result (${isStroke ? 'stroke' : 'fill'}): ${swResults}`;
   }
 
+  checkCountOfUniqueColorsInImage(ctx, expectedColors = null) {
+    const imageData = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
+    const data = imageData.data;
+    const width = ctx.canvas.width;
+    const height = ctx.canvas.height;
+    const uniqueColors = new Set();
+    
+    // Check all pixels in the image
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const i = (y * width + x) * 4;
+        if (data[i+3] === 0) continue; // Skip transparent pixels
+        const colorKey = `${data[i]},${data[i+1]},${data[i+2]},${data[i+3]}`;
+        uniqueColors.add(colorKey);
+      }
+    }
+    
+    const count = uniqueColors.size;
+    if (expectedColors !== null && count !== expectedColors) {
+      let message = `Expected ${expectedColors} unique colors but found ${count} unique colors in ${ctx.canvas.title}`;
+      uniqueColors.forEach(color => {
+        message += `\n- ${color}`;
+      });
+      this.comparison.showError(message);
+    }
+    
+    return count;
+  }
+
   checkForSpeckles(ctx) {
     const imageData = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
     const data = imageData.data;
