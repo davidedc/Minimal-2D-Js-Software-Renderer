@@ -191,7 +191,7 @@ function addRandomPositionNoStrokeCircle(shapes, log, currentExampleNumber) {
 }
 
 /**
- * Helper function to generate multiple circles with smart placement
+ * Helper function to generate multiple circles with simple random placement
  * @param {Array} shapes - Array to add shapes to
  * @param {HTMLElement} log - Log element to add descriptions
  * @param {number} count - Number of circles to create
@@ -212,82 +212,30 @@ function generateMultiplePreciseCircles(shapes, log, currentExampleNumber, count
   
   log.innerHTML += `${description} (${count} circles)<br>`;
   
-  // Pre-calculate several circle sizes to ensure a good mix
-  // but prevent the largest circles from obscuring everything
-  const sizes = [];
   for (let i = 0; i < count; i++) {
-    // Mix of smaller and larger circles
+    // Generate random radius (8-42 pixels)
     const radius = 8 + Math.floor(SeededRandom.getRandom() * 35);
-    sizes.push(radius);
-  }
-  
-  // Sort sizes in descending order so we place larger circles first
-  sizes.sort((a, b) => b - a);
-  
-  // Track placed circles to avoid excessive overlap
-  const placedCircles = [];
-  
-  for (let i = 0; i < count; i++) {
-    // Get pre-calculated radius
-    const radius = sizes[i];
     const diameter = radius * 2;
     
     // Generate a random stroke width (varied range for visual interest)
     // Use 0 if not including strokes
-    const strokeWidth = includeStrokes ? (1 + Math.floor(SeededRandom.getRandom() * 4)) : 0;
+    let strokeWidth = includeStrokes ? (1 + Math.floor(SeededRandom.getRandom() * 4)) : 0;
     
-    // Generate multiple position candidates and pick the one with least overlap
-    let bestX, bestY;
-    let bestOverlapScore = Infinity;
+    // Calculate safe bounds to ensure circle stays completely inside canvas
+    const minX = Math.ceil(margin + radius + strokeWidth/2);
+    const maxX = Math.floor(renderComparisonWidth - margin - radius - strokeWidth/2);
+    const minY = Math.ceil(margin + radius + strokeWidth/2);
+    const maxY = Math.floor(renderComparisonHeight - margin - radius - strokeWidth/2);
     
-    // Try several positions to find a good spot
-    const attempts = 8;
-    for (let attempt = 0; attempt < attempts; attempt++) {
-      // True random positioning within the safe area
-      // Use integer positions for precise pixel alignment
-      const candidateX = Math.floor(margin + SeededRandom.getRandom() * safeWidth);
-      const candidateY = Math.floor(margin + SeededRandom.getRandom() * safeHeight);
-      
-      // Calculate overlap score with existing circles
-      let overlapScore = 0;
-      for (const placed of placedCircles) {
-        // Calculate distance between circle centers
-        const dx = candidateX - placed.x;
-        const dy = candidateY - placed.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        
-        // If circles would overlap significantly, increase score
-        const minDistance = radius + placed.radius;
-        if (distance < minDistance) {
-          // More penalty for more overlap
-          overlapScore += (minDistance - distance) * 2;
-        }
-      }
-      
-      // Check if this position is better than previous attempts
-      if (overlapScore < bestOverlapScore) {
-        bestOverlapScore = overlapScore;
-        bestX = candidateX;
-        bestY = candidateY;
-        
-        // If we found a position with no significant overlap, use it right away
-        if (overlapScore < radius * 0.5) {
-          break;
-        }
-      }
-    }
+    // Generate random position within safe bounds
+    const randX = Math.floor(minX + SeededRandom.getRandom() * (maxX - minX + 1));
+    const randY = Math.floor(minY + SeededRandom.getRandom() * (maxY - minY + 1));
     
-    // Adjust dimensions for crisp rendering
-    const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(
-      diameter, diameter, strokeWidth, { x: bestX, y: bestY }
-    );
-    const adjustedDiameter = adjustedDimensions.width;
-    const finalRadius = adjustedDiameter / 2;
-    
+
     // Choose center type - either at grid point or pixel center
     const atPixel = SeededRandom.getRandom() < 0.5;
-    let centerX = bestX;
-    let centerY = bestY;
+    let centerX = randX;
+    let centerY = randY;
     
     // Adjust center if needed to be either at grid or pixel center
     if (atPixel && centerX % 1 !== 0.5) {
@@ -301,6 +249,15 @@ function generateMultiplePreciseCircles(shapes, log, currentExampleNumber, count
     } else if (!atPixel && centerY % 1 === 0.5) {
       centerY = Math.floor(centerY);
     }
+
+
+    // Adjust dimensions for crisp rendering
+    const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(
+      diameter, diameter, strokeWidth, { x: centerX, y: centerY }
+    );
+    const adjustedDiameter = adjustedDimensions.width;
+    const finalRadius = adjustedDiameter / 2;
+    
     
     // Create the circle with distinct colors (using partitioning to ensure variety)
     const circle = {
@@ -319,13 +276,6 @@ function generateMultiplePreciseCircles(shapes, log, currentExampleNumber, count
       startAngle: 0,
       endAngle: 360
     };
-    
-    // Track placed circle for overlap prevention
-    placedCircles.push({
-      x: centerX,
-      y: centerY,
-      radius: finalRadius + strokeWidth
-    });
     
     // Add the circle to shapes
     shapes.push(circle);
