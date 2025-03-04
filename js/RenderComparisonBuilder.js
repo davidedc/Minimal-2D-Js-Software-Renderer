@@ -86,6 +86,36 @@ class RenderComparisonBuilder {
     return this;
   }
   
+  withNoGapsInFillEdgesCheck() {
+    this._checks.push((comparison) => {
+      const extremes = comparison.builderReturnValue;
+      if (!extremes) return "No extremes data available for fill edge gaps check";
+      
+      return comparison.renderChecks.checkEdgesForGaps(
+        comparison.swCtx,
+        comparison.canvasCtx,
+        extremes,
+        false // isStroke = false, check fill
+      );
+    });
+    return this;
+  }
+  
+  withNoGapsInStrokeEdgesCheck() {
+    this._checks.push((comparison) => {
+      const extremes = comparison.builderReturnValue;
+      if (!extremes) return "No extremes data available for stroke edge gaps check";
+      
+      return comparison.renderChecks.checkEdgesForGaps(
+        comparison.swCtx,
+        comparison.canvasCtx,
+        extremes,
+        true // isStroke = true, check stroke
+      );
+    });
+    return this;
+  }
+  
   // Compare pixels with threshold values for RGB and alpha components
   compareWithThreshold(RGBThreshold, alphaThreshold) {
     this._checks.push((comparison) => {

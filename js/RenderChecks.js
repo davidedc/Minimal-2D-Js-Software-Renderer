@@ -210,6 +210,132 @@ class RenderChecks {
     
     return results.join('\n');
   }
+  
+  checkEdgeGaps(ctx, extremes, isStroke) {
+    const imageData = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
+    const data = imageData.data;
+    const width = ctx.canvas.width;
+    
+    // Extract edges from extremes
+    const { leftX, rightX, topY, bottomY } = extremes;
+    
+    // Function to check for transparent pixels - a pixel is transparent if alpha = 0
+    const isTransparent = (idx) => data[idx + 3] === 0;
+    
+    // Results for tracking gaps
+    const results = { gaps: 0, details: [] };
+    
+    // Find first and last non-transparent pixels in top row
+    let topFirstFilled = null, topLastFilled = null;
+    
+    for (let x = leftX; x <= rightX; x++) {
+      const i = (topY * width + x) * 4;
+      if (!isTransparent(i)) {
+        topFirstFilled = topFirstFilled === null ? x : topFirstFilled;
+        topLastFilled = x;
+      }
+    }
+    
+    // Check for gaps in top row if we found filled pixels
+    if (topFirstFilled !== null) {
+      for (let x = topFirstFilled; x <= topLastFilled; x++) {
+        const i = (topY * width + x) * 4;
+        if (isTransparent(i)) {
+          results.gaps++;
+          results.details.push(`Gap at top row, x=${x}`);
+        }
+      }
+    }
+    
+    // Find first and last non-transparent pixels in bottom row
+    let bottomFirstFilled = null, bottomLastFilled = null;
+    
+    for (let x = leftX; x <= rightX; x++) {
+      const i = (bottomY * width + x) * 4;
+      if (!isTransparent(i)) {
+        bottomFirstFilled = bottomFirstFilled === null ? x : bottomFirstFilled;
+        bottomLastFilled = x;
+      }
+    }
+    
+    // Check for gaps in bottom row if we found filled pixels
+    if (bottomFirstFilled !== null) {
+      for (let x = bottomFirstFilled; x <= bottomLastFilled; x++) {
+        const i = (bottomY * width + x) * 4;
+        if (isTransparent(i)) {
+          results.gaps++;
+          results.details.push(`Gap at bottom row, x=${x}`);
+        }
+      }
+    }
+    
+    // Find first and last non-transparent pixels in left column
+    let leftFirstFilled = null, leftLastFilled = null;
+    
+    for (let y = topY; y <= bottomY; y++) {
+      const i = (y * width + leftX) * 4;
+      if (!isTransparent(i)) {
+        leftFirstFilled = leftFirstFilled === null ? y : leftFirstFilled;
+        leftLastFilled = y;
+      }
+    }
+    
+    // Check for gaps in left column if we found filled pixels
+    if (leftFirstFilled !== null) {
+      for (let y = leftFirstFilled; y <= leftLastFilled; y++) {
+        const i = (y * width + leftX) * 4;
+        if (isTransparent(i)) {
+          results.gaps++;
+          results.details.push(`Gap at left column, y=${y}`);
+        }
+      }
+    }
+    
+    // Find first and last non-transparent pixels in right column
+    let rightFirstFilled = null, rightLastFilled = null;
+    
+    for (let y = topY; y <= bottomY; y++) {
+      const i = (y * width + rightX) * 4;
+      if (!isTransparent(i)) {
+        rightFirstFilled = rightFirstFilled === null ? y : rightFirstFilled;
+        rightLastFilled = y;
+      }
+    }
+    
+    // Check for gaps in right column if we found filled pixels
+    if (rightFirstFilled !== null) {
+      for (let y = rightFirstFilled; y <= rightLastFilled; y++) {
+        const i = (y * width + rightX) * 4;
+        if (isTransparent(i)) {
+          results.gaps++;
+          results.details.push(`Gap at right column, y=${y}`);
+        }
+      }
+    }
+    
+    // Generate result message
+    let resultMsg = `${ctx.canvas.title.split('-')[0]} Renderer: `;
+    
+    if (results.gaps === 0) {
+      resultMsg += `No gaps found in ${isStroke ? 'stroke' : 'fill'} edges!`;
+    } else {
+      resultMsg += `Found ${results.gaps} gaps in ${isStroke ? 'stroke' : 'fill'} edges: ${results.details.join(', ')}`;
+      
+      // Only show error for software renderer (this should always be true as we only call with SW renderer)
+      this.comparison.showError(
+        `Found ${results.gaps} gaps in SW renderer ${isStroke ? 'stroke' : 'fill'} edges. ` +
+        `This indicates missing pixels at circle boundaries!`
+      );
+    }
+    
+    return resultMsg;
+  }
+  
+  checkEdgesForGaps(swCtx, canvasCtx, expectedExtremes, isStroke = false) {
+    // Check only the software renderer for gaps, as specified
+    const swResults = this.checkEdgeGaps(swCtx, expectedExtremes, isStroke);
+    return `Edge gap check result (${isStroke ? 'stroke' : 'fill'}): ${swResults}`;
+  }
 
   checkForSpeckles(ctx) {
     const imageData = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);

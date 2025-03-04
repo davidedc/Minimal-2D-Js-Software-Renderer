@@ -148,6 +148,7 @@ function add1PxStrokedCircleCenteredAtGridComparison() {
     // Adding a tolerance because for some strange reason, at least in Safari, the canvas render overflows
     // the drawing of the stroke ever so slightly (completely invisible to the human eye, but it is there).
     .withExtremesCheck(0.03)
+    .withNoGapsInStrokeEdgesCheck() // Check that the stroke has no gaps
     .build();
 }
 
@@ -162,6 +163,7 @@ function add1PxStrokedCircleCenteredAtPixelComparison() {
     // Adding a tolerance because for some strange reason, at least in Safari, the canvas render overflows
     // the drawing of the stroke ever so slightly (completely invisible to the human eye, but it is there).
     .withExtremesCheck(0.03)
+    .withNoGapsInStrokeEdgesCheck() // Check that the stroke has no gaps
     .build();
 }
 
@@ -266,6 +268,7 @@ function addSingleRandomCircleComparison() {
     .withDescription('Tests rendering of a single random circle with proper pixel alignment for crisp stroke rendering')
     .addShapes(addSingleRandomCircle)  // Using the updated function that returns extremes
     .withExtremesCheck(0.03)  // Same tolerance as the 1px circle tests
+    .withNoGapsInStrokeEdgesCheck() // Check that the stroke has no gaps
     .build();
 }
 
@@ -276,6 +279,7 @@ function addSingleNoStrokeCircleComparison() {
     .withDescription('Tests rendering of a single circle with no stroke, only fill, to validate fill accuracy')
     .addShapes(addSingleNoStrokeCircle)  // Using the no-stroke version
     .withExtremesCheck(0.03)  // Same tolerance as the circle tests
+    .withNoGapsInFillEdgesCheck()  // Check that the fill has no gaps
     .build();
 }
 
