@@ -283,6 +283,28 @@ function addSingleNoStrokeCircleComparison() {
     .build();
 }
 
+function addRandomPositionCircleComparison() {
+  return new RenderComparisonBuilder()
+    .withId('random-position-circle')
+    .withTitle('Randomly Positioned Circle With Stroke')
+    .withDescription('Tests rendering of a single circle at a random position with proper pixel alignment and crisp stroke rendering')
+    .addShapes(addRandomPositionCircle)  // Using the random position version
+    .withExtremesCheck(0.03)  // Same tolerance as the circle tests
+    .withNoGapsInStrokeEdgesCheck()  // Check that the stroke has no gaps
+    .build();
+}
+
+function addRandomPositionNoStrokeCircleComparison() {
+  return new RenderComparisonBuilder()
+    .withId('random-position-no-stroke-circle')
+    .withTitle('Randomly Positioned Circle Without Stroke')
+    .withDescription('Tests rendering of a single circle at a random position with no stroke, only fill, to validate fill accuracy at any location')
+    .addShapes(addRandomPositionNoStrokeCircle)  // Using the random position no-stroke version
+    .withExtremesCheck(0.03)  // Same tolerance as the circle tests
+    .withNoGapsInFillEdgesCheck()  // Check that the fill has no gaps
+    .build();
+}
+
 function addMultiplePreciseRandomCirclesComparison() {
   return new RenderComparisonBuilder()
     .withId('multiple-precise-random-circles')

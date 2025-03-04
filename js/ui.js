@@ -70,6 +70,8 @@ function addRenderComparisons() {
   add1PxStrokedCircleCenteredAtPixelComparison();
   addSingleRandomCircleComparison(); 
   addSingleNoStrokeCircleComparison(); // Test case for circles with no stroke
+  addRandomPositionCircleComparison(); // Test case for randomly positioned circle with stroke
+  addRandomPositionNoStrokeCircleComparison(); // Test case for randomly positioned circle without stroke
   addMultiplePreciseRandomCirclesComparison(); // Multiple precise pixel-aligned circles with strokes
   addMultiplePreciseNoStrokeCirclesComparison(); // Multiple precise pixel-aligned circles without strokes
   addRandomCirclesComparison();
