@@ -285,7 +285,6 @@ class SWRendererCircle {
           if (Math.abs(distFromCenterSquared - fillRadiusSquared) < fillRadius) {
             this.pixelRenderer.setPixel(x, y, fillR, fillG, fillB, fillA);
             filledPixels.add(`${x},${y}`);
-            // Use fixed cardinal points
           }
         }
         
