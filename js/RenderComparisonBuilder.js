@@ -42,7 +42,8 @@ class RenderComparisonBuilder {
         comparison.canvasCtx, 
         options.expectedUniqueColors
       );
-      return `Middle row unique colors: SW: ${swColors}, Canvas: ${canvasColors}`;
+      const isCorrect = swColors === options.expectedUniqueColors && canvasColors === options.expectedUniqueColors;
+      return `${isCorrect ? '&#x2705; ' : ''}Middle row unique colors: SW: ${swColors}, Canvas: ${canvasColors}`;
     });
     return this;
   }
@@ -54,7 +55,8 @@ class RenderComparisonBuilder {
         comparison.swCtx, 
         expectedColors
       );
-      return `Total unique colors in SW renderer: ${swColors}`;
+      const isCorrect = swColors === expectedColors;
+      return `${isCorrect ? '&#x2705; ' : ''}Total unique colors in SW renderer: ${swColors}`;
     });
     return this;
   }
@@ -63,7 +65,7 @@ class RenderComparisonBuilder {
     this._checks.push((comparison) => {
       // check both SW and Canvas
       const speckleCountSW = comparison.renderChecks.checkForSpeckles(comparison.swCtx);
-      return `Speckle count: SW: ${speckleCountSW}`;
+      return `${speckleCountSW === 0 ? '&#x2705; ' : ''}Speckle count: SW: ${speckleCountSW}`;
     });
     return this;
   }
@@ -78,7 +80,8 @@ class RenderComparisonBuilder {
         comparison.canvasCtx, 
         options.expectedUniqueColors
       );
-      return `Middle column unique colors: SW: ${swColors}, Canvas: ${canvasColors}`;
+      const isCorrect = swColors === options.expectedUniqueColors && canvasColors === options.expectedUniqueColors;
+      return `${isCorrect ? '&#x2705; ' : ''}Middle column unique colors: SW: ${swColors}, Canvas: ${canvasColors}`;
     });
     return this;
   }
@@ -88,12 +91,14 @@ class RenderComparisonBuilder {
       const extremes = comparison.builderReturnValue;
       if (!extremes) return "No extremes data available";
       
-      return comparison.renderChecks.checkExtremes(
+      const result = comparison.renderChecks.checkExtremes(
         comparison.swCtx,
         comparison.canvasCtx,
         extremes,
         alphaTolerance
       );
+      const isCorrect = !result.includes("FAIL") && !result.includes("Error");
+      return `${isCorrect ? '&#x2705; ' : ''}${result}`;
     });
     return this;
   }
@@ -103,12 +108,14 @@ class RenderComparisonBuilder {
       const extremes = comparison.builderReturnValue;
       if (!extremes) return "No extremes data available for fill edge gaps check";
       
-      return comparison.renderChecks.checkEdgesForGaps(
+      const result = comparison.renderChecks.checkEdgesForGaps(
         comparison.swCtx,
         comparison.canvasCtx,
         extremes,
         false // isStroke = false, check fill
       );
+      const isCorrect = !result.includes("FAIL") && !result.includes("Error");
+      return `${isCorrect ? '&#x2705; ' : ''}${result}`;
     });
     return this;
   }
@@ -118,12 +125,14 @@ class RenderComparisonBuilder {
       const extremes = comparison.builderReturnValue;
       if (!extremes) return "No extremes data available for stroke edge gaps check";
       
-      return comparison.renderChecks.checkEdgesForGaps(
+      const result = comparison.renderChecks.checkEdgesForGaps(
         comparison.swCtx,
         comparison.canvasCtx,
         extremes,
         true // isStroke = true, check stroke
       );
+      const isCorrect = !result.includes("FAIL") && !result.includes("Error");
+      return `${isCorrect ? '&#x2705; ' : ''}${result}`;
     });
     return this;
   }
@@ -137,7 +146,8 @@ class RenderComparisonBuilder {
         RGBThreshold,
         alphaThreshold
       );
-      return result;
+      const isCorrect = !result.includes("FAIL") && !result.includes("Error");
+      return `${isCorrect ? '&#x2705; ' : ''}${result}`;
     });
     return this;
   }
