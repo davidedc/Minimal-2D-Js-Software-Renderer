@@ -275,6 +275,7 @@ function addOneRandomCircleComparison() {
     // of course they are not going to match, nor their extremes.
     //.withExtremesCheck(0.03)
     .withNoGapsInStrokeEdgesCheck()  // Check that the stroke has no gaps
+    .withUniqueColorsCheck(3)  // Check for fill, stroke, and blended edge colors
     .build();
 }
 
