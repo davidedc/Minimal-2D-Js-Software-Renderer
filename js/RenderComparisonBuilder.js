@@ -105,13 +105,9 @@ class RenderComparisonBuilder {
   
   withNoGapsInFillEdgesCheck() {
     this._checks.push((comparison) => {
-      const extremes = comparison.builderReturnValue;
-      if (!extremes) return "No extremes data available for fill edge gaps check";
-      
       const result = comparison.renderChecks.checkEdgesForGaps(
         comparison.swCtx,
         comparison.canvasCtx,
-        extremes,
         false // isStroke = false, check fill
       );
       const isCorrect = !result.includes("FAIL") && !result.includes("Error");
@@ -122,13 +118,9 @@ class RenderComparisonBuilder {
   
   withNoGapsInStrokeEdgesCheck() {
     this._checks.push((comparison) => {
-      const extremes = comparison.builderReturnValue;
-      if (!extremes) return "No extremes data available for stroke edge gaps check";
-      
       const result = comparison.renderChecks.checkEdgesForGaps(
         comparison.swCtx,
         comparison.canvasCtx,
-        extremes,
         true // isStroke = true, check stroke
       );
       const isCorrect = !result.includes("FAIL") && !result.includes("Error");

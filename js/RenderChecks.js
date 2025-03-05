@@ -139,6 +139,52 @@ class RenderChecks {
     return results.join('\n\n');
   }
 
+  /**
+   * Find the extremes (boundaries) of an image with an alpha tolerance
+   * @param {CanvasRenderingContext2D} ctx - The canvas context to analyze
+   * @param {number} alphaTolerance - Tolerance for alpha values (0-1)
+   * @returns {Object|null} The extremes object with leftX, rightX, topY, bottomY or null if no qualifying pixels
+   */
+  findExtremesWithTolerance(ctx, alphaTolerance = 0) {
+    const imageData = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
+    const data = imageData.data;
+    const width = ctx.canvas.width;
+    const height = ctx.canvas.height;
+    
+    let minX = width;
+    let maxX = -1;
+    let minY = height;
+    let maxY = -1;
+    
+    // Scan all pixels
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const i = (y * width + x) * 4;
+        if (data[i + 3]/255 > alphaTolerance) {  // If pixel is not fully transparent (or very close, depending on alphaTolerance)
+          minX = Math.min(minX, x);
+          maxX = Math.max(maxX, x);
+          minY = Math.min(minY, y);
+          maxY = Math.max(maxY, y);
+        }
+      }
+    }
+    
+    // If no qualifying pixels were found, return null
+    if (minX === width || maxX === -1 || minY === height || maxY === -1) {
+      return null;
+    }
+    
+    return { leftX: minX, rightX: maxX, topY: minY, bottomY: maxY };
+  }
+  
+  /**
+   * Check if the extremes match the expected values for both renderers
+   * @param {CanvasRenderingContext2D} swCtx - The software renderer context
+   * @param {CanvasRenderingContext2D} canvasCtx - The canvas context
+   * @param {Object} expectedExtremes - The expected extremes
+   * @param {number} alphaTolerance - Tolerance for alpha values (0-1)
+   * @returns {string} Results of the check
+   */
   checkExtremes(swCtx, canvasCtx, expectedExtremes, alphaTolerance = 0) {
     const contexts = [
       { name: 'Software Renderer', ctx: swCtx },
@@ -148,40 +194,17 @@ class RenderChecks {
     const results = [];
     
     for (const { name, ctx } of contexts) {
-      const imageData = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
-      const data = imageData.data;
-      const width = ctx.canvas.width;
-      const height = ctx.canvas.height;
+      const actualExtremes = this.findExtremesWithTolerance(ctx, alphaTolerance);
       
-      let minX = width;
-      let maxX = -1;
-      let minY = height;
-      let maxY = -1;
-      
-      // Scan all pixels
-      for (let y = 0; y < height; y++) {
-        for (let x = 0; x < width; x++) {
-          const i = (y * width + x) * 4;
-          if (data[i + 3]/255 > alphaTolerance) {  // If pixel is not fully transparent (or very close, depending on alphaTolerance)
-            minX = Math.min(minX, x);
-            maxX = Math.max(maxX, x);
-            minY = Math.min(minY, y);
-            maxY = Math.max(maxY, y);
-          }
-        }
-      }
-      
-      // If no non-transparent pixels were found, all values will be at their initial values
-      if (minX === width || maxX === -1 || minY === height || maxY === -1) {
+      // If no qualifying pixels were found
+      if (!actualExtremes) {
         const message = `${name}: No non-transparent pixels found`;
         results.push(message);
         this.comparison.showError(message);
         continue;
       }
-
-      const actualExtremes = { leftX: minX, rightX: maxX, topY: minY, bottomY: maxY };
-      // console.log(`${name} found extremes:`, actualExtremes);
       
+      // Check against expected extremes if provided
       if (expectedExtremes) {
         if (actualExtremes.leftX !== expectedExtremes.leftX) {
           const message = `${name}: Left extreme expected at ${expectedExtremes.leftX}, found at ${actualExtremes.leftX}`;
@@ -331,9 +354,26 @@ class RenderChecks {
     return resultMsg;
   }
   
-  checkEdgesForGaps(swCtx, canvasCtx, expectedExtremes, isStroke = false) {
+  /**
+   * Check edges of a shape for gaps
+   * @param {CanvasRenderingContext2D} swCtx - The software renderer context
+   * @param {CanvasRenderingContext2D} canvasCtx - The canvas context
+   * @param {boolean} isStroke - Whether to check stroke edges (true) or fill edges (false)
+   * @returns {string} Results of the check
+   */
+  checkEdgesForGaps(swCtx, canvasCtx, isStroke = false) {
+    // Calculate extremes for the shape by scanning the canvas
+    const calculatedExtremes = this.findExtremesWithTolerance(swCtx, 0);
+    
+    // If no non-transparent pixels were found, return error
+    if (!calculatedExtremes) {
+      const errorMsg = "No non-transparent pixels found, cannot check for gaps";
+      this.comparison.showError(errorMsg);
+      return errorMsg;
+    }
+    
     // Check only the software renderer for gaps, as specified
-    const swResults = this.checkEdgeGaps(swCtx, expectedExtremes, isStroke);
+    const swResults = this.checkEdgeGaps(swCtx, calculatedExtremes, isStroke);
     return `Edge gap check result (${isStroke ? 'stroke' : 'fill'}): ${swResults}`;
   }
 
