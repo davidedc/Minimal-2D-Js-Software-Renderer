@@ -7,13 +7,45 @@ function getRandomCircle() {
   };
 }
 
-function addRandomCircles(shapes, log, currentExampleNumber, count = 5) {
+/**
+ * Helper function for creating circle test cases that share core parameters
+ * @param {Array} shapes - Array to add shapes to
+ * @param {HTMLElement} log - Log element to add descriptions
+ * @param {number} currentExampleNumber - Current example number for seeding
+ * @param {number} count - Number of circles to create
+ * @param {string} description - Description prefix for logging
+ * @returns {Object|null} Extremes coordinates for the circle (if count is 1) or null (if count > 1)
+ */
+function createRandomCircleTest(shapes, log, currentExampleNumber, count, description) {
   SeededRandom.seedWithInteger(currentExampleNumber);
+  let extremes = null;
+  
   for (let i = 0; i < count; i++) {
     const circle = getRandomCircle();
     shapes.push(circle);
-    log.innerHTML += `&#x20DD; Random circle at (${circle.center.x}, ${circle.center.y}) radius: ${circle.radius} strokeWidth: ${circle.strokeWidth} strokeColor: ${colorToString(circle.strokeColor)} fillColor: ${colorToString(circle.fillColor)}<br>`;
+    log.innerHTML += `&#x20DD; ${description} circle at (${circle.center.x}, ${circle.center.y}) radius: ${circle.radius} strokeWidth: ${circle.strokeWidth} strokeColor: ${colorToString(circle.strokeColor)} fillColor: ${colorToString(circle.fillColor)}<br>`;
+    
+    // Calculate extremes, but only for the single circle case
+    if (count === 1) {
+      const effectiveRadius = circle.radius + circle.strokeWidth / 2;
+      extremes = {
+        leftX: Math.floor(circle.center.x - effectiveRadius),
+        rightX: Math.ceil(circle.center.x - effectiveRadius + effectiveRadius * 2 - 1),
+        topY: Math.floor(circle.center.y - effectiveRadius),
+        bottomY: Math.ceil(circle.center.y - effectiveRadius + effectiveRadius * 2 - 1)
+      };
+    }
   }
+  
+  return extremes;
+}
+
+function addRandomCircles(shapes, log, currentExampleNumber, count = 5) {
+  createRandomCircleTest(shapes, log, currentExampleNumber, count, "Random");
+}
+
+function addOneRandomCircle(shapes, log, currentExampleNumber) {
+  return createRandomCircleTest(shapes, log, currentExampleNumber, 1, "Single random");
 }
 
 /**

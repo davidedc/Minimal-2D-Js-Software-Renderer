@@ -74,7 +74,8 @@ function addRenderComparisons() {
   addRandomPositionNoStrokeCircleComparison(); // Test case for randomly positioned circle without stroke
   addMultiplePreciseRandomCirclesComparison(); // Multiple precise pixel-aligned circles with strokes
   addMultiplePreciseNoStrokeCirclesComparison(); // Multiple precise pixel-aligned circles without strokes
-  addRandomCirclesComparison();
+  addOneRandomCircleComparison(); // Single circle using the simplified random circle generation
+  addRandomCirclesComparison(); // Multiple circles using the simplified random circle generation
   
   addNinetyDegreeArcsComparison();
   addRandomArcsComparison();
