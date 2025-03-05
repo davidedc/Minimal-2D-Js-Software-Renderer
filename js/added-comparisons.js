@@ -268,8 +268,8 @@ function addOneRandomCircleComparison() {
     .withTitle('One Random Circle')
     .withDescription('Tests rendering of a single circle with random position, size, and colors')
     .addShapes(addOneRandomCircle)  // Using the new function for a single random circle
-    // we donn't check the extremes because they are almost always going to differ
-    // since the circles is at random coordinates and with random radius and stroke width,
+    // we don't check the extremes because they are almost always going to differ
+    // since the circle is at random coordinates and with random radius and stroke width,
     // this means that it will be drawn in some random position with aliasing in the canvas,
     // and crisply in some approximated "snapped" position by the sw renderer, so
     // of course they are not going to match, nor their extremes.
