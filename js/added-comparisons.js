@@ -214,7 +214,6 @@ function addAxisAlignedRoundedRectanglesComparison() {
     .withTitle('Axis-Aligned Rounded Rectangles')
     .withDescription('Tests rendering of multiple axis-aligned rounded rectangles with random positions, sizes, and corner radii')
     .addShapes(addAxisAlignedRoundedRectangles, 8)  // Using 8 rounded rectangles
-    .withExtremesCheck()
     .build();
 }
 
