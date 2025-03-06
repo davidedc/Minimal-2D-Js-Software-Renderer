@@ -413,38 +413,63 @@ class RenderChecks {
     const height = ctx.canvas.height;
     
     let speckleCount = 0;
+    let firstSpeckleX = -1;
+    let firstSpeckleY = -1;
     
     // Check each pixel (except edges)
-    for (let y = 0; y < height; y++) {
+    for (let y = 1; y < height - 1; y++) {  // Changed to skip first and last rows
       for (let x = 1; x < width - 1; x++) {
         const currentIdx = (y * width + x) * 4;
         const leftIdx = (y * width + (x - 1)) * 4;
         const rightIdx = (y * width + (x + 1)) * 4;
+        const topIdx = ((y - 1) * width + x) * 4;     // Added top neighbor check
+        const bottomIdx = ((y + 1) * width + x) * 4;  // Added bottom neighbor check
                 
-        // Check if left and right pixels have the same color
-        const leftMatchesRight = 
+        // Check if horizontal neighbors match
+        const horizontalMatch = 
           data[leftIdx] === data[rightIdx] &&
           data[leftIdx + 1] === data[rightIdx + 1] &&
           data[leftIdx + 2] === data[rightIdx + 2] &&
           data[leftIdx + 3] === data[rightIdx + 3];
         
+        // Check if vertical neighbors match
+        const verticalMatch = 
+          data[topIdx] === data[bottomIdx] &&
+          data[topIdx + 1] === data[bottomIdx + 1] &&
+          data[topIdx + 2] === data[bottomIdx + 2] &&
+          data[topIdx + 3] === data[bottomIdx + 3];
+        
         // Check if current pixel is different from neighbors
-        const currentDifferent = 
+        const differentFromHorizontal = 
           data[currentIdx] !== data[leftIdx] ||
           data[currentIdx + 1] !== data[leftIdx + 1] ||
           data[currentIdx + 2] !== data[leftIdx + 2] ||
           data[currentIdx + 3] !== data[leftIdx + 3];
+          
+        const differentFromVertical = 
+          data[currentIdx] !== data[topIdx] ||
+          data[currentIdx + 1] !== data[topIdx + 1] ||
+          data[currentIdx + 2] !== data[topIdx + 2] ||
+          data[currentIdx + 3] !== data[topIdx + 3];
         
-        if (leftMatchesRight && currentDifferent) {
+        // Count as speckle if either horizontal or vertical neighbors match but current pixel differs
+        if ((horizontalMatch && differentFromHorizontal) || 
+            (verticalMatch && differentFromVertical)) {
           speckleCount++;
+          if (firstSpeckleX === -1) {
+            firstSpeckleX = x;
+            firstSpeckleY = y;
+          }
         }
       }
     }
     
     if (speckleCount > 0) {
+      const specklePixel = (firstSpeckleY * width + firstSpeckleX) * 4;
       this.comparison.showError(
         `Found ${speckleCount} speckle${speckleCount === 1 ? '' : 's'} in ${ctx.canvas.title} ` +
-        '(single pixels with different color from matching left and right neighbors)'
+        `(single pixels with different color from matching neighbors). First speckle at (${firstSpeckleX}, ${firstSpeckleY}) ` +
+        `with color rgba(${data[specklePixel]}, ${data[specklePixel + 1]}, ${data[specklePixel + 2]}, ${data[specklePixel + 3]})`
       );
     }
     
