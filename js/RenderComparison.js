@@ -10,7 +10,8 @@ class RenderComparison {
     this.width = renderComparisonWidth;
     this.height = renderComparisonHeight;
     this.frameBuffer = new Uint8ClampedArray(this.width * this.height * 4);
-
+    this.errorCount = 0; // Initialize error count
+    
     RenderComparison.sections.push({ id, title });
     
     this.id = id;
@@ -280,6 +281,7 @@ class RenderComparison {
       this.errorCount = 0;
     }
     this.errorCount++;
+    console.log("Error registered, count now:", this.errorCount, "Message:", message);
     
     // Create and add clear errors button and error count display if not already present
     if (!this.clearErrorsButton) {
@@ -316,12 +318,126 @@ class RenderComparison {
     
     const errorMessage = document.createElement('div');
     errorMessage.innerHTML = prefixedMessage; // Using innerHTML to preserve HTML formatting
+    errorMessage.className = 'error-message';
+    errorMessage.dataset.exampleNum = currentExampleNum;
+    
+    // Insert at the appropriate position - either after the last error from this example
+    // or at the top of the errors container
     this.errorsContainer.insertBefore(errorMessage, this.errorCountDisplay);
+    
+    // Save this as the first error for this example if it's the first
+    if (!this.firstErrorOfCurrentExample) {
+      this.firstErrorOfCurrentExample = errorMessage;
+    }
   }
 
   updateErrorCountDisplay() {
     if (this.errorCountDisplay) {
       this.errorCountDisplay.textContent = `Error count: ${this.errorCount}`;
+    }
+  }
+  
+  logSceneContents() {
+    console.log("Attempting to log scene contents");
+    
+    // Mark that we've logged scene contents for this example
+    this.sceneLoggedForCurrentExample = true;
+    
+    try {
+      if (this.shapes && this.shapes.length > 0) {
+        // Log to console for debugging
+        console.log("Scene contents when errors occurred:", JSON.stringify(this.shapes, null, 2));
+        
+        // Get the current example number
+        const currentExampleNum = this.currentLabel ? 
+          this.currentLabel.textContent.match(/Current Example #(\d+)/) ?
+          parseInt(this.currentLabel.textContent.match(/Current Example #(\d+)/)[1]) : 1 : 1;
+        
+        // Create an easy-to-read scene content message
+        let sceneMessage = `Scene Contents for Example #${currentExampleNum}:`;
+        
+        // Format the shape data in a more readable way
+        this.shapes.forEach((shape, index) => {
+          sceneMessage += `\n\n--- Shape ${index} ---\n`;
+          
+          // Handle different shape types with specific formatting
+          if (shape.type === 'circle') {
+            sceneMessage += `Type: Circle\n`;
+            sceneMessage += `Center: (${shape.center.x}, ${shape.center.y})\n`;
+            sceneMessage += `Radius: ${shape.radius}\n`;
+            
+            if (shape.strokeWidth) {
+              sceneMessage += `Stroke Width: ${shape.strokeWidth}\n`;
+              sceneMessage += `Stroke Color: rgba(${shape.strokeColor.r}, ${shape.strokeColor.g}, ${shape.strokeColor.b}, ${shape.strokeColor.a})\n`;
+            }
+            
+            sceneMessage += `Fill Color: rgba(${shape.fillColor.r}, ${shape.fillColor.g}, ${shape.fillColor.b}, ${shape.fillColor.a})`;
+          } else {
+            // For other shape types, use more compact JSON formatting
+            const formattedShape = JSON.stringify(shape, null, 2)
+              .replace(/"([^"]+)":/g, '$1:') // Remove quotes around property names
+              .replace(/[{},]/g, ''); // Remove braces and commas
+            
+            sceneMessage += formattedShape;
+          }
+        });
+        
+        // Create a visually distinct scene contents container
+        const sceneContentDiv = document.createElement('div');
+        sceneContentDiv.style.color = '#0066cc';
+        sceneContentDiv.style.whiteSpace = 'pre-wrap';
+        sceneContentDiv.style.fontFamily = 'monospace';
+        sceneContentDiv.style.border = '1px solid #0066cc';
+        sceneContentDiv.style.borderRadius = '4px';
+        sceneContentDiv.style.backgroundColor = '#f0f8ff';
+        sceneContentDiv.style.padding = '10px';
+        sceneContentDiv.style.margin = '15px 0';
+        sceneContentDiv.textContent = sceneMessage;
+        
+        // Add a scene contents label
+        const contentLabel = document.createElement('div');
+        contentLabel.style.fontWeight = 'bold';
+        contentLabel.style.marginBottom = '5px';
+        contentLabel.style.borderBottom = '1px solid #0066cc';
+        contentLabel.style.paddingBottom = '3px';
+        contentLabel.textContent = "SCENE CONTENTS:";
+        sceneContentDiv.insertBefore(contentLabel, sceneContentDiv.firstChild);
+        
+        console.log("Created scene content div, about to insert into DOM");
+        
+        // If we have an error for this example, insert after it
+        if (this.firstErrorOfCurrentExample) {
+          console.log("Found first error of example, inserting scene after it");
+          
+          // Find all error messages for this example
+          const exampleNum = this.firstErrorOfCurrentExample.dataset.exampleNum;
+          let lastErrorForExample = this.firstErrorOfCurrentExample;
+          
+          // Find the last error with the same example number
+          const errors = this.errorsContainer.querySelectorAll('.error-message');
+          for (let i = 0; i < errors.length; i++) {
+            if (errors[i].dataset.exampleNum === exampleNum) {
+              lastErrorForExample = errors[i];
+            }
+          }
+          
+          // Insert the scene contents after the last error for this example
+          if (lastErrorForExample.nextSibling) {
+            this.errorsContainer.insertBefore(sceneContentDiv, lastErrorForExample.nextSibling);
+          } else {
+            this.errorsContainer.appendChild(sceneContentDiv);
+          }
+        } else {
+          // Fallback: Insert at the top of the errors container
+          this.errorsContainer.insertBefore(sceneContentDiv, this.errorsContainer.firstChild);
+        }
+        
+        console.log("Scene content added to DOM");
+      } else {
+        console.warn("Cannot log scene contents: no shapes found", this.shapes);
+      }
+    } catch (err) {
+      console.error("Error while logging scene contents:", err);
     }
   }
 
@@ -363,6 +479,16 @@ class RenderComparison {
     this.shapes = [];
     this.logContainer.innerHTML = '';
     
+    // Track initial error count before rendering
+    const initialErrorCount = this.errorCount || 0;
+    
+    // Reset error tracking for this example
+    this.firstErrorOfCurrentExample = null;
+    this.lastErrorOfCurrentExample = null;
+    
+    // Create a flag to track if we need to log scene contents
+    this.sceneLoggedForCurrentExample = false;
+    
     if (buildShapesFn) {
       // this returned value is used in the metrics/tests
       this.builderReturnValue = buildShapesFn(this.shapes, this.logContainer, currentCount);
@@ -393,11 +519,34 @@ class RenderComparison {
     this.updateFlipOutput();
     
     this.showMetrics(this.metricsFunction);
+    
+    // Important: Check for errors AFTER all metrics and tests are complete
+    // This ensures all errors have been logged by the time we check
+    setTimeout(() => {
+      // Check if any new errors occurred and log scene contents if needed
+      const finalErrorCount = this.errorCount || 0;
+      console.log("Error counts (delayed check):", {initialErrorCount, finalErrorCount});
+      console.log("Shapes:", this.shapes ? this.shapes.length : 0);
+      console.log("Scene logged:", this.sceneLoggedForCurrentExample);
+      
+      if (finalErrorCount > initialErrorCount && !this.sceneLoggedForCurrentExample && this.shapes && this.shapes.length > 0) {
+        console.log("Logging scene contents for errors");
+        // Log scene contents only once per example when errors occur
+        this.logSceneContents();
+      } else {
+        console.log("Not logging scene contents because:", {
+          "new errors": finalErrorCount > initialErrorCount, 
+          "already logged": this.sceneLoggedForCurrentExample,
+          "has shapes": this.shapes && this.shapes.length > 0
+        });
+      }
+    }, 0); // Using setTimeout with 0 delay ensures this runs after all other operations
   }
 
   runMultipleExamples(count, stopAtError = true) {
     let current = 0;
-    const initialErrorCount = this.errorsContainer.children.length;
+    this.sceneLoggedForCurrentExample = false; // Initialize flag
+    const initialErrorCount = this.errorCount || 0;
 
     // Create progress bar element
     const progressBar = document.createElement('div');
@@ -417,19 +566,35 @@ class RenderComparison {
 
     const runFrame = () => {
         try {
+            // Track error count before rendering
+            const beforeErrorCount = this.errorCount || 0;
+            
+            // Reset scene logged flag
+            this.sceneLoggedForCurrentExample = false;
+            
             this.render(this.buildShapesFn, this.canvasCodeFn);
             current++;
             updateProgress();
-
-            // Continue if under count and either not stopping at errors or no new errors
-            if (current < count && (!stopAtError || this.errorsContainer.children.length === initialErrorCount)) {
-                requestAnimationFrame(runFrame);
-            } else {
-                // Remove progress bar when done
-                progressBar.remove();
-            }
+            
+            // Use a small delay to check for errors after all rendering and metrics are complete
+            setTimeout(() => {
+                // Continue if under count and either not stopping at errors or no new errors
+                if (current < count && (!stopAtError || this.errorCount === beforeErrorCount)) {
+                    requestAnimationFrame(runFrame);
+                } else {
+                    // Remove progress bar when done
+                    progressBar.remove();
+                }
+            }, 0);
+            
         } catch (error) {
             this.showError(`Error during multiple examples: ${error.message}`);
+            
+            // Log scene contents if there's an error and it hasn't been logged yet
+            if (!this.sceneLoggedForCurrentExample && this.shapes && this.shapes.length > 0) {
+                this.logSceneContents();
+            }
+            
             // Remove progress bar on error if we're stopping
             if (stopAtError) {
                 progressBar.remove();
