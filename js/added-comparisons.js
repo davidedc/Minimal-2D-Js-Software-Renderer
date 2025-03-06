@@ -276,6 +276,7 @@ function addOneRandomCircleComparison() {
     //.withExtremesCheck(0.03)
     .withNoGapsInStrokeEdgesCheck()  // Check that the stroke has no gaps
     .withUniqueColorsCheck(3)  // Check for fill, stroke, and blended edge colors
+    .withSpecklesCheckOnSwCanvas()
     .build();
 }
 
@@ -288,6 +289,7 @@ function addSingleRandomCircleComparison() {
     .withExtremesCheck(0.03)  // Same tolerance as the 1px circle tests
     .withNoGapsInStrokeEdgesCheck() // Check that the stroke has no gaps
     .withUniqueColorsCheck(3)  // Check that there are exactly three unique colors (fill, stroke, and blended edge)
+    .withSpecklesCheckOnSwCanvas()
     .build();
 }
 
@@ -300,6 +302,7 @@ function addSingleNoStrokeCircleComparison() {
     .withExtremesCheck(0.03)  // Same tolerance as the circle tests
     .withNoGapsInFillEdgesCheck()  // Check that the fill has no gaps
     .withUniqueColorsCheck(1)  // Check that there's exactly one unique color
+    .withSpecklesCheckOnSwCanvas()
     .build();
 }
 
@@ -312,6 +315,7 @@ function addRandomPositionCircleComparison() {
     .withExtremesCheck(0.03)  // Same tolerance as the circle tests
     .withNoGapsInStrokeEdgesCheck()  // Check that the stroke has no gaps
     .withUniqueColorsCheck(3)  // Check that there are exactly three unique colors (fill, stroke, and blended edge)
+    .withSpecklesCheckOnSwCanvas()
     .build();
 }
 
@@ -324,6 +328,7 @@ function addRandomPositionNoStrokeCircleComparison() {
     .withExtremesCheck(0.03)  // Same tolerance as the circle tests
     .withNoGapsInFillEdgesCheck()  // Check that the fill has no gaps
     .withUniqueColorsCheck(1)  // Check that there's exactly one unique color
+    .withSpecklesCheckOnSwCanvas()
     .build();
 }
 
