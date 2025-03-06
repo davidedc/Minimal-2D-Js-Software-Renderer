@@ -281,7 +281,6 @@ class RenderComparison {
       this.errorCount = 0;
     }
     this.errorCount++;
-    console.log("Error registered, count now:", this.errorCount, "Message:", message);
     
     // Create and add clear errors button and error count display if not already present
     if (!this.clearErrorsButton) {
@@ -525,21 +524,7 @@ class RenderComparison {
     setTimeout(() => {
       // Check if any new errors occurred and log scene contents if needed
       const finalErrorCount = this.errorCount || 0;
-      console.log("Error counts (delayed check):", {initialErrorCount, finalErrorCount});
-      console.log("Shapes:", this.shapes ? this.shapes.length : 0);
-      console.log("Scene logged:", this.sceneLoggedForCurrentExample);
-      
-      if (finalErrorCount > initialErrorCount && !this.sceneLoggedForCurrentExample && this.shapes && this.shapes.length > 0) {
-        console.log("Logging scene contents for errors");
-        // Log scene contents only once per example when errors occur
-        this.logSceneContents();
-      } else {
-        console.log("Not logging scene contents because:", {
-          "new errors": finalErrorCount > initialErrorCount, 
-          "already logged": this.sceneLoggedForCurrentExample,
-          "has shapes": this.shapes && this.shapes.length > 0
-        });
-      }
+
     }, 0); // Using setTimeout with 0 delay ensures this runs after all other operations
   }
 
