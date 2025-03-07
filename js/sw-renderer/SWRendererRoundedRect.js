@@ -18,13 +18,14 @@ class SWRendererRoundedRect {
     // if the stroke is a) invisible (size zero or trasparent) OR b) opaque and thin,
     //  then use drawCrispAxisAlignedRoundedRectThinOpaqueStroke
     //  otherwise use drawCrispAxisAlignedRoundedRectThickOrSemitrasparentStroke
-    if (rotation === 0) {
+    if (isNearMultipleOf90Degrees(rotation)) {
+      const { adjustedWidth, adjustedHeight } = getRotatedDimensionsIfTheCase(width, height, rotation);
       const correctedRadius = radius > 2 ? radius - 1 : radius;
       if (strokeWidth == 0 || strokeA === 255 || (strokeWidth < 5 && strokeA === 255)) {
-        this.drawCrispAxisAlignedRoundedRectThinOpaqueStroke(center.x, center.y, width, height, correctedRadius,
+        this.drawCrispAxisAlignedRoundedRectThinOpaqueStroke(center.x, center.y, adjustedWidth, adjustedHeight, correctedRadius,
           strokeWidth, strokeR, strokeG, strokeB, strokeA, fillR, fillG, fillB, fillA);
       } else {
-        this.drawCrispAxisAlignedRoundedRectThickOrSemitrasparentStroke(center.x, center.y, width, height, correctedRadius,
+        this.drawCrispAxisAlignedRoundedRectThickOrSemitrasparentStroke(center.x, center.y, adjustedWidth, adjustedHeight, correctedRadius,
           strokeWidth, strokeR, strokeG, strokeB, strokeA, fillR, fillG, fillB, fillA);
       }
     } else {

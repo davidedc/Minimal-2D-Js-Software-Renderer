@@ -5,8 +5,15 @@ function drawRoundedRectCanvas(ctx, shape) {
       fillColor: { r: fillR, g: fillG, b: fillB, a: fillA }
   } = shape;
 
-  if (rotation === 0) {
-      drawCrispAxisAlignedRoundedRectCanvas(ctx, shape);
+  if (isNearMultipleOf90Degrees(rotation)) {
+      // Create a modified shape with adjusted width and height
+      const { adjustedWidth, adjustedHeight } = getRotatedDimensionsIfTheCase(width, height, rotation);
+      const modifiedShape = {
+          ...shape,
+          width: adjustedWidth,
+          height: adjustedHeight
+      };
+      drawCrispAxisAlignedRoundedRectCanvas(ctx, modifiedShape);
   } else {
       ctx.save();
       ctx.translate(center.x, center.y);

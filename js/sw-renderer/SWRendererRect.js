@@ -9,8 +9,9 @@ class SWRendererRect {
 
   drawRect(shape) {
     if(shape.clippingOnly) {
-      if (shape.rotation === 0) {
-        this.drawAxisAlignedRect(shape.center.x, shape.center.y, shape.width, shape.height, true);
+      if (isNearMultipleOf90Degrees(shape.rotation)) {
+        const { adjustedWidth, adjustedHeight } = getRotatedDimensionsIfTheCase(shape.width, shape.height, shape.rotation);
+        this.drawAxisAlignedRect(shape.center.x, shape.center.y, adjustedWidth, adjustedHeight, true);
       } else {
         this.drawRotatedRect(shape.center.x, shape.center.y, shape.width, shape.height, shape.rotation, true);
       }
@@ -23,8 +24,9 @@ class SWRendererRect {
       fillColor: { r: fillR, g: fillG, b: fillB, a: fillA }
     } = shape;
 
-    if (rotation === 0) {    
-      this.drawAxisAlignedRect(center.x, center.y, width, height, clippingOnly,
+    if (isNearMultipleOf90Degrees(rotation)) {
+      const { adjustedWidth, adjustedHeight } = getRotatedDimensionsIfTheCase(width, height, rotation);
+      this.drawAxisAlignedRect(center.x, center.y, adjustedWidth, adjustedHeight, clippingOnly,
         strokeWidth, strokeR, strokeG, strokeB, strokeA,
         fillR, fillG, fillB, fillA);
     } else {
@@ -40,15 +42,17 @@ class SWRendererRect {
     const shapeHeight = shape.height;
     const rotation = shape.rotation;
 
-    if (rotation === 0) {
-      if (shapeWidth === this.width && 
-        shapeHeight === this.height &&
-        center.x === shapeWidth / 2 &&
-        center.y === shapeHeight / 2) {
+    if (isNearMultipleOf90Degrees(rotation)) {
+      const { adjustedWidth, adjustedHeight } = getRotatedDimensionsIfTheCase(shapeWidth, shapeHeight, rotation);
+      
+      if (adjustedWidth === this.width && 
+        adjustedHeight === this.height &&
+        center.x === adjustedWidth / 2 &&
+        center.y === adjustedHeight / 2) {
         this.frameBuffer.fill(0);
         return;
       }
-      this.clearAxisAlignedRect(center.x, center.y, shapeWidth, shapeHeight);
+      this.clearAxisAlignedRect(center.x, center.y, adjustedWidth, adjustedHeight);
     } else {
       this.fillRotatedRect(center.x, center.y, shapeWidth, shapeHeight, rotation, false, true);
     }

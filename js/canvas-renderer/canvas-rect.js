@@ -32,8 +32,9 @@ function drawRectCanvas(ctx, shape) {
       fillColor: { r: fillR, g: fillG, b: fillB, a: fillA }
   } = shape;
 
-  if (rotation === 0) {
-      drawAxisAlignedRectCanvas(ctx, center.x, center.y, width, height,
+  if (isNearMultipleOf90Degrees(rotation)) {
+      const { adjustedWidth, adjustedHeight } = getRotatedDimensionsIfTheCase(width, height, rotation);
+      drawAxisAlignedRectCanvas(ctx, center.x, center.y, adjustedWidth, adjustedHeight,
           strokeWidth, strokeR, strokeG, strokeB, strokeA,
           fillR, fillG, fillB, fillA);
   } else {
