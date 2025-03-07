@@ -238,8 +238,8 @@ function addNoStrokeRoundedRectanglesComparison() {
 function addNinetyDegreeArcsComparison() {
   return new RenderComparisonBuilder()
     .withId('ninety-degree-arcs')
-    .withTitle('90° Arcs')
-    .withDescription('Tests rendering of 90-degree arcs with various radii and stroke widths')
+    .withTitle('90\u00B0 Arcs')
+    .withDescription('Tests rendering of 90\u00B0 arcs with various radii and stroke widths')
     .addShapes(addNinetyDegreeArcs)
     .build();
 }
