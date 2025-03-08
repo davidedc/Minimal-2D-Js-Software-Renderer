@@ -28,10 +28,10 @@ VERSION_COMMENT="/* CrispSwCanvas v$VERSION */"
 
 # Concatenate all required JavaScript files with version comment
 echo "$VERSION_COMMENT" > "$CONCAT_FILE"
-cat js/sw-renderer/sw-renderer-utils.js \
-    js/sw-renderer/SWRendererPixel.js \
-    js/sw-renderer/SWRendererLine.js \
-    js/sw-renderer/SWRendererRect.js \
+cat js/renderers/renderer-utils.js \
+    js/renderers/sw-renderer/SWRendererPixel.js \
+    js/renderers/sw-renderer/SWRendererLine.js \
+    js/renderers/sw-renderer/SWRendererRect.js \
     js/crisp-sw-canvas/color-utils.js \
     js/crisp-sw-canvas/transform-utils.js \
     js/crisp-sw-canvas/ContextState.js \
