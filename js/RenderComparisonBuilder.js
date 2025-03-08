@@ -35,11 +35,11 @@ class RenderComparisonBuilder {
   withColorCheckMiddleRow(options) {
     this._checks.push((comparison) => {
       const swColors = comparison.renderChecks.checkCountOfUniqueColorsInMiddleRow(
-        comparison.swCtx, 
+        comparison.canvasCtxOfSwRender, 
         options.expectedUniqueColors
       );
       const canvasColors = comparison.renderChecks.checkCountOfUniqueColorsInMiddleRow(
-        comparison.canvasCtx, 
+        comparison.canvasCtxOfCanvasRender, 
         options.expectedUniqueColors
       );
       const isCorrect = swColors === options.expectedUniqueColors && canvasColors === options.expectedUniqueColors;
@@ -52,7 +52,7 @@ class RenderComparisonBuilder {
     this._checks.push((comparison) => {
       // Only check the software renderer as specified
       const swColors = comparison.renderChecks.checkCountOfUniqueColorsInImage(
-        comparison.swCtx, 
+        comparison.canvasCtxOfSwRender, 
         expectedColors
       );
       const isCorrect = swColors === expectedColors;
@@ -64,7 +64,7 @@ class RenderComparisonBuilder {
   withSpecklesCheckOnSwCanvas() {
     this._checks.push((comparison) => {
       // check both SW and Canvas
-      const speckleCountSW = comparison.renderChecks.checkForSpeckles(comparison.swCtx);
+      const speckleCountSW = comparison.renderChecks.checkForSpeckles(comparison.canvasCtxOfSwRender);
       return `${speckleCountSW === 0 ? '&#x2705; ' : ''}Speckle count: SW: ${speckleCountSW}`;
     });
     return this;
@@ -73,11 +73,11 @@ class RenderComparisonBuilder {
   withColorCheckMiddleColumn(options) {
     this._checks.push((comparison) => {
       const swColors = comparison.renderChecks.checkCountOfUniqueColorsInMiddleColumn(
-        comparison.swCtx, 
+        comparison.canvasCtxOfSwRender, 
         options.expectedUniqueColors
       );
       const canvasColors = comparison.renderChecks.checkCountOfUniqueColorsInMiddleColumn(
-        comparison.canvasCtx, 
+        comparison.canvasCtxOfCanvasRender, 
         options.expectedUniqueColors
       );
       const isCorrect = swColors === options.expectedUniqueColors && canvasColors === options.expectedUniqueColors;
@@ -92,8 +92,8 @@ class RenderComparisonBuilder {
       if (!extremes) return "No extremes data available";
       
       const result = comparison.renderChecks.checkExtremes(
-        comparison.swCtx,
-        comparison.canvasCtx,
+        comparison.canvasCtxOfSwRender,
+        comparison.canvasCtxOfCanvasRender,
         extremes,
         alphaTolerance
       );
@@ -106,8 +106,8 @@ class RenderComparisonBuilder {
   withNoGapsInFillEdgesCheck() {
     this._checks.push((comparison) => {
       const result = comparison.renderChecks.checkEdgesForGaps(
-        comparison.swCtx,
-        comparison.canvasCtx,
+        comparison.canvasCtxOfSwRender,
+        comparison.canvasCtxOfCanvasRender,
         false // isStroke = false, check fill
       );
       const isCorrect = !result.includes("FAIL") && !result.includes("Error");
@@ -119,8 +119,8 @@ class RenderComparisonBuilder {
   withNoGapsInStrokeEdgesCheck() {
     this._checks.push((comparison) => {
       const result = comparison.renderChecks.checkEdgesForGaps(
-        comparison.swCtx,
-        comparison.canvasCtx,
+        comparison.canvasCtxOfSwRender,
+        comparison.canvasCtxOfCanvasRender,
         true // isStroke = true, check stroke
       );
       const isCorrect = !result.includes("FAIL") && !result.includes("Error");
@@ -133,8 +133,8 @@ class RenderComparisonBuilder {
   compareWithThreshold(RGBThreshold, alphaThreshold) {
     this._checks.push((comparison) => {
       const result = comparison.renderChecks.compareWithThreshold(
-        comparison.swCtx,
-        comparison.canvasCtx,
+        comparison.canvasCtxOfSwRender,
+        comparison.canvasCtxOfCanvasRender,
         RGBThreshold,
         alphaThreshold
       );
@@ -161,8 +161,8 @@ class RenderComparisonBuilder {
   //     if (!edges) return "No edges data available";
       
   //     return comparison.renderChecks.checkPlacementOf4SidesAlongMiddleLines(
-  //       comparison.swCtx,
-  //       comparison.canvasCtx,
+  //       comparison.canvasCtxOfSwRender,
+  //       comparison.canvasCtxOfCanvasRender,
   //       edges
   //     );
   //   });

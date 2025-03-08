@@ -53,19 +53,19 @@ class RenderComparison {
     }
     
     // Create canvases
-    this.swCanvas = this.createCanvas('sw');
-    this.canvasCanvas = this.createCanvas('canvas');
-    this.displayCanvas = this.createCanvas('display');
+    this.canvasOfSwRender = this.createCanvas('sw');
+    this.canvasOfCanvasRender = this.createCanvas('canvas');
+    this.canvasOfComparison = this.createCanvas('display');
     
     // Add mouse event listeners for inspection
-    this.swCanvas.addEventListener('mousemove', (e) => this.handleMouseMove(e, this.swCanvas));
-    this.canvasCanvas.addEventListener('mousemove', (e) => this.handleMouseMove(e, this.canvasCanvas));
-    this.swCanvas.addEventListener('mouseout', () => this.handleMouseOut());
-    this.canvasCanvas.addEventListener('mouseout', () => this.handleMouseOut());
+    this.canvasOfSwRender.addEventListener('mousemove', (e) => this.handleMouseMove(e, this.canvasOfSwRender));
+    this.canvasOfCanvasRender.addEventListener('mousemove', (e) => this.handleMouseMove(e, this.canvasOfCanvasRender));
+    this.canvasOfSwRender.addEventListener('mouseout', () => this.handleMouseOut());
+    this.canvasOfCanvasRender.addEventListener('mouseout', () => this.handleMouseOut());
     
     // Set cursor style
-    this.swCanvas.style.cursor = 'crosshair';
-    this.canvasCanvas.style.cursor = 'crosshair';
+    this.canvasOfSwRender.style.cursor = 'crosshair';
+    this.canvasOfCanvasRender.style.cursor = 'crosshair';
     
     // Create wrapper divs and hash containers
     this.swWrapper = document.createElement('div');
@@ -83,13 +83,13 @@ class RenderComparison {
     this.canvasHashContainer.className = 'hash-container';
     
     // Add canvases and hashes to their wrappers
-    this.swWrapper.appendChild(this.swCanvas);
+    this.swWrapper.appendChild(this.canvasOfSwRender);
     this.swWrapper.appendChild(this.swHashContainer);
     
-    this.canvasWrapper.appendChild(this.canvasCanvas);
+    this.canvasWrapper.appendChild(this.canvasOfCanvasRender);
     this.canvasWrapper.appendChild(this.canvasHashContainer);
     
-    this.displayWrapper.appendChild(this.displayCanvas);
+    this.displayWrapper.appendChild(this.canvasOfComparison);
     
     // Add wrappers to container
     this.container.appendChild(this.swWrapper);
@@ -97,9 +97,9 @@ class RenderComparison {
     this.container.appendChild(this.displayWrapper);
     
     // Get contexts
-    this.swCtx = this.swCanvas.getContext('2d');
-    this.canvasCtx = this.canvasCanvas.getContext('2d');
-    this.displayCtx = this.displayCanvas.getContext('2d');
+    this.canvasCtxOfSwRender = this.canvasOfSwRender.getContext('2d');
+    this.canvasCtxOfCanvasRender = this.canvasOfCanvasRender.getContext('2d');
+    this.canvasCtxOfComparison = this.canvasOfComparison.getContext('2d');
     
     // Create outer container for counter and buttons
     const controlsContainer = document.createElement('div');
@@ -243,15 +243,15 @@ class RenderComparison {
 
   updateSWRenderOutput() {
     const imageData = new ImageData(this.frameBuffer, this.width, this.height);
-    this.swCtx.putImageData(imageData, 0, 0);
-    if (this.swCtx.getHashString) this.updateHashes();
+    this.canvasCtxOfSwRender.putImageData(imageData, 0, 0);
+    if (this.canvasCtxOfSwRender.getHashString) this.updateHashes();
   }
 
   drawSceneCanvas() {
-    this.canvasCtx.setTransform(1, 0, 0, 1, 0, 0);
-    this.canvasCtx.clearRect(0, 0, this.canvasCanvas.width, this.canvasCanvas.height);
-    drawShapesImpl(this.shapes, true, this.canvasCtx);
-    if (this.swCtx.getHashString) this.updateHashes();
+    this.canvasCtxOfCanvasRender.setTransform(1, 0, 0, 1, 0, 0);
+    this.canvasCtxOfCanvasRender.clearRect(0, 0, this.canvasOfCanvasRender.width, this.canvasOfCanvasRender.height);
+    drawShapesImpl(this.shapes, true, this.canvasCtxOfCanvasRender);
+    if (this.canvasCtxOfSwRender.getHashString) this.updateHashes();
   }
 
   drawSceneSW() {
@@ -265,13 +265,13 @@ class RenderComparison {
   }
 
   updateFlipOutput() {
-    this.displayCtx.setTransform(1, 0, 0, 1, 0, 0);
-    this.displayCtx.clearRect(0, 0, this.displayCanvas.width, this.displayCanvas.height);
+    this.canvasCtxOfComparison.setTransform(1, 0, 0, 1, 0, 0);
+    this.canvasCtxOfComparison.clearRect(0, 0, this.canvasOfComparison.width, this.canvasOfComparison.height);
     
     if (this.flipState) {
-      this.displayCtx.drawImage(this.swCanvas, 0, 0);
+      this.canvasCtxOfComparison.drawImage(this.canvasOfSwRender, 0, 0);
     } else {
-      this.displayCtx.drawImage(this.canvasCanvas, 0, 0);
+      this.canvasCtxOfComparison.drawImage(this.canvasOfCanvasRender, 0, 0);
     }
   }
 
@@ -462,8 +462,8 @@ class RenderComparison {
   }
 
   updateHashes() {
-    this.swHashContainer.textContent = `Hash: ${this.swCtx.getHashString()}`;
-    this.canvasHashContainer.textContent = `Hash: ${this.canvasCtx.getHashString()}`;
+    this.swHashContainer.textContent = `Hash: ${this.canvasCtxOfSwRender.getHashString()}`;
+    this.canvasHashContainer.textContent = `Hash: ${this.canvasCtxOfCanvasRender.getHashString()}`;
   }
 
   render(buildShapesFn, canvasCodeFn = null) {
@@ -497,21 +497,21 @@ class RenderComparison {
     }
     else if (canvasCodeFn) {
       // clear both canvases (to transparent black)
-      this.canvasCtx.clearRect(0, 0, this.canvasCanvas.width, this.canvasCanvas.height);
-      this.crispSwCtx.clearRect(0, 0, this.swCanvas.width, this.swCanvas.height);
+      this.canvasCtxOfCanvasRender.clearRect(0, 0, this.canvasOfCanvasRender.width, this.canvasOfCanvasRender.height);
+      this.crispSwCtx.clearRect(0, 0, this.canvasOfSwRender.width, this.canvasOfSwRender.height);
       
 
       // For the software-rendered side, use CrispSwCanvas
       SeededRandom.seedWithInteger(currentCount);
       canvasCodeFn(this.crispSwCtx);
       // Blit the result to the SW canvas
-      this.crispSwCtx.blitToCanvas(this.swCanvas);
+      this.crispSwCtx.blitToCanvas(this.canvasOfSwRender);
       
       // For the canvas side, use regular canvas
       SeededRandom.seedWithInteger(currentCount);
-      canvasCodeFn(this.canvasCtx);
+      canvasCodeFn(this.canvasCtxOfCanvasRender);
       
-      if (this.swCtx.getHashString) this.updateHashes();
+      if (this.canvasCtxOfSwRender.getHashString) this.updateHashes();
     }
     
     this.flipState = true;
@@ -667,18 +667,18 @@ class RenderComparison {
     const y = Math.floor(event.clientY - rect.top);
     
     // Clear display canvas
-    this.displayCtx.setTransform(1, 0, 0, 1, 0, 0);
-    this.displayCtx.clearRect(0, 0, this.displayCanvas.width, this.displayCanvas.height);    
+    this.canvasCtxOfComparison.setTransform(1, 0, 0, 1, 0, 0);
+    this.canvasCtxOfComparison.clearRect(0, 0, this.canvasOfComparison.width, this.canvasOfComparison.height);    
 
     // Get image data from both canvases at the same position
-    const swImageData = this.swCtx.getImageData(
+    const swImageData = this.canvasCtxOfSwRender.getImageData(
       Math.max(0, x - Math.floor(RenderComparison.GRID_COLUMNS/2)),
       Math.max(0, y - Math.floor(RenderComparison.GRID_ROWS/2)),
       RenderComparison.GRID_COLUMNS,
       RenderComparison.GRID_ROWS
     );
 
-    const canvasImageData = this.canvasCtx.getImageData(
+    const canvasImageData = this.canvasCtxOfCanvasRender.getImageData(
       Math.max(0, x - Math.floor(RenderComparison.GRID_COLUMNS/2)),
       Math.max(0, y - Math.floor(RenderComparison.GRID_ROWS/2)),
       RenderComparison.GRID_COLUMNS,
@@ -687,8 +687,8 @@ class RenderComparison {
 
     // Calculate pixel size for the magnified view
     const pixelSize = Math.min(
-      (this.displayCanvas.width / 2) / RenderComparison.GRID_COLUMNS,
-      this.displayCanvas.height / RenderComparison.GRID_ROWS
+      (this.canvasOfComparison.width / 2) / RenderComparison.GRID_COLUMNS,
+      this.canvasOfComparison.height / RenderComparison.GRID_ROWS
     );
 
     // Function to draw magnified grid
@@ -713,7 +713,7 @@ class RenderComparison {
 
           if (isOutOfBounds) {
             // Draw grey pixel for out of bounds
-            this.displayCtx.fillStyle = 'rgb(128,128,128)';
+            this.canvasCtxOfComparison.fillStyle = 'rgb(128,128,128)';
           } else {
             // Calculate correct index in the imageData
             const dataX = px - readOffsetX;
@@ -723,10 +723,10 @@ class RenderComparison {
             const g = imageData.data[i + 1];
             const b = imageData.data[i + 2];
             const a = imageData.data[i + 3];
-            this.displayCtx.fillStyle = colorToString(r, g, b, a);
+            this.canvasCtxOfComparison.fillStyle = colorToString(r, g, b, a);
           }
 
-          this.displayCtx.fillRect(
+          this.canvasCtxOfComparison.fillRect(
             offsetX + px * pixelSize,
             py * pixelSize,
             pixelSize,
@@ -734,8 +734,8 @@ class RenderComparison {
           );
 
           // Draw grid lines
-          this.displayCtx.strokeStyle = 'rgba(128,128,128,0.5)';
-          this.displayCtx.strokeRect(
+          this.canvasCtxOfComparison.strokeStyle = 'rgba(128,128,128,0.5)';
+          this.canvasCtxOfComparison.strokeRect(
             offsetX + px * pixelSize,
             py * pixelSize,
             pixelSize,
@@ -745,20 +745,20 @@ class RenderComparison {
       }
 
       // Draw crosshair
-      this.displayCtx.strokeStyle = 'red';
-      this.displayCtx.lineWidth = 2;
+      this.canvasCtxOfComparison.strokeStyle = 'red';
+      this.canvasCtxOfComparison.lineWidth = 2;
       
       // Vertical line
-      this.displayCtx.beginPath();
-      this.displayCtx.moveTo(offsetX + (RenderComparison.GRID_COLUMNS/2) * pixelSize, 0);
-      this.displayCtx.lineTo(offsetX + (RenderComparison.GRID_COLUMNS/2) * pixelSize, RenderComparison.GRID_ROWS * pixelSize);
-      this.displayCtx.stroke();
+      this.canvasCtxOfComparison.beginPath();
+      this.canvasCtxOfComparison.moveTo(offsetX + (RenderComparison.GRID_COLUMNS/2) * pixelSize, 0);
+      this.canvasCtxOfComparison.lineTo(offsetX + (RenderComparison.GRID_COLUMNS/2) * pixelSize, RenderComparison.GRID_ROWS * pixelSize);
+      this.canvasCtxOfComparison.stroke();
       
       // Horizontal line
-      this.displayCtx.beginPath();
-      this.displayCtx.moveTo(offsetX, (RenderComparison.GRID_ROWS/2) * pixelSize);
-      this.displayCtx.lineTo(offsetX + RenderComparison.GRID_COLUMNS * pixelSize, (RenderComparison.GRID_ROWS/2) * pixelSize);
-      this.displayCtx.stroke();
+      this.canvasCtxOfComparison.beginPath();
+      this.canvasCtxOfComparison.moveTo(offsetX, (RenderComparison.GRID_ROWS/2) * pixelSize);
+      this.canvasCtxOfComparison.lineTo(offsetX + RenderComparison.GRID_COLUMNS * pixelSize, (RenderComparison.GRID_ROWS/2) * pixelSize);
+      this.canvasCtxOfComparison.stroke();
 
       // Compute the local mouse coordinates within this grid.
       let localMouseX = Math.floor(RenderComparison.GRID_COLUMNS/2);
@@ -774,52 +774,52 @@ class RenderComparison {
       const rgbaText = colorToString(r, g, b, a);
 
       // Draw color text below grid
-      this.displayCtx.font = '12px monospace';
-      this.displayCtx.textAlign = 'center';
-      this.displayCtx.textBaseline = 'middle';
+      this.canvasCtxOfComparison.font = '12px monospace';
+      this.canvasCtxOfComparison.textAlign = 'center';
+      this.canvasCtxOfComparison.textBaseline = 'middle';
       const textX = offsetX + (RenderComparison.GRID_COLUMNS * pixelSize) / 2;
       const textY = (RenderComparison.GRID_ROWS) * pixelSize + pixelSize/2;
-      this.displayCtx.fillStyle = 'black';
-      this.displayCtx.fillText(rgbaText, textX, textY);
+      this.canvasCtxOfComparison.fillStyle = 'black';
+      this.canvasCtxOfComparison.fillText(rgbaText, textX, textY);
     };
 
     // Draw left side (SW renderer)
     drawMagnifiedGrid(swImageData, 0);
 
     // Draw right side (Canvas renderer)
-    drawMagnifiedGrid(canvasImageData, this.displayCanvas.width / 2);
+    drawMagnifiedGrid(canvasImageData, this.canvasOfComparison.width / 2);
 
     // Draw separator line
-    this.displayCtx.strokeStyle = 'rgba(128,128,128,0.8)';
-    this.displayCtx.lineWidth = 6;
-    this.displayCtx.beginPath();
-    this.displayCtx.moveTo(this.displayCanvas.width / 2, 0);
-    this.displayCtx.lineTo(this.displayCanvas.width / 2, this.displayCanvas.height);
-    this.displayCtx.stroke();
+    this.canvasCtxOfComparison.strokeStyle = 'rgba(128,128,128,0.8)';
+    this.canvasCtxOfComparison.lineWidth = 6;
+    this.canvasCtxOfComparison.beginPath();
+    this.canvasCtxOfComparison.moveTo(this.canvasOfComparison.width / 2, 0);
+    this.canvasCtxOfComparison.lineTo(this.canvasOfComparison.width / 2, this.canvasOfComparison.height);
+    this.canvasCtxOfComparison.stroke();
 
     // Add white highlights on the sides of the separator
-    this.displayCtx.strokeStyle = 'rgba(255,255,255,0.5)';
-    this.displayCtx.lineWidth = 2;
+    this.canvasCtxOfComparison.strokeStyle = 'rgba(255,255,255,0.5)';
+    this.canvasCtxOfComparison.lineWidth = 2;
     
     // Left highlight
-    this.displayCtx.beginPath();
-    this.displayCtx.moveTo(this.displayCanvas.width / 2 - 3, 0);
-    this.displayCtx.lineTo(this.displayCanvas.width / 2 - 3, this.displayCanvas.height);
-    this.displayCtx.stroke();
+    this.canvasCtxOfComparison.beginPath();
+    this.canvasCtxOfComparison.moveTo(this.canvasOfComparison.width / 2 - 3, 0);
+    this.canvasCtxOfComparison.lineTo(this.canvasOfComparison.width / 2 - 3, this.canvasOfComparison.height);
+    this.canvasCtxOfComparison.stroke();
     
     // Right highlight
-    this.displayCtx.beginPath();
-    this.displayCtx.moveTo(this.displayCanvas.width / 2 + 3, 0);
-    this.displayCtx.lineTo(this.displayCanvas.width / 2 + 3, this.displayCanvas.height);
-    this.displayCtx.stroke();
+    this.canvasCtxOfComparison.beginPath();
+    this.canvasCtxOfComparison.moveTo(this.canvasOfComparison.width / 2 + 3, 0);
+    this.canvasCtxOfComparison.lineTo(this.canvasOfComparison.width / 2 + 3, this.canvasOfComparison.height);
+    this.canvasCtxOfComparison.stroke();
 
     // Draw coordinates at top center
-    this.displayCtx.font = '14px monospace';
-    this.displayCtx.textAlign = 'center';
-    this.displayCtx.textBaseline = 'top';
+    this.canvasCtxOfComparison.font = '14px monospace';
+    this.canvasCtxOfComparison.textAlign = 'center';
+    this.canvasCtxOfComparison.textBaseline = 'top';
     const coordsText = `(${x}, ${y})`;
-    this.displayCtx.fillStyle = 'black';
-    this.displayCtx.fillText(coordsText, this.displayCanvas.width / 2, 25);
+    this.canvasCtxOfComparison.fillStyle = 'black';
+    this.canvasCtxOfComparison.fillText(coordsText, this.canvasOfComparison.width / 2, 25);
   }
 
   handleMouseOut() {

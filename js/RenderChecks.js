@@ -51,11 +51,11 @@ class RenderChecks {
   // NOT USED AT THE MOMENT, we rather check the leftmost and rightmost and topmost and bottommost pixels
   // that are not transparent, because there are some defects like protruding pixels in rounded rects
   // that get missed if one just checks the middle lines.
-  checkPlacementOf4SidesAlongMiddleLines(swCtx, canvasCtx, edges) {
+  checkPlacementOf4SidesAlongMiddleLines(canvasCtxOfSwRender, canvasCtxOfCanvasRender, edges) {
     const results = [];
     const contexts = [
-      { name: 'Software Renderer', ctx: swCtx },
-      { name: 'Canvas', ctx: canvasCtx }
+      { name: 'SW Renderer', ctx: canvasCtxOfSwRender },
+      { name: 'Canvas Renderer', ctx: canvasCtxOfCanvasRender }
     ];
     
     for (const { name, ctx } of contexts) {
@@ -179,16 +179,16 @@ class RenderChecks {
   
   /**
    * Check if the extremes match the expected values for both renderers
-   * @param {CanvasRenderingContext2D} swCtx - The software renderer context
-   * @param {CanvasRenderingContext2D} canvasCtx - The canvas context
+   * @param {CanvasRenderingContext2D} canvasCtxOfSwRender - The software renderer context
+   * @param {CanvasRenderingContext2D} canvasCtxOfCanvasRender - The canvas context
    * @param {Object} expectedExtremes - The expected extremes
    * @param {number} alphaTolerance - Tolerance for alpha values (0-1)
    * @returns {string} Results of the check
    */
-  checkExtremes(swCtx, canvasCtx, expectedExtremes, alphaTolerance = 0) {
+  checkExtremes(canvasCtxOfSwRender, canvasCtxOfCanvasRender, expectedExtremes, alphaTolerance = 0) {
     const contexts = [
-      { name: 'Software Renderer', ctx: swCtx },
-      { name: 'Canvas', ctx: canvasCtx }
+      { name: 'SW Renderer', ctx: canvasCtxOfSwRender },
+      { name: 'Canvas Renderer', ctx: canvasCtxOfCanvasRender }
     ];
     
     const results = [];
@@ -356,14 +356,14 @@ class RenderChecks {
   
   /**
    * Check edges of a shape for gaps
-   * @param {CanvasRenderingContext2D} swCtx - The software renderer context
-   * @param {CanvasRenderingContext2D} canvasCtx - The canvas context
+   * @param {CanvasRenderingContext2D} canvasCtxOfSwRender - The software renderer context
+   * @param {CanvasRenderingContext2D} canvasCtxOfCanvasRender - The canvas context
    * @param {boolean} isStroke - Whether to check stroke edges (true) or fill edges (false)
    * @returns {string} Results of the check
    */
-  checkEdgesForGaps(swCtx, canvasCtx, isStroke = false) {
+  checkEdgesForGaps(canvasCtxOfSwRender, canvasCtxOfCanvasRender, isStroke = false) {
     // Calculate extremes for the shape by scanning the canvas
-    const calculatedExtremes = this.findExtremesWithTolerance(swCtx, 0);
+    const calculatedExtremes = this.findExtremesWithTolerance(canvasCtxOfSwRender, 0);
     
     // If no non-transparent pixels were found, return error
     if (!calculatedExtremes) {
@@ -373,7 +373,7 @@ class RenderChecks {
     }
     
     // Check only the software renderer for gaps, as specified
-    const swResults = this.checkEdgeGaps(swCtx, calculatedExtremes, isStroke);
+    const swResults = this.checkEdgeGaps(canvasCtxOfSwRender, calculatedExtremes, isStroke);
     return `Edge gap check result (${isStroke ? 'stroke' : 'fill'}): ${swResults}`;
   }
 
@@ -476,13 +476,13 @@ class RenderChecks {
     return speckleCount;
   }
 
-  compareWithThreshold(swCtx, canvasCtx, RGBThreshold, alphaThreshold) {
-    const swImageData = swCtx.getImageData(0, 0, swCtx.canvas.width, swCtx.canvas.height);
-    const canvasImageData = canvasCtx.getImageData(0, 0, canvasCtx.canvas.width, canvasCtx.canvas.height);
+  compareWithThreshold(canvasCtxOfSwRender, canvasCtxOfCanvasRender, RGBThreshold, alphaThreshold) {
+    const swImageData = canvasCtxOfSwRender.getImageData(0, 0, canvasCtxOfSwRender.canvas.width, canvasCtxOfSwRender.canvas.height);
+    const canvasImageData = canvasCtxOfCanvasRender.getImageData(0, 0, canvasCtxOfCanvasRender.canvas.width, canvasCtxOfCanvasRender.canvas.height);
     const swData = swImageData.data;
     const canvasData = canvasImageData.data;
-    const width = swCtx.canvas.width;
-    const height = swCtx.canvas.height;
+    const width = canvasCtxOfSwRender.canvas.width;
+    const height = canvasCtxOfSwRender.canvas.height;
     
     let differenceCount = 0;
     let firstDiffX = -1;
@@ -539,7 +539,7 @@ class RenderChecks {
       const message = `Found ${differenceCount} pixels with differences exceeding thresholds (RGB: ${RGBThreshold}, Alpha: ${alphaThreshold}). // ` +
                       `First difference at (${firstDiffX}, ${firstDiffY}): ` +
                       `SW Renderer: rgba(${swR}, ${swG}, ${swB}, ${swA}) // ` +
-                      `Canvas: rgba(${canvasR}, ${canvasG}, ${canvasB}, ${canvasA}) // ` +
+                      `Canvas Renderer: rgba(${canvasR}, ${canvasG}, ${canvasB}, ${canvasA}) // ` +
                       `Difference: rgba(${rHighlight}, ${gHighlight}, ${bHighlight}, ${aHighlight})`;
       
       this.comparison.showError(message);
