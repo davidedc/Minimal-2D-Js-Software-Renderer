@@ -1,14 +1,5 @@
 // Check for Node.js environment and load polyfills if needed
 const isNode = typeof window === 'undefined' && typeof process !== 'undefined';
-if (isNode) {
-    try {
-        // Try to load our own polyfills first
-        const polyfills = require('./node-polyfills');
-    } catch (e) {
-        // If our polyfills fail, we can try to use node-canvas if installed
-        console.warn('Failed to load node-polyfills.js. If running in Node.js, make sure it exists or install node-canvas.');
-    }
-}
 
 /**
  * Software-based Canvas 2D rendering context

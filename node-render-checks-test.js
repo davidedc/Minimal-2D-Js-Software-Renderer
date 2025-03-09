@@ -11,7 +11,7 @@
  */
 
 // Require the bundled libraries
-const { CrispSwCanvas } = require('./build/crisp-sw-canvas-node-v1.0.2.js');
+const { CrispSwCanvas, RenderChecks } = require('./build/crisp-sw-canvas-node-v1.0.2.js');
 
 // Create a mock comparison object for RenderChecks
 const mockComparison = {
@@ -19,9 +19,6 @@ const mockComparison = {
     console.error('RENDER ERROR:', message);
   }
 };
-
-// Import RenderChecks
-const { RenderChecks } = require('./js/RenderChecks.js');
 
 // Create a canvas and context
 class MockCanvas {

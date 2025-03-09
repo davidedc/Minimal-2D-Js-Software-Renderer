@@ -34,7 +34,8 @@ cat js/crisp-sw-canvas/TransformationMatrix.js \
     js/renderers/sw-renderer/SWRendererLine.js \
     js/renderers/sw-renderer/SWRendererRect.js \
     js/crisp-sw-canvas/CrispSwCanvas.js \
-    js/crisp-sw-canvas/CrispSwContext.js >> "$NODE_FILE"
+    js/crisp-sw-canvas/CrispSwContext.js \
+    js/RenderChecks.js >> "$NODE_FILE"
 
 # Add Node.js exports at the end
 cat << EOF >> "$NODE_FILE"
@@ -43,10 +44,7 @@ cat << EOF >> "$NODE_FILE"
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     CrispSwCanvas,
-    CrispSwContext,
-    ContextState,
-    TransformationMatrix,
-    ImageData
+    RenderChecks,
   };
 }
 EOF
