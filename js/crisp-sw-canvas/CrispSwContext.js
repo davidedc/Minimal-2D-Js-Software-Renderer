@@ -180,4 +180,45 @@ class CrispSwContext {
         ctx.putImageData(imageData, 0, 0);
     }
     
+    /**
+     * Returns an ImageData object representing the pixel data for the specified rectangle.
+     * Compatible with HTML5 Canvas getImageData method.
+     * @param {number} sx - The x-coordinate of the top-left corner of the rectangle from which the data will be extracted
+     * @param {number} sy - The y-coordinate of the top-left corner of the rectangle from which the data will be extracted
+     * @param {number} sw - The width of the rectangle from which the data will be extracted
+     * @param {number} sh - The height of the rectangle from which the data will be extracted
+     * @returns {ImageData} An ImageData object containing the image data for the specified rectangle
+     */
+    getImageData(sx, sy, sw, sh) {
+        // Ensure parameters are within bounds
+        sx = Math.max(0, Math.min(Math.floor(sx), this.canvas.width));
+        sy = Math.max(0, Math.min(Math.floor(sy), this.canvas.height));
+        sw = Math.max(0, Math.min(Math.floor(sw), this.canvas.width - sx));
+        sh = Math.max(0, Math.min(Math.floor(sh), this.canvas.height - sy));
+        
+        // Create a new buffer for the extracted data
+        const extractedData = new Uint8ClampedArray(sw * sh * 4);
+        
+        // If the requested area is the entire canvas, we can just return a copy of the frameBuffer
+        if (sx === 0 && sy === 0 && sw === this.canvas.width && sh === this.canvas.height) {
+            extractedData.set(this.frameBuffer);
+        } else {
+            // Copy pixel data from the frameBuffer to the new buffer
+            for (let y = 0; y < sh; y++) {
+                for (let x = 0; x < sw; x++) {
+                    const srcIdx = ((sy + y) * this.canvas.width + (sx + x)) * 4;
+                    const destIdx = (y * sw + x) * 4;
+                    
+                    extractedData[destIdx] = this.frameBuffer[srcIdx];         // R
+                    extractedData[destIdx + 1] = this.frameBuffer[srcIdx + 1]; // G
+                    extractedData[destIdx + 2] = this.frameBuffer[srcIdx + 2]; // B
+                    extractedData[destIdx + 3] = this.frameBuffer[srcIdx + 3]; // A
+                }
+            }
+        }
+        
+        // Return a new ImageData object
+        return new ImageData(extractedData, sw, sh);
+    }
+    
 }
