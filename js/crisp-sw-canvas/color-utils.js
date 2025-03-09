@@ -1,7 +1,31 @@
 // Color parsing and normalization
 function parseColor(colorStr) {
-    colorStr = colorStr.replace(/\s+/g, '');
+    if (!colorStr || typeof colorStr !== 'string') {
+        throw new Error("Invalid color format: must be a string");
+    }
+    
+    colorStr = colorStr.trim().replace(/\s+/g, '');
 
+    // Handle hex colors
+    if (colorStr.startsWith('#')) {
+        let r, g, b;
+        
+        if (colorStr.length === 4) {
+            // #RGB format
+            r = parseInt(colorStr[1] + colorStr[1], 16);
+            g = parseInt(colorStr[2] + colorStr[2], 16);
+            b = parseInt(colorStr[3] + colorStr[3], 16);
+            return normalizeColor(r, g, b, 1);
+        } else if (colorStr.length === 7) {
+            // #RRGGBB format
+            r = parseInt(colorStr.substring(1, 3), 16);
+            g = parseInt(colorStr.substring(3, 5), 16);
+            b = parseInt(colorStr.substring(5, 7), 16);
+            return normalizeColor(r, g, b, 1);
+        }
+    }
+
+    // Handle rgb/rgba formats
     const rgbMatch = colorStr.match(/^rgb\((\d+),(\d+),(\d+)\)$/i);
     const rgbaMatch = colorStr.match(/^rgba\((\d+),(\d+),(\d+),([0-9]*\.?[0-9]+)\)$/i);
 
@@ -18,7 +42,8 @@ function parseColor(colorStr) {
         }
         return normalizeColor(+r, +g, +b, +a);
     }
-    throw new Error("Invalid color format");
+    
+    throw new Error(`Invalid color format: ${colorStr}`);
 }
 
 function normalizeColor(r, g, b, a) {
