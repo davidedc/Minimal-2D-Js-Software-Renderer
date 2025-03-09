@@ -1,3 +1,7 @@
+/**
+ * Represents the state of a CrispSwContext at a point in time.
+ * Used for save() and restore() operations.
+ */
 class ContextState {
     constructor(canvasWidth, canvasHeight, lineWidth, transform, strokeColor, fillColor, globalAlpha, clippingMask) {
         this.canvasWidth = canvasWidth;

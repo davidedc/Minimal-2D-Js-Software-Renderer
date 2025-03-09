@@ -1,3 +1,8 @@
+/**
+ * Software-based Canvas 2D rendering context
+ * This provides a subset of the CanvasRenderingContext2D API that runs
+ * entirely in JavaScript without requiring the HTML5 Canvas API.
+ */
 class CrispSwContext {
     constructor(canvas) {
         this.canvas = canvas;
