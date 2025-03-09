@@ -66,8 +66,8 @@ function saveBMP(imageData, filename) {
   const buffer = Buffer.alloc(fileSize);
   
   // BMP File Header (14 bytes)
-  buffer.write('BM', 0);                          // Signature
-  buffer.writeUInt32LE(fileSize, 2);              // File size
+  buffer.write('BM', 0);                         // Signature
+  buffer.writeUInt32LE(fileSize, 2);             // File size
   buffer.writeUInt32LE(0, 6);                    // Reserved
   buffer.writeUInt32LE(54, 10);                  // Offset to pixel data
   
