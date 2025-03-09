@@ -1,3 +1,15 @@
+// Check for Node.js environment and load polyfills if needed
+const isNode = typeof window === 'undefined' && typeof process !== 'undefined';
+if (isNode) {
+    try {
+        // Try to load our own polyfills first
+        const polyfills = require('./node-polyfills');
+    } catch (e) {
+        // If our polyfills fail, we can try to use node-canvas if installed
+        console.warn('Failed to load node-polyfills.js. If running in Node.js, make sure it exists or install node-canvas.');
+    }
+}
+
 /**
  * Software-based Canvas 2D rendering context
  * This provides a subset of the CanvasRenderingContext2D API that runs
@@ -180,9 +192,22 @@ class CrispSwContext {
     }
 
     blitToCanvas(canvas) {
-        const ctx = canvas.getContext('2d');
-        const imageData = new ImageData(this.frameBuffer, this.canvas.width, this.canvas.height);
-        ctx.putImageData(imageData, 0, 0);
+        // Only use real canvas operations in browser environment
+        if (!isNode) {
+            const ctx = canvas.getContext('2d');
+            const imageData = new ImageData(this.frameBuffer, this.canvas.width, this.canvas.height);
+            ctx.putImageData(imageData, 0, 0);
+        } else {
+            // In Node.js, we might use a different approach depending on the canvas implementation
+            // If using node-canvas, the API is compatible, otherwise this is a no-op
+            if (canvas.getContext) {
+                const ctx = canvas.getContext('2d');
+                if (ctx.putImageData) {
+                    const imageData = new ImageData(this.frameBuffer, this.canvas.width, this.canvas.height);
+                    ctx.putImageData(imageData, 0, 0);
+                }
+            }
+        }
     }
     
     /**
