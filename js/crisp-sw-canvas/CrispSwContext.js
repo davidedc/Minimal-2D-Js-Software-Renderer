@@ -17,10 +17,32 @@ if (isNode) {
  */
 class CrispSwContext {
     constructor(canvas) {
+        // Store reference to the canvas element
         this.canvas = canvas;
+        
+        // Ensure canvas has all required properties
+        if (!canvas.title) {
+            canvas.title = '';
+        }
+        
+        // Create additional compatibility properties for RenderChecks
+        // Different parts of the code base might access these properties in different ways
+        this.displayCanvas = {
+            width: canvas.width,
+            height: canvas.height,
+            title: canvas.title
+        };
+        
+        // Add title directly to context for maximum compatibility
+        // Some code might expect ctx.title instead of ctx.canvas.title
+        this.title = canvas.title;
+        
+        // Initialize the context state
         this.stateStack = [new ContextState(canvas.width, canvas.height)];
         this.frameBuffer = new Uint8ClampedArray(canvas.width * canvas.height * 4).fill(0);
         this.tempClippingMask = new Uint8Array(Math.ceil(canvas.width * canvas.height / 8)).fill(0);
+        
+        // Initialize renderers
         this.pixelRenderer = new SWRendererPixel(this.frameBuffer, canvas.width, canvas.height, this);
         this.lineRenderer = new SWRendererLine(this.pixelRenderer);
         this.rectRenderer = new SWRendererRect(this.frameBuffer, canvas.width, canvas.height, this.lineRenderer, this.pixelRenderer);
@@ -220,23 +242,26 @@ class CrispSwContext {
      * @returns {ImageData} An ImageData object containing the image data for the specified rectangle
      */
     getImageData(sx, sy, sw, sh) {
+        const canvasWidth = this.canvas.width;
+        const canvasHeight = this.canvas.height;
+        
         // Ensure parameters are within bounds
-        sx = Math.max(0, Math.min(Math.floor(sx), this.canvas.width));
-        sy = Math.max(0, Math.min(Math.floor(sy), this.canvas.height));
-        sw = Math.max(0, Math.min(Math.floor(sw), this.canvas.width - sx));
-        sh = Math.max(0, Math.min(Math.floor(sh), this.canvas.height - sy));
+        sx = Math.max(0, Math.min(Math.floor(sx), canvasWidth));
+        sy = Math.max(0, Math.min(Math.floor(sy), canvasHeight));
+        sw = Math.max(0, Math.min(Math.floor(sw), canvasWidth - sx));
+        sh = Math.max(0, Math.min(Math.floor(sh), canvasHeight - sy));
         
         // Create a new buffer for the extracted data
         const extractedData = new Uint8ClampedArray(sw * sh * 4);
         
         // If the requested area is the entire canvas, we can just return a copy of the frameBuffer
-        if (sx === 0 && sy === 0 && sw === this.canvas.width && sh === this.canvas.height) {
+        if (sx === 0 && sy === 0 && sw === canvasWidth && sh === canvasHeight) {
             extractedData.set(this.frameBuffer);
         } else {
             // Copy pixel data from the frameBuffer to the new buffer
             for (let y = 0; y < sh; y++) {
                 for (let x = 0; x < sw; x++) {
-                    const srcIdx = ((sy + y) * this.canvas.width + (sx + x)) * 4;
+                    const srcIdx = ((sy + y) * canvasWidth + (sx + x)) * 4;
                     const destIdx = (y * sw + x) * 4;
                     
                     extractedData[destIdx] = this.frameBuffer[srcIdx];         // R
@@ -247,8 +272,18 @@ class CrispSwContext {
             }
         }
         
-        // Return a new ImageData object
-        return new ImageData(extractedData, sw, sh);
+        // Return a new ImageData object with canvas info for RenderChecks compatibility
+        const imageData = new ImageData(extractedData, sw, sh);
+        
+        // Add extra properties that some check routines might expect
+        if (typeof imageData.canvasTitle === 'undefined') {
+            Object.defineProperty(imageData, 'canvasTitle', {
+                get: () => this.canvas.title || this.title || '',
+                configurable: true
+            });
+        }
+        
+        return imageData;
     }
     
 }
