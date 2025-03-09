@@ -12,19 +12,23 @@ class RenderChecks {
 
   /**
    * Checks the count of unique colors in a horizontal or vertical line through the middle of the canvas
-   * @param {CanvasRenderingContext2D} canvasContextOfSwRendererOrCanvasRenderer - The canvas context to analyze
+   * @param {CanvasRenderingContext2D|CrispSwContext} canvasContextOfSwRendererOrCanvasRenderer - The rendering context to analyze
    * @param {number|null} expectedColors - The expected number of unique colors, or null if no expectation
    * @param {boolean} isRow - True to check a horizontal row, false to check a vertical column
    * @returns {number} The count of unique colors found
    */
   checkCountOfUniqueColorsInLine(canvasContextOfSwRendererOrCanvasRenderer, expectedColors, isRow) {
-    const imageData = canvasContextOfSwRendererOrCanvasRenderer.getImageData(0, 0, canvasContextOfSwRendererOrCanvasRenderer.canvas.width, canvasContextOfSwRendererOrCanvasRenderer.canvas.height);
+    const imageData = canvasContextOfSwRendererOrCanvasRenderer.getImageData(0, 0, 
+      canvasContextOfSwRendererOrCanvasRenderer.canvas.width, 
+      canvasContextOfSwRendererOrCanvasRenderer.canvas.height);
+    
     const data = imageData.data;
     const width = canvasContextOfSwRendererOrCanvasRenderer.canvas.width;
+    const height = canvasContextOfSwRendererOrCanvasRenderer.canvas.height;
     const uniqueColors = new Set();
     
     if (isRow) {
-      const middleY = Math.floor(canvasContextOfSwRendererOrCanvasRenderer.canvas.height / 2);
+      const middleY = Math.floor(height / 2);
       for(let x = 0; x < width; x++) {
         const i = (middleY * width + x) * 4;
         if(data[i+3] === 0) continue;
@@ -33,7 +37,7 @@ class RenderChecks {
       }
     } else {
       const middleX = Math.floor(width / 2);
-      for(let y = 0; y < canvasContextOfSwRendererOrCanvasRenderer.canvas.height; y++) {
+      for(let y = 0; y < height; y++) {
         const i = (y * width + middleX) * 4;
         if(data[i+3] === 0) continue;
         const colorKey = `${data[i]},${data[i+1]},${data[i+2]},${data[i+3]}`;
@@ -55,7 +59,7 @@ class RenderChecks {
 
   /**
    * Checks the count of unique colors in the middle horizontal row of the canvas
-   * @param {CanvasRenderingContext2D} canvasContextOfSwRendererOrCanvasRenderer - The canvas context to analyze
+   * @param {CanvasRenderingContext2D|CrispSwContext} canvasContextOfSwRendererOrCanvasRenderer - The rendering context to analyze
    * @param {number|null} expectedColors - The expected number of unique colors, or null if no expectation
    * @returns {number} The count of unique colors found
    */
@@ -65,7 +69,7 @@ class RenderChecks {
 
   /**
    * Checks the count of unique colors in the middle vertical column of the canvas
-   * @param {CanvasRenderingContext2D} canvasContextOfSwRendererOrCanvasRenderer - The canvas context to analyze
+   * @param {CanvasRenderingContext2D|CrispSwContext} canvasContextOfSwRendererOrCanvasRenderer - The rendering context to analyze
    * @param {number|null} expectedColors - The expected number of unique colors, or null if no expectation
    * @returns {number} The count of unique colors found
    */
@@ -73,30 +77,30 @@ class RenderChecks {
     return this.checkCountOfUniqueColorsInLine(canvasContextOfSwRendererOrCanvasRenderer, expectedColors, false);
   }
 
-  // note that these first two parameters are both CanvasRenderingContext2D
+  // note that these parameters can be both CanvasRenderingContext2D or CrispSwContext
   // NOT USED AT THE MOMENT, we rather check the leftmost and rightmost and topmost and bottommost pixels
   // that are not transparent, because there are some defects like protruding pixels in rounded rects
   // that get missed if one just checks the middle lines.
   /**
    * Checks the placement of four sides along middle lines for both renderers
    * Note: Currently not used, as we check leftmost/rightmost and topmost/bottommost non-transparent pixels instead
-   * @param {CanvasRenderingContext2D} canvasCtxOfSwRender - The software renderer context
-   * @param {CanvasRenderingContext2D} canvasCtxOfCanvasRender - The canvas renderer context
+   * @param {CanvasRenderingContext2D|CrispSwContext} canvasCtxOfSwRender - The software renderer context
+   * @param {CanvasRenderingContext2D|CrispSwContext} canvasCtxOfCanvasRender - The canvas renderer context
    * @param {Object} edges - Expected edge positions {leftX, rightX, topY, bottomY}
    * @returns {string} Results of the placement check
    */
   checkPlacementOf4SidesAlongMiddleLines(canvasCtxOfSwRender, canvasCtxOfCanvasRender, edges) {
     const results = [];
     const contexts = [
-      { name: 'SW Renderer', canvasContextOfSwRendererOrCanvasRenderer: canvasCtxOfSwRender },
-      { name: 'Canvas Renderer', canvasContextOfSwRendererOrCanvasRenderer: canvasCtxOfCanvasRender }
+      { name: 'SW Renderer', context: canvasCtxOfSwRender },
+      { name: 'Canvas Renderer', context: canvasCtxOfCanvasRender }
     ];
     
-    for (const { name, canvasContextOfSwRendererOrCanvasRenderer } of contexts) {
-      const imageData = canvasContextOfSwRendererOrCanvasRenderer.getImageData(0, 0, canvasContextOfSwRendererOrCanvasRenderer.canvas.width, canvasContextOfSwRendererOrCanvasRenderer.canvas.height);
+    for (const { name, context } of contexts) {
+      const imageData = context.getImageData(0, 0, context.canvas.width, context.canvas.height);
       const data = imageData.data;
-      const width = canvasContextOfSwRendererOrCanvasRenderer.canvas.width;
-      const height = canvasContextOfSwRendererOrCanvasRenderer.canvas.height;
+      const width = context.canvas.width;
+      const height = context.canvas.height;
       
       const middleY = Math.floor(height / 2);
       let actualLeftX = -1;
@@ -175,12 +179,15 @@ class RenderChecks {
 
   /**
    * Find the extremes (boundaries) of an image with an alpha tolerance
-   * @param {CanvasRenderingContext2D} canvasContextOfSwRendererOrCanvasRenderer - The canvas context to analyze
+   * @param {CanvasRenderingContext2D|CrispSwContext} canvasContextOfSwRendererOrCanvasRenderer - The rendering context to analyze
    * @param {number} alphaTolerance - Tolerance for alpha values (0-1)
    * @returns {Object|null} The extremes object with leftX, rightX, topY, bottomY or null if no qualifying pixels
    */
   findExtremesWithTolerance(canvasContextOfSwRendererOrCanvasRenderer, alphaTolerance = 0) {
-    const imageData = canvasContextOfSwRendererOrCanvasRenderer.getImageData(0, 0, canvasContextOfSwRendererOrCanvasRenderer.canvas.width, canvasContextOfSwRendererOrCanvasRenderer.canvas.height);
+    const imageData = canvasContextOfSwRendererOrCanvasRenderer.getImageData(0, 0, 
+      canvasContextOfSwRendererOrCanvasRenderer.canvas.width, 
+      canvasContextOfSwRendererOrCanvasRenderer.canvas.height);
+    
     const data = imageData.data;
     const width = canvasContextOfSwRendererOrCanvasRenderer.canvas.width;
     const height = canvasContextOfSwRendererOrCanvasRenderer.canvas.height;
@@ -213,22 +220,22 @@ class RenderChecks {
   
   /**
    * Check if the extremes match the expected values for both renderers
-   * @param {CanvasRenderingContext2D} canvasCtxOfSwRender - The software renderer context
-   * @param {CanvasRenderingContext2D} canvasCtxOfCanvasRender - The canvas context
+   * @param {CanvasRenderingContext2D|CrispSwContext} canvasCtxOfSwRender - The software renderer context
+   * @param {CanvasRenderingContext2D|CrispSwContext} canvasCtxOfCanvasRender - The canvas renderer context
    * @param {Object} expectedExtremes - The expected extremes
    * @param {number} alphaTolerance - Tolerance for alpha values (0-1)
    * @returns {string} Results of the check
    */
   checkExtremes(canvasCtxOfSwRender, canvasCtxOfCanvasRender, expectedExtremes, alphaTolerance = 0) {
     const contexts = [
-      { name: 'SW Renderer', canvasContextOfSwRendererOrCanvasRenderer: canvasCtxOfSwRender },
-      { name: 'Canvas Renderer', canvasContextOfSwRendererOrCanvasRenderer: canvasCtxOfCanvasRender }
+      { name: 'SW Renderer', context: canvasCtxOfSwRender },
+      { name: 'Canvas Renderer', context: canvasCtxOfCanvasRender }
     ];
     
     const results = [];
     
-    for (const { name, canvasContextOfSwRendererOrCanvasRenderer } of contexts) {
-      const actualExtremes = this.findExtremesWithTolerance(canvasContextOfSwRendererOrCanvasRenderer, alphaTolerance);
+    for (const { name, context } of contexts) {
+      const actualExtremes = this.findExtremesWithTolerance(context, alphaTolerance);
       
       // If no qualifying pixels were found
       if (!actualExtremes) {
@@ -270,13 +277,16 @@ class RenderChecks {
   
   /**
    * Checks for gaps in the edges of a shape
-   * @param {CanvasRenderingContext2D} canvasContextOfSwRendererOrCanvasRenderer - The canvas context to analyze
+   * @param {CanvasRenderingContext2D|CrispSwContext} canvasContextOfSwRendererOrCanvasRenderer - The rendering context to analyze
    * @param {Object} extremes - The shape boundaries {leftX, rightX, topY, bottomY}
    * @param {boolean} isStroke - Whether checking stroke edges (true) or fill edges (false)
    * @returns {string} Results of the gap check
    */
   checkEdgeGaps(canvasContextOfSwRendererOrCanvasRenderer, extremes, isStroke) {
-    const imageData = canvasContextOfSwRendererOrCanvasRenderer.getImageData(0, 0, canvasContextOfSwRendererOrCanvasRenderer.canvas.width, canvasContextOfSwRendererOrCanvasRenderer.canvas.height);
+    const imageData = canvasContextOfSwRendererOrCanvasRenderer.getImageData(0, 0, 
+      canvasContextOfSwRendererOrCanvasRenderer.canvas.width, 
+      canvasContextOfSwRendererOrCanvasRenderer.canvas.height);
+      
     const data = imageData.data;
     const width = canvasContextOfSwRendererOrCanvasRenderer.canvas.width;
     
@@ -377,8 +387,12 @@ class RenderChecks {
       }
     }
     
+    // Extract renderer name from canvas title or use a default
+    const rendererName = canvasContextOfSwRendererOrCanvasRenderer.canvas.title ? 
+                       canvasContextOfSwRendererOrCanvasRenderer.canvas.title.split('-')[0] : 'Unknown';
+    
     // Generate result message
-    let resultMsg = `${canvasContextOfSwRendererOrCanvasRenderer.canvas.title.split('-')[0]} Renderer: `;
+    let resultMsg = `${rendererName} Renderer: `;
     
     if (results.gaps === 0) {
       resultMsg += `No gaps found in ${isStroke ? 'stroke' : 'fill'} edges!`;
@@ -397,8 +411,8 @@ class RenderChecks {
   
   /**
    * Check edges of a shape for gaps
-   * @param {CanvasRenderingContext2D} canvasCtxOfSwRender - The software renderer context
-   * @param {CanvasRenderingContext2D} canvasCtxOfCanvasRender - The canvas context
+   * @param {CanvasRenderingContext2D|CrispSwContext} canvasCtxOfSwRender - The software renderer context
+   * @param {CanvasRenderingContext2D|CrispSwContext} canvasCtxOfCanvasRender - The canvas renderer context
    * @param {boolean} isStroke - Whether to check stroke edges (true) or fill edges (false)
    * @returns {string} Results of the check
    */
@@ -418,8 +432,17 @@ class RenderChecks {
     return `Edge gap check result (${isStroke ? 'stroke' : 'fill'}): ${swResults}`;
   }
 
+  /**
+   * Counts the number of unique colors in the entire image
+   * @param {CanvasRenderingContext2D|CrispSwContext} canvasContextOfSwRendererOrCanvasRenderer - The rendering context to analyze
+   * @param {number|null} expectedColors - The expected number of unique colors, or null if no expectation
+   * @returns {number} The count of unique colors found
+   */
   checkCountOfUniqueColorsInImage(canvasContextOfSwRendererOrCanvasRenderer, expectedColors = null) {
-    const imageData = canvasContextOfSwRendererOrCanvasRenderer.getImageData(0, 0, canvasContextOfSwRendererOrCanvasRenderer.canvas.width, canvasContextOfSwRendererOrCanvasRenderer.canvas.height);
+    const imageData = canvasContextOfSwRendererOrCanvasRenderer.getImageData(0, 0, 
+      canvasContextOfSwRendererOrCanvasRenderer.canvas.width, 
+      canvasContextOfSwRendererOrCanvasRenderer.canvas.height);
+      
     const data = imageData.data;
     const width = canvasContextOfSwRendererOrCanvasRenderer.canvas.width;
     const height = canvasContextOfSwRendererOrCanvasRenderer.canvas.height;
@@ -449,11 +472,14 @@ class RenderChecks {
 
   /**
    * Checks for speckles (isolated pixels with different colors from their matching neighbors)
-   * @param {CanvasRenderingContext2D} canvasContextOfSwRendererOrCanvasRenderer - The canvas context to analyze
+   * @param {CanvasRenderingContext2D|CrispSwContext} canvasContextOfSwRendererOrCanvasRenderer - The rendering context to analyze
    * @returns {number} The number of speckles found
    */
   checkForSpeckles(canvasContextOfSwRendererOrCanvasRenderer) {
-    const imageData = canvasContextOfSwRendererOrCanvasRenderer.getImageData(0, 0, canvasContextOfSwRendererOrCanvasRenderer.canvas.width, canvasContextOfSwRendererOrCanvasRenderer.canvas.height);
+    const imageData = canvasContextOfSwRendererOrCanvasRenderer.getImageData(0, 0, 
+      canvasContextOfSwRendererOrCanvasRenderer.canvas.width, 
+      canvasContextOfSwRendererOrCanvasRenderer.canvas.height);
+    
     const data = imageData.data;
     const width = canvasContextOfSwRendererOrCanvasRenderer.canvas.width;
     const height = canvasContextOfSwRendererOrCanvasRenderer.canvas.height;
@@ -524,15 +550,21 @@ class RenderChecks {
 
   /**
    * Compares two renderings with color and alpha thresholds
-   * @param {CanvasRenderingContext2D} canvasCtxOfSwRender - The software renderer context
-   * @param {CanvasRenderingContext2D} canvasCtxOfCanvasRender - The canvas renderer context
+   * @param {CanvasRenderingContext2D|CrispSwContext} canvasCtxOfSwRender - The software renderer context
+   * @param {CanvasRenderingContext2D|CrispSwContext} canvasCtxOfCanvasRender - The canvas renderer context
    * @param {number} RGBThreshold - Maximum allowed difference in RGB values
    * @param {number} alphaThreshold - Maximum allowed difference in alpha values
    * @returns {string} Results of the comparison
    */
   compareWithThreshold(canvasCtxOfSwRender, canvasCtxOfCanvasRender, RGBThreshold, alphaThreshold) {
-    const swImageData = canvasCtxOfSwRender.getImageData(0, 0, canvasCtxOfSwRender.canvas.width, canvasCtxOfSwRender.canvas.height);
-    const canvasImageData = canvasCtxOfCanvasRender.getImageData(0, 0, canvasCtxOfCanvasRender.canvas.width, canvasCtxOfCanvasRender.canvas.height);
+    const swImageData = canvasCtxOfSwRender.getImageData(0, 0, 
+      canvasCtxOfSwRender.canvas.width, 
+      canvasCtxOfSwRender.canvas.height);
+      
+    const canvasImageData = canvasCtxOfCanvasRender.getImageData(0, 0, 
+      canvasCtxOfCanvasRender.canvas.width, 
+      canvasCtxOfCanvasRender.canvas.height);
+      
     const swData = swImageData.data;
     const canvasData = canvasImageData.data;
     const width = canvasCtxOfSwRender.canvas.width;
