@@ -1,8 +1,22 @@
+/**
+ * Class for performing various rendering checks and comparisons between software and canvas renderers
+ */
 class RenderChecks {
+  /**
+   * Creates a new RenderChecks instance
+   * @param {Object} comparison - The comparison object used for showing errors
+   */
   constructor(comparison) {
     this.comparison = comparison;
   }
 
+  /**
+   * Checks the count of unique colors in a horizontal or vertical line through the middle of the canvas
+   * @param {CanvasRenderingContext2D} canvasContextOfSwRendererOrCanvasRenderer - The canvas context to analyze
+   * @param {number|null} expectedColors - The expected number of unique colors, or null if no expectation
+   * @param {boolean} isRow - True to check a horizontal row, false to check a vertical column
+   * @returns {number} The count of unique colors found
+   */
   checkCountOfUniqueColorsInLine(canvasContextOfSwRendererOrCanvasRenderer, expectedColors, isRow) {
     const imageData = canvasContextOfSwRendererOrCanvasRenderer.getImageData(0, 0, canvasContextOfSwRendererOrCanvasRenderer.canvas.width, canvasContextOfSwRendererOrCanvasRenderer.canvas.height);
     const data = imageData.data;
@@ -39,10 +53,22 @@ class RenderChecks {
     return count;
   }
 
+  /**
+   * Checks the count of unique colors in the middle horizontal row of the canvas
+   * @param {CanvasRenderingContext2D} canvasContextOfSwRendererOrCanvasRenderer - The canvas context to analyze
+   * @param {number|null} expectedColors - The expected number of unique colors, or null if no expectation
+   * @returns {number} The count of unique colors found
+   */
   checkCountOfUniqueColorsInMiddleRow(canvasContextOfSwRendererOrCanvasRenderer, expectedColors = null) {
     return this.checkCountOfUniqueColorsInLine(canvasContextOfSwRendererOrCanvasRenderer, expectedColors, true);
   }
 
+  /**
+   * Checks the count of unique colors in the middle vertical column of the canvas
+   * @param {CanvasRenderingContext2D} canvasContextOfSwRendererOrCanvasRenderer - The canvas context to analyze
+   * @param {number|null} expectedColors - The expected number of unique colors, or null if no expectation
+   * @returns {number} The count of unique colors found
+   */
   checkCountOfUniqueColorsInMiddleColumn(canvasContextOfSwRendererOrCanvasRenderer, expectedColors = null) {
     return this.checkCountOfUniqueColorsInLine(canvasContextOfSwRendererOrCanvasRenderer, expectedColors, false);
   }
@@ -51,6 +77,14 @@ class RenderChecks {
   // NOT USED AT THE MOMENT, we rather check the leftmost and rightmost and topmost and bottommost pixels
   // that are not transparent, because there are some defects like protruding pixels in rounded rects
   // that get missed if one just checks the middle lines.
+  /**
+   * Checks the placement of four sides along middle lines for both renderers
+   * Note: Currently not used, as we check leftmost/rightmost and topmost/bottommost non-transparent pixels instead
+   * @param {CanvasRenderingContext2D} canvasCtxOfSwRender - The software renderer context
+   * @param {CanvasRenderingContext2D} canvasCtxOfCanvasRender - The canvas renderer context
+   * @param {Object} edges - Expected edge positions {leftX, rightX, topY, bottomY}
+   * @returns {string} Results of the placement check
+   */
   checkPlacementOf4SidesAlongMiddleLines(canvasCtxOfSwRender, canvasCtxOfCanvasRender, edges) {
     const results = [];
     const contexts = [
@@ -234,6 +268,13 @@ class RenderChecks {
     return results.join('\n');
   }
   
+  /**
+   * Checks for gaps in the edges of a shape
+   * @param {CanvasRenderingContext2D} canvasContextOfSwRendererOrCanvasRenderer - The canvas context to analyze
+   * @param {Object} extremes - The shape boundaries {leftX, rightX, topY, bottomY}
+   * @param {boolean} isStroke - Whether checking stroke edges (true) or fill edges (false)
+   * @returns {string} Results of the gap check
+   */
   checkEdgeGaps(canvasContextOfSwRendererOrCanvasRenderer, extremes, isStroke) {
     const imageData = canvasContextOfSwRendererOrCanvasRenderer.getImageData(0, 0, canvasContextOfSwRendererOrCanvasRenderer.canvas.width, canvasContextOfSwRendererOrCanvasRenderer.canvas.height);
     const data = imageData.data;
@@ -406,6 +447,11 @@ class RenderChecks {
     return count;
   }
 
+  /**
+   * Checks for speckles (isolated pixels with different colors from their matching neighbors)
+   * @param {CanvasRenderingContext2D} canvasContextOfSwRendererOrCanvasRenderer - The canvas context to analyze
+   * @returns {number} The number of speckles found
+   */
   checkForSpeckles(canvasContextOfSwRendererOrCanvasRenderer) {
     const imageData = canvasContextOfSwRendererOrCanvasRenderer.getImageData(0, 0, canvasContextOfSwRendererOrCanvasRenderer.canvas.width, canvasContextOfSwRendererOrCanvasRenderer.canvas.height);
     const data = imageData.data;
@@ -476,6 +522,14 @@ class RenderChecks {
     return speckleCount;
   }
 
+  /**
+   * Compares two renderings with color and alpha thresholds
+   * @param {CanvasRenderingContext2D} canvasCtxOfSwRender - The software renderer context
+   * @param {CanvasRenderingContext2D} canvasCtxOfCanvasRender - The canvas renderer context
+   * @param {number} RGBThreshold - Maximum allowed difference in RGB values
+   * @param {number} alphaThreshold - Maximum allowed difference in alpha values
+   * @returns {string} Results of the comparison
+   */
   compareWithThreshold(canvasCtxOfSwRender, canvasCtxOfCanvasRender, RGBThreshold, alphaThreshold) {
     const swImageData = canvasCtxOfSwRender.getImageData(0, 0, canvasCtxOfSwRender.canvas.width, canvasCtxOfSwRender.canvas.height);
     const canvasImageData = canvasCtxOfCanvasRender.getImageData(0, 0, canvasCtxOfCanvasRender.canvas.width, canvasCtxOfCanvasRender.canvas.height);
