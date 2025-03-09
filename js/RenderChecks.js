@@ -3,14 +3,14 @@ class RenderChecks {
     this.comparison = comparison;
   }
 
-  checkCountOfUniqueColorsInLine(ctx, expectedColors, isRow) {
-    const imageData = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
+  checkCountOfUniqueColorsInLine(canvasContextOfSwRendererOrCanvasRenderer, expectedColors, isRow) {
+    const imageData = canvasContextOfSwRendererOrCanvasRenderer.getImageData(0, 0, canvasContextOfSwRendererOrCanvasRenderer.canvas.width, canvasContextOfSwRendererOrCanvasRenderer.canvas.height);
     const data = imageData.data;
-    const width = ctx.canvas.width;
+    const width = canvasContextOfSwRendererOrCanvasRenderer.canvas.width;
     const uniqueColors = new Set();
     
     if (isRow) {
-      const middleY = Math.floor(ctx.canvas.height / 2);
+      const middleY = Math.floor(canvasContextOfSwRendererOrCanvasRenderer.canvas.height / 2);
       for(let x = 0; x < width; x++) {
         const i = (middleY * width + x) * 4;
         if(data[i+3] === 0) continue;
@@ -19,7 +19,7 @@ class RenderChecks {
       }
     } else {
       const middleX = Math.floor(width / 2);
-      for(let y = 0; y < ctx.canvas.height; y++) {
+      for(let y = 0; y < canvasContextOfSwRendererOrCanvasRenderer.canvas.height; y++) {
         const i = (y * width + middleX) * 4;
         if(data[i+3] === 0) continue;
         const colorKey = `${data[i]},${data[i+1]},${data[i+2]},${data[i+3]}`;
@@ -29,7 +29,7 @@ class RenderChecks {
     
     const count = uniqueColors.size;
     if (expectedColors !== null && count !== expectedColors) {
-      let message = `Expected ${expectedColors} colors but found ${count} colors in middle ${isRow ? 'row' : 'column'} of ${ctx.canvas.title}`;
+      let message = `Expected ${expectedColors} colors but found ${count} colors in middle ${isRow ? 'row' : 'column'} of ${canvasContextOfSwRendererOrCanvasRenderer.canvas.title}`;
       uniqueColors.forEach(color => {
         message += `\n- ${color}`;
       });
@@ -39,12 +39,12 @@ class RenderChecks {
     return count;
   }
 
-  checkCountOfUniqueColorsInMiddleRow(ctx, expectedColors = null) {
-    return this.checkCountOfUniqueColorsInLine(ctx, expectedColors, true);
+  checkCountOfUniqueColorsInMiddleRow(canvasContextOfSwRendererOrCanvasRenderer, expectedColors = null) {
+    return this.checkCountOfUniqueColorsInLine(canvasContextOfSwRendererOrCanvasRenderer, expectedColors, true);
   }
 
-  checkCountOfUniqueColorsInMiddleColumn(ctx, expectedColors = null) {
-    return this.checkCountOfUniqueColorsInLine(ctx, expectedColors, false);
+  checkCountOfUniqueColorsInMiddleColumn(canvasContextOfSwRendererOrCanvasRenderer, expectedColors = null) {
+    return this.checkCountOfUniqueColorsInLine(canvasContextOfSwRendererOrCanvasRenderer, expectedColors, false);
   }
 
   // note that these first two parameters are both CanvasRenderingContext2D
@@ -54,15 +54,15 @@ class RenderChecks {
   checkPlacementOf4SidesAlongMiddleLines(canvasCtxOfSwRender, canvasCtxOfCanvasRender, edges) {
     const results = [];
     const contexts = [
-      { name: 'SW Renderer', ctx: canvasCtxOfSwRender },
-      { name: 'Canvas Renderer', ctx: canvasCtxOfCanvasRender }
+      { name: 'SW Renderer', canvasContextOfSwRendererOrCanvasRenderer: canvasCtxOfSwRender },
+      { name: 'Canvas Renderer', canvasContextOfSwRendererOrCanvasRenderer: canvasCtxOfCanvasRender }
     ];
     
-    for (const { name, ctx } of contexts) {
-      const imageData = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
+    for (const { name, canvasContextOfSwRendererOrCanvasRenderer } of contexts) {
+      const imageData = canvasContextOfSwRendererOrCanvasRenderer.getImageData(0, 0, canvasContextOfSwRendererOrCanvasRenderer.canvas.width, canvasContextOfSwRendererOrCanvasRenderer.canvas.height);
       const data = imageData.data;
-      const width = ctx.canvas.width;
-      const height = ctx.canvas.height;
+      const width = canvasContextOfSwRendererOrCanvasRenderer.canvas.width;
+      const height = canvasContextOfSwRendererOrCanvasRenderer.canvas.height;
       
       const middleY = Math.floor(height / 2);
       let actualLeftX = -1;
@@ -141,15 +141,15 @@ class RenderChecks {
 
   /**
    * Find the extremes (boundaries) of an image with an alpha tolerance
-   * @param {CanvasRenderingContext2D} ctx - The canvas context to analyze
+   * @param {CanvasRenderingContext2D} canvasContextOfSwRendererOrCanvasRenderer - The canvas context to analyze
    * @param {number} alphaTolerance - Tolerance for alpha values (0-1)
    * @returns {Object|null} The extremes object with leftX, rightX, topY, bottomY or null if no qualifying pixels
    */
-  findExtremesWithTolerance(ctx, alphaTolerance = 0) {
-    const imageData = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
+  findExtremesWithTolerance(canvasContextOfSwRendererOrCanvasRenderer, alphaTolerance = 0) {
+    const imageData = canvasContextOfSwRendererOrCanvasRenderer.getImageData(0, 0, canvasContextOfSwRendererOrCanvasRenderer.canvas.width, canvasContextOfSwRendererOrCanvasRenderer.canvas.height);
     const data = imageData.data;
-    const width = ctx.canvas.width;
-    const height = ctx.canvas.height;
+    const width = canvasContextOfSwRendererOrCanvasRenderer.canvas.width;
+    const height = canvasContextOfSwRendererOrCanvasRenderer.canvas.height;
     
     let minX = width;
     let maxX = -1;
@@ -187,14 +187,14 @@ class RenderChecks {
    */
   checkExtremes(canvasCtxOfSwRender, canvasCtxOfCanvasRender, expectedExtremes, alphaTolerance = 0) {
     const contexts = [
-      { name: 'SW Renderer', ctx: canvasCtxOfSwRender },
-      { name: 'Canvas Renderer', ctx: canvasCtxOfCanvasRender }
+      { name: 'SW Renderer', canvasContextOfSwRendererOrCanvasRenderer: canvasCtxOfSwRender },
+      { name: 'Canvas Renderer', canvasContextOfSwRendererOrCanvasRenderer: canvasCtxOfCanvasRender }
     ];
     
     const results = [];
     
-    for (const { name, ctx } of contexts) {
-      const actualExtremes = this.findExtremesWithTolerance(ctx, alphaTolerance);
+    for (const { name, canvasContextOfSwRendererOrCanvasRenderer } of contexts) {
+      const actualExtremes = this.findExtremesWithTolerance(canvasContextOfSwRendererOrCanvasRenderer, alphaTolerance);
       
       // If no qualifying pixels were found
       if (!actualExtremes) {
@@ -234,10 +234,10 @@ class RenderChecks {
     return results.join('\n');
   }
   
-  checkEdgeGaps(ctx, extremes, isStroke) {
-    const imageData = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
+  checkEdgeGaps(canvasContextOfSwRendererOrCanvasRenderer, extremes, isStroke) {
+    const imageData = canvasContextOfSwRendererOrCanvasRenderer.getImageData(0, 0, canvasContextOfSwRendererOrCanvasRenderer.canvas.width, canvasContextOfSwRendererOrCanvasRenderer.canvas.height);
     const data = imageData.data;
-    const width = ctx.canvas.width;
+    const width = canvasContextOfSwRendererOrCanvasRenderer.canvas.width;
     
     // Extract edges from extremes
     const { leftX, rightX, topY, bottomY } = extremes;
@@ -337,7 +337,7 @@ class RenderChecks {
     }
     
     // Generate result message
-    let resultMsg = `${ctx.canvas.title.split('-')[0]} Renderer: `;
+    let resultMsg = `${canvasContextOfSwRendererOrCanvasRenderer.canvas.title.split('-')[0]} Renderer: `;
     
     if (results.gaps === 0) {
       resultMsg += `No gaps found in ${isStroke ? 'stroke' : 'fill'} edges!`;
@@ -377,11 +377,11 @@ class RenderChecks {
     return `Edge gap check result (${isStroke ? 'stroke' : 'fill'}): ${swResults}`;
   }
 
-  checkCountOfUniqueColorsInImage(ctx, expectedColors = null) {
-    const imageData = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
+  checkCountOfUniqueColorsInImage(canvasContextOfSwRendererOrCanvasRenderer, expectedColors = null) {
+    const imageData = canvasContextOfSwRendererOrCanvasRenderer.getImageData(0, 0, canvasContextOfSwRendererOrCanvasRenderer.canvas.width, canvasContextOfSwRendererOrCanvasRenderer.canvas.height);
     const data = imageData.data;
-    const width = ctx.canvas.width;
-    const height = ctx.canvas.height;
+    const width = canvasContextOfSwRendererOrCanvasRenderer.canvas.width;
+    const height = canvasContextOfSwRendererOrCanvasRenderer.canvas.height;
     const uniqueColors = new Set();
     
     // Check all pixels in the image
@@ -396,7 +396,7 @@ class RenderChecks {
     
     const count = uniqueColors.size;
     if (expectedColors !== null && count !== expectedColors) {
-      let message = `Expected ${expectedColors} unique colors but found ${count} unique colors in ${ctx.canvas.title}`;
+      let message = `Expected ${expectedColors} unique colors but found ${count} unique colors in ${canvasContextOfSwRendererOrCanvasRenderer.canvas.title}`;
       uniqueColors.forEach(color => {
         message += `\n- ${color}`;
       });
@@ -406,11 +406,11 @@ class RenderChecks {
     return count;
   }
 
-  checkForSpeckles(ctx) {
-    const imageData = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
+  checkForSpeckles(canvasContextOfSwRendererOrCanvasRenderer) {
+    const imageData = canvasContextOfSwRendererOrCanvasRenderer.getImageData(0, 0, canvasContextOfSwRendererOrCanvasRenderer.canvas.width, canvasContextOfSwRendererOrCanvasRenderer.canvas.height);
     const data = imageData.data;
-    const width = ctx.canvas.width;
-    const height = ctx.canvas.height;
+    const width = canvasContextOfSwRendererOrCanvasRenderer.canvas.width;
+    const height = canvasContextOfSwRendererOrCanvasRenderer.canvas.height;
     
     let speckleCount = 0;
     let firstSpeckleX = -1;
@@ -467,7 +467,7 @@ class RenderChecks {
     if (speckleCount > 0) {
       const specklePixel = (firstSpeckleY * width + firstSpeckleX) * 4;
       this.comparison.showError(
-        `Found ${speckleCount} speckle${speckleCount === 1 ? '' : 's'} in ${ctx.canvas.title} ` +
+        `Found ${speckleCount} speckle${speckleCount === 1 ? '' : 's'} in ${canvasContextOfSwRendererOrCanvasRenderer.canvas.title} ` +
         `(single pixels with different color from matching neighbors). First speckle at (${firstSpeckleX}, ${firstSpeckleY}) ` +
         `with color rgba(${data[specklePixel]}, ${data[specklePixel + 1]}, ${data[specklePixel + 2]}, ${data[specklePixel + 3]})`
       );
