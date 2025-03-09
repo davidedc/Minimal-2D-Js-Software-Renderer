@@ -1,51 +1,34 @@
 #!/bin/bash
 
-# Check if terser is installed
-if ! command -v terser &> /dev/null && [ "$1" != "--no-minify" ]; then
-    echo "Terser is not installed. To install it, run:"
-    echo "npm install terser -g"
-    echo ""
-    echo "Alternatively, run this script with --no-minify to skip minification"
+# Build script for browser environment
+# This script combines all necessary files for running the software renderer in browsers
+
+# Source common build functions
+source ./build-common.sh
+
+# Check for terser
+check_terser "$1" || exit 1
+
+# Get version
+VERSION=$(get_version)
+if [ $? -ne 0 ]; then
     exit 1
 fi
 
-# Create build directory if it doesn't exist
-mkdir -p build
-
-# Extract version from CrispSwCanvas.js
-VERSION=$(grep "static version = '" js/crisp-sw-canvas/CrispSwCanvas.js | sed "s/.*version = '\([^']*\)'.*/\1/")
-if [ -z "$VERSION" ]; then
-    echo "Error: Could not extract version from CrispSwCanvas.js"
-    exit 1
-fi
+# Create build directory
+ensure_build_dir
 
 # Define the output files
 CONCAT_FILE="build/crisp-sw-canvas-v$VERSION.js"
 MIN_FILE="build/crisp-sw-canvas-v$VERSION.min.js"
 
-# Create version comment
-VERSION_COMMENT="/* CrispSwCanvas v$VERSION */"
+# Create file list
+FILES=("${COMMON_CORE_FILES[@]}" "${BROWSER_SPECIFIC_FILES[@]}")
 
-# Concatenate all required JavaScript files with version comment
-echo "$VERSION_COMMENT" > "$CONCAT_FILE"
-cat js/renderers/renderer-utils.js \
-    js/renderers/sw-renderer/SWRendererPixel.js \
-    js/renderers/sw-renderer/SWRendererLine.js \
-    js/renderers/sw-renderer/SWRendererRect.js \
-    js/crisp-sw-canvas/color-utils.js \
-    js/crisp-sw-canvas/transform-utils.js \
-    js/crisp-sw-canvas/ContextState.js \
-    js/crisp-sw-canvas/CrispSwCanvas.js \
-    js/crisp-sw-canvas/CrispSwContext.js \
-    js/crisp-sw-canvas/TransformationMatrix.js \
-    js/utils/geometry.js >> "$CONCAT_FILE"
-
-echo "Created concatenated file: $CONCAT_FILE"
+# Concatenate all files with version comment
+concatenate_files "$CONCAT_FILE" "$VERSION" "browser" "${FILES[@]}"
 
 # Minify only if --no-minify is not specified
 if [ "$1" != "--no-minify" ]; then
-    # Add version comment to minified file and preserve it during minification
-    echo "$VERSION_COMMENT" > "$MIN_FILE"
-    terser "$CONCAT_FILE" -o "$MIN_FILE" --comments "/CrispSwCanvas v/" -c -m
-    echo "Created minified file: $MIN_FILE"
+    minify_js "$CONCAT_FILE" "$MIN_FILE" "$VERSION"
 fi

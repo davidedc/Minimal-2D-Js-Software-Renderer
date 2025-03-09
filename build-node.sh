@@ -3,41 +3,28 @@
 # Build script for Node.js environment
 # This script combines all necessary files for running the software renderer in Node.js
 
-# Create build directory if it doesn't exist
-mkdir -p build
+# Source common build functions
+source ./build-common.sh
 
-# Extract version from CrispSwCanvas.js
-VERSION=$(grep "static version = '" js/crisp-sw-canvas/CrispSwCanvas.js | sed "s/.*version = '\([^']*\)'.*/\1/")
-if [ -z "$VERSION" ]; then
-    echo "Error: Could not extract version from CrispSwCanvas.js"
+# Get version
+VERSION=$(get_version)
+if [ $? -ne 0 ]; then
     exit 1
 fi
+
+# Create build directory
+ensure_build_dir
 
 # Define the output file
 NODE_FILE="build/crisp-sw-canvas-node-v$VERSION.js"
 
-# Create version comment
-VERSION_COMMENT="/* CrispSwCanvas for Node.js v$VERSION */"
+# Create combined file list
+FILES=("${COMMON_CORE_FILES[@]}" "${NODE_SPECIFIC_FILES[@]}")
 
-# Concatenate all required JavaScript files with version comment
-echo "$VERSION_COMMENT" > "$NODE_FILE"
-echo "'use strict';" >> "$NODE_FILE"
-echo "// Node.js environment setup" >> "$NODE_FILE"
-cat js/crisp-sw-canvas/node-polyfills.js >> "$NODE_FILE"
-cat js/crisp-sw-canvas/TransformationMatrix.js \
-    js/crisp-sw-canvas/transform-utils.js \
-    js/crisp-sw-canvas/color-utils.js \
-    js/crisp-sw-canvas/ContextState.js \
-    js/utils/geometry.js \
-    js/renderers/renderer-utils.js \
-    js/renderers/sw-renderer/SWRendererPixel.js \
-    js/renderers/sw-renderer/SWRendererLine.js \
-    js/renderers/sw-renderer/SWRendererRect.js \
-    js/crisp-sw-canvas/CrispSwCanvas.js \
-    js/crisp-sw-canvas/CrispSwContext.js \
-    js/RenderChecks.js >> "$NODE_FILE"
+# Concatenate all files with version comment
+concatenate_files "$NODE_FILE" "$VERSION" "node" "${FILES[@]}"
 
-# Add Node.js exports at the end
+# Add Node.js exports at the end - custom exports for this script
 cat << EOF >> "$NODE_FILE"
 
 // Node.js exports - make the essential classes available to importing scripts
