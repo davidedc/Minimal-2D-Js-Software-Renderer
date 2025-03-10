@@ -1,6 +1,6 @@
 function addBlackLinesComparison(lineWidth) {
   return new RenderComparisonBuilder()
-    .withId('thin-black-lines')
+    .withId('thin-black-lines-' + lineWidth)
     .withTitle(`${lineWidth}px Black Lines`)
     .withDescription(`Tests rendering of multiple black lines of line width ${lineWidth}`)
     .addShapes(addBlackLines, lineWidth, 20)
