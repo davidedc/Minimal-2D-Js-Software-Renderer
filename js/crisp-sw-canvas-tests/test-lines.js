@@ -92,7 +92,6 @@ function drawSimpleLinesScene(ctx) {
     // Draw diagonals
     ctx.lineWidth = 1;
     ctx.strokeStyle = "rgb(0, 0, 255)"; // Blue
-    debugger
     ctx.strokeLine(-100, -100, 100, 100);
     ctx.strokeLine(-100, 100, 100, -100);
     

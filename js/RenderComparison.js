@@ -500,7 +500,6 @@ class RenderComparison {
       this.canvasCtxOfCanvasRender.clearRect(0, 0, this.canvasOfCanvasRender.width, this.canvasOfCanvasRender.height);
       this.crispSwCtx.clearRect(0, 0, this.canvasOfSwRender.width, this.canvasOfSwRender.height);
       
-
       // For the software-rendered side, use CrispSwCanvas
       SeededRandom.seedWithInteger(currentCount);
       canvasCodeFn(this.crispSwCtx);

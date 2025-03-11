@@ -63,7 +63,7 @@ class RenderComparisonBuilder {
 
   withSpecklesCheckOnSwCanvas() {
     this._checks.push((comparison) => {
-      // check both SW and Canvas
+      // Check only SW renderer for speckles
       const speckleCountSW = comparison.renderChecks.checkForSpeckles(comparison.canvasCtxOfSwRender);
       return `${speckleCountSW === 0 ? '&#x2705; ' : ''}Speckle count: SW: ${speckleCountSW}`;
     });
@@ -151,23 +151,6 @@ class RenderComparisonBuilder {
     this._canvasCodeFn = canvasCodeFn;
     return this;
   }
-
-  // NOT USED, we rather check the leftmost and rightmost and topmost and bottommost pixels
-  // that are not transparent, because there are some defects like protruding pixels in rounded rects
-  // that get missed if one just checks the middle lines.
-  // withPlacementCheck() {
-  //   this._checks.push((comparison) => {
-  //     const edges = comparison.builderReturnValue;
-  //     if (!edges) return "No edges data available";
-      
-  //     return comparison.renderChecks.checkPlacementOf4SidesAlongMiddleLines(
-  //       comparison.canvasCtxOfSwRender,
-  //       comparison.canvasCtxOfCanvasRender,
-  //       edges
-  //     );
-  //   });
-  //   return this;
-  // }
 
   build() {
     if (!this._id || !this._title || (!this._shapeBuilder && !this._canvasCodeFn)) {
