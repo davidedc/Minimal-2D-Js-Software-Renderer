@@ -24,9 +24,20 @@ class SWRendererCircle {
 
   drawPreciseCircle(centerX, centerY, innerRadius, outerRadius, fillR, fillG, fillB, fillA, strokeR, strokeG, strokeB, strokeA) {
 
-    // Round to nearest half-integer for a slightly different look that
-    // has fewer "small circle parts on the edges", but is otherwise less
-    // similar to the canvas rendering.
+    // This routine currently accepts and in fact "represents in the rendering" fractional coordinates.
+    // Although it might seem surprising that an aliased renderer can meaningfully represent fractional coordinates,
+    // it is indeed the case. Intuitively, imagine a circle that shifts slowly right by a very small fractional amount.
+    // The effect is that, even if only "whole pixels" are drawn, if the circle barely touches the last column,
+    // 1 pixel will be drawn on the last column, but if the circle moves just a bit further, 2 pixels will be drawn on the last column, etc.
+    // Also note that this way the circle will not be perfectly simmetrical.
+
+
+    // If instead you round to nearest half-integer, you'll snap the circle to discrete positions for a slightly different look
+    // (which will be inevitably less similar to the canvas rendering).
+    // The advantage of this snapping is that the circle will be perfectly simmetrical both vertically and horizontally.
+    // In fact, it would be possible to draw thw whole circle by drawing 1/8th of the circle, and doing simple reflections
+    // (however, this is not implemented yet).
+    //
     //centerX = Math.round(centerX * 2) / 2;
     //centerY = Math.round(centerY * 2) / 2;    
     //innerRadius = Math.round(innerRadius * 2) / 2;
