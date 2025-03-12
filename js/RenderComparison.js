@@ -5,20 +5,79 @@ class RenderComparison {
   static sections = [];
   static GRID_COLUMNS = 11;
   static GRID_ROWS = 21;
+  static registry = {}; // Central registry for all comparisons
 
   constructor(id, title, buildShapesFn, canvasCodeFn = null, metricsFunction = null, comparisonDescription = '') {
+    // Environment detection
+    this.isNode = typeof window === 'undefined';
+    
+    // Common initialization - works in both environments
     this.width = renderComparisonWidth;
     this.height = renderComparisonHeight;
     this.frameBuffer = new Uint8ClampedArray(this.width * this.height * 4);
     this.errorCount = 0; // Initialize error count
-    
-    RenderComparison.sections.push({ id, title });
+    this.errors = []; // Track error messages
+    this.verbose = false; // Verbose logging flag for Node.js
     
     this.id = id;
-    this.flipState = true;
+    this.title = title;
     this.shapes = [];
     this.metricsFunction = metricsFunction;
     this.canvasCodeFn = canvasCodeFn;
+    this.buildShapesFn = buildShapesFn;
+    
+    // Auto-register this comparison
+    RenderComparison.registry[id] = this;
+
+    if (this.isNode) {
+      // Node.js initialization path
+      this.setupForNode();
+    } else {
+      // Browser initialization path
+      this.setupForBrowser(id, title, buildShapesFn, canvasCodeFn, comparisonDescription);
+      // Only add to sections in browser environment
+      RenderComparison.sections.push({ id, title });
+    }
+
+    // Initialize RenderChecks in both environments
+    this.renderChecks = new RenderChecks(this);
+
+    // If we're not in a Node environment, render the initial scene
+    if (!this.isNode) {
+      this.render(buildShapesFn, canvasCodeFn);
+    }
+  }
+
+  setupForNode() {
+    // Create a mock canvas object for the SW renderer
+    this.canvasOfSwRender = {
+      width: this.width,
+      height: this.height,
+      title: `${this.id}-sw`,
+    };
+    
+    // Set up CrispSwContext for Node
+    if (this.canvasCodeFn) {
+      this.crispSwCanvas = new CrispSwCanvas(this.width, this.height);
+      this.crispSwCtx = this.crispSwCanvas.getContext('2d');
+      this.canvasCtxOfSwRender = this.crispSwCtx;
+    } else {
+      // Create a properly extended mock context for Node.js that supports all checks
+      this.canvasCtxOfSwRender = {
+        canvas: this.canvasOfSwRender, // Important for checks that use canvas.width/height
+        getImageData: (x, y, width, height) => {
+          return new ImageData(this.frameBuffer, this.width, this.height);
+        }
+      };
+    }
+    
+    // Set up flipState as a no-op for Node
+    this.flipState = true;
+  };
+
+  setupForBrowser(id, title, buildShapesFn, canvasCodeFn, comparisonDescription) {
+    this.flipState = true;
+    
     // Create container with anchor
     this.container = document.createElement('div');
     this.container.className = 'comparison-container';
@@ -193,9 +252,6 @@ class RenderComparison {
     this.container.appendChild(this.errorsContainer);
     
     document.body.appendChild(this.container);
-    
-    // Initialize RenderChecks
-    this.renderChecks = new RenderChecks(this);
 
     // Add CrispSwCanvas instance if we have a canvasCodeFn
     if (canvasCodeFn) {
@@ -223,9 +279,6 @@ class RenderComparison {
       }
     `;
     document.head.appendChild(style);
-
-    // Render initial scene
-    this.render(buildShapesFn, canvasCodeFn);
   }
 
   createCanvas(name) {
@@ -282,6 +335,21 @@ class RenderComparison {
     }
     this.errorCount++;
     
+    // Store the error message for Node environment
+    if (!this.errors) {
+      this.errors = [];
+    }
+    this.errors.push(message);
+    
+    // If in Node environment, log the error and return
+    if (this.isNode) {
+      if (this.verbose) {
+        console.error(`ERROR: ${message}`);
+      }
+      return;
+    }
+    
+    // Browser-specific error handling
     // Create and add clear errors button and error count display if not already present
     if (!this.clearErrorsButton) {
       // Create error count element
@@ -453,11 +521,21 @@ class RenderComparison {
   }
 
   showMetrics(metricsFunction) {
-    if (metricsFunction) {
-      const result = metricsFunction(this);
-      this.metricsContainer.innerHTML = result;
+    if (!metricsFunction) {
+      if (!this.isNode && this.metricsContainer) {
+        this.metricsContainer.innerHTML = '';
+      }
+      return;
+    }
+    
+    const result = metricsFunction(this);
+    
+    if (this.isNode) {
+      // In Node, just return the result for logging elsewhere if needed
+      return result;
     } else {
-      this.metricsContainer.innerHTML = '';
+      // In browser, update the metrics container
+      this.metricsContainer.innerHTML = result;
     }
   }
 
@@ -466,7 +544,103 @@ class RenderComparison {
     this.canvasHashContainer.textContent = `Hash: ${this.canvasCtxOfCanvasRender.getHashString()}`;
   }
 
-  render(buildShapesFn, canvasCodeFn = null) {
+  render(buildShapesFn, canvasCodeFn = null, exampleNumber = null) {
+    if (this.isNode) {
+      // Node.js specific rendering path
+      return this.renderInNode(buildShapesFn, canvasCodeFn, exampleNumber);
+    } else {
+      // Browser specific rendering path
+      return this.renderInBrowser(buildShapesFn, canvasCodeFn);
+    }
+  }
+
+  // Node.js specific rendering implementation
+  renderInNode(buildShapesFn, canvasCodeFn = null, exampleNumber = null) {
+    // Use the provided example number or default to 1
+    const currentCount = exampleNumber || 1;
+    
+    // Reset error tracking for this example
+    this.errorCount = 0;
+    this.errors = [];
+    
+    // Initialize shapes array
+    this.shapes = [];
+    
+    if (buildShapesFn) {
+      // Mock log container for Node
+      const nodeLogContainer = {
+        innerHTML: '',
+        appendChild: (text) => {
+          if (this.verbose) console.log(text);
+        }
+      };
+      
+      // Execute the shape builder
+      this.builderReturnValue = buildShapesFn(this.shapes, nodeLogContainer, currentCount);
+      this.drawSceneSW();
+    }
+    else if (canvasCodeFn) {
+      // Clear the canvas (to transparent black)
+      this.crispSwCtx.clearRect(0, 0, this.canvasOfSwRender.width, this.canvasOfSwRender.height);
+      
+      // Use CrispSwCanvas for the software-rendered output
+      SeededRandom.seedWithInteger(currentCount);
+      canvasCodeFn(this.crispSwCtx);
+    }
+    
+    // Run metrics if available
+    if (this.metricsFunction) {
+      const results = this.metricsFunction(this);
+      if (this.verbose) {
+        console.log('Metrics Results:');
+        console.log(results);
+      }
+    }
+    
+    // Return success/failure status based on error count
+    return this.errorCount === 0;
+  }
+  
+  // Export BMP image for Node.js
+  exportBMP(outputDir, exampleNum) {
+    if (!this.isNode) return;
+    
+    try {
+      const fs = require('fs');
+      const path = require('path');
+      
+      // Get image data
+      if (this.canvasCtxOfSwRender && this.canvasCtxOfSwRender.getImageData) {
+        const imageData = this.canvasCtxOfSwRender.getImageData(0, 0, this.width, this.height);
+        
+        // Use the toBMP method to generate the BMP data
+        const bmpData = imageData.toBMP();
+        
+        // Create directory if needed
+        if (!fs.existsSync(outputDir)) {
+          fs.mkdirSync(outputDir, { recursive: true });
+        }
+        
+        // Save the file
+        const filename = `${this.id}-example${exampleNum}.bmp`;
+        const filepath = path.join(outputDir, filename);
+        fs.writeFileSync(filepath, bmpData);
+        
+        if (this.verbose) {
+          console.log(`Saved BMP image to ${filepath}`);
+        }
+        
+        return filepath;
+      }
+    } catch (err) {
+      console.error('Error exporting BMP:', err);
+    }
+    
+    return null;
+  }
+
+  // Browser specific rendering implementation
+  renderInBrowser(buildShapesFn, canvasCodeFn = null) {
     // Update current example label to match the next example number
     const currentCount = parseInt(this.exampleCounter.value) || 1;
     this.currentLabel.textContent = `Current Example #${currentCount}`;
@@ -525,6 +699,9 @@ class RenderComparison {
       const finalErrorCount = this.errorCount || 0;
 
     }, 0); // Using setTimeout with 0 delay ensures this runs after all other operations
+    
+    // Return success/failure status based on error count
+    return this.errorCount === initialErrorCount;
   }
 
   runMultipleExamples(count, stopAtError = true) {

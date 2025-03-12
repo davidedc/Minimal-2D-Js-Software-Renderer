@@ -18,13 +18,15 @@ class RenderChecks {
    * @returns {number} The count of unique colors found
    */
   checkCountOfUniqueColorsInLine(canvasContextOfSwRendererOrCanvasRenderer, expectedColors, isRow) {
-    const imageData = canvasContextOfSwRendererOrCanvasRenderer.getImageData(0, 0, 
-      canvasContextOfSwRendererOrCanvasRenderer.canvas.width, 
-      canvasContextOfSwRendererOrCanvasRenderer.canvas.height);
+    // Get the canvas width/height - handling both real canvas and our CrispSwContext
+    const canvas = canvasContextOfSwRendererOrCanvasRenderer.canvas;
+    const width = canvas.width;
+    const height = canvas.height;
+    const title = canvas.title || (canvasContextOfSwRendererOrCanvasRenderer.title || 'unknown');
+    
+    const imageData = canvasContextOfSwRendererOrCanvasRenderer.getImageData(0, 0, width, height);
     
     const data = imageData.data;
-    const width = canvasContextOfSwRendererOrCanvasRenderer.canvas.width;
-    const height = canvasContextOfSwRendererOrCanvasRenderer.canvas.height;
     const uniqueColors = new Set();
     
     if (isRow) {
@@ -47,7 +49,7 @@ class RenderChecks {
     
     const count = uniqueColors.size;
     if (expectedColors !== null && count !== expectedColors) {
-      let message = `Expected ${expectedColors} colors but found ${count} colors in middle ${isRow ? 'row' : 'column'} of ${canvasContextOfSwRendererOrCanvasRenderer.canvas.title}`;
+      let message = `Expected ${expectedColors} colors but found ${count} colors in middle ${isRow ? 'row' : 'column'} of ${title}`;
       uniqueColors.forEach(color => {
         message += `\n- ${color}`;
       });
@@ -85,13 +87,14 @@ class RenderChecks {
    * @returns {Object|null} The extremes object with leftX, rightX, topY, bottomY or null if no qualifying pixels
    */
   findExtremesWithTolerance(canvasContextOfSwRendererOrCanvasRenderer, alphaTolerance = 0) {
-    const imageData = canvasContextOfSwRendererOrCanvasRenderer.getImageData(0, 0, 
-      canvasContextOfSwRendererOrCanvasRenderer.canvas.width, 
-      canvasContextOfSwRendererOrCanvasRenderer.canvas.height);
+    // Get canvas dimensions - handle both real canvas and CrispSwContext
+    const canvas = canvasContextOfSwRendererOrCanvasRenderer.canvas;
+    const width = canvas.width;
+    const height = canvas.height;
+    
+    const imageData = canvasContextOfSwRendererOrCanvasRenderer.getImageData(0, 0, width, height);
     
     const data = imageData.data;
-    const width = canvasContextOfSwRendererOrCanvasRenderer.canvas.width;
-    const height = canvasContextOfSwRendererOrCanvasRenderer.canvas.height;
     
     let minX = width;
     let maxX = -1;
@@ -128,12 +131,19 @@ class RenderChecks {
    * @returns {string} Results of the check
    */
   checkExtremes(canvasCtxOfSwRender, canvasCtxOfCanvasRender, expectedExtremes, alphaTolerance = 0) {
+    // Build an array of contexts to check, always including SW renderer
+    // Only include Canvas renderer if it's provided (not null/undefined)
     const contexts = [
-      { name: 'SW Renderer', context: canvasCtxOfSwRender },
-      { name: 'Canvas Renderer', context: canvasCtxOfCanvasRender }
+      { name: 'SW Renderer', context: canvasCtxOfSwRender }
     ];
     
+    // Add Canvas renderer only if it exists (handles Node environment case)
+    if (canvasCtxOfCanvasRender) {
+      contexts.push({ name: 'Canvas Renderer', context: canvasCtxOfCanvasRender });
+    }
+    
     const results = [];
+    const errors = [];
     
     for (const { name, context } of contexts) {
       const actualExtremes = this.findExtremesWithTolerance(context, alphaTolerance);
@@ -151,27 +161,34 @@ class RenderChecks {
         if (actualExtremes.leftX !== expectedExtremes.leftX) {
           const message = `${name}: Left extreme expected at ${expectedExtremes.leftX}, found at ${actualExtremes.leftX}`;
           results.push(message);
+          errors.push(message);
           this.comparison.showError(message);
         }
         if (actualExtremes.rightX !== expectedExtremes.rightX) {
           const message = `${name}: Right extreme expected at ${expectedExtremes.rightX}, found at ${actualExtremes.rightX}`;
           results.push(message);
+          errors.push(message);
           this.comparison.showError(message);
         }
         if (actualExtremes.topY !== expectedExtremes.topY) {
           const message = `${name}: Top extreme expected at ${expectedExtremes.topY}, found at ${actualExtremes.topY}`;
           results.push(message);
+          errors.push(message);
           this.comparison.showError(message);
         }
         if (actualExtremes.bottomY !== expectedExtremes.bottomY) {
           const message = `${name}: Bottom extreme expected at ${expectedExtremes.bottomY}, found at ${actualExtremes.bottomY}`;
           results.push(message);
+          errors.push(message);
           this.comparison.showError(message);
         }
       }
       
       results.push(`${name}: left=${actualExtremes.leftX}, right=${actualExtremes.rightX}, top=${actualExtremes.topY}, bottom=${actualExtremes.bottomY}`);
     }
+    
+    // For Node environment compatibility, add error count to result
+    results.errors = errors.length;
     
     return results.join('\n');
   }
@@ -184,12 +201,14 @@ class RenderChecks {
    * @returns {string} Results of the gap check
    */
   checkEdgeGaps(canvasContextOfSwRendererOrCanvasRenderer, extremes, isStroke) {
-    const imageData = canvasContextOfSwRendererOrCanvasRenderer.getImageData(0, 0, 
-      canvasContextOfSwRendererOrCanvasRenderer.canvas.width, 
-      canvasContextOfSwRendererOrCanvasRenderer.canvas.height);
+    // Get canvas dimensions and title - handle both real canvas and CrispSwContext
+    const canvas = canvasContextOfSwRendererOrCanvasRenderer.canvas;
+    const width = canvas.width;
+    const title = canvas.title || (canvasContextOfSwRendererOrCanvasRenderer.title || 'unknown');
+    
+    const imageData = canvasContextOfSwRendererOrCanvasRenderer.getImageData(0, 0, width, canvas.height);
       
     const data = imageData.data;
-    const width = canvasContextOfSwRendererOrCanvasRenderer.canvas.width;
     
     // Extract edges from extremes
     const { leftX, rightX, topY, bottomY } = extremes;
@@ -288,9 +307,8 @@ class RenderChecks {
       }
     }
     
-    // Extract renderer name from canvas title or use a default
-    const rendererName = canvasContextOfSwRendererOrCanvasRenderer.canvas.title ? 
-                       canvasContextOfSwRendererOrCanvasRenderer.canvas.title.split('-')[0] : 'Unknown';
+    // Extract renderer name from title or use a default
+    const rendererName = title ? title.split('-')[0] : 'Unknown';
     
     // Generate result message
     let resultMsg = `${rendererName} Renderer: `;
@@ -328,7 +346,7 @@ class RenderChecks {
       return errorMsg;
     }
     
-    // Check only the software renderer for gaps, as specified
+    // Check only the software renderer for gaps
     const swResults = this.checkEdgeGaps(canvasCtxOfSwRender, calculatedExtremes, isStroke);
     return `Edge gap check result (${isStroke ? 'stroke' : 'fill'}): ${swResults}`;
   }
@@ -340,13 +358,15 @@ class RenderChecks {
    * @returns {number} The count of unique colors found
    */
   checkCountOfUniqueColorsInImage(canvasContextOfSwRendererOrCanvasRenderer, expectedColors = null) {
-    const imageData = canvasContextOfSwRendererOrCanvasRenderer.getImageData(0, 0, 
-      canvasContextOfSwRendererOrCanvasRenderer.canvas.width, 
-      canvasContextOfSwRendererOrCanvasRenderer.canvas.height);
+    // Get canvas dimensions and title - handle both real canvas and CrispSwContext
+    const canvas = canvasContextOfSwRendererOrCanvasRenderer.canvas;
+    const width = canvas.width;
+    const height = canvas.height;
+    const title = canvas.title || (canvasContextOfSwRendererOrCanvasRenderer.title || 'unknown');
+    
+    const imageData = canvasContextOfSwRendererOrCanvasRenderer.getImageData(0, 0, width, height);
       
     const data = imageData.data;
-    const width = canvasContextOfSwRendererOrCanvasRenderer.canvas.width;
-    const height = canvasContextOfSwRendererOrCanvasRenderer.canvas.height;
     const uniqueColors = new Set();
     
     // Check all pixels in the image
@@ -361,7 +381,7 @@ class RenderChecks {
     
     const count = uniqueColors.size;
     if (expectedColors !== null && count !== expectedColors) {
-      let message = `Expected ${expectedColors} unique colors but found ${count} unique colors in ${canvasContextOfSwRendererOrCanvasRenderer.canvas.title}`;
+      let message = `Expected ${expectedColors} unique colors but found ${count} unique colors in ${title}`;
       uniqueColors.forEach(color => {
         message += `\n- ${color}`;
       });
@@ -377,13 +397,15 @@ class RenderChecks {
    * @returns {number} The number of speckles found
    */
   checkForSpeckles(canvasContextOfSwRendererOrCanvasRenderer) {
-    const imageData = canvasContextOfSwRendererOrCanvasRenderer.getImageData(0, 0, 
-      canvasContextOfSwRendererOrCanvasRenderer.canvas.width, 
-      canvasContextOfSwRendererOrCanvasRenderer.canvas.height);
+    // Get canvas dimensions and title - handle both real canvas and CrispSwContext
+    const canvas = canvasContextOfSwRendererOrCanvasRenderer.canvas;
+    const width = canvas.width;
+    const height = canvas.height;
+    const title = canvas.title || (canvasContextOfSwRendererOrCanvasRenderer.title || 'unknown');
+    
+    const imageData = canvasContextOfSwRendererOrCanvasRenderer.getImageData(0, 0, width, height);
     
     const data = imageData.data;
-    const width = canvasContextOfSwRendererOrCanvasRenderer.canvas.width;
-    const height = canvasContextOfSwRendererOrCanvasRenderer.canvas.height;
     
     let speckleCount = 0;
     let firstSpeckleX = -1;
@@ -440,7 +462,7 @@ class RenderChecks {
     if (speckleCount > 0) {
       const specklePixel = (firstSpeckleY * width + firstSpeckleX) * 4;
       this.comparison.showError(
-        `Found ${speckleCount} speckle${speckleCount === 1 ? '' : 's'} in ${canvasContextOfSwRendererOrCanvasRenderer.canvas.title} ` +
+        `Found ${speckleCount} speckle${speckleCount === 1 ? '' : 's'} in ${title} ` +
         `(single pixels with different color from matching neighbors). First speckle at (${firstSpeckleX}, ${firstSpeckleY}) ` +
         `with color rgba(${data[specklePixel]}, ${data[specklePixel + 1]}, ${data[specklePixel + 2]}, ${data[specklePixel + 3]})`
       );
