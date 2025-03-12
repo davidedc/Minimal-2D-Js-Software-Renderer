@@ -13,7 +13,9 @@ class SWRendererCircle {
     const innerRadius = strokeWidth > 0 ? radius - strokeWidth / 2 : radius;
     const outerRadius = radius + strokeWidth / 2;
 
-    // Draw row by row
+    // TODO: In "drawCircle", calling "drawPreciseCircle": unclear what this "precise" adjective is for really.
+    // Also - since this is the one and only implementation backing "drawCircle", should we just
+    // put the drawPreciseCircle directly in here? What's the point of the indirection?
     this.drawPreciseCircle(
       center.x, center.y, 
       innerRadius, outerRadius,
