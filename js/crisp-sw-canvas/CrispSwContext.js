@@ -205,24 +205,13 @@ class CrispSwContext {
     }
 
     blitToCanvas(canvas) {
-        // Only use real canvas operations in browser environment
-        if (!isNode) {
-            const ctx = canvas.getContext('2d');
-            const imageData = new ImageData(this.frameBuffer, this.canvas.width, this.canvas.height);
-            ctx.putImageData(imageData, 0, 0);
-        } else {
-            // In Node.js, we might use a different approach depending on the canvas implementation
-            // If using node-canvas, the API is compatible, otherwise this is a no-op
-            if (canvas.getContext) {
-                const ctx = canvas.getContext('2d');
-                if (ctx.putImageData) {
-                    const imageData = new ImageData(this.frameBuffer, this.canvas.width, this.canvas.height);
-                    ctx.putImageData(imageData, 0, 0);
-                }
-            }
-        }
+        if (isNode) return;
+
+        const imageData = new ImageData(this.frameBuffer, this.canvas.width, this.canvas.height);
+        const ctx = canvas.getContext('2d');
+        ctx.putImageData(imageData, 0, 0);
     }
-    
+
     /**
      * Returns an ImageData object representing the pixel data for the specified rectangle.
      * Compatible with HTML5 Canvas getImageData method.

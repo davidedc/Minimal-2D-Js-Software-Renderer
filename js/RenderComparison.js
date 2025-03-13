@@ -329,19 +329,18 @@ class RenderComparison {
   }
 
   showError(message) {
-    // Track error count
+    // Common error tracking used in both environments
     if (!this.errorCount) {
       this.errorCount = 0;
     }
     this.errorCount++;
     
-    // Store the error message for Node environment
     if (!this.errors) {
       this.errors = [];
     }
     this.errors.push(message);
     
-    // If in Node environment, log the error and return
+    // In Node environment, only log the error if verbose
     if (this.isNode) {
       if (this.verbose) {
         console.error(`ERROR: ${message}`);
@@ -349,7 +348,12 @@ class RenderComparison {
       return;
     }
     
-    // Browser-specific error handling
+    // Browser-specific UI handling
+    this.showErrorInBrowser(message);
+  }
+  
+  // Separated browser-specific UI handling into its own method
+  showErrorInBrowser(message) {
     // Create and add clear errors button and error count display if not already present
     if (!this.clearErrorsButton) {
       // Create error count element
@@ -521,6 +525,7 @@ class RenderComparison {
   }
 
   showMetrics(metricsFunction) {
+    // Common path - if no metrics function, clear container in browser mode
     if (!metricsFunction) {
       if (!this.isNode && this.metricsContainer) {
         this.metricsContainer.innerHTML = '';
@@ -528,14 +533,17 @@ class RenderComparison {
       return;
     }
     
+    // Common calculation of metrics result
     const result = metricsFunction(this);
     
-    if (this.isNode) {
-      // In Node, just return the result for logging elsewhere if needed
-      return result;
-    } else {
-      // In browser, update the metrics container
-      this.metricsContainer.innerHTML = result;
+    this.showMetricsInBrowser(result);
+    return result;
+  }
+  
+  // Browser-specific metrics display
+  showMetricsInBrowser(metricsResult) {
+    if (this.metricsContainer) {
+      this.metricsContainer.innerHTML = metricsResult;
     }
   }
 
@@ -545,6 +553,15 @@ class RenderComparison {
   }
 
   render(buildShapesFn, canvasCodeFn = null, exampleNumber = null) {
+    // Common setup for both environments
+    // Reset error tracking
+    this.errorCount = 0;
+    this.errors = [];
+    
+    // Initialize shapes array
+    this.shapes = [];
+    
+    // Call the appropriate environment-specific render method
     if (this.isNode) {
       // Node.js specific rendering path
       return this.renderInNode(buildShapesFn, canvasCodeFn, exampleNumber);
@@ -558,13 +575,6 @@ class RenderComparison {
   renderInNode(buildShapesFn, canvasCodeFn = null, exampleNumber = null) {
     // Use the provided example number or default to 1
     const currentCount = exampleNumber || 1;
-    
-    // Reset error tracking for this example
-    this.errorCount = 0;
-    this.errors = [];
-    
-    // Initialize shapes array
-    this.shapes = [];
     
     if (buildShapesFn) {
       // Mock log container for Node
@@ -649,13 +659,12 @@ class RenderComparison {
     this.exampleCounter.value = (currentCount + 1).toString();
     
     this.buildShapesFn = buildShapesFn; // Store the function for later use
-    this.shapes = [];
     this.logContainer.innerHTML = '';
     
     // Track initial error count before rendering
     const initialErrorCount = this.errorCount || 0;
     
-    // Reset error tracking for this example
+    // Reset UI error tracking for this example
     this.firstErrorOfCurrentExample = null;
     this.lastErrorOfCurrentExample = null;
     

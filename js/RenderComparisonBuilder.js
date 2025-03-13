@@ -51,14 +51,22 @@ class RenderComparisonBuilder {
       const isCorrect = swColors === options.expectedUniqueColors && 
                        (comparison.isNode || canvasColors === options.expectedUniqueColors);
       
-      // Format appropriately for environment
-      if (comparison.isNode) {
-        return `${isCorrect ? '✓' : '✗'} Middle row unique colors: SW: ${swColors}`;
-      } else {
-        return `${isCorrect ? '&#x2705; ' : ''}Middle row unique colors: SW: ${swColors}, Canvas: ${canvasColors}`;
-      }
+      const baseMsg = `Middle row unique colors: SW: ${swColors}`;
+      return this.formatCheckResult(isCorrect, comparison.isNode, { 
+        node: baseMsg,
+        browser: baseMsg + `, Canvas: ${canvasColors}`
+      });
     });
     return this;
+  }
+  
+  // Helper method to format check results based on environment
+  formatCheckResult(isCorrect, isNodeEnv, messages) {
+    if (isNodeEnv) {
+      return `${isCorrect ? '✓' : '✗'} ${messages.node}`;
+    } else {
+      return `${isCorrect ? '&#x2714;' : '&#x2717;'} ${messages.browser}`;
+    }
   }
   
   withUniqueColorsCheck(expectedColors) {
@@ -70,12 +78,8 @@ class RenderComparisonBuilder {
       );
       const isCorrect = swColors === expectedColors;
       
-      // Format appropriately for the environment
-      if (comparison.isNode) {
-        return `${isCorrect ? '✓' : '✗'} Total unique colors in SW renderer: ${swColors}`;
-      } else {
-        return `${isCorrect ? '&#x2705; ' : ''}Total unique colors in SW renderer: ${swColors}`;
-      }
+      const message = `Total unique colors in SW renderer: ${swColors}`;
+      return this.formatCheckResult(isCorrect, comparison.isNode, { node: message, browser: message });
     });
     return this;
   }
@@ -84,13 +88,10 @@ class RenderComparisonBuilder {
     this._checks.push((comparison) => {
       // Check only SW renderer for speckles
       const speckleCountSW = comparison.renderChecks.checkForSpeckles(comparison.canvasCtxOfSwRender);
+      const isCorrect = speckleCountSW === 0;
       
-      // Format appropriately for the environment
-      if (comparison.isNode) {
-        return `${speckleCountSW === 0 ? '✓' : '✗'} Speckle count: SW: ${speckleCountSW}`;
-      } else {
-        return `${speckleCountSW === 0 ? '&#x2705; ' : ''}Speckle count: SW: ${speckleCountSW}`;
-      }
+      const message = `Speckle count: SW: ${speckleCountSW}`;
+      return this.formatCheckResult(isCorrect, comparison.isNode, { node: message, browser: message });
     });
     return this;
   }
@@ -113,13 +114,12 @@ class RenderComparisonBuilder {
       
       const isCorrect = swColors === options.expectedUniqueColors && 
                        (comparison.isNode || canvasColors === options.expectedUniqueColors);
-                       
-      // Format appropriately for environment
-      if (comparison.isNode) {
-        return `${isCorrect ? '✓' : '✗'} Middle column unique colors: SW: ${swColors}`;
-      } else {
-        return `${isCorrect ? '&#x2705; ' : ''}Middle column unique colors: SW: ${swColors}, Canvas: ${canvasColors}`;
-      }
+      
+      const baseMsg = `Middle column unique colors: SW: ${swColors}`;
+      return this.formatCheckResult(isCorrect, comparison.isNode, { 
+        node: baseMsg,
+        browser: baseMsg + `, Canvas: ${canvasColors}`
+      });
     });
     return this;
   }
@@ -138,17 +138,17 @@ class RenderComparisonBuilder {
         alphaTolerance
       );
       
-      // Format appropriately for the environment
-      if (comparison.isNode) {
-        // In Node, check if there were any errors
-        const isCorrect = !result.includes("FAIL") && !result.includes("Error") && 
-                         (typeof result.errors === 'undefined' || result.errors === 0);
-        return `${isCorrect ? '✓' : '✗'} ${result}`;
-      } else {
-        // In browser, use HTML checkmarks
-        const isCorrect = !result.includes("FAIL") && !result.includes("Error");
-        return `${isCorrect ? '&#x2705; ' : ''}${result}`;
-      }
+      // Determine if the check passed
+      const isNodeCorrect = !result.includes("FAIL") && !result.includes("Error") && 
+                           (typeof result.errors === 'undefined' || result.errors === 0);
+      const isBrowserCorrect = !result.includes("FAIL") && !result.includes("Error");
+      
+      // Use the common formatter with the appropriate correctness value
+      return this.formatCheckResult(
+        comparison.isNode ? isNodeCorrect : isBrowserCorrect,
+        comparison.isNode,
+        { node: result, browser: result }
+      );
     });
     return this;
   }
@@ -161,11 +161,8 @@ class RenderComparisonBuilder {
         false // isStroke = false, check fill
       );
       const isCorrect = !result.includes("FAIL") && !result.includes("Error");
-      if (comparison.isNode) {
-        return `${isCorrect ? '✓' : '✗'} ${result}`;
-      } else {
-        return `${isCorrect ? '&#x2705; ' : ''}${result}`;
-      }
+      
+      return this.formatCheckResult(isCorrect, comparison.isNode, { node: result, browser: result });
     });
     return this;
   }
@@ -178,11 +175,8 @@ class RenderComparisonBuilder {
         true // isStroke = true, check stroke
       );
       const isCorrect = !result.includes("FAIL") && !result.includes("Error");
-      if (comparison.isNode) {
-        return `${isCorrect ? '✓' : '✗'} ${result}`;
-      } else {
-        return `${isCorrect ? '&#x2705; ' : ''}${result}`;
-      }
+      
+      return this.formatCheckResult(isCorrect, comparison.isNode, { node: result, browser: result });
     });
     return this;
   }
@@ -192,7 +186,10 @@ class RenderComparisonBuilder {
     this._checks.push((comparison) => {
       // In Node environment, we can't compare with Canvas as it doesn't exist
       if (comparison.isNode) {
-        return `✓ Threshold check skipped in Node environment`;
+        return this.formatCheckResult(true, true, { 
+          node: "Threshold check skipped in Node environment",
+          browser: "" // Not used in Node
+        });
       } else {
         const result = comparison.renderChecks.compareWithThreshold(
           comparison.canvasCtxOfSwRender,
@@ -201,7 +198,11 @@ class RenderComparisonBuilder {
           alphaThreshold
         );
         const isCorrect = !result.includes("FAIL") && !result.includes("Error");
-        return `${isCorrect ? '&#x2705; ' : ''}${result}`;
+        
+        return this.formatCheckResult(isCorrect, false, { 
+          node: "", // Not used in browser
+          browser: result 
+        });
       }
     });
     return this;
@@ -229,12 +230,7 @@ class RenderComparisonBuilder {
     const metricsFunction = this._checks.length > 0 ? 
       (comparison) => {
         const results = this._checks.map(check => check(comparison));
-        
-        // Return environment-appropriate formatted result
-        const isNode = typeof window === 'undefined';
-        return isNode ?
-          results.join('\n') : // Plain text for Node
-          results.join('<br>'); // HTML for browser
+        return this.formatResultsForEnvironment(results, comparison.isNode);
       } : null;
 
     return new RenderComparison(
@@ -245,5 +241,12 @@ class RenderComparisonBuilder {
       metricsFunction,
       this._description
     );
+  }
+  
+  // Format the results array based on the environment
+  formatResultsForEnvironment(results, isNodeEnv) {
+    return isNodeEnv ? 
+      results.join('\n') : // Plain text for Node
+      results.join('<br>'); // HTML for browser
   }
 }
