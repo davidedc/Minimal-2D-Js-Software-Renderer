@@ -7,7 +7,7 @@ set -e
 
 echo "Building node-test-runner.js using direct concatenation..."
 
-rm node-test-runner.js
+rm -f node-test-runner.js
 
 # Node environment setup
 cat js/crisp-sw-canvas/node-polyfills.js >> node-test-runner.js
