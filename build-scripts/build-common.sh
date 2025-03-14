@@ -11,7 +11,7 @@ fi
 
 # Function to extract version from CrispSwCanvas.js
 function get_version() {
-    local version=$(grep "static version = '" js/crisp-sw-canvas/CrispSwCanvas.js | sed "s/.*version = '\([^']*\)'.*/\1/")
+    local version=$(grep "static version = '" ../js/crisp-sw-canvas/CrispSwCanvas.js | sed "s/.*version = '\([^']*\)'.*/\1/")
     if [ -z "$version" ]; then
         echo "Error: Could not extract version from CrispSwCanvas.js" >&2
         return 1
@@ -21,7 +21,7 @@ function get_version() {
 
 # Function to create build directory if it doesn't exist
 function ensure_build_dir() {
-    mkdir -p build
+    mkdir -p ../build
 }
 
 # Function to create version comment
@@ -40,22 +40,22 @@ function create_version_comment() {
 
 # Common files for both browser and node builds
 COMMON_CORE_FILES=(
-    "js/crisp-sw-canvas/TransformationMatrix.js"
-    "js/crisp-sw-canvas/transform-utils.js"
-    "js/crisp-sw-canvas/color-utils.js"
-    "js/crisp-sw-canvas/ContextState.js"
-    "js/utils/geometry.js"
-    "js/renderers/renderer-utils.js"
-    "js/renderers/sw-renderer/SWRendererPixel.js"
-    "js/renderers/sw-renderer/SWRendererLine.js"
-    "js/renderers/sw-renderer/SWRendererRect.js"
-    "js/crisp-sw-canvas/CrispSwCanvas.js"
-    "js/crisp-sw-canvas/CrispSwContext.js"
+    "../js/crisp-sw-canvas/TransformationMatrix.js"
+    "../js/crisp-sw-canvas/transform-utils.js"
+    "../js/crisp-sw-canvas/color-utils.js"
+    "../js/crisp-sw-canvas/ContextState.js"
+    "../js/utils/geometry.js"
+    "../js/renderers/renderer-utils.js"
+    "../js/renderers/sw-renderer/SWRendererPixel.js"
+    "../js/renderers/sw-renderer/SWRendererLine.js"
+    "../js/renderers/sw-renderer/SWRendererRect.js"
+    "../js/crisp-sw-canvas/CrispSwCanvas.js"
+    "../js/crisp-sw-canvas/CrispSwContext.js"
 )
 
 # Node-specific files
 NODE_SPECIFIC_FILES=(
-    "js/RenderChecks.js"
+    "../js/RenderChecks.js"
 )
 
 # Browser-specific files (if any)
@@ -75,7 +75,7 @@ function concatenate_files() {
     if [ "$target" == "node" ]; then
         echo "'use strict';" >> "$output_file"
         echo "// Node.js environment setup" >> "$output_file"
-        cat js/crisp-sw-canvas/node-polyfills.js >> "$output_file"
+        cat ../js/crisp-sw-canvas/node-polyfills.js >> "$output_file"
     fi
     
     # Concatenate all files

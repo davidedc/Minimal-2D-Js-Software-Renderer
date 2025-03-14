@@ -11,7 +11,7 @@ const path = require('path');
 // Import the CrispSwCanvas library from the build directory
 let CrispSwCanvas;
 try {
-  const bundle = require('./build/crisp-sw-canvas-node-v1.0.2.js');
+  const bundle = require('../build/crisp-sw-canvas-node-v1.0.2.js');
   
   // Assign the imported class
   CrispSwCanvas = bundle.CrispSwCanvas;

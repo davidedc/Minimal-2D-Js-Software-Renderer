@@ -19,8 +19,8 @@ fi
 ensure_build_dir
 
 # Define the output files
-CONCAT_FILE="build/crisp-sw-canvas-v$VERSION.js"
-MIN_FILE="build/crisp-sw-canvas-v$VERSION.min.js"
+CONCAT_FILE="../build/crisp-sw-canvas-v$VERSION.js"
+MIN_FILE="../build/crisp-sw-canvas-v$VERSION.min.js"
 
 # Create file list
 FILES=("${COMMON_CORE_FILES[@]}" "${BROWSER_SPECIFIC_FILES[@]}")

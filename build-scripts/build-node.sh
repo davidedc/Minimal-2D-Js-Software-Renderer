@@ -16,7 +16,7 @@ fi
 ensure_build_dir
 
 # Define the output file
-NODE_FILE="build/crisp-sw-canvas-node-v$VERSION.js"
+NODE_FILE="../build/crisp-sw-canvas-node-v$VERSION.js"
 
 # Create combined file list
 FILES=("${COMMON_CORE_FILES[@]}" "${NODE_SPECIFIC_FILES[@]}")
