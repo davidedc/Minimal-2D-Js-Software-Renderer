@@ -4,7 +4,8 @@
 # This script combines all necessary files for running the software renderer in Node.js
 
 # Source common build functions
-source ./build-common.sh
+SCRIPT_DIR="$(dirname "$0")"
+source "$SCRIPT_DIR/build-common.sh"
 
 # Get version
 VERSION=$(get_version)
@@ -15,10 +16,15 @@ fi
 # Create build directory
 ensure_build_dir
 
+# Get project root
+PROJECT_ROOT="$(get_project_root)"
+
 # Define the output file
-NODE_FILE="../build/crisp-sw-canvas-node-v$VERSION.js"
+NODE_FILE="$PROJECT_ROOT/build/crisp-sw-canvas-node-v$VERSION.js"
 
 # Create combined file list
+get_common_core_files
+get_node_specific_files
 FILES=("${COMMON_CORE_FILES[@]}" "${NODE_SPECIFIC_FILES[@]}")
 
 # Concatenate all files with version comment

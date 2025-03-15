@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>CrispSwCanvas minimal example</title>
+    <title>CrispSwCanvas working example to check code coverage</title>
     <style>
         canvas {
             border: 2px solid #000;
@@ -11,12 +11,15 @@
 </head>
 
 <body>
-    <h1>CrispSwCanvas minimal example</h1>
+    <h1>CrispSwCanvas working example for code coverage checks</h1>
+    <p>
+        Just to check that the build library as all the code needed and only the code needed.
+    </p>
     <canvas id="targetCanvas" width="800" height="600"></canvas>
 
-    <script src="build/crisp-sw-canvas-v1.0.2.min.js"></script>
+    <script src="../../build/crisp-sw-canvas-v1.0.2.js"></script>
 
-    <script>
+<script>
         const crispCanvas = new CrispSwCanvas(800, 600);
         const ctx = crispCanvas.getContext('2d');
 

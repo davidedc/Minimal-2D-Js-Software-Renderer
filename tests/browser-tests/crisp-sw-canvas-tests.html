@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CrispSwCanvas Demo</title>
+    <style>
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background-color: #fff;
+        }
+        canvas {
+            border: 2px solid #000;
+            margin: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <script src="../../build/crisp-sw-canvas-v1.0.2.js"></script>
+
+    <script src="../../src/utils/canvas-extensions.js"></script>
+    <script src="../../src/utils/geometry.js"></script>
+    <script src="../../src/utils/random-utils.js"></script>
+
+    <!-- Needed because we place a random rectangle in one of the examples to see that the examples are dynamic -->
+    <script src="../../src/scene-creation/SeededRandom.js"></script>
+
+    <script src="../../src/renderers/renderer-utils.js"></script>
+    <script src="../../src/renderers/sw-renderer/SWRendererPixel.js"></script>
+    <script src="../../src/renderers/sw-renderer/SWRendererLine.js"></script>
+    <script src="../../src/renderers/sw-renderer/SWRendererRect.js"></script>
+
+    <script src="../../src/crisp-sw-canvas/color-utils.js"></script>
+    <script src="../../src/crisp-sw-canvas/transform-utils.js"></script>
+    <script src="../../src/crisp-sw-canvas/ContextState.js"></script>
+    <script src="../../src/crisp-sw-canvas/CrispSwCanvas.js"></script>
+    <script src="../../src/crisp-sw-canvas/CrispSwContext.js"></script>
+    <script src="../../src/crisp-sw-canvas/TransformationMatrix.js"></script>
+
+    <script src="../../src/canvas-sw-polyfills.js"></script>
+
+    <!-- Load shared renderer before RenderComparison.js -->
+    <script src="../../src/shared-renderer.js"></script>
+    <script src="../../src/RenderChecks.js"></script>
+    <script src="../../src/RenderComparison.js"></script>
+    <script src="../../src/RenderComparisonBuilder.js"></script>
+    <script src="../../src/added-comparisons.js"></script>
+  
+    <script src="../../src/crisp-sw-canvas-tests/test-organic.js"></script>
+    <script src="../../src/crisp-sw-canvas-tests/test-overlapping-rectangles.js"></script>
+    <script src="../../src/crisp-sw-canvas-tests/test-rectangle-clip.js"></script>
+    <script src="../../src/crisp-sw-canvas-tests/test-lines.js"></script>
+
+    <script>
+        const CANVAS_WIDTH = 800;
+        const CANVAS_HEIGHT = 600;
+
+        function addRenderComparisons() {
+            createOrganicTest();
+            createOverlappingRectanglesTest();
+            createRectangleClipTest();
+            createLinesTest();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            addRenderComparisons();
+            RenderComparison.createNavigation("CrispSwCanvas tests");
+        });
+    </script>
+</body>
+</html>

@@ -9,9 +9,17 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     exit 1
 fi
 
+# Function to get the project root directory
+function get_project_root() {
+    local SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    echo "$(cd "$SCRIPT_DIR/.." && pwd)"
+}
+
 # Function to extract version from CrispSwCanvas.js
 function get_version() {
-    local version=$(grep "static version = '" ../js/crisp-sw-canvas/CrispSwCanvas.js | sed "s/.*version = '\([^']*\)'.*/\1/")
+    local PROJECT_ROOT="$(get_project_root)"
+    
+    local version=$(grep "static version = '" "$PROJECT_ROOT/src/crisp-sw-canvas/CrispSwCanvas.js" | sed "s/.*version = '\([^']*\)'.*/\1/")
     if [ -z "$version" ]; then
         echo "Error: Could not extract version from CrispSwCanvas.js" >&2
         return 1
@@ -21,7 +29,8 @@ function get_version() {
 
 # Function to create build directory if it doesn't exist
 function ensure_build_dir() {
-    mkdir -p ../build
+    local PROJECT_ROOT="$(get_project_root)"
+    mkdir -p "$PROJECT_ROOT/build"
 }
 
 # Function to create version comment
@@ -39,24 +48,30 @@ function create_version_comment() {
 }
 
 # Common files for both browser and node builds
-COMMON_CORE_FILES=(
-    "../js/crisp-sw-canvas/TransformationMatrix.js"
-    "../js/crisp-sw-canvas/transform-utils.js"
-    "../js/crisp-sw-canvas/color-utils.js"
-    "../js/crisp-sw-canvas/ContextState.js"
-    "../js/utils/geometry.js"
-    "../js/renderers/renderer-utils.js"
-    "../js/renderers/sw-renderer/SWRendererPixel.js"
-    "../js/renderers/sw-renderer/SWRendererLine.js"
-    "../js/renderers/sw-renderer/SWRendererRect.js"
-    "../js/crisp-sw-canvas/CrispSwCanvas.js"
-    "../js/crisp-sw-canvas/CrispSwContext.js"
-)
+function get_common_core_files() {
+    local PROJECT_ROOT="$(get_project_root)"
+    COMMON_CORE_FILES=(
+        "$PROJECT_ROOT/src/crisp-sw-canvas/TransformationMatrix.js"
+        "$PROJECT_ROOT/src/crisp-sw-canvas/transform-utils.js"
+        "$PROJECT_ROOT/src/crisp-sw-canvas/color-utils.js"
+        "$PROJECT_ROOT/src/crisp-sw-canvas/ContextState.js"
+        "$PROJECT_ROOT/src/utils/geometry.js"
+        "$PROJECT_ROOT/src/renderers/renderer-utils.js"
+        "$PROJECT_ROOT/src/renderers/sw-renderer/SWRendererPixel.js"
+        "$PROJECT_ROOT/src/renderers/sw-renderer/SWRendererLine.js"
+        "$PROJECT_ROOT/src/renderers/sw-renderer/SWRendererRect.js"
+        "$PROJECT_ROOT/src/crisp-sw-canvas/CrispSwCanvas.js"
+        "$PROJECT_ROOT/src/crisp-sw-canvas/CrispSwContext.js"
+    )
+}
 
 # Node-specific files
-NODE_SPECIFIC_FILES=(
-    "../js/RenderChecks.js"
-)
+function get_node_specific_files() {
+    local PROJECT_ROOT="$(get_project_root)"
+    NODE_SPECIFIC_FILES=(
+        "$PROJECT_ROOT/src/RenderChecks.js"
+    )
+}
 
 # Browser-specific files (if any)
 BROWSER_SPECIFIC_FILES=()
@@ -73,9 +88,10 @@ function concatenate_files() {
     
     # If this is a node.js build, add 'use strict' and node polyfills
     if [ "$target" == "node" ]; then
+        local PROJECT_ROOT="$(get_project_root)"
         echo "'use strict';" >> "$output_file"
         echo "// Node.js environment setup" >> "$output_file"
-        cat ../js/crisp-sw-canvas/node-polyfills.js >> "$output_file"
+        cat "$PROJECT_ROOT/src/crisp-sw-canvas/node-polyfills.js" >> "$output_file"
     fi
     
     # Concatenate all files
