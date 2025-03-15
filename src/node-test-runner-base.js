@@ -28,7 +28,7 @@ function printHelp() {
     -p, --progress        Show progress indicator
     -l, --list            List all available tests
     -o, --output <dir>    Directory to save output images (default: ./test-output)
-    -t, --test            Run one frame for all tests in the registry
+    -t, --test            Run one iteration for all tests in the registry
     -v, --verbose         Show detailed test output
     -h, --help            Display this help information
   
@@ -170,9 +170,9 @@ function printHelp() {
       process.exit(0);
     }
   
-    // Handle --test option to run one frame for all registered tests
+    // Handle --test option to run one iteration for all registered tests
     if (options.test) {
-      console.log('Running one frame for all registered tests...');
+      console.log('Running one iteration for all registered tests...');
       
       const testIds = Object.keys(RenderTest.registry).sort();
       console.log(`Found ${testIds.length} registered tests.`);
