@@ -19,9 +19,9 @@ function getRandomArc() {
   };
 }
 
-function addNinetyDegreeArcs(shapes, log, currentExampleNumber) {
+function addNinetyDegreeArcs(shapes, log, currentIterationNumber) {
   // Not strictly needed as there is nothing random here
-  SeededRandom.seedWithInteger(currentExampleNumber);
+  SeededRandom.seedWithInteger(currentIterationNumber);
   
   const strokeSizes = [1, 2, 3, 4];
   const radii = [20, 40, 60];
@@ -47,8 +47,8 @@ function addNinetyDegreeArcs(shapes, log, currentExampleNumber) {
   }
 }
 
-function addRandomArcs(shapes, log, currentExampleNumber, count = 3) {
-  SeededRandom.seedWithInteger(currentExampleNumber);
+function addRandomArcs(shapes, log, currentIterationNumber, count = 3) {
+  SeededRandom.seedWithInteger(currentIterationNumber);
   for (let i = 0; i < count; i++) {
     const arc = getRandomArc();
     shapes.push(arc);

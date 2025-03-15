@@ -169,23 +169,23 @@ class RenderTest {
     // Create counter container
     const counterContainer = document.createElement('div');
     
-    // Add current example label
+    // Add current iteration label
     const currentLabel = document.createElement('label');
-    currentLabel.textContent = 'Current Example #1 | ';
+    currentLabel.textContent = 'Current Iteration #1 | ';
     currentLabel.style.marginRight = '10px';
     this.currentLabel = currentLabel;  // Store reference to update it later
     counterContainer.appendChild(currentLabel);
     
     const counterLabel = document.createElement('label');
-    counterLabel.textContent = 'Next example #: ';
+    counterLabel.textContent = 'Next iteration #: ';
     counterContainer.appendChild(counterLabel);
     
-    this.exampleCounter = document.createElement('input');
-    this.exampleCounter.type = 'text';
-    this.exampleCounter.value = '1';
-    this.exampleCounter.style.width = '70px';
-    this.exampleCounter.style.marginLeft = '5px';
-    counterContainer.appendChild(this.exampleCounter);
+    this.iterationCounter = document.createElement('input');
+    this.iterationCounter.type = 'text';
+    this.iterationCounter.value = '1';
+    this.iterationCounter.style.width = '70px';
+    this.iterationCounter.style.marginLeft = '5px';
+    counterContainer.appendChild(this.iterationCounter);
     
     controlsContainer.appendChild(counterContainer);
     
@@ -198,26 +198,26 @@ class RenderTest {
     
     // Add buttons to button container
     const runButton = document.createElement('button');
-    runButton.textContent = '1 example';
+    runButton.textContent = '1 iteration';
     runButton.onclick = () => this.render(buildShapesFn, canvasCodeFn);
     runButton.className = 'action-button';
     
-    // Add run 10 examples button
+    // Add run 10 iterations button
     const run10Button = document.createElement('button');
-    run10Button.textContent = '10 examples';
-    run10Button.onclick = () => this.runMultipleExamples(10);
+    run10Button.textContent = '10 iterations';
+    run10Button.onclick = () => this.runMultipleIterations(10);
     run10Button.className = 'action-button';
 
-    // Add run 100 examples button
+    // Add run 100 iterations button
     const run100Button = document.createElement('button');
-    run100Button.textContent = '100 examples';
-    run100Button.onclick = () => this.runMultipleExamples(100);
+    run100Button.textContent = '100 iterations';
+    run100Button.onclick = () => this.runMultipleIterations(100);
     run100Button.className = 'action-button';
 
-    // Add a button to collect defects on 1000 examples
+    // Add a button to collect defects on 1000 iterations
     const run1000Button = document.createElement('button');
-    run1000Button.textContent = 'Collect defects / 1k examples';
-    run1000Button.onclick = () => this.runMultipleExamples(1000, false);
+    run1000Button.textContent = 'Collect defects / 1k iterations';
+    run1000Button.onclick = () => this.runMultipleIterations(1000, false);
     run1000Button.className = 'action-button';
 
     // Add flip button last
@@ -379,26 +379,26 @@ class RenderTest {
       this.updateErrorCountDisplay();
     }
 
-    // Get the current example number from the label
-    const currentExampleNum = this.currentLabel ? 
-      this.currentLabel.textContent.match(/Current Example #(\d+)/) ?
-      parseInt(this.currentLabel.textContent.match(/Current Example #(\d+)/)[1]) : 1 : 1;
+    // Get the current iteration number from the label
+    const currentIterationNum = this.currentLabel ? 
+      this.currentLabel.textContent.match(/Current Iteration #(\d+)/) ?
+      parseInt(this.currentLabel.textContent.match(/Current Iteration #(\d+)/)[1]) : 1 : 1;
     
-    // Prefix the message with the example number
-    const prefixedMessage = `Example #${currentExampleNum}: ${message}`;
+    // Prefix the message with the iteration number
+    const prefixedMessage = `Iteration #${currentIterationNum}: ${message}`;
     
     const errorMessage = document.createElement('div');
     errorMessage.innerHTML = prefixedMessage; // Using innerHTML to preserve HTML formatting
     errorMessage.className = 'error-message';
-    errorMessage.dataset.exampleNum = currentExampleNum;
+    errorMessage.dataset.iterationNum = currentIterationNum;
     
-    // Insert at the appropriate position - either after the last error from this example
+    // Insert at the appropriate position - either after the last error from this iteration
     // or at the top of the errors container
     this.errorsContainer.insertBefore(errorMessage, this.errorCountDisplay);
     
-    // Save this as the first error for this example if it's the first
-    if (!this.firstErrorOfCurrentExample) {
-      this.firstErrorOfCurrentExample = errorMessage;
+    // Save this as the first error for this iteration if it's the first
+    if (!this.firstErrorOfCurrentIteration) {
+      this.firstErrorOfCurrentIteration = errorMessage;
     }
   }
 
@@ -411,21 +411,21 @@ class RenderTest {
   logSceneContents() {
     console.log("Attempting to log scene contents");
     
-    // Mark that we've logged scene contents for this example
-    this.sceneLoggedForCurrentExample = true;
+    // Mark that we've logged scene contents for this iteration
+    this.sceneLoggedForCurrentIteration = true;
     
     try {
       if (this.shapes && this.shapes.length > 0) {
         // Log to console for debugging
         console.log("Scene contents when errors occurred:", JSON.stringify(this.shapes, null, 2));
         
-        // Get the current example number
-        const currentExampleNum = this.currentLabel ? 
-          this.currentLabel.textContent.match(/Current Example #(\d+)/) ?
-          parseInt(this.currentLabel.textContent.match(/Current Example #(\d+)/)[1]) : 1 : 1;
+        // Get the current iteration number
+        const currentIterationNum = this.currentLabel ? 
+          this.currentLabel.textContent.match(/Current Iteration #(\d+)/) ?
+          parseInt(this.currentLabel.textContent.match(/Current Iteration #(\d+)/)[1]) : 1 : 1;
         
         // Create an easy-to-read scene content message
-        let sceneMessage = `Scene Contents for Example #${currentExampleNum}:`;
+        let sceneMessage = `Scene Contents for Iteration #${currentIterationNum}:`;
         
         // Format the shape data in a more readable way
         this.shapes.forEach((shape, index) => {
@@ -476,25 +476,25 @@ class RenderTest {
         
         console.log("Created scene content div, about to insert into DOM");
         
-        // If we have an error for this example, insert after it
-        if (this.firstErrorOfCurrentExample) {
-          console.log("Found first error of example, inserting scene after it");
+        // If we have an error for this iteration, insert after it
+        if (this.firstErrorOfCurrentIteration) {
+          console.log("Found first error of iteration, inserting scene after it");
           
-          // Find all error messages for this example
-          const exampleNum = this.firstErrorOfCurrentExample.dataset.exampleNum;
-          let lastErrorForExample = this.firstErrorOfCurrentExample;
+          // Find all error messages for this iteration
+          const iterationNum = this.firstErrorOfCurrentIteration.dataset.iterationNum;
+          let lastErrorForIteration = this.firstErrorOfCurrentIteration;
           
-          // Find the last error with the same example number
+          // Find the last error with the same iteration number
           const errors = this.errorsContainer.querySelectorAll('.error-message');
           for (let i = 0; i < errors.length; i++) {
-            if (errors[i].dataset.exampleNum === exampleNum) {
-              lastErrorForExample = errors[i];
+            if (errors[i].dataset.iterationNum === iterationNum) {
+              lastErrorForIteration = errors[i];
             }
           }
           
-          // Insert the scene contents after the last error for this example
-          if (lastErrorForExample.nextSibling) {
-            this.errorsContainer.insertBefore(sceneContentDiv, lastErrorForExample.nextSibling);
+          // Insert the scene contents after the last error for this iteration
+          if (lastErrorForIteration.nextSibling) {
+            this.errorsContainer.insertBefore(sceneContentDiv, lastErrorForIteration.nextSibling);
           } else {
             this.errorsContainer.appendChild(sceneContentDiv);
           }
@@ -552,7 +552,7 @@ class RenderTest {
     this.canvasHashContainer.textContent = `Hash: ${this.canvasCtxOfCanvasRender.getHashString()}`;
   }
 
-  render(buildShapesFn, canvasCodeFn = null, exampleNumber = null) {
+  render(buildShapesFn, canvasCodeFn = null, iterationNumber = null) {
     // Common setup for both environments
     // Reset error tracking
     this.errorCount = 0;
@@ -564,7 +564,7 @@ class RenderTest {
     // Call the appropriate environment-specific render method
     if (this.isNode) {
       // Node.js specific rendering path
-      return this.renderInNode(buildShapesFn, canvasCodeFn, exampleNumber);
+      return this.renderInNode(buildShapesFn, canvasCodeFn, iterationNumber);
     } else {
       // Browser specific rendering path
       return this.renderInBrowser(buildShapesFn, canvasCodeFn);
@@ -572,9 +572,9 @@ class RenderTest {
   }
 
   // Node.js specific rendering implementation
-  renderInNode(buildShapesFn, canvasCodeFn = null, exampleNumber = null) {
-    // Use the provided example number or default to 1
-    const currentCount = exampleNumber || 1;
+  renderInNode(buildShapesFn, canvasCodeFn = null, iterationNumber = null) {
+    // Use the provided iteration number or default to 1
+    const currentCount = iterationNumber || 1;
     
     if (buildShapesFn) {
       // Mock log container for Node
@@ -612,7 +612,7 @@ class RenderTest {
   }
   
   // Export BMP image for Node.js
-  exportBMP(outputDir, exampleNum) {
+  exportBMP(outputDir, iterationNum) {
     if (!this.isNode) return;
     
     try {
@@ -632,7 +632,7 @@ class RenderTest {
         }
         
         // Save the file
-        const filename = `${this.id}-example${exampleNum}.bmp`;
+        const filename = `${this.id}-iteration${iterationNum}.bmp`;
         const filepath = path.join(outputDir, filename);
         fs.writeFileSync(filepath, bmpData);
         
@@ -651,12 +651,12 @@ class RenderTest {
 
   // Browser specific rendering implementation
   renderInBrowser(buildShapesFn, canvasCodeFn = null) {
-    // Update current example label to match the next example number
-    const currentCount = parseInt(this.exampleCounter.value) || 1;
-    this.currentLabel.textContent = `Current Example #${currentCount}`;
+    // Update current iteration label to match the next iteration number
+    const currentCount = parseInt(this.iterationCounter.value) || 1;
+    this.currentLabel.textContent = `Current Iteration #${currentCount}`;
     
-    // Increment counter for next example
-    this.exampleCounter.value = (currentCount + 1).toString();
+    // Increment counter for next iteration
+    this.iterationCounter.value = (currentCount + 1).toString();
     
     this.buildShapesFn = buildShapesFn; // Store the function for later use
     this.logContainer.innerHTML = '';
@@ -664,12 +664,12 @@ class RenderTest {
     // Track initial error count before rendering
     const initialErrorCount = this.errorCount || 0;
     
-    // Reset UI error tracking for this example
-    this.firstErrorOfCurrentExample = null;
-    this.lastErrorOfCurrentExample = null;
+    // Reset UI error tracking for this iteration
+    this.firstErrorOfCurrentIteration = null;
+    this.lastErrorOfCurrentIteration = null;
     
     // Create a flag to track if we need to log scene contents
-    this.sceneLoggedForCurrentExample = false;
+    this.sceneLoggedForCurrentIteration = false;
     
     if (buildShapesFn) {
       // this returned value is used in the metrics/tests
@@ -713,9 +713,9 @@ class RenderTest {
     return this.errorCount === initialErrorCount;
   }
 
-  runMultipleExamples(count, stopAtError = true) {
+  runMultipleIterations(count, stopAtError = true) {
     let current = 0;
-    this.sceneLoggedForCurrentExample = false; // Initialize flag
+    this.sceneLoggedForCurrentIteration = false; // Initialize flag
     const initialErrorCount = this.errorCount || 0;
 
     // Create progress bar element
@@ -740,7 +740,7 @@ class RenderTest {
             const beforeErrorCount = this.errorCount || 0;
             
             // Reset scene logged flag
-            this.sceneLoggedForCurrentExample = false;
+            this.sceneLoggedForCurrentIteration = false;
             
             this.render(this.buildShapesFn, this.canvasCodeFn);
             current++;
@@ -758,10 +758,10 @@ class RenderTest {
             }, 0);
             
         } catch (error) {
-            this.showError(`Error during multiple examples: ${error.message}`);
+            this.showError(`Error during multiple iterations: ${error.message}`);
             
             // Log scene contents if there's an error and it hasn't been logged yet
-            if (!this.sceneLoggedForCurrentExample && this.shapes && this.shapes.length > 0) {
+            if (!this.sceneLoggedForCurrentIteration && this.shapes && this.shapes.length > 0) {
                 this.logSceneContents();
             }
             

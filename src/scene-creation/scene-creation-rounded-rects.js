@@ -1,5 +1,5 @@
-function addAxisAlignedRoundedRectangles(shapes, log, currentExampleNumber, count = 10) {
-  SeededRandom.seedWithInteger(currentExampleNumber);
+function addAxisAlignedRoundedRectangles(shapes, log, currentIterationNumber, count = 10) {
+  SeededRandom.seedWithInteger(currentIterationNumber);
   for (let i = 0; i < count; i++) {
     // Use placeRoundedRectWithFillAndStrokeBothCrisp to get a properly positioned rectangle
     var { center, adjustedDimensions, strokeWidth } = placeRoundedRectWithFillAndStrokeBothCrisp(10);
@@ -33,8 +33,8 @@ function addAxisAlignedRoundedRectangles(shapes, log, currentExampleNumber, coun
   }
 }
 
-function addThinOpaqueStrokeRoundedRectangles(shapes, log, currentExampleNumber, count = 10) {
-  SeededRandom.seedWithInteger(currentExampleNumber);
+function addThinOpaqueStrokeRoundedRectangles(shapes, log, currentIterationNumber, count = 10) {
+  SeededRandom.seedWithInteger(currentIterationNumber);
   for (let i = 0; i < count; i++) {
     const width = Math.round(50 + SeededRandom.getRandom() * 100);
     const height = Math.round(50 + SeededRandom.getRandom() * 100);
@@ -60,8 +60,8 @@ function addThinOpaqueStrokeRoundedRectangles(shapes, log, currentExampleNumber,
   }
 }
 
-function addLargeTransparentRoundedRectangles(shapes, log, currentExampleNumber, count = 10) {
-  SeededRandom.seedWithInteger(currentExampleNumber);
+function addLargeTransparentRoundedRectangles(shapes, log, currentIterationNumber, count = 10) {
+  SeededRandom.seedWithInteger(currentIterationNumber);
   for (let i = 0; i < count; i++) {
     // Use placeRoundedRectWithFillAndStrokeBothCrisp to get a properly positioned rectangle
     var { center, adjustedDimensions, strokeWidth } = placeRoundedRectWithFillAndStrokeBothCrisp(40);
@@ -94,8 +94,8 @@ function addLargeTransparentRoundedRectangles(shapes, log, currentExampleNumber,
   }
 }
 
-function addNoStrokeRoundedRectangles(shapes, log, currentExampleNumber, count = 10) {
-  SeededRandom.seedWithInteger(currentExampleNumber);
+function addNoStrokeRoundedRectangles(shapes, log, currentIterationNumber, count = 10) {
+  SeededRandom.seedWithInteger(currentIterationNumber);
   for (let i = 0; i < count; i++) {
     const center = roundPoint(getRandomPoint(1));
     shapes.push({
@@ -114,8 +114,8 @@ function addNoStrokeRoundedRectangles(shapes, log, currentExampleNumber, count =
   }
 }
 
-function addRotatedRoundedRectangles(shapes, log, currentExampleNumber, count = 3) {
-  SeededRandom.seedWithInteger(currentExampleNumber);
+function addRotatedRoundedRectangles(shapes, log, currentIterationNumber, count = 3) {
+  SeededRandom.seedWithInteger(currentIterationNumber);
   for (let i = 0; i < count; i++) {
     const width = 50 + SeededRandom.getRandom() * 100;
     const height = 50 + SeededRandom.getRandom() * 100;
@@ -140,9 +140,9 @@ function addRotatedRoundedRectangles(shapes, log, currentExampleNumber, count = 
   }
 }
 
-function addCenteredRoundedRectOpaqueStrokesRandomStrokeWidth(shapes, log, currentExampleNumber) {
+function addCenteredRoundedRectOpaqueStrokesRandomStrokeWidth(shapes, log, currentIterationNumber) {
   checkCanvasHasEvenDimensions();
-  SeededRandom.seedWithInteger(currentExampleNumber);
+  SeededRandom.seedWithInteger(currentIterationNumber);
 
   const maxWidth = renderTestWidth * 0.6;
   const maxHeight = renderTestHeight * 0.6;
@@ -179,9 +179,9 @@ function addCenteredRoundedRectOpaqueStrokesRandomStrokeWidth(shapes, log, curre
 
 // TODO to work out exactly when the main features of the rounded rect
 // are identical in the sw renderer and the canvas renderer. 
-function addCenteredRoundedRectTransparentStrokesRandomStrokeWidth(shapes, log, currentExampleNumber) {
+function addCenteredRoundedRectTransparentStrokesRandomStrokeWidth(shapes, log, currentIterationNumber) {
   checkCanvasHasEvenDimensions();
-  SeededRandom.seedWithInteger(currentExampleNumber);
+  SeededRandom.seedWithInteger(currentIterationNumber);
 
   var { center, adjustedDimensions, strokeWidth } = placeRoundedRectWithFillAndStrokeBothCrisp(40);
 
@@ -239,9 +239,9 @@ function placeRoundedRectWithFillAndStrokeBothCrisp(maxStrokeWidth = 40) {
   return { center, adjustedDimensions, strokeWidth };
 }
 
-function add1PxStrokeCenteredRoundedRectAtGrid(shapes, log, currentExampleNumber) {
+function add1PxStrokeCenteredRoundedRectAtGrid(shapes, log, currentIterationNumber) {
   checkCanvasHasEvenDimensions();
-  SeededRandom.seedWithInteger(currentExampleNumber);
+  SeededRandom.seedWithInteger(currentIterationNumber);
 
   const { centerX, centerY } = placeCloseToCenterAtGrid(renderTestWidth, renderTestHeight);
 
@@ -253,9 +253,9 @@ function add1PxStrokeCenteredRoundedRectAtGrid(shapes, log, currentExampleNumber
   return add1PxStrokeCenteredRoundedRect(centerX, centerY, adjustedDimensions.width, adjustedDimensions.height, shapes, log);
 }
 
-function add1PxStrokeCenteredRoundedRectAtPixel(shapes, log, currentExampleNumber) {
+function add1PxStrokeCenteredRoundedRectAtPixel(shapes, log, currentIterationNumber) {
   checkCanvasHasEvenDimensions();
-  SeededRandom.seedWithInteger(currentExampleNumber);
+  SeededRandom.seedWithInteger(currentIterationNumber);
 
   const { centerX, centerY } = placeCloseToCenterAtPixel(renderTestWidth, renderTestHeight);
 

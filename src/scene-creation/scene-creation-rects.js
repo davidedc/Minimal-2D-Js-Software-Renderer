@@ -1,5 +1,5 @@
-function addAxisAlignedRectangles(shapes, log, currentExampleNumber, count = 5) {
-  SeededRandom.seedWithInteger(currentExampleNumber);
+function addAxisAlignedRectangles(shapes, log, currentIterationNumber, count = 5) {
+  SeededRandom.seedWithInteger(currentIterationNumber);
   for (let i = 0; i < count; i++) {
     var { center, adjustedDimensions, strokeWidth } = placeRoundedRectWithFillAndStrokeBothCrisp(10);
     
@@ -29,8 +29,8 @@ function addAxisAlignedRectangles(shapes, log, currentExampleNumber, count = 5) 
   }
 }
 
-function addRotatedRectangles(shapes, log, currentExampleNumber, count = 5) {
-  SeededRandom.seedWithInteger(currentExampleNumber);
+function addRotatedRectangles(shapes, log, currentIterationNumber, count = 5) {
+  SeededRandom.seedWithInteger(currentIterationNumber);
   for (let i = 0; i < count; i++) {
     const center = getRandomPoint(1);
     const width = 30 + SeededRandom.getRandom() * 100;
@@ -55,9 +55,9 @@ function addRotatedRectangles(shapes, log, currentExampleNumber, count = 5) {
   }
 }
 
-function add1PxStrokeCenteredRectAtGrid(shapes, log, currentExampleNumber) {
+function add1PxStrokeCenteredRectAtGrid(shapes, log, currentIterationNumber) {
   checkCanvasHasEvenDimensions();
-  SeededRandom.seedWithInteger(currentExampleNumber);
+  SeededRandom.seedWithInteger(currentIterationNumber);
   const { centerX, centerY } = placeCloseToCenterAtGrid(renderTestWidth, renderTestHeight);
 
   let rectWidth = Math.floor(20 + SeededRandom.getRandom() * 130);
@@ -68,9 +68,9 @@ function add1PxStrokeCenteredRectAtGrid(shapes, log, currentExampleNumber) {
   return add1PxStrokeCenteredRect(centerX, centerY, adjustedDimensions.width, adjustedDimensions.height, shapes, log);
 }
 
-function add1PxStrokeCenteredRectAtPixel(shapes, log, currentExampleNumber) {
+function add1PxStrokeCenteredRectAtPixel(shapes, log, currentIterationNumber) {
   checkCanvasHasEvenDimensions();
-  SeededRandom.seedWithInteger(currentExampleNumber);
+  SeededRandom.seedWithInteger(currentIterationNumber);
   const { centerX, centerY } = placeCloseToCenterAtGrid(renderTestWidth, renderTestHeight);
 
   let rectWidth = Math.floor(20 + SeededRandom.getRandom() * 130);

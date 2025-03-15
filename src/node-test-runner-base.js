@@ -22,9 +22,9 @@ function printHelp() {
   
   Options:
     -i, --id <id>         Test ID to run
-    -e, --example <num>   Specific example number to run
-    -c, --count <num>     Number of examples to run
-    -r, --range <s-e>     Range of examples to run (e.g., 1-10)
+    -i, --iteration <num>   Specific iteration number to run
+    -c, --count <num>     Number of iterations to run
+    -r, --range <s-e>     Range of iterations to run (e.g., 1-10)
     -p, --progress        Show progress indicator
     -l, --list            List all available tests
     -o, --output <dir>    Directory to save output images (default: ./test-output)
@@ -34,7 +34,7 @@ function printHelp() {
   
   Examples:
     node node-test-runner.js --list
-    node node-test-runner.js --id=thin-black-lines-2 --example=5
+    node node-test-runner.js --id=thin-black-lines-2 --iteration=5
     node node-test-runner.js --test --output=./test-output
     node node-test-runner.js --id=random-circles --count=100 --progress
     node node-test-runner.js --id=all-shapes --range=1-5 --output=./results
@@ -60,8 +60,8 @@ function printHelp() {
         options.test = true;
       } else if (arg.startsWith('--id=')) {
         options.id = arg.substring(5);
-      } else if (arg.startsWith('--example=')) {
-        options.example = parseInt(arg.substring(10));
+      } else if (arg.startsWith('--iteration=')) {
+        options.iteration = parseInt(arg.substring(10));
       } else if (arg.startsWith('--count=')) {
         options.count = parseInt(arg.substring(8));
       } else if (arg.startsWith('--range=')) {
@@ -70,8 +70,8 @@ function printHelp() {
         options.output = arg.substring(9);
       } else if (arg === '--id' || arg === '-i') {
         if (i + 1 < args.length) options.id = args[++i];
-      } else if (arg === '--example' || arg === '-e') {
-        if (i + 1 < args.length) options.example = parseInt(args[++i]);
+      } else if (arg === '--iteration' || arg === '-i') {
+        if (i + 1 < args.length) options.iteration = parseInt(args[++i]);
       } else if (arg === '--count' || arg === '-c') {
         if (i + 1 < args.length) options.count = parseInt(args[++i]);
       } else if (arg === '--range' || arg === '-r') {
@@ -97,12 +97,12 @@ function printHelp() {
   }
   
   // Export image data for tests
-  function saveOutputImage(test, exampleNum, outputDir) {
+  function saveOutputImage(test, iterationNum, outputDir) {
     try {
-      console.log(`Saving image for test ${test.id}, example ${exampleNum} to ${outputDir}`);
+      console.log(`Saving image for test ${test.id}, iteration ${iterationNum} to ${outputDir}`);
       
       // Use the built-in exportBMP method
-      const filePath = test.exportBMP(outputDir, exampleNum);
+      const filePath = test.exportBMP(outputDir, iterationNum);
       
       if (filePath) {
         console.log(`  Saved BMP to ${filePath}`);
@@ -119,7 +119,7 @@ function printHelp() {
   }
   
   // Save test results as text
-  function saveTestResults(testId, exampleNum, test, outputDir) {
+  function saveTestResults(testId, iterationNum, test, outputDir) {
     try {
       // Create output directory if it doesn't exist
       if (!fs.existsSync(outputDir)) {
@@ -129,7 +129,7 @@ function printHelp() {
       // Create result text
       let resultText = `Test: ${test.title}\n`;
       resultText += `ID: ${testId}\n`;
-      resultText += `Example: ${exampleNum}\n`;
+      resultText += `Iteration: ${iterationNum}\n`;
       resultText += `Errors: ${test.errorCount}\n\n`;
       
       if (test.errorCount > 0) {
@@ -146,7 +146,7 @@ function printHelp() {
       }
       
       // Save to file
-      const logFilename = `${testId}-example${exampleNum}-results.txt`;
+      const logFilename = `${testId}-iteration${iterationNum}-results.txt`;
       const logFilePath = path.join(outputDir, logFilename);
       fs.writeFileSync(logFilePath, resultText);
       
@@ -191,10 +191,10 @@ function printHelp() {
       // Show progress if requested
       const showProgress = options.progress;
       
-      // Run all tests with example #1
+      // Run all tests with iteration #1
       testIds.forEach((testId, index) => {
         const test = RenderTest.registry[testId];
-        const exampleNum = 1; // Always use example #1 for the --test option
+        const iterationNum = 1; // Always use iteration #1 for the --test option
         
         if (showProgress) {
           const percent = Math.floor((index / totalTests) * 100);
@@ -207,7 +207,7 @@ function printHelp() {
         test.verbose = options.verbose;
         
         try {
-          const success = test.render(test.buildShapesFn, test.canvasCodeFn, exampleNum);
+          const success = test.render(test.buildShapesFn, test.canvasCodeFn, iterationNum);
           
           if (success) {
             passedTests++;
@@ -227,8 +227,8 @@ function printHelp() {
               fs.mkdirSync(testOutputDir, { recursive: true });
             }
             
-            const imagePath = saveOutputImage(test, exampleNum, testOutputDir);
-            const resultPath = saveTestResults(testId, exampleNum, test, testOutputDir);
+            const imagePath = saveOutputImage(test, iterationNum, testOutputDir);
+            const resultPath = saveTestResults(testId, iterationNum, test, testOutputDir);
           }
         } catch (err) {
           failedTests++;
@@ -269,62 +269,62 @@ function printHelp() {
     // Set verbosity on the test
     test.verbose = options.verbose;
   
-    // Determine which examples to run
-    let exampleNumbers = [];
+    // Determine which iterations to run
+    let iterationNumbers = [];
   
-    if (options.example) {
-      exampleNumbers = [parseInt(options.example)];
+    if (options.iteration) {
+      iterationNumbers = [parseInt(options.iteration)];
     } else if (options.count) {
-      exampleNumbers = Array.from({length: parseInt(options.count)}, (_, i) => i + 1);
+      iterationNumbers = Array.from({length: parseInt(options.count)}, (_, i) => i + 1);
     } else if (options.range) {
       const [start, end] = options.range.split('-').map(Number);
       if (isNaN(start) || isNaN(end) || start > end) {
         console.error('Error: Range must be in format "start-end" with start <= end.');
         process.exit(1);
       }
-      exampleNumbers = Array.from({length: end - start + 1}, (_, i) => i + start);
+      iterationNumbers = Array.from({length: end - start + 1}, (_, i) => i + start);
     } else {
-      // Default to a single example
-      exampleNumbers = [1];
+      // Default to a single iteration
+      iterationNumbers = [1];
     }
   
     // Run the test(s)
     console.log(`Running test: ${test.title}`);
-    console.log(`Examples: ${exampleNumbers.length > 1 ? `${exampleNumbers.length} examples` : `example #${exampleNumbers[0]}`}`);
+    console.log(`Iterations: ${iterationNumbers.length > 1 ? `${iterationNumbers.length} iterations` : `iteration #${iterationNumbers[0]}`}`);
   
     // Show progress if requested
-    const showProgress = options.progress && exampleNumbers.length > 1;
-    let failedExamples = 0;
-    let passedExamples = 0;
+    const showProgress = options.progress && iterationNumbers.length > 1;
+    let failedIterations = 0;
+    let passedIterations = 0;
   
-    // Run the examples
-    exampleNumbers.forEach((exampleNum, index) => {
+    // Run the iterations
+    iterationNumbers.forEach((iterationNum, index) => {
       if (showProgress) {
-        const percent = Math.floor((index / exampleNumbers.length) * 100);
-        process.stdout.write(`\rProgress: ${percent}% [${index}/${exampleNumbers.length}]`);
+        const percent = Math.floor((index / iterationNumbers.length) * 100);
+        process.stdout.write(`\rProgress: ${percent}% [${index}/${iterationNumbers.length}]`);
       }
   
-      const success = test.render(test.buildShapesFn, test.canvasCodeFn, exampleNum);
+      const success = test.render(test.buildShapesFn, test.canvasCodeFn, iterationNum);
       
       if (success) {
-        passedExamples++;
+        passedIterations++;
         if (options.verbose) {
-          console.log(`\nExample #${exampleNum} passed`);
+          console.log(`\nIteration #${iterationNum} passed`);
         }
         
         // Save output for successful tests as well
         if (options.output) {
-          const imagePath = saveOutputImage(test, exampleNum, options.output);
-          const resultPath = saveTestResults(testId, exampleNum, test, options.output);
+          const imagePath = saveOutputImage(test, iterationNum, options.output);
+          const resultPath = saveTestResults(testId, iterationNum, test, options.output);
         }
       } else {
-        failedExamples++;
-        console.log(`\nExample #${exampleNum} failed`);
+        failedIterations++;
+        console.log(`\nIteration #${iterationNum} failed`);
         
         // Save output for failed tests
         if (options.output) {
-          const imagePath = saveOutputImage(test, exampleNum, options.output);
-          const resultPath = saveTestResults(testId, exampleNum, test, options.output);
+          const imagePath = saveOutputImage(test, iterationNum, options.output);
+          const resultPath = saveTestResults(testId, iterationNum, test, options.output);
         }
       }
     });
@@ -335,11 +335,11 @@ function printHelp() {
   
     // Print summary
     console.log(`\nTest execution complete`);
-    console.log(`Passed: ${passedExamples}`);
-    console.log(`Failed: ${failedExamples}`);
+    console.log(`Passed: ${passedIterations}`);
+    console.log(`Failed: ${failedIterations}`);
     
     // Return appropriate exit code
-    process.exit(failedExamples > 0 ? 1 : 0);
+    process.exit(failedIterations > 0 ? 1 : 0);
   }
 
   function initializeTestRegistry() {

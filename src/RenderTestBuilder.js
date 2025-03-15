@@ -25,9 +25,9 @@ class RenderTestBuilder {
   }
 
   addShapes(shapeFunction, ...args) {
-    this._shapeBuilder = (shapes, log, currentExampleNumber) => {
+    this._shapeBuilder = (shapes, log, currentIterationNumber) => {
       this._buildLog = [];
-      return shapeFunction(shapes, log, currentExampleNumber, ...args);
+      return shapeFunction(shapes, log, currentIterationNumber, ...args);
     };
     return this;
   }

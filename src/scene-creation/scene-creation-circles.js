@@ -11,13 +11,13 @@ function getRandomCircle() {
  * Helper function for creating circle test cases that share core parameters
  * @param {Array} shapes - Array to add shapes to
  * @param {HTMLElement} log - Log element to add descriptions
- * @param {number} currentExampleNumber - Current example number for seeding
+ * @param {number} currentIterationNumber - Current iteration number for seeding
  * @param {number} count - Number of circles to create
  * @param {string} description - Description prefix for logging
  * @returns {Object|null} Extremes coordinates for the circle (if count is 1) or null (if count > 1)
  */
-function createRandomCircleTest(shapes, log, currentExampleNumber, count, description) {
-  SeededRandom.seedWithInteger(currentExampleNumber);
+function createRandomCircleTest(shapes, log, currentIterationNumber, count, description) {
+  SeededRandom.seedWithInteger(currentIterationNumber);
   let extremes = null;
   
   for (let i = 0; i < count; i++) {
@@ -40,12 +40,12 @@ function createRandomCircleTest(shapes, log, currentExampleNumber, count, descri
   return extremes;
 }
 
-function addRandomCircles(shapes, log, currentExampleNumber, count = 5) {
-  createRandomCircleTest(shapes, log, currentExampleNumber, count, "Random");
+function addRandomCircles(shapes, log, currentIterationNumber, count = 5) {
+  createRandomCircleTest(shapes, log, currentIterationNumber, count, "Random");
 }
 
-function addOneRandomCircle(shapes, log, currentExampleNumber) {
-  return createRandomCircleTest(shapes, log, currentExampleNumber, 1, "Single random");
+function addOneRandomCircle(shapes, log, currentIterationNumber) {
+  return createRandomCircleTest(shapes, log, currentIterationNumber, 1, "Single random");
 }
 
 /**
@@ -144,8 +144,8 @@ function calculateCircleParameters(options) {
   };
 }
 
-function createTestCircle(currentExampleNumber, hasStroke = true, randomPosition = false) {
-  SeededRandom.seedWithInteger(currentExampleNumber);
+function createTestCircle(currentIterationNumber, hasStroke = true, randomPosition = false) {
+  SeededRandom.seedWithInteger(currentIterationNumber);
   checkCanvasHasEvenDimensions();
   
   const params = calculateCircleParameters({
@@ -194,8 +194,8 @@ function createTestCircle(currentExampleNumber, hasStroke = true, randomPosition
   };
 }
 
-function addSingleRandomCircle(shapes, log, currentExampleNumber) {
-  const result = createTestCircle(currentExampleNumber, true, false);
+function addSingleRandomCircle(shapes, log, currentIterationNumber) {
+  const result = createTestCircle(currentIterationNumber, true, false);
   const { circle, extremes, centerX, centerY, radius, strokeWidth, adjustedDiameter, atPixel } = result;
   
   // Add the circle to shapes
@@ -211,8 +211,8 @@ function addSingleRandomCircle(shapes, log, currentExampleNumber) {
   return extremes;
 }
 
-function addSingleNoStrokeCircle(shapes, log, currentExampleNumber) {
-  const result = createTestCircle(currentExampleNumber, false, false);
+function addSingleNoStrokeCircle(shapes, log, currentIterationNumber) {
+  const result = createTestCircle(currentIterationNumber, false, false);
   const { circle, extremes, centerX, centerY, radius, adjustedDiameter, atPixel } = result;
   
   // Add the circle to shapes
@@ -227,8 +227,8 @@ function addSingleNoStrokeCircle(shapes, log, currentExampleNumber) {
   return extremes;
 }
 
-function addRandomPositionCircle(shapes, log, currentExampleNumber) {
-  const result = createTestCircle(currentExampleNumber, true, true);
+function addRandomPositionCircle(shapes, log, currentIterationNumber) {
+  const result = createTestCircle(currentIterationNumber, true, true);
   const { circle, extremes, centerX, centerY, radius, strokeWidth, adjustedDiameter, atPixel } = result;
   
   // Add the circle to shapes
@@ -244,8 +244,8 @@ function addRandomPositionCircle(shapes, log, currentExampleNumber) {
   return extremes;
 }
 
-function addRandomPositionNoStrokeCircle(shapes, log, currentExampleNumber) {
-  const result = createTestCircle(currentExampleNumber, false, true);
+function addRandomPositionNoStrokeCircle(shapes, log, currentIterationNumber) {
+  const result = createTestCircle(currentIterationNumber, false, true);
   const { circle, extremes, centerX, centerY, radius, adjustedDiameter, atPixel } = result;
   
   // Add the circle to shapes
@@ -269,8 +269,8 @@ function addRandomPositionNoStrokeCircle(shapes, log, currentExampleNumber) {
  * @param {string} description - Description to log
  * @returns {void}
  */
-function generateMultiplePreciseCircles(shapes, log, currentExampleNumber, count, includeStrokes, description) {
-  SeededRandom.seedWithInteger(currentExampleNumber);
+function generateMultiplePreciseCircles(shapes, log, currentIterationNumber, count, includeStrokes, description) {
+  SeededRandom.seedWithInteger(currentIterationNumber);
   checkCanvasHasEvenDimensions();
   
   log.innerHTML += `${description} (${count} circles)<br>`;
@@ -329,11 +329,11 @@ function generateMultiplePreciseCircles(shapes, log, currentExampleNumber, count
 /**
  * Add multiple precise random circles with strokes
  */
-function addMultiplePreciseRandomCircles(shapes, log, currentExampleNumber, count = 10) {
+function addMultiplePreciseRandomCircles(shapes, log, currentIterationNumber, count = 10) {
   generateMultiplePreciseCircles(
     shapes, 
     log, 
-    currentExampleNumber, 
+    currentIterationNumber, 
     count, 
     true, 
     "Adding multiple precise random circles with strokes"
@@ -343,11 +343,11 @@ function addMultiplePreciseRandomCircles(shapes, log, currentExampleNumber, coun
 /**
  * Add multiple precise random circles without strokes (fill only)
  */
-function addMultiplePreciseNoStrokeCircles(shapes, log, currentExampleNumber, count = 10) {
+function addMultiplePreciseNoStrokeCircles(shapes, log, currentIterationNumber, count = 10) {
   generateMultiplePreciseCircles(
     shapes, 
     log, 
-    currentExampleNumber, 
+    currentIterationNumber, 
     count, 
     false, 
     "Adding multiple precise random circles without strokes (fill only)"
@@ -356,8 +356,8 @@ function addMultiplePreciseNoStrokeCircles(shapes, log, currentExampleNumber, co
 
 // ----------------------------------------------------------------------
 // Single 1px Stroked Circle centered at grid
-function add1PxStrokeCenteredCircleAtGrid(shapes, log, currentExampleNumber) {
-  SeededRandom.seedWithInteger(currentExampleNumber);
+function add1PxStrokeCenteredCircleAtGrid(shapes, log, currentIterationNumber) {
+  SeededRandom.seedWithInteger(currentIterationNumber);
   // Ensure canvas dimensions are even for proper grid alignment
   checkCanvasHasEvenDimensions();
 
@@ -394,8 +394,8 @@ function add1PxStrokeCenteredCircleAtGrid(shapes, log, currentExampleNumber) {
 
 // ----------------------------------------------------------------------
 // Single 1px Stroked Circle centered at pixel
-function add1PxStrokeCenteredCircleAtPixel(shapes, log, currentExampleNumber) {
-  SeededRandom.seedWithInteger(currentExampleNumber);
+function add1PxStrokeCenteredCircleAtPixel(shapes, log, currentIterationNumber) {
+  SeededRandom.seedWithInteger(currentIterationNumber);
   // Ensure canvas dimensions are even for proper pixel alignment
   checkCanvasHasEvenDimensions();
 
