@@ -1,10 +1,10 @@
 function checkCanvasHasEvenDimensions() {
-  if (renderComparisonWidth % 2 !== 0 || renderComparisonHeight % 2 !== 0) {
+  if (renderTestWidth % 2 !== 0 || renderTestHeight % 2 !== 0) {
     console.error('Width and height should be even numbers for this test');
   }
 }
 
-// adds many shapes. Each of these adds also has its own comparison.
+// adds many shapes.
 function buildScene(shapes, log, currentExampleNumber) {
   addRandomLines(shapes, log, currentExampleNumber, 15);
   addAxisAlignedRectangles(shapes, log, currentExampleNumber, 5);

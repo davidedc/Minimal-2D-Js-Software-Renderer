@@ -3,13 +3,13 @@
  * ======================================================
  * 
  * This script runs software renderer tests in Node.js without a browser.
- * It uses comparisons defined in added-comparisons.js to run tests via command line.
+ * It uses tests defined in add-tests.js to run tests via command line.
  */
 
 const fs = require('fs');
 const path = require('path');
 
-// Create Node.js specific version of RenderComparison
+// Create Node.js specific version of RenderTest
 
 const { exit } = require('process');
 
@@ -28,7 +28,7 @@ function printHelp() {
     -p, --progress        Show progress indicator
     -l, --list            List all available tests
     -o, --output <dir>    Directory to save output images (default: ./test-output)
-    -t, --test            Run one frame for all comparisons in the registry
+    -t, --test            Run one frame for all tests in the registry
     -v, --verbose         Show detailed test output
     -h, --help            Display this help information
   
@@ -163,19 +163,19 @@ function printHelp() {
     // Handle --list option to show all tests
     if (options.list) {
       console.log('Available tests:');
-      Object.keys(RenderComparison.registry).sort().forEach(id => {
-        const test = RenderComparison.registry[id];
+      Object.keys(RenderTest.registry).sort().forEach(id => {
+        const test = RenderTest.registry[id];
         console.log(`  ${id} - ${test.title}`);
       });
       process.exit(0);
     }
   
-    // Handle --test option to run one frame for all registered comparisons
+    // Handle --test option to run one frame for all registered tests
     if (options.test) {
-      console.log('Running one frame for all registered comparisons...');
+      console.log('Running one frame for all registered tests...');
       
-      const testIds = Object.keys(RenderComparison.registry).sort();
-      console.log(`Found ${testIds.length} registered comparisons.`);
+      const testIds = Object.keys(RenderTest.registry).sort();
+      console.log(`Found ${testIds.length} registered tests.`);
       
       // Create output directory if needed
       if (options.output) {
@@ -193,7 +193,7 @@ function printHelp() {
       
       // Run all tests with example #1
       testIds.forEach((testId, index) => {
-        const test = RenderComparison.registry[testId];
+        const test = RenderTest.registry[testId];
         const exampleNum = 1; // Always use example #1 for the --test option
         
         if (showProgress) {
@@ -260,7 +260,7 @@ function printHelp() {
     }
   
     const testId = options.id;
-    const test = RenderComparison.registry[testId];
+    const test = RenderTest.registry[testId];
     if (!test) {
       console.error(`Error: Test with ID "${testId}" not found. Use --list to see available tests.`);
       process.exit(1);
@@ -344,7 +344,7 @@ function printHelp() {
 
   function initializeTestRegistry() {
     console.log("Initializing test registry with core tests...");
-    addRenderComparisons();
+    addRenderTests();
   }
   
   // Call initialization function
@@ -353,8 +353,8 @@ function printHelp() {
     
     // Initialize with our core tests
     initializeTestRegistry();
-    console.log(`Registered ${Object.keys(RenderComparison.registry).length} test comparisons.`);
+    console.log(`Registered ${Object.keys(RenderTest.registry).length} tests.`);
   } catch (err) {
-    console.error("Error registering test comparisons:", err);
+    console.error("Error registering tests:", err);
   }
   

@@ -99,7 +99,7 @@ function drawSimpleLinesScene(ctx) {
 }
 
 function createLinesTest() {
-    return new RenderComparisonBuilder()
+    return new RenderTestBuilder()
         .withId('lines-test')
         .withTitle('Lines Test')
         .withDescription('Tests various line rendering capabilities including thickness, color, and transformations')

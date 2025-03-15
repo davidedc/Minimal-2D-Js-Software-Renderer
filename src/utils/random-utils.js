@@ -1,7 +1,7 @@
 function getRandomPoint(decimalPlaces = null) {
   const margin = 100;
-  const x = margin + SeededRandom.getRandom() * (renderComparisonWidth - 2 * margin);
-  const y = margin + SeededRandom.getRandom() * (renderComparisonHeight - 2 * margin);
+  const x = margin + SeededRandom.getRandom() * (renderTestWidth - 2 * margin);
+  const y = margin + SeededRandom.getRandom() * (renderTestHeight - 2 * margin);
   
   if (decimalPlaces === null) {
     return { x, y };

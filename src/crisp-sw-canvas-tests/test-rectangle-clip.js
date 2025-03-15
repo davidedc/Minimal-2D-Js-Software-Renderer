@@ -24,7 +24,7 @@ function drawRectangleClipTest(ctx) {
 }
 
 function createRectangleClipTest() {
-    return new RenderComparisonBuilder()
+    return new RenderTestBuilder()
         .withId('rectangle-clip-test')
         .withTitle('Testing if rectangle stroke is part of clipping area (it shouldn\'t be)')
         .withDescription('This test checks if the stroke of a rectangle is correctly excluded from the clipping area. ' +

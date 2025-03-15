@@ -54,9 +54,9 @@ cat "$PROJECT_ROOT/src/scene-creation/"*.js >> "$OUTPUT_FILE"
 # Test framework files
 TEST_FILES=(
     "$PROJECT_ROOT/src/RenderChecks.js"
-    "$PROJECT_ROOT/src/RenderComparison.js"
-    "$PROJECT_ROOT/src/RenderComparisonBuilder.js"
-    "$PROJECT_ROOT/src/added-comparisons.js"
+    "$PROJECT_ROOT/src/RenderTest.js"
+    "$PROJECT_ROOT/src/RenderTestBuilder.js"
+    "$PROJECT_ROOT/src/add-tests.js"
     "$PROJECT_ROOT/src/ui.js"
     "$PROJECT_ROOT/src/node-test-runner-base.js"
 )

@@ -78,8 +78,8 @@ function calculateCircleParameters(options) {
   
   // Get initial center point
   let {centerX, centerY} = atPixel
-    ? placeCloseToCenterAtPixel(renderComparisonWidth, renderComparisonHeight)
-    : placeCloseToCenterAtGrid(renderComparisonWidth, renderComparisonHeight);
+    ? placeCloseToCenterAtPixel(renderTestWidth, renderTestHeight)
+    : placeCloseToCenterAtGrid(renderTestWidth, renderTestHeight);
   
   // Calculate base diameter
   const diameter = Math.floor(minRadius * 2 + SeededRandom.getRandom() * (maxRadius * 2 - minRadius * 2));
@@ -97,25 +97,25 @@ function calculateCircleParameters(options) {
     
     // Calculate safe bounds
     const minX = Math.ceil(totalRadius + marginX);
-    const maxX = Math.floor(renderComparisonWidth - totalRadius - marginX);
+    const maxX = Math.floor(renderTestWidth - totalRadius - marginX);
     const minY = Math.ceil(totalRadius + marginY);
-    const maxY = Math.floor(renderComparisonHeight - totalRadius - marginY);
+    const maxY = Math.floor(renderTestHeight - totalRadius - marginY);
     
     // Adjust diameter if circle is too large
     let adjustedDiameter = diameter;
     if (maxX <= minX || maxY <= minY) {
       // Circle is too large, reduce diameter to 1/4 of canvas size
       adjustedDiameter = Math.min(
-        Math.floor(renderComparisonWidth / 4),
-        Math.floor(renderComparisonHeight / 4)
+        Math.floor(renderTestWidth / 4),
+        Math.floor(renderTestHeight / 4)
       );
       
       // Recalculate bounds with reduced diameter
       const newTotalRadius = (adjustedDiameter / 2) + (strokeWidth / 2);
       const newMinX = Math.ceil(newTotalRadius + marginX);
-      const newMaxX = Math.floor(renderComparisonWidth - newTotalRadius - marginX);
+      const newMaxX = Math.floor(renderTestWidth - newTotalRadius - marginX);
       const newMinY = Math.ceil(newTotalRadius + marginY);
-      const newMaxY = Math.floor(renderComparisonHeight - newTotalRadius - marginY);
+      const newMaxY = Math.floor(renderTestHeight - newTotalRadius - marginY);
       
       // Generate random position within new safe bounds
       centerX = newMinX + Math.floor(SeededRandom.getRandom() * (newMaxX - newMinX + 1));
@@ -361,7 +361,7 @@ function add1PxStrokeCenteredCircleAtGrid(shapes, log, currentExampleNumber) {
   // Ensure canvas dimensions are even for proper grid alignment
   checkCanvasHasEvenDimensions();
 
-  const { centerX, centerY } = placeCloseToCenterAtGrid(renderComparisonWidth, renderComparisonHeight);
+  const { centerX, centerY } = placeCloseToCenterAtGrid(renderTestWidth, renderTestHeight);
 
   // Generate a random diameter (similar range as the rectangle dimensions)
   let diameter = Math.floor(20 + SeededRandom.getRandom() * 130);
@@ -400,7 +400,7 @@ function add1PxStrokeCenteredCircleAtPixel(shapes, log, currentExampleNumber) {
   checkCanvasHasEvenDimensions();
 
   // Replace direct calculation with new function
-  const { centerX, centerY } = placeCloseToCenterAtPixel(renderComparisonWidth, renderComparisonHeight);
+  const { centerX, centerY } = placeCloseToCenterAtPixel(renderTestWidth, renderTestHeight);
 
   // Generate a random diameter (similar range as the rectangle dimensions)
   let diameter = Math.floor(20 + SeededRandom.getRandom() * 130);

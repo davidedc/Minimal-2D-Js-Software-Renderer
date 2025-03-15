@@ -6,13 +6,13 @@
 const isNodeEnv = typeof window === 'undefined';
 
 // In Node.js, define these as globals
-// In browser, they're already defined in RenderComparison.js
+// In browser, they're already defined in RenderTest.js
 if (isNodeEnv) {
   // Node.js - define as global variables
-  global.renderComparisonWidth = 600;
-  global.renderComparisonHeight = 600;
+  global.renderTestWidth = 600;
+  global.renderTestHeight = 600;
 } 
-// In browser they'll be defined by RenderComparison.js, so we don't need to do anything
+// In browser they'll be defined by RenderTest.js, so we don't need to do anything
 
 /**
  * Draw shapes using either canvas or software renderer
@@ -23,10 +23,10 @@ if (isNodeEnv) {
  * @param {Uint8ClampedArray} frameBuffer - Frame buffer for SW rendering (only used if isCanvas=false)
  */
 const drawShapesImplFn = function(shapes, isCanvas, ctx = null, frameBuffer) {
-  const pixelRenderer = new SWRendererPixel(frameBuffer, renderComparisonWidth, renderComparisonHeight);
+  const pixelRenderer = new SWRendererPixel(frameBuffer, renderTestWidth, renderTestHeight);
   const swLineRenderer = new SWRendererLine(pixelRenderer);
-  const swRectRenderer = new SWRendererRect(frameBuffer, renderComparisonWidth, renderComparisonHeight, swLineRenderer, pixelRenderer);
-  const swRoundedRectRenderer = new SWRendererRoundedRect(frameBuffer, renderComparisonWidth, renderComparisonHeight, swLineRenderer, pixelRenderer, swRectRenderer);
+  const swRectRenderer = new SWRendererRect(frameBuffer, renderTestWidth, renderTestHeight, swLineRenderer, pixelRenderer);
+  const swRoundedRectRenderer = new SWRendererRoundedRect(frameBuffer, renderTestWidth, renderTestHeight, swLineRenderer, pixelRenderer, swRectRenderer);
   const swCircleRenderer = new SWRendererCircle(pixelRenderer);
   const swArcRenderer = new SWRendererArc(pixelRenderer);
   
@@ -78,7 +78,7 @@ if (isNodeEnv && typeof module !== 'undefined' && module.exports) {
   global.drawShapesImpl = drawShapesImplFn;
   
   // Make sure renderers are available globally in Node
-  // Note: These are needed for addedComparisons.js to work correctly
+  // Note: These are needed for add-tests.js to work correctly
   global.SWRendererPixel = global.SWRendererPixel || {};
   global.SWRendererLine = global.SWRendererLine || {};
   global.SWRendererRect = global.SWRendererRect || {};

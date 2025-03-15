@@ -180,7 +180,7 @@ function drawOrganicTestScene(ctx) {
 }
 
 function createOrganicTest() {
-  return new RenderComparisonBuilder()
+  return new RenderTestBuilder()
     .withId('organic-shapes-and-transforms')
     .withTitle('Organic Shapes with Transformations')
     .withDescription('Tests complex rendering with clipping, transformations, and alpha blending')

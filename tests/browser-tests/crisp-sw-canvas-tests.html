@@ -40,12 +40,12 @@
 
     <script src="../../src/canvas-sw-polyfills.js"></script>
 
-    <!-- Load shared renderer before RenderComparison.js -->
+    <!-- Load shared renderer before RenderTest.js -->
     <script src="../../src/shared-renderer.js"></script>
     <script src="../../src/RenderChecks.js"></script>
-    <script src="../../src/RenderComparison.js"></script>
-    <script src="../../src/RenderComparisonBuilder.js"></script>
-    <script src="../../src/added-comparisons.js"></script>
+    <script src="../../src/RenderTest.js"></script>
+    <script src="../../src/RenderTestBuilder.js"></script>
+    <script src="../../src/add-tests.js"></script>
   
     <script src="../../src/crisp-sw-canvas-tests/test-organic.js"></script>
     <script src="../../src/crisp-sw-canvas-tests/test-overlapping-rectangles.js"></script>
@@ -56,7 +56,7 @@
         const CANVAS_WIDTH = 800;
         const CANVAS_HEIGHT = 600;
 
-        function addRenderComparisons() {
+        function addRenderTests() {
             createOrganicTest();
             createOverlappingRectanglesTest();
             createRectangleClipTest();
@@ -64,8 +64,8 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            addRenderComparisons();
-            RenderComparison.createNavigation("CrispSwCanvas tests");
+            addRenderTests();
+            RenderTest.createNavigation("CrispSwCanvas tests");
         });
     </script>
 </body>

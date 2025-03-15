@@ -2,57 +2,57 @@
 
 if (typeof window !== 'undefined') {
   document.addEventListener('DOMContentLoaded', () => {
-    addRenderComparisons();
+    addRenderTests();
 
     // Create navigation after all sections are added
-    RenderComparison.createNavigation("Low level sw renderer tests");
+    RenderTest.createNavigation("Low level sw renderer tests");
   });
 }
 
-function addRenderComparisons() {
-  add1PxHorizontalLineCenteredAtPixelComparison();
-  add1PxVerticalLineCenteredAtPixelComparison();
-  add2PxHorizontalLineCenteredAtGridComparison();
-  add2PxVerticalLineCenteredAtGridComparison();
+function addRenderTests() {
+  add1PxHorizontalLineCenteredAtPixelTest();
+  add1PxVerticalLineCenteredAtPixelTest();
+  add2PxHorizontalLineCenteredAtGridTest();
+  add2PxVerticalLineCenteredAtGridTest();
 
-  addBlackLinesComparison(1);  // 1px lines
-  addBlackLinesComparison(2);  // 2px lines
-  addBlackLinesComparison(3);  // 3px lines
-  addBlackLinesComparison(5);  // 5px lines
-  addBlackLinesComparison(10); // 10px lines
-  addRandomLinesComparison();  // Random lines with various colors and thicknesses
+  addBlackLinesTest(1);  // 1px lines
+  addBlackLinesTest(2);  // 2px lines
+  addBlackLinesTest(3);  // 3px lines
+  addBlackLinesTest(5);  // 5px lines
+  addBlackLinesTest(10); // 10px lines
+  addRandomLinesTest();  // Random lines with various colors and thicknesses
 
-  add1PxStrokedRectCenteredAtGridComparison();
-  add1PxStrokedRectCenteredAtPixelComparison();
+  add1PxStrokedRectCenteredAtGridTest();
+  add1PxStrokedRectCenteredAtPixelTest();
 
   // TODO to be renamed to show that the stroke can be thick
   // and that the stroke and fill are semi-transparent
-  addSingleAxisAlignedRectangleComparison();
-  addAxisAlignedRectanglesComparison();
-  addRotatedRectanglesComparison();
+  addSingleAxisAlignedRectangleTest();
+  addAxisAlignedRectanglesTest();
+  addRotatedRectanglesTest();
 
-  add1PxStrokedRoundedRectCenteredAtGridComparison();
-  add1PxStrokedRoundedRectCenteredAtPixelComparison();
-  addCenteredRoundedRectMixedOpaqueStrokeWidthsComparison();
-  addCenteredRoundedRectMixedTransparentStrokeWidthsComparison();
-  addThinRoundedRectsComparison();
-  addAxisAlignedRoundedRectanglesComparison();
-  addLargeTransparentRoundedRectanglesComparison();
-  addNoStrokeRoundedRectanglesComparison();
+  add1PxStrokedRoundedRectCenteredAtGridTest();
+  add1PxStrokedRoundedRectCenteredAtPixelTest();
+  addCenteredRoundedRectMixedOpaqueStrokeWidthsTest();
+  addCenteredRoundedRectMixedTransparentStrokeWidthsTest();
+  addThinRoundedRectsTest();
+  addAxisAlignedRoundedRectanglesTest();
+  addLargeTransparentRoundedRectanglesTest();
+  addNoStrokeRoundedRectanglesTest();
 
-  add1PxStrokedCircleCenteredAtGridComparison();
-  add1PxStrokedCircleCenteredAtPixelComparison();
-  addSingleRandomCircleComparison(); 
-  addSingleNoStrokeCircleComparison(); // Test case for circles with no stroke
-  addRandomPositionCircleComparison(); // Test case for randomly positioned circle with stroke
-  addRandomPositionNoStrokeCircleComparison(); // Test case for randomly positioned circle without stroke
-  addMultiplePreciseRandomCirclesComparison(); // Multiple precise pixel-aligned circles with strokes
-  addMultiplePreciseNoStrokeCirclesComparison(); // Multiple precise pixel-aligned circles without strokes
-  addOneRandomCircleComparison(); // Single circle using the simplified random circle generation
-  addRandomCirclesComparison(); // Multiple circles using the simplified random circle generation
+  add1PxStrokedCircleCenteredAtGridTest();
+  add1PxStrokedCircleCenteredAtPixelTest();
+  addSingleRandomCircleTest(); 
+  addSingleNoStrokeCircleTest(); // Test case for circles with no stroke
+  addRandomPositionCircleTest(); // Test case for randomly positioned circle with stroke
+  addRandomPositionNoStrokeCircleTest(); // Test case for randomly positioned circle without stroke
+  addMultiplePreciseRandomCirclesTest(); // Multiple precise pixel-aligned circles with strokes
+  addMultiplePreciseNoStrokeCirclesTest(); // Multiple precise pixel-aligned circles without strokes
+  addOneRandomCircleTest(); // Single circle using the simplified random circle generation
+  addRandomCirclesTest(); // Multiple circles using the simplified random circle generation
   
-  addNinetyDegreeArcsComparison();
-  addRandomArcsComparison();
+  addNinetyDegreeArcsTest();
+  addRandomArcsTest();
   
-  addEverythingTogetherComparison();
+  addEverythingTogetherTest();
 }

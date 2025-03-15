@@ -64,7 +64,7 @@ function add2PxVerticalLineCenteredAtGrid(shapes, log, currentExampleNumber) {
   checkCanvasHasEvenDimensions();
   SeededRandom.seedWithInteger(currentExampleNumber);
   const lineHeight = Math.floor(20 + SeededRandom.getRandom() * 130);
-  const { centerX, centerY } = placeCloseToCenterAtGrid(renderComparisonWidth, renderComparisonHeight);
+  const { centerX, centerY } = placeCloseToCenterAtGrid(renderTestWidth, renderTestHeight);
   
   const result = add2PxVerticalLine(centerX, centerY, lineHeight, shapes, log);
   
@@ -104,8 +104,8 @@ function add1PxVerticalLineCenteredAtPixel(shapes, log, currentExampleNumber) {
   checkCanvasHasEvenDimensions();
   SeededRandom.seedWithInteger(currentExampleNumber);
   const lineHeight = Math.floor(20 + SeededRandom.getRandom() * 130);
-  const centerX = Math.floor(renderComparisonWidth / 2) + 0.5;
-  const centerY = Math.floor(renderComparisonHeight / 2);
+  const centerX = Math.floor(renderTestWidth / 2) + 0.5;
+  const centerY = Math.floor(renderTestHeight / 2);
   
   return add1PxVerticalLine(centerX, centerY, lineHeight, shapes, log);
 }
@@ -141,8 +141,8 @@ function add1PxHorizontalLineCenteredAtPixel(shapes, log, currentExampleNumber) 
   checkCanvasHasEvenDimensions();
   SeededRandom.seedWithInteger(currentExampleNumber);
   const lineWidth = Math.floor(20 + SeededRandom.getRandom() * 130);
-  const centerX = Math.floor(renderComparisonWidth / 2);
-  const centerY = Math.floor(renderComparisonHeight / 2) + 0.5;
+  const centerX = Math.floor(renderTestWidth / 2);
+  const centerY = Math.floor(renderTestHeight / 2) + 0.5;
   
   return add1PxHorizontalLine(centerX, centerY, lineWidth, shapes, log);
 }
@@ -179,7 +179,7 @@ function add2PxHorizontalLineCenteredAtGrid(shapes, log, currentExampleNumber) {
   checkCanvasHasEvenDimensions();
   SeededRandom.seedWithInteger(currentExampleNumber);
   const lineWidth = Math.floor(20 + SeededRandom.getRandom() * 130);
-  const { centerX, centerY } = placeCloseToCenterAtGrid(renderComparisonWidth, renderComparisonHeight);
+  const { centerX, centerY } = placeCloseToCenterAtGrid(renderTestWidth, renderTestHeight);
   
   return add2PxHorizontalLine(centerX, centerY, lineWidth, shapes, log);
 }

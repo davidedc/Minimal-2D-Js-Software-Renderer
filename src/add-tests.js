@@ -1,5 +1,5 @@
-function addBlackLinesComparison(lineWidth) {
-  return new RenderComparisonBuilder()
+function addBlackLinesTest(lineWidth) {
+  return new RenderTestBuilder()
     .withId('thin-black-lines-' + lineWidth)
     .withTitle(`${lineWidth}px Black Lines`)
     .withDescription(`Tests rendering of multiple black lines of line width ${lineWidth}`)
@@ -7,8 +7,8 @@ function addBlackLinesComparison(lineWidth) {
     .build();
 }
 
-function addEverythingTogetherComparison() {
-  return new RenderComparisonBuilder()
+function addEverythingTogetherTest() {
+  return new RenderTestBuilder()
     .withId('all-shapes')
     .withTitle('All Shape Types Combined')
     .withDescription('Combines all shape types into a single scene to test overall rendering consistency')
@@ -16,8 +16,8 @@ function addEverythingTogetherComparison() {
     .build();
 }
 
-function addThinRoundedRectsComparison() {
-  return new RenderComparisonBuilder()
+function addThinRoundedRectsTest() {
+  return new RenderTestBuilder()
     .withId('thin-rounded-rects')
     .withTitle('10 thin-opaque-stroke rounded rectangles (line width 1px)')
     .withDescription('Tests rendering of 10 rounded rectangles with thin stroke widths (line width 1px)')
@@ -25,8 +25,8 @@ function addThinRoundedRectsComparison() {
     .build();
 }
 
-function addCenteredRoundedRectMixedOpaqueStrokeWidthsComparison() {
-  return new RenderComparisonBuilder()
+function addCenteredRoundedRectMixedOpaqueStrokeWidthsTest() {
+  return new RenderTestBuilder()
     .withId('centered-rounded-rect')
     .withTitle('Single Centered Rounded Rectangle of different stroke widths - opaque stroke - centered at grid')
     .withDescription('A single rounded rectangle with different stroke widths and colors, centered at a grid crossing')
@@ -37,8 +37,8 @@ function addCenteredRoundedRectMixedOpaqueStrokeWidthsComparison() {
     .build();
 }
 
-function addCenteredRoundedRectMixedTransparentStrokeWidthsComparison() {
-  return new RenderComparisonBuilder()
+function addCenteredRoundedRectMixedTransparentStrokeWidthsTest() {
+  return new RenderTestBuilder()
     .withId('centered-rounded-rect-transparent')
     .withTitle('Single Centered Rounded Rectangle - semi-transparent stroke and fill')
     .withDescription('A single rounded rectangle with different stroke widths and semi-transparent colors, centered at a grid crossing')
@@ -49,8 +49,8 @@ function addCenteredRoundedRectMixedTransparentStrokeWidthsComparison() {
     .build();
 }
 
-function add1PxStrokedRoundedRectCenteredAtGridComparison() {
-  return new RenderComparisonBuilder()
+function add1PxStrokedRoundedRectCenteredAtGridTest() {
+  return new RenderTestBuilder()
     .withId('centered-1px-rounded-rect')
     .withTitle('Single 1px Stroked Rounded Rectangle centered at grid')
     .withDescription('Tests crisp rendering of a 1px stroked rounded rectangle where the center is at a crossing in the grid')
@@ -59,8 +59,8 @@ function add1PxStrokedRoundedRectCenteredAtGridComparison() {
     .build();
 }
 
-function add1PxStrokedRoundedRectCenteredAtPixelComparison() {
-  return new RenderComparisonBuilder()
+function add1PxStrokedRoundedRectCenteredAtPixelTest() {
+  return new RenderTestBuilder()
     .withId('centered-1px-rounded-rect')
     .withTitle('Single 1px Stroked Rounded Rectangle centered at pixel')
     .withDescription('Tests crisp rendering of a 1px stroked rounded rectangle where the center is in the middle of a pixel')
@@ -69,8 +69,8 @@ function add1PxStrokedRoundedRectCenteredAtPixelComparison() {
     .build();
 }
 
-function add2PxVerticalLineCenteredAtGridComparison() {
-  return new RenderComparisonBuilder()
+function add2PxVerticalLineCenteredAtGridTest() {
+  return new RenderTestBuilder()
     .withId('centered-2px-vertical-line')
     .withTitle('Single 2px Vertical Line centered at grid')
     .withDescription('Tests crisp rendering of a 2px vertical line')
@@ -81,8 +81,8 @@ function add2PxVerticalLineCenteredAtGridComparison() {
     .build();
 }
 
-function add1PxVerticalLineCenteredAtPixelComparison() {
-  return new RenderComparisonBuilder()
+function add1PxVerticalLineCenteredAtPixelTest() {
+  return new RenderTestBuilder()
     .withId('centered-1px-vertical-line')
     .withTitle('Single 1px Vertical Line centered at pixel')
     .withDescription('Tests crisp rendering of a 1px vertical line centered at pixel')
@@ -93,8 +93,8 @@ function add1PxVerticalLineCenteredAtPixelComparison() {
     .build();
 }
 
-function add1PxHorizontalLineCenteredAtPixelComparison() {
-  return new RenderComparisonBuilder()
+function add1PxHorizontalLineCenteredAtPixelTest() {
+  return new RenderTestBuilder()
     .withId('centered-1px-horizontal-line')
     .withTitle('Single 1px Horizontal Line centered at pixel')
     .withDescription('Tests crisp rendering of a 1px horizontal line centered at pixel')
@@ -105,8 +105,8 @@ function add1PxHorizontalLineCenteredAtPixelComparison() {
     .build();
 }
 
-function add2PxHorizontalLineCenteredAtGridComparison() {
-  return new RenderComparisonBuilder()
+function add2PxHorizontalLineCenteredAtGridTest() {
+  return new RenderTestBuilder()
     .withId('centered-2px-horizontal-line')
     .withTitle('Single 2px Horizontal Line centered at grid')
     .withDescription('Tests crisp rendering of a 2px horizontal line centered at grid')
@@ -117,8 +117,8 @@ function add2PxHorizontalLineCenteredAtGridComparison() {
     .build();
 }
 
-function add1PxStrokedRectCenteredAtGridComparison() {
-  return new RenderComparisonBuilder()
+function add1PxStrokedRectCenteredAtGridTest() {
+  return new RenderTestBuilder()
     .withId('centered-1px-rect')
     .withTitle('Single 1px Stroked Rectangle centered at grid')
     .withDescription('Tests crisp rendering of a 1px stroked rectangle where the center is at a crossing in the grid')
@@ -127,8 +127,8 @@ function add1PxStrokedRectCenteredAtGridComparison() {
     .build();
 }
 
-function add1PxStrokedRectCenteredAtPixelComparison() {
-  return new RenderComparisonBuilder()
+function add1PxStrokedRectCenteredAtPixelTest() {
+  return new RenderTestBuilder()
     .withId('centered-1px-rect')
     .withTitle('Single 1px Stroked Rectangle centered at pixel')
     .withDescription('Tests crisp rendering of a 1px stroked rectangle where the center is in the middle of a pixel')
@@ -139,8 +139,8 @@ function add1PxStrokedRectCenteredAtPixelComparison() {
 
 // ----------------------------------------------------------------------
 // Single 1px Stroked Circle centered at grid
-function add1PxStrokedCircleCenteredAtGridComparison() {
-  return new RenderComparisonBuilder()
+function add1PxStrokedCircleCenteredAtGridTest() {
+  return new RenderTestBuilder()
     .withId('centered-1px-circle')
     .withTitle('Single 1px Stroked Circle centered at grid')
     .withDescription('Tests crisp rendering of a 1px stroked circle where the center is at a crossing in the grid')
@@ -155,8 +155,8 @@ function add1PxStrokedCircleCenteredAtGridComparison() {
 
 // ----------------------------------------------------------------------
 // Single 1px Stroked Circle centered at pixel
-function add1PxStrokedCircleCenteredAtPixelComparison() {
-  return new RenderComparisonBuilder()
+function add1PxStrokedCircleCenteredAtPixelTest() {
+  return new RenderTestBuilder()
     .withId('centered-1px-circle-pixel')
     .withTitle('Single 1px Stroked Circle centered at pixel')
     .withDescription('Tests crisp rendering of a 1px stroked circle where the center is in the middle of a pixel')
@@ -169,8 +169,8 @@ function add1PxStrokedCircleCenteredAtPixelComparison() {
     .build();
 }
 
-function addSingleAxisAlignedRectangleComparison() {
-  return new RenderComparisonBuilder()
+function addSingleAxisAlignedRectangleTest() {
+  return new RenderTestBuilder()
     .withId('single-axis-aligned-rectangle')
     .withTitle('Single Axis-Aligned Rectangle')
     .withDescription('Tests rendering of a single axis-aligned rectangle with random stroke width and semi-transparent colors')
@@ -180,8 +180,8 @@ function addSingleAxisAlignedRectangleComparison() {
     .build();
 }
 
-function addAxisAlignedRectanglesComparison() {
-  return new RenderComparisonBuilder()
+function addAxisAlignedRectanglesTest() {
+  return new RenderTestBuilder()
     .withId('axis-aligned-rectangles')
     .withTitle('Axis-Aligned Rectangles')
     .withDescription('Tests rendering of multiple axis-aligned rectangles with random positions, sizes, and colors')
@@ -190,8 +190,8 @@ function addAxisAlignedRectanglesComparison() {
     .build();
 }
 
-function addRotatedRectanglesComparison() {
-  return new RenderComparisonBuilder()
+function addRotatedRectanglesTest() {
+  return new RenderTestBuilder()
     .withId('rotated-rectangles')
     .withTitle('Rotated Rectangles')
     .withDescription('Tests rendering of multiple rotated rectangles with random positions, sizes, angles, and colors')
@@ -199,8 +199,8 @@ function addRotatedRectanglesComparison() {
     .build();
 }
 
-function addRandomLinesComparison() {
-  return new RenderComparisonBuilder()
+function addRandomLinesTest() {
+  return new RenderTestBuilder()
     .withId('random-lines')
     .withTitle('Random Lines')
     .withDescription('Tests rendering of multiple lines with random positions, thickness, and colors')
@@ -208,8 +208,8 @@ function addRandomLinesComparison() {
     .build();
 }
 
-function addAxisAlignedRoundedRectanglesComparison() {
-  return new RenderComparisonBuilder()
+function addAxisAlignedRoundedRectanglesTest() {
+  return new RenderTestBuilder()
     .withId('axis-aligned-rounded-rectangles')
     .withTitle('Axis-Aligned Rounded Rectangles')
     .withDescription('Tests rendering of multiple axis-aligned rounded rectangles with random positions, sizes, and corner radii')
@@ -217,8 +217,8 @@ function addAxisAlignedRoundedRectanglesComparison() {
     .build();
 }
 
-function addLargeTransparentRoundedRectanglesComparison() {
-  return new RenderComparisonBuilder()
+function addLargeTransparentRoundedRectanglesTest() {
+  return new RenderTestBuilder()
     .withId('large-transparent-rounded-rectangles')
     .withTitle('Large Transparent Rounded Rectangles')
     .withDescription('Tests rendering of large rounded rectangles with transparent strokes and random colors')
@@ -226,8 +226,8 @@ function addLargeTransparentRoundedRectanglesComparison() {
     .build();
 }
 
-function addNoStrokeRoundedRectanglesComparison() {
-  return new RenderComparisonBuilder()
+function addNoStrokeRoundedRectanglesTest() {
+  return new RenderTestBuilder()
     .withId('no-stroke-rounded-rectangles')
     .withTitle('Rounded Rectangles Without Stroke')
     .withDescription('Tests rendering of rounded rectangles with no stroke, only fill')
@@ -235,8 +235,8 @@ function addNoStrokeRoundedRectanglesComparison() {
     .build();
 }
 
-function addNinetyDegreeArcsComparison() {
-  return new RenderComparisonBuilder()
+function addNinetyDegreeArcsTest() {
+  return new RenderTestBuilder()
     .withId('ninety-degree-arcs')
     .withTitle('90\u00B0 Arcs')
     .withDescription('Tests rendering of 90\u00B0 arcs with various radii and stroke widths')
@@ -244,8 +244,8 @@ function addNinetyDegreeArcsComparison() {
     .build();
 }
 
-function addRandomArcsComparison() {
-  return new RenderComparisonBuilder()
+function addRandomArcsTest() {
+  return new RenderTestBuilder()
     .withId('random-arcs')
     .withTitle('Random Arcs')
     .withDescription('Tests rendering of arcs with random positions, angles, and colors')
@@ -253,8 +253,8 @@ function addRandomArcsComparison() {
     .build();
 }
 
-function addRandomCirclesComparison() {
-  return new RenderComparisonBuilder()
+function addRandomCirclesTest() {
+  return new RenderTestBuilder()
     .withId('random-circles')
     .withTitle('Random Circles')
     .withDescription('Tests rendering of circles with random positions, sizes, and colors')
@@ -262,8 +262,8 @@ function addRandomCirclesComparison() {
     .build();
 }
 
-function addOneRandomCircleComparison() {
-  return new RenderComparisonBuilder()
+function addOneRandomCircleTest() {
+  return new RenderTestBuilder()
     .withId('one-random-circle')
     .withTitle('One Random Circle')
     .withDescription('Tests rendering of a single circle with random position, size, and colors')
@@ -280,8 +280,8 @@ function addOneRandomCircleComparison() {
     .build();
 }
 
-function addSingleRandomCircleComparison() {
-  return new RenderComparisonBuilder()
+function addSingleRandomCircleTest() {
+  return new RenderTestBuilder()
     .withId('single-random-circle')
     .withTitle('Single Random Circle')
     .withDescription('Tests rendering of a single random circle with proper pixel alignment for crisp stroke rendering')
@@ -293,8 +293,8 @@ function addSingleRandomCircleComparison() {
     .build();
 }
 
-function addSingleNoStrokeCircleComparison() {
-  return new RenderComparisonBuilder()
+function addSingleNoStrokeCircleTest() {
+  return new RenderTestBuilder()
     .withId('single-no-stroke-circle')
     .withTitle('Single Circle Without Stroke')
     .withDescription('Tests rendering of a single circle with no stroke, only fill, to validate fill accuracy')
@@ -306,8 +306,8 @@ function addSingleNoStrokeCircleComparison() {
     .build();
 }
 
-function addRandomPositionCircleComparison() {
-  return new RenderComparisonBuilder()
+function addRandomPositionCircleTest() {
+  return new RenderTestBuilder()
     .withId('random-position-circle')
     .withTitle('Randomly Positioned Circle With Stroke')
     .withDescription('Tests rendering of a single circle at a random position with proper pixel alignment and crisp stroke rendering')
@@ -319,8 +319,8 @@ function addRandomPositionCircleComparison() {
     .build();
 }
 
-function addRandomPositionNoStrokeCircleComparison() {
-  return new RenderComparisonBuilder()
+function addRandomPositionNoStrokeCircleTest() {
+  return new RenderTestBuilder()
     .withId('random-position-no-stroke-circle')
     .withTitle('Randomly Positioned Circle Without Stroke')
     .withDescription('Tests rendering of a single circle at a random position with no stroke, only fill, to validate fill accuracy at any location')
@@ -332,8 +332,8 @@ function addRandomPositionNoStrokeCircleComparison() {
     .build();
 }
 
-function addMultiplePreciseRandomCirclesComparison() {
-  return new RenderComparisonBuilder()
+function addMultiplePreciseRandomCirclesTest() {
+  return new RenderTestBuilder()
     .withId('multiple-precise-random-circles')
     .withTitle('Multiple Precise Random Circles')
     .withDescription('Tests rendering of multiple circles with precise pixel alignment, varied strokes and fills')
@@ -341,8 +341,8 @@ function addMultiplePreciseRandomCirclesComparison() {
     .build();
 }
 
-function addMultiplePreciseNoStrokeCirclesComparison() {
-  return new RenderComparisonBuilder()
+function addMultiplePreciseNoStrokeCirclesTest() {
+  return new RenderTestBuilder()
     .withId('multiple-precise-no-stroke-circles')
     .withTitle('Multiple Precise Fill-Only Circles')
     .withDescription('Tests rendering of multiple circles with no strokes, only fills, to validate the fill algorithm')

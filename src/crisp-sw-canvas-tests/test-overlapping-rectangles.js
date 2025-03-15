@@ -12,7 +12,7 @@ function drawOverlappingRectanglesScene(ctx) {
 }
 
 function createOverlappingRectanglesTest() {
-  return new RenderComparisonBuilder()
+  return new RenderTestBuilder()
     .withId('overlapping-rectangles')
     .withTitle('Overlapping Rectangles Test')
     .withDescription('Tests rendering of multiple overlapping rectangles with different colors')

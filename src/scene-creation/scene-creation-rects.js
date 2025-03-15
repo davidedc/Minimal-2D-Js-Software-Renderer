@@ -58,7 +58,7 @@ function addRotatedRectangles(shapes, log, currentExampleNumber, count = 5) {
 function add1PxStrokeCenteredRectAtGrid(shapes, log, currentExampleNumber) {
   checkCanvasHasEvenDimensions();
   SeededRandom.seedWithInteger(currentExampleNumber);
-  const { centerX, centerY } = placeCloseToCenterAtGrid(renderComparisonWidth, renderComparisonHeight);
+  const { centerX, centerY } = placeCloseToCenterAtGrid(renderTestWidth, renderTestHeight);
 
   let rectWidth = Math.floor(20 + SeededRandom.getRandom() * 130);
   let rectHeight = Math.floor(20 + SeededRandom.getRandom() * 130);
@@ -71,7 +71,7 @@ function add1PxStrokeCenteredRectAtGrid(shapes, log, currentExampleNumber) {
 function add1PxStrokeCenteredRectAtPixel(shapes, log, currentExampleNumber) {
   checkCanvasHasEvenDimensions();
   SeededRandom.seedWithInteger(currentExampleNumber);
-  const { centerX, centerY } = placeCloseToCenterAtGrid(renderComparisonWidth, renderComparisonHeight);
+  const { centerX, centerY } = placeCloseToCenterAtGrid(renderTestWidth, renderTestHeight);
 
   let rectWidth = Math.floor(20 + SeededRandom.getRandom() * 130);
   let rectHeight = Math.floor(20 + SeededRandom.getRandom() * 130);

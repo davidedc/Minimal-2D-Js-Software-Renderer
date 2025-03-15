@@ -1,13 +1,13 @@
 /**
- * Class for performing various rendering checks and comparisons between software and canvas renderers
+ * Class for performing various checks on the rendered images
  */
 class RenderChecks {
   /**
    * Creates a new RenderChecks instance
-   * @param {Object} comparison - The comparison object used for showing errors
+   * @param {Object} test - The test object used for showing errors
    */
-  constructor(comparison) {
-    this.comparison = comparison;
+  constructor(test) {
+    this.test = test;
   }
 
   /**
@@ -53,7 +53,7 @@ class RenderChecks {
       uniqueColors.forEach(color => {
         message += `\n- ${color}`;
       });
-      this.comparison.showError(message);
+      this.test.showError(message);
     }
     
     return count;
@@ -152,7 +152,7 @@ class RenderChecks {
       if (!actualExtremes) {
         const message = `${name}: No non-transparent pixels found`;
         results.push(message);
-        this.comparison.showError(message);
+        this.test.showError(message);
         continue;
       }
       
@@ -162,25 +162,25 @@ class RenderChecks {
           const message = `${name}: Left extreme expected at ${expectedExtremes.leftX}, found at ${actualExtremes.leftX}`;
           results.push(message);
           errors.push(message);
-          this.comparison.showError(message);
+          this.test.showError(message);
         }
         if (actualExtremes.rightX !== expectedExtremes.rightX) {
           const message = `${name}: Right extreme expected at ${expectedExtremes.rightX}, found at ${actualExtremes.rightX}`;
           results.push(message);
           errors.push(message);
-          this.comparison.showError(message);
+          this.test.showError(message);
         }
         if (actualExtremes.topY !== expectedExtremes.topY) {
           const message = `${name}: Top extreme expected at ${expectedExtremes.topY}, found at ${actualExtremes.topY}`;
           results.push(message);
           errors.push(message);
-          this.comparison.showError(message);
+          this.test.showError(message);
         }
         if (actualExtremes.bottomY !== expectedExtremes.bottomY) {
           const message = `${name}: Bottom extreme expected at ${expectedExtremes.bottomY}, found at ${actualExtremes.bottomY}`;
           results.push(message);
           errors.push(message);
-          this.comparison.showError(message);
+          this.test.showError(message);
         }
       }
       
@@ -319,7 +319,7 @@ class RenderChecks {
       resultMsg += `Found ${results.gaps} gaps in ${isStroke ? 'stroke' : 'fill'} edges: ${results.details.join(', ')}`;
       
       // Only show error for software renderer (this should always be true as we only call with SW renderer)
-      this.comparison.showError(
+      this.test.showError(
         `Found ${results.gaps} gaps in SW renderer ${isStroke ? 'stroke' : 'fill'} edges. ` +
         `This indicates missing pixels at circle boundaries!`
       );
@@ -342,7 +342,7 @@ class RenderChecks {
     // If no non-transparent pixels were found, return error
     if (!calculatedExtremes) {
       const errorMsg = "No non-transparent pixels found, cannot check for gaps";
-      this.comparison.showError(errorMsg);
+      this.test.showError(errorMsg);
       return errorMsg;
     }
     
@@ -385,7 +385,7 @@ class RenderChecks {
       uniqueColors.forEach(color => {
         message += `\n- ${color}`;
       });
-      this.comparison.showError(message);
+      this.test.showError(message);
     }
     
     return count;
@@ -461,7 +461,7 @@ class RenderChecks {
     
     if (speckleCount > 0) {
       const specklePixel = (firstSpeckleY * width + firstSpeckleX) * 4;
-      this.comparison.showError(
+      this.test.showError(
         `Found ${speckleCount} speckle${speckleCount === 1 ? '' : 's'} in ${title} ` +
         `(single pixels with different color from matching neighbors). First speckle at (${firstSpeckleX}, ${firstSpeckleY}) ` +
         `with color rgba(${data[specklePixel]}, ${data[specklePixel + 1]}, ${data[specklePixel + 2]}, ${data[specklePixel + 3]})`
@@ -477,7 +477,7 @@ class RenderChecks {
    * @param {CanvasRenderingContext2D|CrispSwContext} canvasCtxOfCanvasRender - The canvas renderer context
    * @param {number} RGBThreshold - Maximum allowed difference in RGB values
    * @param {number} alphaThreshold - Maximum allowed difference in alpha values
-   * @returns {string} Results of the comparison
+   * @returns {string} Results of the test
    */
   compareWithThreshold(canvasCtxOfSwRender, canvasCtxOfCanvasRender, RGBThreshold, alphaThreshold) {
     const swImageData = canvasCtxOfSwRender.getImageData(0, 0, 
@@ -551,7 +551,7 @@ class RenderChecks {
                       `Canvas Renderer: rgba(${canvasR}, ${canvasG}, ${canvasB}, ${canvasA}) // ` +
                       `Difference: rgba(${rHighlight}, ${gHighlight}, ${bHighlight}, ${aHighlight})`;
       
-      this.comparison.showError(message);
+      this.test.showError(message);
       return message;
     }
     

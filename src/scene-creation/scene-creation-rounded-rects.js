@@ -144,14 +144,14 @@ function addCenteredRoundedRectOpaqueStrokesRandomStrokeWidth(shapes, log, curre
   checkCanvasHasEvenDimensions();
   SeededRandom.seedWithInteger(currentExampleNumber);
 
-  const maxWidth = renderComparisonWidth * 0.6;
-  const maxHeight = renderComparisonHeight * 0.6;
+  const maxWidth = renderTestWidth * 0.6;
+  const maxHeight = renderTestHeight * 0.6;
 
   const strokeWidth = Math.round(SeededRandom.getRandom() * 10 + 1);
 
   // center is an even number divided by 2, so it's an integer,
   // so the center is at a grid crossing.
-  const center = { x: renderComparisonWidth/2, y: renderComparisonHeight/2 };
+  const center = { x: renderTestWidth/2, y: renderTestHeight/2 };
 
   
   let rectWidth = Math.round(50 + SeededRandom.getRandom() * maxWidth);
@@ -211,8 +211,8 @@ function addCenteredRoundedRectTransparentStrokesRandomStrokeWidth(shapes, log, 
 //  1) the fill needs to have its edges on the grid (hence width and height need to be adjusted depending on whether the center is at a grid crossing or not)
 //  2) the stroke has to be of even width,
 function placeRoundedRectWithFillAndStrokeBothCrisp(maxStrokeWidth = 40) {
-  const maxWidth = renderComparisonWidth * 0.6;
-  const maxHeight = renderComparisonHeight * 0.6;
+  const maxWidth = renderTestWidth * 0.6;
+  const maxHeight = renderTestHeight * 0.6;
 
   let strokeWidth = Math.round(SeededRandom.getRandom() * maxStrokeWidth + 1);
 
@@ -223,7 +223,7 @@ function placeRoundedRectWithFillAndStrokeBothCrisp(maxStrokeWidth = 40) {
 
   // center is an even number divided by 2, so it's an integer,
   // so the center is at a grid crossing.
-  let center = { x: renderComparisonWidth / 2, y: renderComparisonHeight / 2 };
+  let center = { x: renderTestWidth / 2, y: renderTestHeight / 2 };
 
   // 50% of the times, move the center by half pixel so we also test the case where the
   // center is not at a grid crossing.
@@ -243,7 +243,7 @@ function add1PxStrokeCenteredRoundedRectAtGrid(shapes, log, currentExampleNumber
   checkCanvasHasEvenDimensions();
   SeededRandom.seedWithInteger(currentExampleNumber);
 
-  const { centerX, centerY } = placeCloseToCenterAtGrid(renderComparisonWidth, renderComparisonHeight);
+  const { centerX, centerY } = placeCloseToCenterAtGrid(renderTestWidth, renderTestHeight);
 
   let rectWidth = Math.floor(20 + SeededRandom.getRandom() * 130);
   let rectHeight = Math.floor(20 + SeededRandom.getRandom() * 130);
@@ -257,7 +257,7 @@ function add1PxStrokeCenteredRoundedRectAtPixel(shapes, log, currentExampleNumbe
   checkCanvasHasEvenDimensions();
   SeededRandom.seedWithInteger(currentExampleNumber);
 
-  const { centerX, centerY } = placeCloseToCenterAtPixel(renderComparisonWidth, renderComparisonHeight);
+  const { centerX, centerY } = placeCloseToCenterAtPixel(renderTestWidth, renderTestHeight);
 
   let rectWidth = Math.floor(20 + SeededRandom.getRandom() * 130);
   let rectHeight = Math.floor(20 + SeededRandom.getRandom() * 130);
