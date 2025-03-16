@@ -62,216 +62,180 @@ class SWRendererCircle {
     const fillRadiusSquared = fillRadius * fillRadius;
     
     
-    // Regions for optimized drawing:
-    // 1. Center region: uniform fill with distance checks
-    const centerRegionSize = Math.floor(innerRadius * 0.5); // Keep center region smaller to avoid overdraw
-    const centerLeft = Math.floor(cX - centerRegionSize);
-    const centerRight = Math.ceil(cX + centerRegionSize);
-    const centerTop = Math.floor(cY - centerRegionSize);
-    const centerBottom = Math.ceil(cY + centerRegionSize);
-    
-    // 2. Define the horizontal and vertical sections for optimized scanning
-    // Use different scan directions depending on the section
-    // For areas outside these sections, we'll use a single scan direction based on radius
-    const sectionSize = Math.ceil(fillRadius * 1.0); // Use full radius to ensure complete coverage
-    
-    // Draw fill first
+    // Draw fill first using analytical edge detection for maximum efficiency
     if (fillA > 0) {
-      const filledPixels = new Set();
+      //console.log("Using optimized analytical fill method");
       
-      // 1. STEP: Fill center with uniform fill (no distance checks needed)
-      if (centerRegionSize > 0) {
-        for (let y = Math.max(minY, centerTop); y <= Math.min(maxY, centerBottom); y++) {
-          for (let x = Math.max(minX, centerLeft); x <= Math.min(maxX, centerRight); x++) {
-            const dx = x - cX;
-            const dy = y - cY;
-            const distSquared = dx * dx + dy * dy;
-            
-            // Use strict comparison here too, for consistency
-            if (distSquared < fillRadiusSquared) {
-              this.pixelRenderer.setPixel(x, y, fillR, fillG, fillB, fillA);
-              filledPixels.add(`${x},${y}`);
-            }
-          }
-        }
-      }
-      
-      // Define horizontal and vertical bands for the fill like we do for stroke
-      const fillSectionSize = Math.ceil(fillRadius * 1.0);
-      const fillHorizBandTop = Math.max(minY, Math.floor(cY - fillSectionSize));
-      const fillHorizBandBottom = Math.min(maxY, Math.ceil(cY + fillSectionSize));
-      
-      // 2. STEP: Fill horizontal band with vertical scanning (column by column)
-      for (let x = minX; x <= maxX; x++) {
-        const dx = x - cX;
-        const dxSquared = dx * dx;
-        const fillDistSquared = fillRadiusSquared - dxSquared;
-        
-        if (fillDistSquared >= 0) {
-          const fillYDist = Math.sqrt(fillDistSquared);
-          
-          // Apply boundary checking for column - use stricter bounds for top and bottom
-          const topFillY = Math.max(minY, Math.ceil(cY - fillYDist));
-          const bottomFillY = Math.min(maxY, Math.floor(cY + fillYDist));
-          
-          // Only scan within horizontal band
-          const startY = Math.max(topFillY, fillHorizBandTop);
-          const endY = Math.min(bottomFillY, fillHorizBandBottom);
-          
-          for (let y = startY; y <= endY; y++) {
-
-            
-            // Check if already filled
-            const pixelKey = `${x},${y}`;
-            if (filledPixels.has(pixelKey)) {
-              continue;
-            }
-            
-            const dy = y - cY;
-            const distFromCenterSquared = dxSquared + dy * dy;
-            
-            // Check if pixel is within fill radius - use a slightly smaller threshold
-            // for better edge appearance, especially on extremes (top, bottom, left, right)
-            if (distFromCenterSquared < fillRadiusSquared) {
-              this.pixelRenderer.setPixel(x, y, fillR, fillG, fillB, fillA);
-              filledPixels.add(pixelKey);
-            }
-          }
-        }
-      }
-      
-      // 3. STEP: Fill vertical band with horizontal scanning (row by row)
+      // Fill the circle using row-by-row scanning with analytical edge detection
       for (let y = minY; y <= maxY; y++) {
         const dy = y - cY;
         const dySquared = dy * dy;
         const fillDistSquared = fillRadiusSquared - dySquared;
         
-        if (fillDistSquared >= 0) {
-          const fillXDist = Math.sqrt(fillDistSquared);
-          
-          // Apply boundary checking for row - use stricter bounds for left and right
-          const leftFillX = Math.max(minX, Math.ceil(cX - fillXDist));
-          const rightFillX = Math.min(maxX, Math.floor(cX + fillXDist));
-          
-          for (let x = leftFillX; x <= rightFillX; x++) {
-            
-            
-            // Check if already filled
-            const pixelKey = `${x},${y}`;
-            if (filledPixels.has(pixelKey)) {
-              continue;
-            }
-            
-            const dx = x - cX;
-            const distFromCenterSquared = dx * dx + dySquared;
-            
-            // Check if pixel is within fill radius - use a slightly smaller threshold
-            // for better edge appearance, especially on extremes (top, bottom, left, right)
-            if (distFromCenterSquared < fillRadiusSquared) {
-              this.pixelRenderer.setPixel(x, y, fillR, fillG, fillB, fillA);
-              filledPixels.add(pixelKey);
-            }
-          }
+        // Skip rows that don't intersect with the circle
+        if (fillDistSquared < 0) continue;
+        
+        // Calculate horizontal span for this row using a single sqrt operation
+        const fillXDist = Math.sqrt(fillDistSquared);
+        
+        // Calculate precise boundaries for this row with a small correction
+        // The tiny offset prevents "speckles" at the extremes of the circle
+        const leftFillX = Math.max(minX, Math.ceil(cX - fillXDist + 0.0001)); // Add tiny offset to prevent speckle
+        const rightFillX = Math.min(maxX, Math.floor(cX + fillXDist - 0.0001)); // Subtract tiny offset to prevent speckle
+        
+        // Debug logging for some rows
+        //if ((y - minY) % 50 === 0) {
+        //  console.log(`Fill row ${y}: span from ${leftFillX} to ${rightFillX}`);
+        //}
+        
+        // Fill entire span without per-pixel distance check - much more efficient
+        for (let x = leftFillX; x <= rightFillX; x++) {
+          this.pixelRenderer.setPixel(x, y, fillR, fillG, fillB, fillA);
         }
       }
-      
-
     }
     
     // Then draw stroke on top of fill
     if (strokeA > 0 && outerRadius > innerRadius) {
       const outerRadiusSquared = outerRadius * outerRadius;
       const innerRadiusSquared = innerRadius * innerRadius;
-      const drawnStrokePixels = new Set(); // Track drawn stroke pixels to prevent double-drawing
       
-      // The radius at which we switch scan directions - choose the larger dimension
-      const strokeMidRadius = (outerRadius + innerRadius) / 2;
-      const strokeSectionSize = Math.ceil(strokeMidRadius * 1.0); // Use full radius for complete coverage
+      // IMPORTANT: Using precise mathematical partitioning at 45° tangent points
+      // This eliminates the need for tracking drawn pixels
+      //console.log("Precise mathematical partitioning at 45° tangent points:");
+      //console.log(`- Center: (${cX}, ${cY}), Radius: inner=${innerRadius}, outer=${outerRadius}`);
+      //console.log("- Using exact 45° lines to divide regions (where |x-cX| = |y-cY|)");
+      //console.log("- Each pixel processed exactly once (no tracking needed)");
       
-      // Define horizontal and vertical bands for the stroke
-      const strokeHorizBandTop = Math.max(minY, Math.floor(cY - strokeSectionSize));
-      const strokeHorizBandBottom = Math.min(maxY, Math.ceil(cY + strokeSectionSize));
-      
-      // 1. STEP: Draw horizontal band with vertical scanning (column by column)
+      // 1. STEP: Draw LEFT and RIGHT sides with column-by-column scanning
+      // These regions are where |x-cX| >= |y-cY| (i.e., more horizontal distance than vertical)
       for (let x = minX; x <= maxX; x++) {
         const dx = x - cX;
         const dxSquared = dx * dx;
-        const outerDistSquared = outerRadiusSquared - dxSquared;
+        const absXDist = Math.abs(dx);
         
-        if (outerDistSquared >= 0) {
-          const outerYDist = Math.sqrt(outerDistSquared);
-          
-          // Apply boundary checking - use stricter bounds for top and bottom edges
-          const topEdge = Math.max(minY, Math.ceil(cY - outerYDist));
-          const bottomEdge = Math.min(maxY, Math.floor(cY + outerYDist));
-          
-          // Only scan within horizontal band
-          const startY = Math.max(topEdge, strokeHorizBandTop);
-          const endY = Math.min(bottomEdge, strokeHorizBandBottom);
-          
-          for (let y = startY; y <= endY; y++) {
-            
-            // Check if already drawn
-            const pixelKey = `${x},${y}`;
-            if (drawnStrokePixels.has(pixelKey)) {
-              continue;
-            }
-            
+        // Skip if outside outer circle
+        if (dxSquared > outerRadiusSquared) continue;
+        
+        // Calculate outer intersections
+        const outerYDist = Math.sqrt(outerRadiusSquared - dxSquared);
+        const outerTopY = Math.max(minY, Math.ceil(cY - outerYDist));
+        const outerBottomY = Math.min(maxY, Math.floor(cY + outerYDist));
+        
+        // Debug logging for a sample of columns
+        //if (x % 20 === 0) {
+        //  console.log(`Left-right processing: x=${x}, y range=${outerTopY}-${outerBottomY}`);
+        //}
+        
+        // Case: No inner intersection on this column
+        if (innerRadius <= 0 || dxSquared > innerRadiusSquared) {
+          // Process vertical segment with 45° check
+          for (let y = outerTopY; y <= outerBottomY; y++) {
             const dy = y - cY;
-            const distFromCenterSquared = dxSquared + dy * dy; // Reuse dxSquared
+            const absYDist = Math.abs(dy);
             
-            // Check if pixel is within the stroke area - using strict comparison for outer edge
-            if (distFromCenterSquared < outerRadiusSquared) {
-              if (innerRadius <= 0 || distFromCenterSquared >= innerRadiusSquared) {
-                // Draw the stroke
-                this.pixelRenderer.setPixel(x, y, strokeR, strokeG, strokeB, strokeA);
-                drawnStrokePixels.add(pixelKey);
-              }
-            }
+            // CRITICAL: Only process pixels in left-right regions (|x-cX| >= |y-cY|)
+            // This is the exact 45° partitioning
+            if (absXDist < absYDist) continue;
+            
+            // Draw this pixel (in left-right region)
+            this.pixelRenderer.setPixel(x, y, strokeR, strokeG, strokeB, strokeA);
+          }
+        } 
+        // Case: Intersects both inner and outer circles
+        else {
+          const innerYDist = Math.sqrt(innerRadiusSquared - dxSquared);
+          const innerTopY = Math.min(outerBottomY, Math.floor(cY - innerYDist));
+          const innerBottomY = Math.max(outerTopY, Math.ceil(cY + innerYDist));
+          
+          // Draw top segment (from outer top to inner top)
+          for (let y = outerTopY; y <= innerTopY; y++) {
+            const dy = y - cY;
+            const absYDist = Math.abs(dy);
+            
+            // Only process pixels in left-right regions (|x-cX| >= |y-cY|)
+            if (absXDist < absYDist) continue;
+            
+            this.pixelRenderer.setPixel(x, y, strokeR, strokeG, strokeB, strokeA);
+          }
+          
+          // Draw bottom segment (from inner bottom to outer bottom)
+          for (let y = innerBottomY; y <= outerBottomY; y++) {
+            const dy = y - cY;
+            const absYDist = Math.abs(dy);
+            
+            // Only process pixels in left-right regions (|x-cX| >= |y-cY|)
+            if (absXDist < absYDist) continue;
+            
+            this.pixelRenderer.setPixel(x, y, strokeR, strokeG, strokeB, strokeA);
           }
         }
       }
       
-      // 2. STEP: Draw vertical band with horizontal scanning (row by row)
+      // 2. STEP: Draw TOP and BOTTOM with row-by-row scanning
+      // These regions are where |y-cY| > |x-cX| (i.e., more vertical distance than horizontal)
       for (let y = minY; y <= maxY; y++) {
-        // Don't skip any rows to ensure complete coverage of the stroke
-        // The tracked pixels set will prevent duplicate drawing
-        
         const dy = y - cY;
         const dySquared = dy * dy;
-        const outerDistSquared = outerRadiusSquared - dySquared;
+        const absYDist = Math.abs(dy);
         
-        if (outerDistSquared >= 0) {
-          const outerXDist = Math.sqrt(outerDistSquared);
-          
-          // Apply boundary checking - use stricter bounds for left and right edges
-          const leftEdge = Math.max(minX, Math.ceil(cX - outerXDist));
-          const rightEdge = Math.min(maxX, Math.floor(cX + outerXDist));
-          
-          for (let x = leftEdge; x <= rightEdge; x++) {
-            
-            // Check if already drawn
-            const pixelKey = `${x},${y}`;
-            if (drawnStrokePixels.has(pixelKey)) {
-              continue;
-            }
-            
+        // Skip if outside outer circle
+        if (dySquared > outerRadiusSquared) continue;
+        
+        // Calculate outer intersections
+        const outerXDist = Math.sqrt(outerRadiusSquared - dySquared);
+        const outerLeftX = Math.max(minX, Math.ceil(cX - outerXDist));
+        const outerRightX = Math.min(maxX, Math.floor(cX + outerXDist));
+        
+        // Debug logging for a sample of rows
+        //if (y % 20 === 0) {
+        //  console.log(`Top-bottom processing: y=${y}, x range=${outerLeftX}-${outerRightX}`);
+        //}
+        
+        // Case: No inner intersection on this row
+        if (innerRadius <= 0 || dySquared > innerRadiusSquared) {
+          // Process horizontal segment with 45° check
+          for (let x = outerLeftX; x <= outerRightX; x++) {
             const dx = x - cX;
-            const distFromCenterSquared = dx * dx + dySquared;
+            const absXDist = Math.abs(dx);
             
-            // Check if pixel is within the stroke area - using strict comparison for outer edge
-            if (distFromCenterSquared < outerRadiusSquared) {
-              if (innerRadius <= 0 || distFromCenterSquared >= innerRadiusSquared) {
-                
-                // Draw the stroke
-                this.pixelRenderer.setPixel(x, y, strokeR, strokeG, strokeB, strokeA);
-                drawnStrokePixels.add(pixelKey);
-              }
-            }
+            // CRITICAL: Only process pixels in top-bottom regions (|y-cY| > |x-cX|)
+            // This is the exact complement to the left-right regions
+            if (absYDist <= absXDist) continue;
+            
+            // Draw this pixel (in top-bottom region)
+            this.pixelRenderer.setPixel(x, y, strokeR, strokeG, strokeB, strokeA);
+          }
+        } 
+        // Case: Intersects both inner and outer circles
+        else {
+          const innerXDist = Math.sqrt(innerRadiusSquared - dySquared);
+          const innerLeftX = Math.min(outerRightX, Math.floor(cX - innerXDist));
+          const innerRightX = Math.max(outerLeftX, Math.ceil(cX + innerXDist));
+          
+          // Draw left segment (from outer left to inner left)
+          for (let x = outerLeftX; x <= innerLeftX; x++) {
+            const dx = x - cX;
+            const absXDist = Math.abs(dx);
+            
+            // Only process pixels in top-bottom regions (|y-cY| > |x-cX|)
+            if (absYDist <= absXDist) continue;
+            
+            this.pixelRenderer.setPixel(x, y, strokeR, strokeG, strokeB, strokeA);
+          }
+          
+          // Draw right segment (from inner right to outer right)
+          for (let x = innerRightX; x <= outerRightX; x++) {
+            const dx = x - cX;
+            const absXDist = Math.abs(dx);
+            
+            // Only process pixels in top-bottom regions (|y-cY| > |x-cX|)
+            if (absYDist <= absXDist) continue;
+            
+            this.pixelRenderer.setPixel(x, y, strokeR, strokeG, strokeB, strokeA);
           }
         }
       }
-      
 
     }
   }
