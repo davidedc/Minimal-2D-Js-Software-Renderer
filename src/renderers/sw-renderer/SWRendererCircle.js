@@ -13,10 +13,10 @@ class SWRendererCircle {
     const innerRadius = strokeWidth > 0 ? radius - strokeWidth / 2 : radius;
     const outerRadius = radius + strokeWidth / 2;
 
-    // TODO: In "drawCircle", calling "drawPreciseCircle": unclear what this "precise" adjective is for really.
-    // Also - since this is the one and only implementation backing "drawCircle", should we just
-    // put the drawPreciseCircle directly in here? What's the point of the indirection?
-    this.drawPreciseCircle(
+    // leaving this as a separate function for now because I think we might use
+    // variants of this function to draw quarter-circles and arbitrary arcs in the
+    // future.
+    this.drawFullCircle(
       center.x, center.y, 
       innerRadius, outerRadius,
       fillR, fillG, fillB, fillA,
@@ -24,7 +24,7 @@ class SWRendererCircle {
     );
   }
 
-  drawPreciseCircle(centerX, centerY, innerRadius, outerRadius, fillR, fillG, fillB, fillA, strokeR, strokeG, strokeB, strokeA) {
+  drawFullCircle(centerX, centerY, innerRadius, outerRadius, fillR, fillG, fillB, fillA, strokeR, strokeG, strokeB, strokeA) {
 
     // This routine currently accepts and in fact "represents in the rendering" fractional coordinates.
     // Although it might seem surprising that an aliased renderer can meaningfully represent fractional coordinates,
