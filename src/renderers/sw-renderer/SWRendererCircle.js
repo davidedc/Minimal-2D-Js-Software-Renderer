@@ -117,6 +117,10 @@ class SWRendererCircle {
         // Skip if outside outer circle
         if (dxSquared > outerRadiusSquared) continue;
         
+        // Process this column to see if it's entirely inside the inner circle
+        // We'll track if any stroke pixels are drawn in this column
+        let anyStrokePixelsDrawn = false;
+        
         // Calculate outer intersections
         const outerYDist = Math.sqrt(outerRadiusSquared - dxSquared);
         const outerTopY = Math.max(minY, Math.ceil(cY - outerYDist));
@@ -140,6 +144,7 @@ class SWRendererCircle {
             
             // Draw this pixel (in left-right region)
             this.pixelRenderer.setPixel(x, y, strokeR, strokeG, strokeB, strokeA);
+            anyStrokePixelsDrawn = true;
           }
         } 
         // Case: Intersects both inner and outer circles
@@ -157,6 +162,7 @@ class SWRendererCircle {
             if (absXDist < absYDist) continue;
             
             this.pixelRenderer.setPixel(x, y, strokeR, strokeG, strokeB, strokeA);
+            anyStrokePixelsDrawn = true;
           }
           
           // Draw bottom segment (from inner bottom to outer bottom)
@@ -168,6 +174,24 @@ class SWRendererCircle {
             if (absXDist < absYDist) continue;
             
             this.pixelRenderer.setPixel(x, y, strokeR, strokeG, strokeB, strokeA);
+            anyStrokePixelsDrawn = true;
+          }
+        }
+        
+        // OPTIMIZATION: If we didn't draw any pixels in this column and we're processing the left half,
+        // we can skip directly to the symmetrically opposite column on the right
+        if (!anyStrokePixelsDrawn && x < cX) {
+          // Calculate the symmetrically opposite column
+          const skipToX = Math.ceil(cX + (cX - x));
+          
+          // Only skip if it would save us some columns
+          if (skipToX > x) {
+            // Debug logging for significant skips
+            //if (skipToX - x > 20) {
+            //  console.log(`Column ${x} had no stroke pixels - skipping to column ${skipToX}`);
+            //}
+            
+            x = skipToX - 1; // -1 because the loop will increment x
           }
         }
       }
@@ -181,6 +205,9 @@ class SWRendererCircle {
         
         // Skip if outside outer circle
         if (dySquared > outerRadiusSquared) continue;
+        
+        // We'll track if any stroke pixels are drawn in this row
+        let anyStrokePixelsDrawn = false;
         
         // Calculate outer intersections
         const outerXDist = Math.sqrt(outerRadiusSquared - dySquared);
@@ -205,6 +232,7 @@ class SWRendererCircle {
             
             // Draw this pixel (in top-bottom region)
             this.pixelRenderer.setPixel(x, y, strokeR, strokeG, strokeB, strokeA);
+            anyStrokePixelsDrawn = true;
           }
         } 
         // Case: Intersects both inner and outer circles
@@ -222,6 +250,7 @@ class SWRendererCircle {
             if (absYDist <= absXDist) continue;
             
             this.pixelRenderer.setPixel(x, y, strokeR, strokeG, strokeB, strokeA);
+            anyStrokePixelsDrawn = true;
           }
           
           // Draw right segment (from inner right to outer right)
@@ -233,6 +262,24 @@ class SWRendererCircle {
             if (absYDist <= absXDist) continue;
             
             this.pixelRenderer.setPixel(x, y, strokeR, strokeG, strokeB, strokeA);
+            anyStrokePixelsDrawn = true;
+          }
+        }
+        
+        // OPTIMIZATION: If we didn't draw any pixels in this row and we're processing the top half,
+        // we can skip directly to the symmetrically opposite row on the bottom
+        if (!anyStrokePixelsDrawn && y < cY) {
+          // Calculate the symmetrically opposite row
+          const skipToY = Math.ceil(cY + (cY - y));
+          
+          // Only skip if it would save us some rows
+          if (skipToY > y) {
+            // Debug logging for significant skips
+            //if (skipToY - y > 20) {
+            //  console.log(`Row ${y} had no stroke pixels - skipping to row ${skipToY}`);
+            //}
+            
+            y = skipToY - 1; // -1 because the loop will increment y
           }
         }
       }
