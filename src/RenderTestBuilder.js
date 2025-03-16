@@ -226,8 +226,8 @@ class RenderTestBuilder {
       throw new Error('RenderTestBuilder cannot have both shape builder function and canvas code function');
     }
 
-    // Create metrics function that works in both environments
-    const metricsFunction = this._checks.length > 0 ? 
+    // Create checks function that works in both environments
+    const functionToRunAllChecks = this._checks.length > 0 ? 
       (test) => {
         const results = this._checks.map(check => check(test));
         return this.formatResultsForEnvironment(results, test.isNode);
@@ -238,7 +238,7 @@ class RenderTestBuilder {
       this._title,
       this._shapeBuilder,
       this._canvasCodeFn,
-      metricsFunction,
+      functionToRunAllChecks,
       this._description
     );
   }

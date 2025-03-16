@@ -139,10 +139,10 @@ function printHelp() {
         });
       }
       
-      // Add metrics results if available
-      if (test.metricsFunction) {
-        resultText += '\nMetrics:\n';
-        resultText += test.metricsFunction(test) || "No metrics available";
+      // Add checks results if available
+      if (test.functionToRunAllChecks) {
+        resultText += '\nChecks:\n';
+        resultText += test.functionToRunAllChecks(test) || "No checks performed";
       }
       
       // Save to file

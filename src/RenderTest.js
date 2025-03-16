@@ -7,7 +7,7 @@ class RenderTest {
   static GRID_ROWS = 21;
   static registry = {}; // Central registry for all tests
 
-  constructor(id, title, buildShapesFn, canvasCodeFn = null, metricsFunction = null, testDescription = '') {
+  constructor(id, title, buildShapesFn, canvasCodeFn = null, functionToRunAllChecks = null, testDescription = '') {
     // Environment detection
     this.isNode = typeof window === 'undefined';
     
@@ -22,7 +22,7 @@ class RenderTest {
     this.id = id;
     this.title = title;
     this.shapes = [];
-    this.metricsFunction = metricsFunction;
+    this.functionToRunAllChecks = functionToRunAllChecks;
     this.canvasCodeFn = canvasCodeFn;
     this.buildShapesFn = buildShapesFn;
     
@@ -240,10 +240,10 @@ class RenderTest {
     this.logContainer.className = 'log-container';
     this.container.appendChild(this.logContainer);
 
-    // Add metrics container
-    this.metricsContainer = document.createElement('div');
-    this.metricsContainer.className = 'metrics-container';
-    this.container.appendChild(this.metricsContainer);
+    // Add checks container
+    this.checksContainer = document.createElement('div');
+    this.checksContainer.className = 'checks-container';
+    this.container.appendChild(this.checksContainer);
     
     // Add errors container
     this.errorsContainer = document.createElement('div');
@@ -524,26 +524,26 @@ class RenderTest {
     this.clearErrorsButton = null;
   }
 
-  showMetrics(metricsFunction) {
-    // Common path - if no metrics function, clear container in browser mode
-    if (!metricsFunction) {
-      if (!this.isNode && this.metricsContainer) {
-        this.metricsContainer.innerHTML = '';
+  showChecks(functionToRunAllChecks) {
+    // Common path - if no checks, clear container in browser mode
+    if (!functionToRunAllChecks) {
+      if (!this.isNode && this.checksContainer) {
+        this.checksContainer.innerHTML = '';
       }
       return;
     }
     
-    // Common calculation of metrics result
-    const result = metricsFunction(this);
+    // Common calculation of checks result
+    const result = functionToRunAllChecks(this);
     
-    this.showMetricsInBrowser(result);
+    this.showChecksInBrowser(result);
     return result;
   }
   
-  // Browser-specific metrics display
-  showMetricsInBrowser(metricsResult) {
-    if (this.metricsContainer) {
-      this.metricsContainer.innerHTML = metricsResult;
+  // Browser-specific checks display
+  showChecksInBrowser(checksResult) {
+    if (this.checksContainer) {
+      this.checksContainer.innerHTML = checksResult;
     }
   }
 
@@ -598,11 +598,11 @@ class RenderTest {
       canvasCodeFn(this.crispSwCtx);
     }
     
-    // Run metrics if available
-    if (this.metricsFunction) {
-      const results = this.metricsFunction(this);
+    // Run checks if available
+    if (this.functionToRunAllChecks) {
+      const results = this.functionToRunAllChecks(this);
       if (this.verbose) {
-        console.log('Metrics Results:');
+        console.log('Checks Results:');
         console.log(results);
       }
     }
@@ -672,7 +672,7 @@ class RenderTest {
     this.sceneLoggedForCurrentIteration = false;
     
     if (buildShapesFn) {
-      // this returned value is used in the metrics/tests
+      // this returned value is used in the checks/tests
       this.builderReturnValue = buildShapesFn(this.shapes, this.logContainer, currentCount);
       this.drawSceneSW();
       this.updateSWRenderOutput();
@@ -699,9 +699,9 @@ class RenderTest {
     this.flipState = true;
     this.updateFlipOutput();
     
-    this.showMetrics(this.metricsFunction);
+    this.showChecks(this.functionToRunAllChecks);
     
-    // Important: Check for errors AFTER all metrics and tests are complete
+    // Important: Check for errors AFTER all checks and tests are complete
     // This ensures all errors have been logged by the time we check
     setTimeout(() => {
       // Check if any new errors occurred and log scene contents if needed
@@ -746,7 +746,7 @@ class RenderTest {
             current++;
             updateProgress();
             
-            // Use a small delay to check for errors after all rendering and metrics are complete
+            // Use a small delay to check for errors after all rendering and checks are complete
             setTimeout(() => {
                 // Continue if under count and either not stopping at errors or no new errors
                 if (current < count && (!stopAtError || this.errorCount === beforeErrorCount)) {
