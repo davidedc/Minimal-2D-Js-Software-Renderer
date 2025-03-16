@@ -41,6 +41,17 @@
   <script src="../../src/RenderTest.js"></script>
   <script src="../../src/RenderTestBuilder.js"></script>
   <script src="../../src/add-tests.js"></script>
-  <script src="../../src/ui.js"></script>
+
+  <script src="../../tests/low-level-renderer-tests-loading.js"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      loadLowLevelRenderTests();
+
+      // Create navigation after all sections are added
+      RenderTest.createNavigation("Low level sw renderer tests");
+    });
+  </script>
+
 </body>
 </html>

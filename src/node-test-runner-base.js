@@ -344,7 +344,7 @@ function printHelp() {
 
   function initializeTestRegistry() {
     console.log("Initializing test registry with core tests...");
-    addRenderTests();
+    loadLowLevelRenderTests();
   }
   
   // Call initialization function

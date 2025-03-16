@@ -1,15 +1,4 @@
-// Initialize when DOM is ready
-
-if (typeof window !== 'undefined') {
-  document.addEventListener('DOMContentLoaded', () => {
-    addRenderTests();
-
-    // Create navigation after all sections are added
-    RenderTest.createNavigation("Low level sw renderer tests");
-  });
-}
-
-function addRenderTests() {
+function loadLowLevelRenderTests() {
   add1PxHorizontalLineCenteredAtPixelTest();
   add1PxVerticalLineCenteredAtPixelTest();
   add2PxHorizontalLineCenteredAtGridTest();

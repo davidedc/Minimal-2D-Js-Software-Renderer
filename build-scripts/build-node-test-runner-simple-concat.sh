@@ -57,7 +57,7 @@ TEST_FILES=(
     "$PROJECT_ROOT/src/RenderTest.js"
     "$PROJECT_ROOT/src/RenderTestBuilder.js"
     "$PROJECT_ROOT/src/add-tests.js"
-    "$PROJECT_ROOT/src/ui.js"
+    "$PROJECT_ROOT/tests/low-level-renderer-tests-loading.js"
     "$PROJECT_ROOT/src/node-test-runner-base.js"
 )
 
