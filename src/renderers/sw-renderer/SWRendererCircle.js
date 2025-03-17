@@ -61,11 +61,14 @@ class SWRendererCircle {
     const fillRadius = pathRadius;
     const fillRadiusSquared = fillRadius * fillRadius;
     
+    // Determine which rendering approach to use based on what we need to draw
+    const hasFill = fillA > 0;
+    const hasStroke = strokeA > 0 && outerRadius > innerRadius;
     
-    // Draw fill first using analytical edge detection for maximum efficiency
-    if (fillA > 0) {
-      //console.log("Using optimized analytical fill method");
-      
+    // OPTIMIZATION: Choose the best rendering approach based on what's needed
+    
+    // Case 1: Fill only (no stroke)
+    if (hasFill && !hasStroke) {
       // Fill the circle using row-by-row scanning with analytical edge detection
       for (let y = minY; y <= maxY; y++) {
         const dy = y - cY;
@@ -78,15 +81,9 @@ class SWRendererCircle {
         // Calculate horizontal span for this row using a single sqrt operation
         const fillXDist = Math.sqrt(fillDistSquared);
         
-        // Calculate precise boundaries for this row with a small correction
-        // The tiny offset prevents "speckles" at the extremes of the circle
-        const leftFillX = Math.max(minX, Math.ceil(cX - fillXDist + 0.0001)); // Add tiny offset to prevent speckle
-        const rightFillX = Math.min(maxX, Math.floor(cX + fillXDist - 0.0001)); // Subtract tiny offset to prevent speckle
-        
-        // Debug logging for some rows
-        //if ((y - minY) % 50 === 0) {
-        //  console.log(`Fill row ${y}: span from ${leftFillX} to ${rightFillX}`);
-        //}
+        // Calculate precise boundaries with small correction to prevent speckles
+        const leftFillX = Math.max(minX, Math.ceil(cX - fillXDist + 0.0001));
+        const rightFillX = Math.min(maxX, Math.floor(cX + fillXDist - 0.0001));
         
         // Fill entire span without per-pixel distance check - much more efficient
         for (let x = leftFillX; x <= rightFillX; x++) {
@@ -95,13 +92,10 @@ class SWRendererCircle {
       }
     }
     
-    // Then draw stroke on top of fill
-    if (strokeA > 0 && outerRadius > innerRadius) {
+    // Case 2: Stroke only (no fill)
+    else if (hasStroke && !hasFill) {
       const outerRadiusSquared = outerRadius * outerRadius;
       const innerRadiusSquared = innerRadius * innerRadius;
-      
-      // Just use a single row-by-row scan for the entire circle
-      //console.log("Using simplified single-scan approach for stroke drawing");
       
       // Process each row from top to bottom
       for (let y = minY; y <= maxY; y++) {
@@ -111,27 +105,16 @@ class SWRendererCircle {
         // Skip if outside outer circle
         if (dySquared > outerRadiusSquared) continue;
         
-        // We'll track if any stroke pixels are drawn in this row
-        let anyStrokePixelsDrawn = false;
-        
         // Calculate outer intersections
         const outerXDist = Math.sqrt(outerRadiusSquared - dySquared);
         const outerLeftX = Math.max(minX, Math.ceil(cX - outerXDist));
         const outerRightX = Math.min(maxX, Math.floor(cX + outerXDist));
         
-        // Debug logging for a sample of rows
-        //if ((y - minY) % 50 === 0) {
-        //  console.log(`Stroke row ${y}: x range=${outerLeftX}-${outerRightX}`);
-        //}
-        
-        // Case: No inner intersection on this row i.e. the row does not
-        // intersect with the inner circle. I.s. there is only one
-        // contiguous horizontal segment within this line that is
-        // entirely within the stroke.
+        // Case: No inner intersection on this row
         if (innerRadius <= 0 || dySquared > innerRadiusSquared) {
+          // Draw the entire horizontal line
           for (let x = outerLeftX; x <= outerRightX; x++) {
             this.pixelRenderer.setPixel(x, y, strokeR, strokeG, strokeB, strokeA);
-            anyStrokePixelsDrawn = true;
           }
         } 
         // Case: Intersects both inner and outer circles
@@ -143,13 +126,80 @@ class SWRendererCircle {
           // Draw left segment (from outer left to inner left)
           for (let x = outerLeftX; x <= innerLeftX; x++) {
             this.pixelRenderer.setPixel(x, y, strokeR, strokeG, strokeB, strokeA);
-            anyStrokePixelsDrawn = true;
           }
           
           // Draw right segment (from inner right to outer right)
           for (let x = innerRightX; x <= outerRightX; x++) {
             this.pixelRenderer.setPixel(x, y, strokeR, strokeG, strokeB, strokeA);
-            anyStrokePixelsDrawn = true;
+          }
+        }
+      }
+    }
+    
+    // Case 3: Both fill and stroke - do them in a single scan for efficiency
+    else if (hasFill && hasStroke) {
+      const outerRadiusSquared = outerRadius * outerRadius;
+      const innerRadiusSquared = innerRadius * innerRadius;
+      
+      // Process each row from top to bottom
+      for (let y = minY; y <= maxY; y++) {
+        const dy = y - cY;
+        const dySquared = dy * dy;
+        
+        // Skip if outside outer circle
+        if (dySquared > outerRadiusSquared) continue;
+                
+        // Calculate outer circle intersections for this row (for stroke)
+        const outerXDist = Math.sqrt(outerRadiusSquared - dySquared);
+        const outerLeftX = Math.max(minX, Math.ceil(cX - outerXDist));
+        const outerRightX = Math.min(maxX, Math.floor(cX + outerXDist));
+        
+        // Calculate inner circle intersections if needed
+        let innerLeftX = -1;
+        let innerRightX = -1;
+        
+        if (innerRadius > 0 && dySquared <= innerRadiusSquared) {
+          const innerXDist = Math.sqrt(innerRadiusSquared - dySquared);
+          innerLeftX = Math.min(outerRightX, Math.floor(cX - innerXDist));
+          innerRightX = Math.max(outerLeftX, Math.ceil(cX + innerXDist));
+        }
+        
+        // Calculate fill circle intersections if this row passes through the fill area
+        const fillDistSquared = fillRadiusSquared - dySquared;
+        let leftFillX = -1;
+        let rightFillX = -1;
+        
+        if (fillDistSquared >= 0) {
+          const fillXDist = Math.sqrt(fillDistSquared);
+          leftFillX = Math.max(minX, Math.ceil(cX - fillXDist + 0.0001));
+          rightFillX = Math.min(maxX, Math.floor(cX + fillXDist - 0.0001));
+        }
+        
+        // STEP 1: Draw the fill first (if this row intersects the fill circle)
+        if (leftFillX >= 0) {
+          for (let x = leftFillX; x <= rightFillX; x++) {
+            this.pixelRenderer.setPixel(x, y, fillR, fillG, fillB, fillA);
+          }
+        }
+        
+        // STEP 2: Draw the stroke on top
+        if (innerRadius <= 0 || dySquared > innerRadiusSquared) {
+          // No inner circle intersection - draw the entire stroke span
+          for (let x = outerLeftX; x <= outerRightX; x++) {
+            this.pixelRenderer.setPixel(x, y, strokeR, strokeG, strokeB, strokeA);
+          }
+        } 
+        else {
+          // Intersects both inner and outer circles - draw two stroke spans
+          
+          // Draw left segment of stroke (from outer left to inner left)
+          for (let x = outerLeftX; x <= innerLeftX; x++) {
+            this.pixelRenderer.setPixel(x, y, strokeR, strokeG, strokeB, strokeA);
+          }
+          
+          // Draw right segment of stroke (from inner right to outer right)
+          for (let x = innerRightX; x <= outerRightX; x++) {
+            this.pixelRenderer.setPixel(x, y, strokeR, strokeG, strokeB, strokeA);
           }
         }
       }
