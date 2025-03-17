@@ -100,108 +100,13 @@ class SWRendererCircle {
       const outerRadiusSquared = outerRadius * outerRadius;
       const innerRadiusSquared = innerRadius * innerRadius;
       
-      // IMPORTANT: Using precise mathematical partitioning at 45° tangent points
-      // This eliminates the need for tracking drawn pixels
-      //console.log("Precise mathematical partitioning at 45° tangent points:");
-      //console.log(`- Center: (${cX}, ${cY}), Radius: inner=${innerRadius}, outer=${outerRadius}`);
-      //console.log("- Using exact 45° lines to divide regions (where |x-cX| = |y-cY|)");
-      //console.log("- Each pixel processed exactly once (no tracking needed)");
+      // Just use a single row-by-row scan for the entire circle
+      //console.log("Using simplified single-scan approach for stroke drawing");
       
-      // 1. STEP: Draw LEFT and RIGHT sides with column-by-column scanning
-      // These regions are where |x-cX| >= |y-cY| (i.e., more horizontal distance than vertical)
-      for (let x = minX; x <= maxX; x++) {
-        const dx = x - cX;
-        const dxSquared = dx * dx;
-        const absXDist = Math.abs(dx);
-        
-        // Skip if outside outer circle
-        if (dxSquared > outerRadiusSquared) continue;
-        
-        // Process this column to see if it's entirely inside the inner circle
-        // We'll track if any stroke pixels are drawn in this column
-        let anyStrokePixelsDrawn = false;
-        
-        // Calculate outer intersections
-        const outerYDist = Math.sqrt(outerRadiusSquared - dxSquared);
-        const outerTopY = Math.max(minY, Math.ceil(cY - outerYDist));
-        const outerBottomY = Math.min(maxY, Math.floor(cY + outerYDist));
-        
-        // Debug logging for a sample of columns
-        //if (x % 20 === 0) {
-        //  console.log(`Left-right processing: x=${x}, y range=${outerTopY}-${outerBottomY}`);
-        //}
-        
-        // Case: No inner intersection on this column
-        if (innerRadius <= 0 || dxSquared > innerRadiusSquared) {
-          // Process vertical segment with 45° check
-          for (let y = outerTopY; y <= outerBottomY; y++) {
-            const dy = y - cY;
-            const absYDist = Math.abs(dy);
-            
-            // CRITICAL: Only process pixels in left-right regions (|x-cX| >= |y-cY|)
-            // This is the exact 45° partitioning
-            if (absXDist < absYDist) continue;
-            
-            // Draw this pixel (in left-right region)
-            this.pixelRenderer.setPixel(x, y, strokeR, strokeG, strokeB, strokeA);
-            anyStrokePixelsDrawn = true;
-          }
-        } 
-        // Case: Intersects both inner and outer circles
-        else {
-          const innerYDist = Math.sqrt(innerRadiusSquared - dxSquared);
-          const innerTopY = Math.min(outerBottomY, Math.floor(cY - innerYDist));
-          const innerBottomY = Math.max(outerTopY, Math.ceil(cY + innerYDist));
-          
-          // Draw top segment (from outer top to inner top)
-          for (let y = outerTopY; y <= innerTopY; y++) {
-            const dy = y - cY;
-            const absYDist = Math.abs(dy);
-            
-            // Only process pixels in left-right regions (|x-cX| >= |y-cY|)
-            if (absXDist < absYDist) continue;
-            
-            this.pixelRenderer.setPixel(x, y, strokeR, strokeG, strokeB, strokeA);
-            anyStrokePixelsDrawn = true;
-          }
-          
-          // Draw bottom segment (from inner bottom to outer bottom)
-          for (let y = innerBottomY; y <= outerBottomY; y++) {
-            const dy = y - cY;
-            const absYDist = Math.abs(dy);
-            
-            // Only process pixels in left-right regions (|x-cX| >= |y-cY|)
-            if (absXDist < absYDist) continue;
-            
-            this.pixelRenderer.setPixel(x, y, strokeR, strokeG, strokeB, strokeA);
-            anyStrokePixelsDrawn = true;
-          }
-        }
-        
-        // OPTIMIZATION: If we didn't draw any pixels in this column and we're processing the left half,
-        // we can skip directly to the symmetrically opposite column on the right
-        if (!anyStrokePixelsDrawn && x < cX) {
-          // Calculate the symmetrically opposite column
-          const skipToX = Math.ceil(cX + (cX - x));
-          
-          // Only skip if it would save us some columns
-          if (skipToX > x) {
-            // Debug logging for significant skips
-            //if (skipToX - x > 20) {
-            //  console.log(`Column ${x} had no stroke pixels - skipping to column ${skipToX}`);
-            //}
-            
-            x = skipToX - 1; // -1 because the loop will increment x
-          }
-        }
-      }
-      
-      // 2. STEP: Draw TOP and BOTTOM with row-by-row scanning
-      // These regions are where |y-cY| > |x-cX| (i.e., more vertical distance than horizontal)
+      // Process each row from top to bottom
       for (let y = minY; y <= maxY; y++) {
         const dy = y - cY;
         const dySquared = dy * dy;
-        const absYDist = Math.abs(dy);
         
         // Skip if outside outer circle
         if (dySquared > outerRadiusSquared) continue;
@@ -215,22 +120,16 @@ class SWRendererCircle {
         const outerRightX = Math.min(maxX, Math.floor(cX + outerXDist));
         
         // Debug logging for a sample of rows
-        //if (y % 20 === 0) {
-        //  console.log(`Top-bottom processing: y=${y}, x range=${outerLeftX}-${outerRightX}`);
+        //if ((y - minY) % 50 === 0) {
+        //  console.log(`Stroke row ${y}: x range=${outerLeftX}-${outerRightX}`);
         //}
         
-        // Case: No inner intersection on this row
+        // Case: No inner intersection on this row i.e. the row does not
+        // intersect with the inner circle. I.s. there is only one
+        // contiguous horizontal segment within this line that is
+        // entirely within the stroke.
         if (innerRadius <= 0 || dySquared > innerRadiusSquared) {
-          // Process horizontal segment with 45° check
           for (let x = outerLeftX; x <= outerRightX; x++) {
-            const dx = x - cX;
-            const absXDist = Math.abs(dx);
-            
-            // CRITICAL: Only process pixels in top-bottom regions (|y-cY| > |x-cX|)
-            // This is the exact complement to the left-right regions
-            if (absYDist <= absXDist) continue;
-            
-            // Draw this pixel (in top-bottom region)
             this.pixelRenderer.setPixel(x, y, strokeR, strokeG, strokeB, strokeA);
             anyStrokePixelsDrawn = true;
           }
@@ -243,47 +142,17 @@ class SWRendererCircle {
           
           // Draw left segment (from outer left to inner left)
           for (let x = outerLeftX; x <= innerLeftX; x++) {
-            const dx = x - cX;
-            const absXDist = Math.abs(dx);
-            
-            // Only process pixels in top-bottom regions (|y-cY| > |x-cX|)
-            if (absYDist <= absXDist) continue;
-            
             this.pixelRenderer.setPixel(x, y, strokeR, strokeG, strokeB, strokeA);
             anyStrokePixelsDrawn = true;
           }
           
           // Draw right segment (from inner right to outer right)
           for (let x = innerRightX; x <= outerRightX; x++) {
-            const dx = x - cX;
-            const absXDist = Math.abs(dx);
-            
-            // Only process pixels in top-bottom regions (|y-cY| > |x-cX|)
-            if (absYDist <= absXDist) continue;
-            
             this.pixelRenderer.setPixel(x, y, strokeR, strokeG, strokeB, strokeA);
             anyStrokePixelsDrawn = true;
           }
         }
-        
-        // OPTIMIZATION: If we didn't draw any pixels in this row and we're processing the top half,
-        // we can skip directly to the symmetrically opposite row on the bottom
-        if (!anyStrokePixelsDrawn && y < cY) {
-          // Calculate the symmetrically opposite row
-          const skipToY = Math.ceil(cY + (cY - y));
-          
-          // Only skip if it would save us some rows
-          if (skipToY > y) {
-            // Debug logging for significant skips
-            //if (skipToY - y > 20) {
-            //  console.log(`Row ${y} had no stroke pixels - skipping to row ${skipToY}`);
-            //}
-            
-            y = skipToY - 1; // -1 because the loop will increment y
-          }
-        }
       }
-
     }
   }
 }
