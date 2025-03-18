@@ -11,6 +11,250 @@ class RenderChecks {
   }
 
   /**
+   * Checks if a stroke forms a continuous loop without holes
+   * @param {CanvasRenderingContext2D|CrispSwContext} canvasCtxOfSwRender - The rendering context to analyze
+   * @param {Object} extremes - The shape boundaries {leftX, rightX, topY, bottomY}
+   * @param {boolean} horizontalScan - Whether to perform a horizontal (column-by-column) scan instead of vertical
+   * @returns {boolean} True if the stroke is continuous, false if holes are found
+   */
+  checkStrokeContinuity(canvasCtxOfSwRender, extremes, horizontalScan = false) {
+    // Get canvas dimensions and image data
+    const canvas = canvasCtxOfSwRender.canvas;
+    const width = canvas.width;
+    const height = canvas.height;
+    const title = canvas.title || (canvasCtxOfSwRender.title || 'unknown');
+    
+    const imageData = canvasCtxOfSwRender.getImageData(0, 0, width, height);
+    const data = imageData.data;
+    
+    // Extract edges from extremes
+    const { leftX, rightX, topY, bottomY } = extremes;
+    
+    // Function to check if a pixel is transparent (alpha = 0)
+    const isTransparent = (idx) => data[idx + 3] === 0;
+    
+    // Track the pattern transitions as we scan
+    let transitionPattern = [];
+    let holeFound = false;
+    let detailMessage = '';
+    
+    if (!horizontalScan) {
+      // Vertical scan (row by row from top to bottom)
+      this.scanVertically(data, width, leftX, rightX, topY, bottomY, isTransparent, transitionPattern);
+    } else {
+      // Horizontal scan (column by column from left to right)
+      this.scanHorizontally(data, width, leftX, rightX, topY, bottomY, isTransparent, transitionPattern);
+    }
+    
+    // Find any fragmented patterns that indicate holes
+    for (const transition of transitionPattern) {
+      if (transition.pattern === 'fragmented') {
+        holeFound = true;
+        const coord = horizontalScan ? `x=${transition.pos}` : `y=${transition.pos}`;
+        detailMessage = `${horizontalScan ? 'Column' : 'Row'} ${coord} has ${transition.groupCount} disconnected pixel groups instead of 1 or 2`;
+        break;
+      }
+    }
+    
+    // Validate the transition pattern - should follow this sequence:
+    // 1. One or more 'solid' rows/cols (cap)
+    // 2. Zero or more 'sides' rows/cols (if shape is large enough)
+    // 3. One or more 'solid' rows/cols (cap)
+    
+    // The only valid patterns are:
+    // - solid only (small shape)
+    // - solid → sides → solid (normal shape)
+    
+    let validTransitionSequence = true;
+    let currentState = 'start';
+    const directionLabel = horizontalScan ? 'column' : 'row';
+    
+    for (let i = 0; i < transitionPattern.length; i++) {
+      const { pattern, pos } = transitionPattern[i];
+      
+      switch (currentState) {
+        case 'start':
+          if (pattern === 'solid') {
+            currentState = 'firstCap';
+          } else if (pattern === 'sides') {
+            // Missing first cap
+            validTransitionSequence = false;
+            detailMessage = `Missing first cap at ${directionLabel} ${pos}`;
+          } else if (pattern === 'fragmented') {
+            // Fragmented pattern not allowed
+            validTransitionSequence = false;
+            detailMessage = `Fragmented pattern at ${directionLabel} ${pos}`;
+          }
+          break;
+          
+        case 'firstCap':
+          if (pattern === 'sides') {
+            currentState = 'sides';
+          } else if (pattern === 'fragmented') {
+            // Fragmented pattern not allowed
+            validTransitionSequence = false;
+            detailMessage = `Fragmented pattern at ${directionLabel} ${pos}`;
+          } else if (pattern === 'empty') {
+            // Empty row/column not allowed here
+            validTransitionSequence = false;
+            detailMessage = `Unexpected empty ${directionLabel} at ${pos}`;
+          }
+          break;
+          
+        case 'sides':
+          if (pattern === 'solid') {
+            currentState = 'secondCap';
+          } else if (pattern === 'fragmented') {
+            // Fragmented pattern not allowed
+            validTransitionSequence = false;
+            detailMessage = `Fragmented pattern at ${directionLabel} ${pos}`;
+          } else if (pattern === 'empty') {
+            // Empty row/column not allowed here
+            validTransitionSequence = false;
+            detailMessage = `Unexpected empty ${directionLabel} at ${pos}`;
+          }
+          break;
+          
+        case 'secondCap':
+          if (pattern !== 'solid') {
+            // Only solid allowed in second cap
+            validTransitionSequence = false;
+            detailMessage = `Expected solid pattern for second cap, got ${pattern} at ${directionLabel} ${pos}`;
+          }
+          break;
+      }
+      
+      if (!validTransitionSequence) {
+        break;
+      }
+    }
+    
+    // Check final state - must end in firstCap (small shape) or secondCap (normal shape)
+    if (validTransitionSequence && currentState !== 'firstCap' && currentState !== 'secondCap') {
+      validTransitionSequence = false;
+      detailMessage = 'Incomplete stroke pattern';
+    }
+    
+    if (!validTransitionSequence || holeFound) {
+      const rendererName = title ? title.split('-')[0] : 'Unknown';
+      const scanType = horizontalScan ? 'horizontal' : 'vertical';
+      const errorMessage = `${rendererName} Renderer: Found holes in stroke during ${scanType} scan! ${detailMessage}`;
+      this.test.showError(errorMessage);
+      return false;
+    }
+    
+    return true;
+  }
+  
+  /**
+   * Scan vertically (row by row) and analyze pixel patterns
+   * @private
+   */
+  scanVertically(data, width, leftX, rightX, topY, bottomY, isTransparent, transitionPattern) {
+    // Scan each row from top to bottom
+    for (let y = topY; y <= bottomY; y++) {
+      // Track contiguous pixel groups in the current row
+      let contiguousGroups = [];
+      let currentGroup = null;
+      
+      // Scan this row from left to right
+      for (let x = leftX; x <= rightX; x++) {
+        const idx = (y * width + x) * 4;
+        const isPixelTransparent = isTransparent(idx);
+        
+        if (!isPixelTransparent) {
+          // Start a new group or extend current group
+          if (currentGroup === null) {
+            currentGroup = { startX: x, endX: x };
+          } else {
+            currentGroup.endX = x;
+          }
+        } else if (currentGroup !== null) {
+          // End of a group
+          contiguousGroups.push(currentGroup);
+          currentGroup = null;
+        }
+      }
+      
+      // Add the last group if it exists
+      if (currentGroup !== null) {
+        contiguousGroups.push(currentGroup);
+      }
+      
+      // Categorize the pattern for this row
+      let rowPattern = '';
+      if (contiguousGroups.length === 0) {
+        rowPattern = 'empty';
+      } else if (contiguousGroups.length === 1) {
+        rowPattern = 'solid';
+      } else if (contiguousGroups.length === 2) {
+        rowPattern = 'sides';
+      } else {
+        rowPattern = 'fragmented';
+      }
+      
+      // Add the pattern to our transition sequence
+      if (transitionPattern.length === 0 || transitionPattern[transitionPattern.length - 1].pattern !== rowPattern) {
+        transitionPattern.push({ pos: y, pattern: rowPattern, groupCount: contiguousGroups.length });
+      }
+    }
+  }
+  
+  /**
+   * Scan horizontally (column by column) and analyze pixel patterns
+   * @private
+   */
+  scanHorizontally(data, width, leftX, rightX, topY, bottomY, isTransparent, transitionPattern) {
+    // Scan each column from left to right
+    for (let x = leftX; x <= rightX; x++) {
+      // Track contiguous pixel groups in the current column
+      let contiguousGroups = [];
+      let currentGroup = null;
+      
+      // Scan this column from top to bottom
+      for (let y = topY; y <= bottomY; y++) {
+        const idx = (y * width + x) * 4;
+        const isPixelTransparent = isTransparent(idx);
+        
+        if (!isPixelTransparent) {
+          // Start a new group or extend current group
+          if (currentGroup === null) {
+            currentGroup = { startY: y, endY: y };
+          } else {
+            currentGroup.endY = y;
+          }
+        } else if (currentGroup !== null) {
+          // End of a group
+          contiguousGroups.push(currentGroup);
+          currentGroup = null;
+        }
+      }
+      
+      // Add the last group if it exists
+      if (currentGroup !== null) {
+        contiguousGroups.push(currentGroup);
+      }
+      
+      // Categorize the pattern for this column
+      let colPattern = '';
+      if (contiguousGroups.length === 0) {
+        colPattern = 'empty';
+      } else if (contiguousGroups.length === 1) {
+        colPattern = 'solid';
+      } else if (contiguousGroups.length === 2) {
+        colPattern = 'sides';
+      } else {
+        colPattern = 'fragmented';
+      }
+      
+      // Add the pattern to our transition sequence
+      if (transitionPattern.length === 0 || transitionPattern[transitionPattern.length - 1].pattern !== colPattern) {
+        transitionPattern.push({ pos: x, pattern: colPattern, groupCount: contiguousGroups.length });
+      }
+    }
+  }
+
+  /**
    * Checks the count of unique colors in a horizontal or vertical line through the middle of the canvas
    * @param {CanvasRenderingContext2D|CrispSwContext} canvasContextOfSwRendererOrCanvasRenderer - The rendering context to analyze
    * @param {number|null} expectedColors - The expected number of unique colors, or null if no expectation
@@ -329,7 +573,9 @@ class RenderChecks {
   }
   
   /**
-   * Check edges of a shape for gaps
+   * Check edges of a shape for gaps. This is particularly used for circles, where some rendering
+   * artefacts could happen where there would be holes in the top/bottom/left/right edges.
+   * Note that this check works regardless of the fill presence and/or width or color.
    * @param {CanvasRenderingContext2D|CrispSwContext} canvasCtxOfSwRender - The software renderer context
    * @param {CanvasRenderingContext2D|CrispSwContext} canvasCtxOfCanvasRender - The canvas renderer context
    * @param {boolean} isStroke - Whether to check stroke edges (true) or fill edges (false)
@@ -349,6 +595,68 @@ class RenderChecks {
     // Check only the software renderer for gaps
     const swResults = this.checkEdgeGaps(canvasCtxOfSwRender, calculatedExtremes, isStroke);
     return `Edge gap check result (${isStroke ? 'stroke' : 'fill'}): ${swResults}`;
+  }
+  
+  /**
+   * Check if a stroke has no holes. Note that this only works for a) shapes that have a starting cap,
+   * two sides, and an ending cap (like circles, rectangles, rounded rectangles, etc), and
+   * b) shapes with no fill (or with a fill that is the same color as the stroke).
+   * @param {CanvasRenderingContext2D|CrispSwContext} canvasCtxOfSwRender - The software renderer context
+   * @param {CanvasRenderingContext2D|CrispSwContext} canvasCtxOfCanvasRender - The canvas renderer context
+   * @param {Object} options - Options for the check
+   * @param {boolean} options.verticalScan - Whether to perform a vertical scan (default: true)
+   * @param {boolean} options.horizontalScan - Whether to perform a horizontal scan (default: true)
+   * @returns {string} Results of the check
+   */
+  checkStrokeForHoles(canvasCtxOfSwRender, canvasCtxOfCanvasRender, options = {}) {
+    // Default options
+    const { 
+      verticalScan = true, 
+      horizontalScan = true 
+    } = options;
+    
+    // Calculate extremes for the shape by scanning the canvas
+    const calculatedExtremes = this.findExtremesWithTolerance(canvasCtxOfSwRender, 0);
+    
+    // If no non-transparent pixels were found, return error
+    if (!calculatedExtremes) {
+      const errorMsg = "No non-transparent pixels found, cannot check for stroke holes";
+      this.test.showError(errorMsg);
+      return errorMsg;
+    }
+    
+    const rendererName = canvasCtxOfSwRender.canvas.title ? 
+      canvasCtxOfSwRender.canvas.title.split('-')[0] : 'SW';
+    
+    let isStrokeContinuous = true;
+    let resultMsgs = [];
+    
+    // Perform vertical scan if requested
+    if (verticalScan) {
+      const isVerticalContinuous = this.checkStrokeContinuity(canvasCtxOfSwRender, calculatedExtremes, false);
+      isStrokeContinuous = isStrokeContinuous && isVerticalContinuous;
+      
+      if (!isVerticalContinuous) {
+        resultMsgs.push(`Vertical scan: Found holes`);
+      }
+    }
+    
+    // Perform horizontal scan if requested
+    if (horizontalScan) {
+      const isHorizontalContinuous = this.checkStrokeContinuity(canvasCtxOfSwRender, calculatedExtremes, true);
+      isStrokeContinuous = isStrokeContinuous && isHorizontalContinuous;
+      
+      if (!isHorizontalContinuous) {
+        resultMsgs.push(`Horizontal scan: Found holes`);
+      }
+    }
+    
+    // Determine overall result message
+    const resultMsg = isStrokeContinuous ? 
+      `${rendererName} Renderer: Stroke is continuous with no holes` : 
+      `${rendererName} Renderer: Stroke has holes or discontinuities (${resultMsgs.join(', ')})`;
+      
+    return `Stroke continuity check result: ${resultMsg}`;
   }
 
   /**

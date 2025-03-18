@@ -181,6 +181,22 @@ class RenderTestBuilder {
     return this;
   }
   
+  withContinuousStrokeCheck(options = {}) {
+    this._checks.push((test) => {
+      const result = test.renderChecks.checkStrokeForHoles(
+        test.canvasCtxOfSwRender,
+        test.isNode ? null : test.canvasCtxOfCanvasRender,
+        options
+      );
+      // Modified logic to correctly check for continuous strokes
+      // If the result contains "continuous with no holes", it's correct
+      const isCorrect = result.includes("continuous with no holes");
+      
+      return this.formatCheckResult(isCorrect, test.isNode, { node: result, browser: result });
+    });
+    return this;
+  }
+  
   // Compare pixels with threshold values for RGB and alpha components
   compareWithThreshold(RGBThreshold, alphaThreshold) {
     this._checks.push((test) => {

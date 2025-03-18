@@ -148,8 +148,9 @@ function add1PxStrokedCircleCenteredAtGridTest() {
     // Adding a tolerance because for some strange reason, at least in Safari, the canvas render overflows
     // the drawing of the stroke ever so slightly (completely invisible to the human eye, but it is there).
     .withExtremesCheck(0.03)
-    .withNoGapsInStrokeEdgesCheck() // Check that the stroke has no gaps
+    //.withNoGapsInStrokeEdgesCheck() // Check that the stroke has no gaps // NOT NEEDED BECAUSE THE withContinuousStrokeCheck IS MORE STRICT
     .withUniqueColorsCheck(1) // Check that there's exactly one unique color
+    .withContinuousStrokeCheck({ verticalScan: true, horizontalScan: true }) // Check that the stroke has no holes in both directions
     .build();
 }
 
@@ -164,8 +165,9 @@ function add1PxStrokedCircleCenteredAtPixelTest() {
     // Adding a tolerance because for some strange reason, at least in Safari, the canvas render overflows
     // the drawing of the stroke ever so slightly (completely invisible to the human eye, but it is there).
     .withExtremesCheck(0.03)
-    .withNoGapsInStrokeEdgesCheck() // Check that the stroke has no gaps
+    //.withNoGapsInStrokeEdgesCheck() // Check that the stroke has no gaps // NOT NEEDED BECAUSE THE withContinuousStrokeCheck IS MORE STRICT
     .withUniqueColorsCheck(1) // Check that there's exactly one unique color
+    .withContinuousStrokeCheck({ verticalScan: true, horizontalScan: true }) // Check that the stroke has no holes in both directions
     .build();
 }
 
