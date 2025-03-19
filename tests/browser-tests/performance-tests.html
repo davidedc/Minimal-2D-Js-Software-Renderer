@@ -119,12 +119,6 @@
     <h2>Test Configuration</h2>
     
     <div>
-      <label for="test-iterations">Iterations per test level:</label>
-      <input type="range" id="test-iterations" min="1" max="20" value="1">
-      <span id="test-iterations-value" class="value-display">1</span>
-    </div>
-    
-    <div>
       <label for="sw-increment-size">SW Canvas increment size:</label>
       <input type="number" id="sw-increment-size" min="1" max="100" value="1" style="width: 60px;">
     </div>
@@ -198,8 +192,6 @@
     const ctx = canvas.getContext('2d');
     
     // Controls
-    const testIterationsSlider = document.getElementById('test-iterations');
-    const testIterationsValue = document.getElementById('test-iterations-value');
     const swIncrementSize = document.getElementById('sw-increment-size');
     const htmlIncrementSize = document.getElementById('html-increment-size');
     const consecutiveExceedances = document.getElementById('consecutive-exceedances');
@@ -215,11 +207,6 @@
     let currentTest = null;
     let abortRequested = false;
     let animationFrameId = null;
-    
-    // Update UI based on slider values
-    testIterationsSlider.addEventListener('input', () => {
-      testIterationsValue.textContent = testIterationsSlider.value;
-    });
     
     // Button event listeners
     btnLinesTest.addEventListener('click', () => runTest('lines'));
@@ -295,7 +282,6 @@
       abortRequested = false;
       
       // Get test parameters
-      const iterationsPerCount = parseInt(testIterationsSlider.value);
       const swIncrement = parseInt(swIncrementSize.value);
       const htmlIncrement = parseInt(htmlIncrementSize.value);
       const requiredExceedances = parseInt(consecutiveExceedances.value);
@@ -303,9 +289,9 @@
       
       // Clear previous results if not part of "Run All Tests"
       if (clearResults) {
-        resultsContainer.innerHTML = `Running ${testType} test with SW increment ${swIncrement}, HTML increment ${htmlIncrement}, ${iterationsPerCount} iterations per count level${includeBlitting ? ' (including blitting time)' : ' (excluding blitting time)'}...\n\n`;
+        resultsContainer.innerHTML = `Running ${testType} test with SW increment ${swIncrement}, HTML increment ${htmlIncrement}${includeBlitting ? ' (including blitting time)' : ' (excluding blitting time)'}...\n\n`;
       } else {
-        resultsContainer.innerHTML += `\nRunning ${testType} test with SW increment ${swIncrement}, HTML increment ${htmlIncrement}, ${iterationsPerCount} iterations per count level${includeBlitting ? ' (including blitting time)' : ' (excluding blitting time)'}...\n\n`;
+        resultsContainer.innerHTML += `\nRunning ${testType} test with SW increment ${swIncrement}, HTML increment ${htmlIncrement}${includeBlitting ? ' (including blitting time)' : ' (excluding blitting time)'}...\n\n`;
       }
       
       // Show progress bar
@@ -316,7 +302,6 @@
       // Testing data structure
       const testData = {
         testType,
-        iterationsPerCount,
         swIncrement,
         htmlIncrement,
         includeBlitting,
@@ -336,13 +321,13 @@
       resultsContainer.scrollTop = resultsContainer.scrollHeight;
       
       // Start with the software canvas test
-      runSoftwareCanvasRampTest(testType, STARTING_SHAPE_COUNT, swIncrement, iterationsPerCount, includeBlitting, requiredExceedances, testData, () => {
+      runSoftwareCanvasRampTest(testType, STARTING_SHAPE_COUNT, swIncrement, includeBlitting, requiredExceedances, testData, () => {
         
         // After SW canvas test completes, run HTML5 canvas test
         resultsContainer.innerHTML += "\nPHASE 2: Testing HTML5 Canvas...\n";
         resultsContainer.scrollTop = resultsContainer.scrollHeight;
         
-        runHTML5CanvasRampTest(testType, STARTING_SHAPE_COUNT, htmlIncrement, iterationsPerCount, requiredExceedances, testData, () => {
+        runHTML5CanvasRampTest(testType, STARTING_SHAPE_COUNT, htmlIncrement, requiredExceedances, testData, () => {
           
           // Calculate performance ratio
           testData.ratio = testData.canvasMaxShapes / testData.swMaxShapes;
@@ -365,7 +350,7 @@
     }
     
     // Software Canvas Ramp Test
-    function runSoftwareCanvasRampTest(testType, startCount, incrementSize, iterationsPerCount, includeBlitting, requiredExceedances, testData, callback) {
+    function runSoftwareCanvasRampTest(testType, startCount, incrementSize, includeBlitting, requiredExceedances, testData, callback) {
       let currentShapeCount = startCount;
       let exceededBudget = false;
       let totalPhaseSteps = 1000; // Just an estimate for progress bar
@@ -388,85 +373,65 @@
         progressBar.style.width = `${progress}%`;
         progressBar.textContent = `${progress}%`;
         
-        // Run multiple iterations at current shape count
-        let iterationTimings = [];
-        let iterationCount = 0;
+        // Clear canvas
+        swCtx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
         
-        function runNextIteration() {
-          if (iterationCount < iterationsPerCount && !abortRequested) {
-            // Clear canvas
-            swCtx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-            
-            // Seed random for consistent shapes
-            SeededRandom.seedWithInteger(iterationCount);
-            
-            // Run the specific test and measure time
-            let startTime = performance.now();
-            
-            // Draw shapes based on test type
-            if (testType === 'lines') {
-              drawRandomLines(swCtx, currentShapeCount);
-            } else if (testType === 'rects') {
-              drawRandomRects(swCtx, currentShapeCount);
-            }
-            
-            // Include blitting time if requested
-            if (includeBlitting) {
-              swCtx.blitToCanvas(swCanvas);
-            }
-            
-            let endTime = performance.now();
-            let elapsedTime = endTime - startTime;
-            
-            iterationTimings.push(elapsedTime);
-            iterationCount++;
-            
-            // Wait for next frame before running next iteration
-            animationFrameId = requestAnimationFrame(runNextIteration);
-          } else {
-            // Done with iterations for this shape count
-            // Calculate average time
-            const avgTime = calculateAverage(iterationTimings);
-            const stdDev = calculateStandardDeviation(iterationTimings, avgTime);
-            
-            // Store results
-            testData.swShapeCounts.push(currentShapeCount);
-            testData.swTimings.push(avgTime);
-            
-            // Log to results
-            resultsContainer.innerHTML += `SW Canvas with ${currentShapeCount} shapes: ${avgTime.toFixed(2)}ms ±${stdDev.toFixed(2)}ms\n`;
-            // Auto-scroll to show latest results
-            resultsContainer.scrollTop = resultsContainer.scrollHeight;
-            
-            // Check if we exceeded the frame budget
-            // Using average + 1 standard deviation to account for variability
-            if (avgTime + stdDev > FRAME_BUDGET) {
-              consecutiveExceedances++;
-              resultsContainer.innerHTML += `  Exceeded budget (${consecutiveExceedances}/${requiredExceedances})\n`;
-              // Auto-scroll to show exceedance messages
-              resultsContainer.scrollTop = resultsContainer.scrollHeight;
-              
-              // Only stop if we've exceeded enough times consecutively
-              if (consecutiveExceedances >= requiredExceedances) {
-                exceededBudget = true;
-              } else {
-                // Continue with the same shape count to confirm if it consistently exceeds budget
-                // No need to increment here
-              }
-            } else {
-              // Reset consecutive exceedances counter
-              consecutiveExceedances = 0;
-              // Increment shape count and continue testing
-              currentShapeCount += incrementSize;
-            }
-            
-            // Proceed to next shape count
-            testNextShapeCount();
-          }
+        // Seed random for consistent shapes
+        SeededRandom.seedWithInteger(currentPhaseStep);
+        
+        // Run the specific test and measure time
+        let startTime = performance.now();
+        
+        // Draw shapes based on test type
+        if (testType === 'lines') {
+          drawRandomLines(swCtx, currentShapeCount);
+        } else if (testType === 'rects') {
+          drawRandomRects(swCtx, currentShapeCount);
         }
         
-        // Start first iteration for this shape count
-        runNextIteration();
+        // Include blitting time if requested
+        if (includeBlitting) {
+          swCtx.blitToCanvas(swCanvas);
+        }
+        
+        let endTime = performance.now();
+        let elapsedTime = endTime - startTime;
+        
+        const avgTime = elapsedTime;
+        const stdDev = 0; // No standard deviation with single measurement
+        
+        // Store results
+        testData.swShapeCounts.push(currentShapeCount);
+        testData.swTimings.push(avgTime);
+        
+        // Log to results
+        resultsContainer.innerHTML += `SW Canvas with ${currentShapeCount} shapes: ${avgTime.toFixed(2)}ms\n`;
+        // Auto-scroll to show latest results
+        resultsContainer.scrollTop = resultsContainer.scrollHeight;
+        
+        // Check if we exceeded the frame budget
+        if (avgTime > FRAME_BUDGET) {
+          consecutiveExceedances++;
+          resultsContainer.innerHTML += `  Exceeded budget (${consecutiveExceedances}/${requiredExceedances})\n`;
+          // Auto-scroll to show exceedance messages
+          resultsContainer.scrollTop = resultsContainer.scrollHeight;
+          
+          // Only stop if we've exceeded enough times consecutively
+          if (consecutiveExceedances >= requiredExceedances) {
+            exceededBudget = true;
+          } else {
+            // Continue with the same shape count to confirm if it consistently exceeds budget
+            // No need to increment here
+          }
+        } else {
+          // Reset consecutive exceedances counter
+          consecutiveExceedances = 0;
+          // Increment shape count and continue testing
+          currentShapeCount += incrementSize;
+        }
+        
+        // Wait for the next frame before proceeding to next shape count
+        animationFrameId = requestAnimationFrame(testNextShapeCount);
       }
       
       // Start with the first shape count
@@ -474,7 +439,7 @@
     }
     
     // HTML5 Canvas Ramp Test
-    function runHTML5CanvasRampTest(testType, startCount, incrementSize, iterationsPerCount, requiredExceedances, testData, callback) {
+    function runHTML5CanvasRampTest(testType, startCount, incrementSize, requiredExceedances, testData, callback) {
       let currentShapeCount = startCount;
       let exceededBudget = false;
       let totalPhaseSteps = 1000; // Just an estimate for progress bar
@@ -497,80 +462,60 @@
         progressBar.style.width = `${progress}%`;
         progressBar.textContent = `${progress}%`;
         
-        // Run multiple iterations at current shape count
-        let iterationTimings = [];
-        let iterationCount = 0;
+        // Clear canvas
+        ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
         
-        function runNextIteration() {
-          if (iterationCount < iterationsPerCount && !abortRequested) {
-            // Clear canvas
-            ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-            
-            // Seed random for consistent shapes
-            SeededRandom.seedWithInteger(iterationCount);
-            
-            // Run the specific test and measure time
-            let startTime = performance.now();
-            
-            // Draw shapes based on test type
-            if (testType === 'lines') {
-              drawRandomLinesHTML5(ctx, currentShapeCount);
-            } else if (testType === 'rects') {
-              drawRandomRectsHTML5(ctx, currentShapeCount);
-            }
-            
-            let endTime = performance.now();
-            let elapsedTime = endTime - startTime;
-            
-            iterationTimings.push(elapsedTime);
-            iterationCount++;
-            
-            // Wait for next frame before running next iteration
-            animationFrameId = requestAnimationFrame(runNextIteration);
-          } else {
-            // Done with iterations for this shape count
-            // Calculate average time
-            const avgTime = calculateAverage(iterationTimings);
-            const stdDev = calculateStandardDeviation(iterationTimings, avgTime);
-            
-            // Store results
-            testData.canvasShapeCounts.push(currentShapeCount);
-            testData.canvasTimings.push(avgTime);
-            
-            // Log to results
-            resultsContainer.innerHTML += `HTML5 Canvas with ${currentShapeCount} shapes: ${avgTime.toFixed(2)}ms ±${stdDev.toFixed(2)}ms\n`;
-            // Auto-scroll to show latest results
-            resultsContainer.scrollTop = resultsContainer.scrollHeight;
-            
-            // Check if we exceeded the frame budget
-            // Using average + 1 standard deviation to account for variability
-            if (avgTime + stdDev > FRAME_BUDGET) {
-              consecutiveExceedances++;
-              resultsContainer.innerHTML += `  Exceeded budget (${consecutiveExceedances}/${requiredExceedances})\n`;
-              // Auto-scroll to show exceedance messages
-              resultsContainer.scrollTop = resultsContainer.scrollHeight;
-              
-              // Only stop if we've exceeded enough times consecutively
-              if (consecutiveExceedances >= requiredExceedances) {
-                exceededBudget = true;
-              } else {
-                // Continue with the same shape count to confirm if it consistently exceeds budget
-                // No need to increment here
-              }
-            } else {
-              // Reset consecutive exceedances counter
-              consecutiveExceedances = 0;
-              // Increment shape count and continue testing
-              currentShapeCount += incrementSize;
-            }
-            
-            // Proceed to next shape count
-            testNextShapeCount();
-          }
+        // Seed random for consistent shapes
+        SeededRandom.seedWithInteger(currentPhaseStep);
+        
+        // Run the specific test and measure time
+        let startTime = performance.now();
+        
+        // Draw shapes based on test type
+        if (testType === 'lines') {
+          drawRandomLinesHTML5(ctx, currentShapeCount);
+        } else if (testType === 'rects') {
+          drawRandomRectsHTML5(ctx, currentShapeCount);
         }
         
-        // Start first iteration for this shape count
-        runNextIteration();
+        let endTime = performance.now();
+        let elapsedTime = endTime - startTime;
+        
+        const avgTime = elapsedTime;
+        const stdDev = 0; // No standard deviation with single measurement
+        
+        // Store results
+        testData.canvasShapeCounts.push(currentShapeCount);
+        testData.canvasTimings.push(avgTime);
+        
+        // Log to results
+        resultsContainer.innerHTML += `HTML5 Canvas with ${currentShapeCount} shapes: ${avgTime.toFixed(2)}ms\n`;
+        // Auto-scroll to show latest results
+        resultsContainer.scrollTop = resultsContainer.scrollHeight;
+        
+        // Check if we exceeded the frame budget
+        if (avgTime > FRAME_BUDGET) {
+          consecutiveExceedances++;
+          resultsContainer.innerHTML += `  Exceeded budget (${consecutiveExceedances}/${requiredExceedances})\n`;
+          // Auto-scroll to show exceedance messages
+          resultsContainer.scrollTop = resultsContainer.scrollHeight;
+          
+          // Only stop if we've exceeded enough times consecutively
+          if (consecutiveExceedances >= requiredExceedances) {
+            exceededBudget = true;
+          } else {
+            // Continue with the same shape count to confirm if it consistently exceeds budget
+            // No need to increment here
+          }
+        } else {
+          // Reset consecutive exceedances counter
+          consecutiveExceedances = 0;
+          // Increment shape count and continue testing
+          currentShapeCount += incrementSize;
+        }
+        
+        // Wait for the next frame before proceeding to next shape count
+        animationFrameId = requestAnimationFrame(testNextShapeCount);
       }
       
       // Start with the first shape count
@@ -695,7 +640,6 @@
       results += `\n=== ${testData.testType.toUpperCase()} TEST RESULTS ===\n`;
       results += `Test Parameters:\n`;
       results += `- Frame budget: ${FRAME_BUDGET}ms (60fps)\n`;
-      results += `- Iterations per count: ${testData.iterationsPerCount}\n`;
       results += `- SW Canvas increment: ${testData.swIncrement}\n`;
       results += `- HTML5 Canvas increment: ${testData.htmlIncrement}\n`;
       results += `- Consecutive exceedances required: ${testData.requiredExceedances}\n`;
