@@ -214,13 +214,32 @@
       const tests = ['lines', 'rects'];
       let currentIndex = 0;
       
+      // Clear previous results and set header for overall results
+      resultsContainer.innerHTML = "Running all tests...\n\n";
+      
+      // Store results for overall summary
+      const allResults = {
+        tests: [],
+        swAvgTimes: [],
+        canvasAvgTimes: [],
+        ratios: []
+      };
+      
       function runNextTest() {
         if (currentIndex < tests.length && !abortRequested) {
-          runTest(tests[currentIndex], () => {
+          runTest(tests[currentIndex], (testResults) => {
+            // Store individual test results
+            allResults.tests.push(tests[currentIndex]);
+            allResults.swAvgTimes.push(testResults.swAvg);
+            allResults.canvasAvgTimes.push(testResults.canvasAvg);
+            allResults.ratios.push(testResults.ratio);
+            
             currentIndex++;
             runNextTest();
-          });
+          }, false); // Pass false to avoid clearing results between tests
         } else {
+          // Show overall results after all tests are done
+          displayOverallResults(allResults);
           resetTestState();
         }
       }
@@ -252,7 +271,7 @@
       btnAbort.disabled = enabled;
     }
     
-    function runTest(testType, callback = null) {
+    function runTest(testType, callback = null, clearResults = true) {
       setButtonsState(false);
       currentTest = testType;
       abortRequested = false;
@@ -262,8 +281,12 @@
       const iterations = parseInt(testIterationsSlider.value);
       const includeBlitting = includeBlittingCheckbox.checked;
       
-      // Clear previous results
-      resultsContainer.innerHTML = `Running ${testType} test with ${shapeCount} shapes, ${iterations} iterations${includeBlitting ? ' (including blitting time)' : ' (excluding blitting time)'}...\n\n`;
+      // Clear previous results if not part of "Run All Tests"
+      if (clearResults) {
+        resultsContainer.innerHTML = `Running ${testType} test with ${shapeCount} shapes, ${iterations} iterations${includeBlitting ? ' (including blitting time)' : ' (excluding blitting time)'}...\n\n`;
+      } else {
+        resultsContainer.innerHTML += `\nRunning ${testType} test with ${shapeCount} shapes, ${iterations} iterations${includeBlitting ? ' (including blitting time)' : ' (excluding blitting time)'}...\n\n`;
+      }
       
       // Show progress bar
       progressContainer.style.display = 'block';
@@ -307,13 +330,15 @@
           animationFrameId = requestAnimationFrame(runNextIteration);
         } else {
           // Test complete, calculate and display results
-          displayResults(testType, shapeCount, iterations, includeBlitting, swTimes, canvasTimes);
+          const results = displayResults(testType, shapeCount, iterations, includeBlitting, swTimes, canvasTimes);
           
-          // Reset test state
-          resetTestState();
+          // Reset test state if not part of "Run All Tests" or if it's the last test
+          if (!callback) {
+            resetTestState();
+          }
           
-          // Call callback if provided (for runAllTests)
-          if (callback) callback();
+          // Call callback if provided (for runAllTests), passing the results
+          if (callback) callback(results);
         }
       }
       
@@ -462,6 +487,46 @@
       
       results += `Performance Ratio (Software / HTML5): ${ratio.toFixed(2)}x\n`;
       results += `Software canvas is ${ratio.toFixed(2)}x ${ratio > 1 ? "slower" : "faster"} than HTML5 canvas for this test.\n\n`;
+      
+      // Append results to container
+      resultsContainer.innerHTML += results;
+      
+      // Return results object for aggregation
+      return {
+        testType,
+        shapeCount,
+        iterations,
+        includeBlitting,
+        swAvg,
+        canvasAvg,
+        swStdDev,
+        canvasStdDev,
+        ratio
+      };
+    }
+    
+    function displayOverallResults(allResults) {
+      // Calculate overall statistics
+      const overallSwAvg = calculateAverage(allResults.swAvgTimes);
+      const overallCanvasAvg = calculateAverage(allResults.canvasAvgTimes);
+      const overallRatio = calculateAverage(allResults.ratios);
+      
+      // Format overall results
+      let results = "\n=== OVERALL TEST RESULTS ===\n";
+      results += `Tests run: ${allResults.tests.length}\n\n`;
+      
+      // Test specific summary
+      results += "Test Summary:\n";
+      for (let i = 0; i < allResults.tests.length; i++) {
+        results += `- ${allResults.tests[i].toUpperCase()}: SW ${allResults.swAvgTimes[i].toFixed(3)}ms, HTML5 ${allResults.canvasAvgTimes[i].toFixed(3)}ms, Ratio ${allResults.ratios[i].toFixed(2)}x\n`;
+      }
+      results += "\n";
+      
+      results += "Average Performance Across All Tests:\n";
+      results += `- Software Canvas: ${overallSwAvg.toFixed(3)}ms\n`;
+      results += `- HTML5 Canvas: ${overallCanvasAvg.toFixed(3)}ms\n`;
+      results += `- Average Ratio: ${overallRatio.toFixed(2)}x\n`;
+      results += `Software canvas is on average ${overallRatio.toFixed(2)}x ${overallRatio > 1 ? "slower" : "faster"} than HTML5 canvas.\n\n`;
       
       // Append results to container
       resultsContainer.innerHTML += results;
