@@ -330,7 +330,7 @@ class RenderTest {
 
   showError(message) {
     // Common error tracking used in both environments
-    if (!this.errorCount) {
+    if (this.errorCount === undefined) {
       this.errorCount = 0;
     }
     this.errorCount++;
@@ -522,6 +522,9 @@ class RenderTest {
     // Clear references to the UI elements
     this.errorCountDisplay = null;
     this.clearErrorsButton = null;
+    
+    // Clear the errors array too
+    this.errors = [];
   }
 
   showChecks(functionToRunAllChecks) {
@@ -553,16 +556,15 @@ class RenderTest {
   }
 
   render(buildShapesFn, canvasCodeFn = null, iterationNumber = null) {
-    // Common setup for both environments
-    // Reset error tracking
-    this.errorCount = 0;
-    this.errors = [];
-    
     // Initialize shapes array
     this.shapes = [];
     
     // Call the appropriate environment-specific render method
     if (this.isNode) {
+      // For Node environment, reset error tracking (since it's a single run)
+      this.errorCount = 0;
+      this.errors = [];
+      
       // Node.js specific rendering path
       return this.renderInNode(buildShapesFn, canvasCodeFn, iterationNumber);
     } else {
