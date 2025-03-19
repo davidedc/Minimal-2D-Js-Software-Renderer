@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Performance Tests - Software Canvas vs HTML5 Canvas</title>
+  <link rel="stylesheet" href="styles/main.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    h1, h2 {
+      color: #333;
+    }
+    
+    .test-controls {
+      margin-bottom: 20px;
+      padding: 15px;
+      background-color: #f5f5f5;
+      border-radius: 5px;
+    }
+    
+    .canvas-container {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    
+    .canvas-wrapper {
+      width: 48%;
+    }
+    
+    canvas {
+      border: 1px solid #ddd;
+      margin-bottom: 10px;
+    }
+    
+    .test-buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+    }
+    
+    button {
+      padding: 8px 16px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    
+    button:hover {
+      background-color: #45a049;
+    }
+    
+    button:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+    
+    .results {
+      font-family: monospace;
+      padding: 15px;
+      background-color: #f8f8f8;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      white-space: pre-wrap;
+      overflow-x: auto;
+    }
+    
+    #progress-container {
+      width: 100%;
+      background-color: #ddd;
+      border-radius: 4px;
+      margin-top: 10px;
+      margin-bottom: 20px;
+    }
+    
+    #progress-bar {
+      height: 20px;
+      width: 0;
+      background-color: #4CAF50;
+      border-radius: 4px;
+      text-align: center;
+      color: white;
+      line-height: 20px;
+    }
+    
+    label {
+      margin-right: 10px;
+    }
+    
+    input[type="range"] {
+      vertical-align: middle;
+    }
+    
+    .value-display {
+      display: inline-block;
+      width: 50px;
+      text-align: center;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Performance Tests - Software Canvas vs HTML5 Canvas</h1>
+  
+  <div class="test-controls">
+    <h2>Test Configuration</h2>
+    
+    <div>
+      <label for="shape-count">Number of shapes:</label>
+      <input type="range" id="shape-count" min="1" max="1000" value="100">
+      <span id="shape-count-value" class="value-display">100</span>
+    </div>
+    
+    <div>
+      <label for="test-iterations">Test iterations:</label>
+      <input type="range" id="test-iterations" min="1" max="100" value="10">
+      <span id="test-iterations-value" class="value-display">10</span>
+    </div>
+    
+    <div>
+      <label>
+        <input type="checkbox" id="include-blitting" checked>
+        Include blitting time (complete render cycle)
+      </label>
+    </div>
+    
+    <div class="test-buttons">
+      <button id="btn-lines-test">Run Lines Test</button>
+      <button id="btn-rects-test">Run Rectangles Test</button>
+      <button id="btn-run-all">Run All Tests</button>
+      <button id="btn-abort" disabled>Abort Tests</button>
+    </div>
+  </div>
+  
+  <div id="progress-container" style="display: none;">
+    <div id="progress-bar">0%</div>
+  </div>
+  
+  <div class="canvas-container">
+    <div class="canvas-wrapper">
+      <h3>Software Canvas</h3>
+      <canvas id="sw-canvas" width="500" height="400"></canvas>
+    </div>
+    <div class="canvas-wrapper">
+      <h3>HTML5 Canvas</h3>
+      <canvas id="canvas" width="500" height="400"></canvas>
+    </div>
+  </div>
+  
+  <h2>Test Results</h2>
+  <div class="results" id="results-container"></div>
+
+  <!-- Load library scripts -->
+  <script src="../../build/crisp-sw-canvas-v1.0.2.min.js"></script>
+  <script src="../../src/scene-creation/SeededRandom.js"></script>
+  
+  <script>
+    // Constants
+    const CANVAS_WIDTH = 500;
+    const CANVAS_HEIGHT = 400;
+    
+    // Elements
+    const swCanvas = document.getElementById('sw-canvas');
+    const canvas = document.getElementById('canvas');
+    const resultsContainer = document.getElementById('results-container');
+    const progressContainer = document.getElementById('progress-container');
+    const progressBar = document.getElementById('progress-bar');
+    
+    // Canvas contexts
+    const swCtx = new CrispSwContext(swCanvas);
+    const ctx = canvas.getContext('2d');
+    
+    // Controls
+    const shapeCountSlider = document.getElementById('shape-count');
+    const shapeCountValue = document.getElementById('shape-count-value');
+    const testIterationsSlider = document.getElementById('test-iterations');
+    const testIterationsValue = document.getElementById('test-iterations-value');
+    const includeBlittingCheckbox = document.getElementById('include-blitting');
+    
+    // Buttons
+    const btnLinesTest = document.getElementById('btn-lines-test');
+    const btnRectsTest = document.getElementById('btn-rects-test');
+    const btnRunAll = document.getElementById('btn-run-all');
+    const btnAbort = document.getElementById('btn-abort');
+    
+    // Test state
+    let currentTest = null;
+    let abortRequested = false;
+    let animationFrameId = null;
+    
+    // Update UI based on slider values
+    shapeCountSlider.addEventListener('input', () => {
+      shapeCountValue.textContent = shapeCountSlider.value;
+    });
+    
+    testIterationsSlider.addEventListener('input', () => {
+      testIterationsValue.textContent = testIterationsSlider.value;
+    });
+    
+    // Button event listeners
+    btnLinesTest.addEventListener('click', () => runTest('lines'));
+    btnRectsTest.addEventListener('click', () => runTest('rects'));
+    btnRunAll.addEventListener('click', runAllTests);
+    btnAbort.addEventListener('click', abortTests);
+    
+    // Test execution functions
+    function runAllTests() {
+      const tests = ['lines', 'rects'];
+      let currentIndex = 0;
+      
+      function runNextTest() {
+        if (currentIndex < tests.length && !abortRequested) {
+          runTest(tests[currentIndex], () => {
+            currentIndex++;
+            runNextTest();
+          });
+        } else {
+          resetTestState();
+        }
+      }
+      
+      runNextTest();
+    }
+    
+    function abortTests() {
+      abortRequested = true;
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
+      }
+      resetTestState();
+      resultsContainer.innerHTML += "Tests aborted by user.\n";
+    }
+    
+    function resetTestState() {
+      currentTest = null;
+      abortRequested = false;
+      setButtonsState(true);
+      progressContainer.style.display = 'none';
+    }
+    
+    function setButtonsState(enabled) {
+      btnLinesTest.disabled = !enabled;
+      btnRectsTest.disabled = !enabled;
+      btnRunAll.disabled = !enabled;
+      btnAbort.disabled = enabled;
+    }
+    
+    function runTest(testType, callback = null) {
+      setButtonsState(false);
+      currentTest = testType;
+      abortRequested = false;
+      
+      // Get test parameters
+      const shapeCount = parseInt(shapeCountSlider.value);
+      const iterations = parseInt(testIterationsSlider.value);
+      const includeBlitting = includeBlittingCheckbox.checked;
+      
+      // Clear previous results
+      resultsContainer.innerHTML = `Running ${testType} test with ${shapeCount} shapes, ${iterations} iterations${includeBlitting ? ' (including blitting time)' : ' (excluding blitting time)'}...\n\n`;
+      
+      // Show progress bar
+      progressContainer.style.display = 'block';
+      progressBar.style.width = '0%';
+      progressBar.textContent = '0%';
+      
+      // Timing arrays
+      const swTimes = [];
+      const canvasTimes = [];
+      
+      // Run test iterations
+      let currentIteration = 0;
+      
+      function runNextIteration() {
+        if (currentIteration < iterations && !abortRequested) {
+          // Update progress
+          const progress = Math.round((currentIteration / iterations) * 100);
+          progressBar.style.width = `${progress}%`;
+          progressBar.textContent = `${progress}%`;
+          
+          // Clear canvases
+          swCtx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+          ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+          
+          // Seed random number generator for consistent shapes across both canvases
+          SeededRandom.seedWithInteger(currentIteration);
+          
+          // Run the specific test
+          switch (testType) {
+            case 'lines':
+              runLinesTest(shapeCount, includeBlitting, swTimes, canvasTimes);
+              break;
+            case 'rects':
+              runRectsTest(shapeCount, includeBlitting, swTimes, canvasTimes);
+              break;
+          }
+          
+          currentIteration++;
+          
+          // Wait for next frame to allow canvas rendering to complete
+          animationFrameId = requestAnimationFrame(runNextIteration);
+        } else {
+          // Test complete, calculate and display results
+          displayResults(testType, shapeCount, iterations, includeBlitting, swTimes, canvasTimes);
+          
+          // Reset test state
+          resetTestState();
+          
+          // Call callback if provided (for runAllTests)
+          if (callback) callback();
+        }
+      }
+      
+      // Start first iteration
+      animationFrameId = requestAnimationFrame(runNextIteration);
+    }
+    
+    function runLinesTest(count, includeBlitting, swTimes, canvasTimes) {
+      // Generate random lines
+      const lines = [];
+      for (let i = 0; i < count; i++) {
+        lines.push({
+          x1: Math.floor(SeededRandom.getRandom() * CANVAS_WIDTH),
+          y1: Math.floor(SeededRandom.getRandom() * CANVAS_HEIGHT),
+          x2: Math.floor(SeededRandom.getRandom() * CANVAS_WIDTH),
+          y2: Math.floor(SeededRandom.getRandom() * CANVAS_HEIGHT),
+          lineWidth: Math.floor(SeededRandom.getRandom() * 5) + 1,
+          color: `rgba(${Math.floor(SeededRandom.getRandom() * 256)}, ${Math.floor(SeededRandom.getRandom() * 256)}, ${Math.floor(SeededRandom.getRandom() * 256)}, ${SeededRandom.getRandom().toFixed(2)})`
+        });
+      }
+      
+      // Test software canvas
+      let startTime = performance.now();
+      
+      // Draw on software canvas
+      for (const line of lines) {
+        swCtx.lineWidth = line.lineWidth;
+        swCtx.strokeStyle = line.color;
+        swCtx.strokeLine(line.x1, line.y1, line.x2, line.y2);
+      }
+      
+      // Include blitting time if requested
+      if (includeBlitting) {
+        swCtx.blitToCanvas(swCanvas);
+      }
+      
+      let endTime = performance.now();
+      swTimes.push(endTime - startTime);
+      
+      // Test regular canvas
+      startTime = performance.now();
+      
+      // Draw on regular canvas
+      for (const line of lines) {
+        ctx.lineWidth = line.lineWidth;
+        ctx.strokeStyle = line.color;
+        ctx.beginPath();
+        ctx.moveTo(line.x1, line.y1);
+        ctx.lineTo(line.x2, line.y2);
+        ctx.stroke();
+      }
+      
+      endTime = performance.now();
+      canvasTimes.push(endTime - startTime);
+    }
+    
+    function runRectsTest(count, includeBlitting, swTimes, canvasTimes) {
+      // Generate random rectangles
+      const rects = [];
+      for (let i = 0; i < count; i++) {
+        const x = Math.floor(SeededRandom.getRandom() * CANVAS_WIDTH);
+        const y = Math.floor(SeededRandom.getRandom() * CANVAS_HEIGHT);
+        const width = Math.floor(SeededRandom.getRandom() * 100) + 20;
+        const height = Math.floor(SeededRandom.getRandom() * 100) + 20;
+        const hasFill = SeededRandom.getRandom() > 0.3;
+        const hasStroke = SeededRandom.getRandom() > 0.3;
+        
+        rects.push({
+          x, y, width, height,
+          hasFill, hasStroke,
+          fillColor: `rgba(${Math.floor(SeededRandom.getRandom() * 256)}, ${Math.floor(SeededRandom.getRandom() * 256)}, ${Math.floor(SeededRandom.getRandom() * 256)}, ${SeededRandom.getRandom().toFixed(2)})`,
+          strokeColor: `rgba(${Math.floor(SeededRandom.getRandom() * 256)}, ${Math.floor(SeededRandom.getRandom() * 256)}, ${Math.floor(SeededRandom.getRandom() * 256)}, ${SeededRandom.getRandom().toFixed(2)})`,
+          lineWidth: Math.floor(SeededRandom.getRandom() * 5) + 1
+        });
+      }
+      
+      // Test software canvas
+      let startTime = performance.now();
+      
+      // Draw on software canvas
+      for (const rect of rects) {
+        if (rect.hasFill) {
+          swCtx.fillStyle = rect.fillColor;
+          swCtx.fillRect(rect.x, rect.y, rect.width, rect.height);
+        }
+        
+        if (rect.hasStroke) {
+          swCtx.lineWidth = rect.lineWidth;
+          swCtx.strokeStyle = rect.strokeColor;
+          swCtx.strokeRect(rect.x, rect.y, rect.width, rect.height);
+        }
+      }
+      
+      // Include blitting time if requested
+      if (includeBlitting) {
+        swCtx.blitToCanvas(swCanvas);
+      }
+      
+      let endTime = performance.now();
+      swTimes.push(endTime - startTime);
+      
+      // Test regular canvas
+      startTime = performance.now();
+      
+      // Draw on regular canvas
+      for (const rect of rects) {
+        if (rect.hasFill) {
+          ctx.fillStyle = rect.fillColor;
+          ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
+        }
+        
+        if (rect.hasStroke) {
+          ctx.lineWidth = rect.lineWidth;
+          ctx.strokeStyle = rect.strokeColor;
+          ctx.strokeRect(rect.x, rect.y, rect.width, rect.height);
+        }
+      }
+      
+      endTime = performance.now();
+      canvasTimes.push(endTime - startTime);
+    }
+    
+    function displayResults(testType, shapeCount, iterations, includeBlitting, swTimes, canvasTimes) {
+      // Calculate statistics
+      const swAvg = calculateAverage(swTimes);
+      const canvasAvg = calculateAverage(canvasTimes);
+      const swStdDev = calculateStandardDeviation(swTimes, swAvg);
+      const canvasStdDev = calculateStandardDeviation(canvasTimes, canvasAvg);
+      const ratio = swAvg / canvasAvg;
+      
+      // Format results
+      let results = "";
+      results += `=== ${testType.toUpperCase()} TEST RESULTS ===\n`;
+      results += `Test Parameters:\n`;
+      results += `- Shapes: ${shapeCount}\n`;
+      results += `- Iterations: ${iterations}\n`;
+      results += `- Blitting time: ${includeBlitting ? "Included" : "Excluded"}\n\n`;
+      
+      results += `Software Canvas Performance:\n`;
+      results += `- Average time: ${swAvg.toFixed(3)}ms\n`;
+      results += `- Standard deviation: ${swStdDev.toFixed(3)}ms\n\n`;
+      
+      results += `HTML5 Canvas Performance:\n`;
+      results += `- Average time: ${canvasAvg.toFixed(3)}ms\n`;
+      results += `- Standard deviation: ${canvasStdDev.toFixed(3)}ms\n\n`;
+      
+      results += `Performance Ratio (Software / HTML5): ${ratio.toFixed(2)}x\n`;
+      results += `Software canvas is ${ratio.toFixed(2)}x ${ratio > 1 ? "slower" : "faster"} than HTML5 canvas for this test.\n\n`;
+      
+      // Append results to container
+      resultsContainer.innerHTML += results;
+    }
+    
+    // Utility functions
+    function calculateAverage(values) {
+      return values.reduce((sum, val) => sum + val, 0) / values.length;
+    }
+    
+    function calculateStandardDeviation(values, avg) {
+      const squareDiffs = values.map(value => Math.pow(value - avg, 2));
+      const avgSquareDiff = calculateAverage(squareDiffs);
+      return Math.sqrt(avgSquareDiff);
+    }
+  </script>
+</body>
+</html>
