@@ -28,6 +28,7 @@
 
     <script src="../../src/renderers/renderer-utils.js"></script>
     <script src="../../src/renderers/sw-renderer/SWRendererPixel.js"></script>
+    <script src="../../src/renderers/sw-renderer/SWRendererCircle.js"></script>
     <script src="../../src/renderers/sw-renderer/SWRendererLine.js"></script>
     <script src="../../src/renderers/sw-renderer/SWRendererRect.js"></script>
 
@@ -51,6 +52,7 @@
     <script src="../../src/crisp-sw-canvas-tests/test-overlapping-rectangles.js"></script>
     <script src="../../src/crisp-sw-canvas-tests/test-rectangle-clip.js"></script>
     <script src="../../src/crisp-sw-canvas-tests/test-lines.js"></script>
+    <script src="../../src/crisp-sw-canvas-tests/test-circles.js"></script>
 
     <script>
         const CANVAS_WIDTH = 800;
@@ -61,6 +63,7 @@
             createOverlappingRectanglesTest();
             createRectangleClipTest();
             createLinesTest();
+            createCirclesTest();
         }
 
         document.addEventListener('DOMContentLoaded', () => {

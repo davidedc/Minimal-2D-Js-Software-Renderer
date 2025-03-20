@@ -143,6 +143,7 @@
     <div class="test-buttons">
       <button id="btn-lines-test">Run Lines Test</button>
       <button id="btn-rects-test">Run Rectangles Test</button>
+      <button id="btn-circles-test">Run Circles Test</button>
       <button id="btn-run-all">Run All Tests</button>
       <button id="btn-abort" disabled>Abort Tests</button>
     </div>
@@ -200,6 +201,7 @@
     // Buttons
     const btnLinesTest = document.getElementById('btn-lines-test');
     const btnRectsTest = document.getElementById('btn-rects-test');
+    const btnCirclesTest = document.getElementById('btn-circles-test');
     const btnRunAll = document.getElementById('btn-run-all');
     const btnAbort = document.getElementById('btn-abort');
     
@@ -211,12 +213,13 @@
     // Button event listeners
     btnLinesTest.addEventListener('click', () => runTest('lines'));
     btnRectsTest.addEventListener('click', () => runTest('rects'));
+    btnCirclesTest.addEventListener('click', () => runTest('circles'));
     btnRunAll.addEventListener('click', runAllTests);
     btnAbort.addEventListener('click', abortTests);
     
     // Test execution functions
     function runAllTests() {
-      const tests = ['lines', 'rects'];
+      const tests = ['lines', 'rects', 'circles'];
       let currentIndex = 0;
       
       // Clear previous results
@@ -272,6 +275,7 @@
     function setButtonsState(enabled) {
       btnLinesTest.disabled = !enabled;
       btnRectsTest.disabled = !enabled;
+      btnCirclesTest.disabled = !enabled;
       btnRunAll.disabled = !enabled;
       btnAbort.disabled = enabled;
     }
@@ -387,6 +391,8 @@
           drawRandomLines(swCtx, currentShapeCount);
         } else if (testType === 'rects') {
           drawRandomRects(swCtx, currentShapeCount);
+        } else if (testType === 'circles') {
+          drawRandomCircles(swCtx, currentShapeCount);
         }
         
         // Include blitting time if requested
@@ -476,6 +482,8 @@
           drawRandomLinesHTML5(ctx, currentShapeCount);
         } else if (testType === 'rects') {
           drawRandomRectsHTML5(ctx, currentShapeCount);
+        } else if (testType === 'circles') {
+          drawRandomCirclesHTML5(ctx, currentShapeCount);
         }
         
         let endTime = performance.now();
@@ -629,6 +637,88 @@
           ctx.lineWidth = lineWidth;
           ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${a})`;
           ctx.strokeRect(x, y, width, height);
+        }
+      }
+    }
+    
+    // Circle drawing for Software Canvas
+    function drawRandomCircles(ctx, count) {
+      for (let i = 0; i < count; i++) {
+        const centerX = Math.floor(SeededRandom.getRandom() * CANVAS_WIDTH);
+        const centerY = Math.floor(SeededRandom.getRandom() * CANVAS_HEIGHT);
+        const radius = Math.floor(SeededRandom.getRandom() * 40) + 10;
+        const drawType = SeededRandom.getRandom();
+        
+        const r = Math.floor(SeededRandom.getRandom() * 256);
+        const g = Math.floor(SeededRandom.getRandom() * 256);
+        const b = Math.floor(SeededRandom.getRandom() * 256);
+        const a = Math.floor((0.3 + SeededRandom.getRandom() * 0.7) * 255);
+        const strokeWidth = Math.floor(SeededRandom.getRandom() * 5) + 1;
+        
+        // 33% fill only, 33% stroke only, 33% both
+        if (drawType < 0.33) {
+          // Fill only
+          ctx.fillCircle(centerX, centerY, radius, r, g, b, a);
+        } else if (drawType < 0.66) {
+          // Stroke only
+          ctx.strokeCircle(centerX, centerY, radius, strokeWidth, r, g, b, a);
+        } else {
+          // Both fill and stroke
+          const sr = Math.floor(SeededRandom.getRandom() * 256);
+          const sg = Math.floor(SeededRandom.getRandom() * 256);
+          const sb = Math.floor(SeededRandom.getRandom() * 256);
+          const sa = Math.floor((0.3 + SeededRandom.getRandom() * 0.7) * 255);
+          
+          ctx.fillAndStrokeCircle(
+            centerX, centerY, radius,
+            r, g, b, a,
+            strokeWidth,
+            sr, sg, sb, sa
+          );
+        }
+      }
+    }
+    
+    // Circle drawing for HTML5 Canvas
+    function drawRandomCirclesHTML5(ctx, count) {
+      for (let i = 0; i < count; i++) {
+        const centerX = Math.floor(SeededRandom.getRandom() * CANVAS_WIDTH);
+        const centerY = Math.floor(SeededRandom.getRandom() * CANVAS_HEIGHT);
+        const radius = Math.floor(SeededRandom.getRandom() * 40) + 10;
+        const drawType = SeededRandom.getRandom();
+        
+        const r = Math.floor(SeededRandom.getRandom() * 256);
+        const g = Math.floor(SeededRandom.getRandom() * 256);
+        const b = Math.floor(SeededRandom.getRandom() * 256);
+        const a = 0.3 + SeededRandom.getRandom() * 0.7;
+        const strokeWidth = Math.floor(SeededRandom.getRandom() * 5) + 1;
+        
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+        
+        // 33% fill only, 33% stroke only, 33% both
+        if (drawType < 0.33) {
+          // Fill only
+          ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${a})`;
+          ctx.fill();
+        } else if (drawType < 0.66) {
+          // Stroke only
+          ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${a})`;
+          ctx.lineWidth = strokeWidth;
+          ctx.stroke();
+        } else {
+          // Both fill and stroke
+          const sr = Math.floor(SeededRandom.getRandom() * 256);
+          const sg = Math.floor(SeededRandom.getRandom() * 256);
+          const sb = Math.floor(SeededRandom.getRandom() * 256);
+          const sa = 0.3 + SeededRandom.getRandom() * 0.7;
+          
+          ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${a})`;
+          ctx.fill();
+          
+          ctx.strokeStyle = `rgba(${sr}, ${sg}, ${sb}, ${sa})`;
+          ctx.lineWidth = strokeWidth;
+          ctx.stroke();
         }
       }
     }

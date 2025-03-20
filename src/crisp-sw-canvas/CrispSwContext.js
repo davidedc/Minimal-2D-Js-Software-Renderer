@@ -38,7 +38,7 @@ class CrispSwContext {
         this.lineRenderer = new SWRendererLine(this.pixelRenderer);
         this.rectRenderer = new SWRendererRect(this.frameBuffer, canvas.width, canvas.height, this.lineRenderer, this.pixelRenderer);
         //this.roundedRectRenderer = new SWRendererRoundedRect(this.frameBuffer, canvas.width, canvas.height, this.lineRenderer, this.pixelRenderer);
-        //this.circleRenderer = new SWRendererCircle(this.pixelRenderer);
+        this.circleRenderer = new SWRendererCircle(this.pixelRenderer);
         //this.arcRenderer = new SWRendererArc(this.pixelRenderer);
     }
 
@@ -217,6 +217,118 @@ class CrispSwContext {
         const imageData = new ImageData(this.frameBuffer, this.canvas.width, this.canvas.height);
         const ctx = canvas.getContext('2d');
         ctx.putImageData(imageData, 0, 0);
+    }
+    
+    /**
+     * Fill a circle with the specified color
+     * @param {number} centerX - X coordinate of the circle center
+     * @param {number} centerY - Y coordinate of the circle center
+     * @param {number} radius - Radius of the circle
+     * @param {number} fillR - Red component of fill color (0-255)
+     * @param {number} fillG - Green component of fill color (0-255)
+     * @param {number} fillB - Blue component of fill color (0-255)
+     * @param {number} fillA - Alpha component of fill color (0-255)
+     */
+    fillCircle(centerX, centerY, radius, fillR, fillG, fillB, fillA) {
+        const state = this.currentState;
+        
+        // Transform center point according to current transformation matrix
+        const center = transformPoint(centerX, centerY, state.transform.elements);
+        
+        // Apply scale factor to radius
+        const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
+        const scaledRadius = radius * Math.max(scaleX, scaleY);
+        
+        // Create shape object for the circle
+        const circleShape = {
+            center: { x: center.tx, y: center.ty },
+            radius: scaledRadius,
+            strokeWidth: 0,
+            strokeColor: { r: 0, g: 0, b: 0, a: 0 }, // No stroke
+            fillColor: { r: fillR, g: fillG, b: fillB, a: fillA }
+        };
+        
+        // Call the circle renderer with our shape
+        this.circleRenderer.drawCircle(circleShape);
+    }
+    
+    /**
+     * Stroke a circle with the specified color and width
+     * @param {number} centerX - X coordinate of the circle center
+     * @param {number} centerY - Y coordinate of the circle center
+     * @param {number} radius - Radius of the circle
+     * @param {number} strokeWidth - Width of the stroke
+     * @param {number} strokeR - Red component of stroke color (0-255)
+     * @param {number} strokeG - Green component of stroke color (0-255)
+     * @param {number} strokeB - Blue component of stroke color (0-255)
+     * @param {number} strokeA - Alpha component of stroke color (0-255)
+     */
+    strokeCircle(centerX, centerY, radius, strokeWidth, strokeR, strokeG, strokeB, strokeA) {
+        const state = this.currentState;
+        
+        // Transform center point according to current transformation matrix
+        const center = transformPoint(centerX, centerY, state.transform.elements);
+        
+        // Apply scale factor to radius and stroke width
+        const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
+        const scaledRadius = radius * Math.max(scaleX, scaleY);
+        const scaledStrokeWidth = getScaledLineWidth(state.transform.elements, strokeWidth);
+        
+        // Create shape object for the circle
+        const circleShape = {
+            center: { x: center.tx, y: center.ty },
+            radius: scaledRadius,
+            strokeWidth: scaledStrokeWidth,
+            strokeColor: { r: strokeR, g: strokeG, b: strokeB, a: strokeA },
+            fillColor: { r: 0, g: 0, b: 0, a: 0 } // No fill
+        };
+        
+        // Call the circle renderer with our shape
+        this.circleRenderer.drawCircle(circleShape);
+    }
+    
+    /**
+     * Fill and stroke a circle with specified colors and stroke width
+     * @param {number} centerX - X coordinate of the circle center
+     * @param {number} centerY - Y coordinate of the circle center
+     * @param {number} radius - Radius of the circle
+     * @param {number} fillR - Red component of fill color (0-255)
+     * @param {number} fillG - Green component of fill color (0-255)
+     * @param {number} fillB - Blue component of fill color (0-255)
+     * @param {number} fillA - Alpha component of fill color (0-255)
+     * @param {number} strokeWidth - Width of the stroke
+     * @param {number} strokeR - Red component of stroke color (0-255)
+     * @param {number} strokeG - Green component of stroke color (0-255)
+     * @param {number} strokeB - Blue component of stroke color (0-255)
+     * @param {number} strokeA - Alpha component of stroke color (0-255)
+     */
+    fillAndStrokeCircle(
+        centerX, centerY, radius,
+        fillR, fillG, fillB, fillA,
+        strokeWidth,
+        strokeR, strokeG, strokeB, strokeA
+    ) {
+        const state = this.currentState;
+        
+        // Transform center point according to current transformation matrix
+        const center = transformPoint(centerX, centerY, state.transform.elements);
+        
+        // Apply scale factor to radius and stroke width
+        const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
+        const scaledRadius = radius * Math.max(scaleX, scaleY);
+        const scaledStrokeWidth = getScaledLineWidth(state.transform.elements, strokeWidth);
+        
+        // Create shape object for the circle
+        const circleShape = {
+            center: { x: center.tx, y: center.ty },
+            radius: scaledRadius,
+            strokeWidth: scaledStrokeWidth,
+            strokeColor: { r: strokeR, g: strokeG, b: strokeB, a: strokeA },
+            fillColor: { r: fillR, g: fillG, b: fillB, a: fillA }
+        };
+        
+        // Call the circle renderer with our shape
+        this.circleRenderer.drawCircle(circleShape);
     }
 
     /**

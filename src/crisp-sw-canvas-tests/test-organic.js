@@ -177,6 +177,33 @@ function drawOrganicTestScene(ctx) {
   
   ctx.restore();
   ctx.restore();
+  
+  // Add some circles to demonstrate the new circle drawing functionality
+  ctx.save();
+  ctx.globalAlpha = 1.0;
+  
+  // Add a cluster of circles with different fill and stroke styles
+  const centerX = 150;
+  const centerY = 300;
+  
+  // Large background circle with fill only
+  ctx.fillCircle(centerX, centerY, 60, 230, 230, 250, 255);
+  
+  // Medium circle with both fill and stroke
+  ctx.fillAndStrokeCircle(
+    centerX, centerY, 45,
+    200, 100, 100, 180,  // Semi-transparent reddish fill
+    3,                   // 3px stroke width
+    100, 50, 50, 255     // Solid darker red stroke
+  );
+  
+  // Small circle with stroke only
+  ctx.strokeCircle(centerX, centerY, 25, 2, 50, 50, 150, 255);
+  
+  // Tiny circle with fill only in the center
+  ctx.fillCircle(centerX, centerY, 10, 255, 255, 255, 255);
+  
+  ctx.restore();
 }
 
 function createOrganicTest() {

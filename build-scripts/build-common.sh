@@ -60,6 +60,7 @@ function get_common_core_files() {
         "$PROJECT_ROOT/src/renderers/sw-renderer/SWRendererPixel.js"
         "$PROJECT_ROOT/src/renderers/sw-renderer/SWRendererLine.js"
         "$PROJECT_ROOT/src/renderers/sw-renderer/SWRendererRect.js"
+        "$PROJECT_ROOT/src/renderers/sw-renderer/SWRendererCircle.js"
         "$PROJECT_ROOT/src/crisp-sw-canvas/CrispSwCanvas.js"
         "$PROJECT_ROOT/src/crisp-sw-canvas/CrispSwContext.js"
     )
