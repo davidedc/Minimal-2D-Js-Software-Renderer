@@ -15,53 +15,96 @@ class SWRendererPixel {
   }
 
   clipPixel(x, y) {
-    if (x < 0 || x >= this.width || y < 0 || y >= this.height) return;
+    // Convert to integer with bitwise OR
+    x = x | 0;
+    y = y | 0;
     
-    const byteIndex = Math.floor((y * this.width + x) / 8);
-    const bitIndex = (y * this.width + x) % 8;
+    // Cache width for performance
+    const width = this.width;
+    
+    if (x < 0 || x >= width || y < 0 || y >= this.height) return;
+    
+    // Pre-calculate pixel position
+    const pixelPos = y * width + x;
+    
+    // Use bit shifting for division and modulo
+    const byteIndex = pixelPos >> 3; // Faster than Math.floor(pixelPos / 8)
+    const bitIndex = pixelPos & 7;   // Faster than pixelPos % 8
+    
     // OR the bit in the tempClippingMask
-    this.tempClippingMask[byteIndex] = this.tempClippingMask[byteIndex] | (1 << (7 - bitIndex));
+    this.tempClippingMask[byteIndex] |= (1 << (7 - bitIndex));
   }
 
   // Blending happens in sRGB space for performance reasons
   setPixel(x, y, r, g, b, a) {
     // emit a warning if x or y are not integers
-    if (!Number.isInteger(x) || !Number.isInteger(y)) {
-      console.warn(`setPixel called with non-integer coordinates: x=${x}, y=${y}`);
+    if (false) {
+      if (!Number.isInteger(x) || !Number.isInteger(y)) {
+        console.warn(`setPixel called with non-integer coordinates: x=${x}, y=${y}`);
+      }
     }
-    // fix x and y to be integers
-    x = Math.round(x);
-    y = Math.round(y);
-    if (x < 0 || x >= this.width || y < 0 || y >= this.height) return;
+    // fix x and y to be integers using bitwise OR (faster than Math.round)
+    x = x | 0;
+    y = y | 0;
     
-    // check for clipping
+    // Cache frequently used constants
+    const width = this.width;
+    const globalAlpha = this.context.globalAlpha;
+    
+    // Early bounds check
+    if (x < 0 || x >= width || y < 0 || y >= this.height) return;
+    
+    // Pre-calculate pixel position (used multiple times)
+    const pixelPos = y * width + x;
+    const index = pixelPos * 4;
+    
+    // Check for clipping with optimized path
     if (this.context.currentState) {
-      // TODO Performance
-      // Most bytes in the clipping mask are going to be either 0 or 255,
-      // so I wonder if we can do a quick check just using the byte index/bytevalue
-      // before we do a bit-level check.
-      const clippingMaskByteIndex = Math.floor((y * this.width + x) / 8);
-      const bitIndex = (y * this.width + x) % 8;
-      if ((this.context.currentState.clippingMask[clippingMaskByteIndex] & (1 << (7 - bitIndex))) === 0) return;
+      const clippingMask = this.context.currentState.clippingMask;
+      const clippingMaskByteIndex = pixelPos >> 3; // Faster than Math.floor(pixelPos / 8)
+      const bitIndex = pixelPos & 7; // Faster than pixelPos % 8
+      
+      // Quick check for common case (fully clipped byte)
+      if (clippingMask[clippingMaskByteIndex] === 0) return;
+      
+      // Bit-level check only if needed
+      if ((clippingMask[clippingMaskByteIndex] & (1 << (7 - bitIndex))) === 0) return;
     }
-
-    const index = (y * this.width + x) * 4;
     
-    const alpha = (a / 255) * this.context.globalAlpha;
+    // Batch alpha calculations to reduce divisions
+    const incomingAlpha = (a / 255) * globalAlpha;
     const oldAlpha = this.frameBuffer[index + 3] / 255;
-    const newAlpha = alpha + oldAlpha * (1 - alpha);
+    const inverseIncomingAlpha = 1 - incomingAlpha;
+    const oldAlphaScaled = oldAlpha * inverseIncomingAlpha;
+    const newAlpha = incomingAlpha + oldAlphaScaled;
     
-    if (newAlpha > 0) {
-      this.frameBuffer[index] = (r * alpha + this.frameBuffer[index] * oldAlpha * (1 - alpha)) / newAlpha;
-      this.frameBuffer[index + 1] = (g * alpha + this.frameBuffer[index + 1] * oldAlpha * (1 - alpha)) / newAlpha;
-      this.frameBuffer[index + 2] = (b * alpha + this.frameBuffer[index + 2] * oldAlpha * (1 - alpha)) / newAlpha;
-      this.frameBuffer[index + 3] = newAlpha * 255;
-    }
+    // Avoid division if possible
+    if (newAlpha <= 0) return;
+    
+    // Pre-calculate division factor once
+    const blendFactor = 1 / newAlpha;
+    
+    // Apply color blending
+    this.frameBuffer[index] = (r * incomingAlpha + this.frameBuffer[index] * oldAlphaScaled) * blendFactor;
+    this.frameBuffer[index + 1] = (g * incomingAlpha + this.frameBuffer[index + 1] * oldAlphaScaled) * blendFactor;
+    this.frameBuffer[index + 2] = (b * incomingAlpha + this.frameBuffer[index + 2] * oldAlphaScaled) * blendFactor;
+    this.frameBuffer[index + 3] = newAlpha * 255;
   }
 
   clearPixel(x, y) {
-    if (x < 0 || x >= this.width || y < 0 || y >= this.height) return;
-    const index = (y * this.width + x) * 4;
+    // Convert to integer with bitwise OR
+    x = x | 0;
+    y = y | 0;
+    
+    // Cache width for performance
+    const width = this.width;
+    
+    if (x < 0 || x >= width || y < 0 || y >= this.height) return;
+    
+    // Pre-calculate pixel position
+    const index = (y * width + x) * 4;
+    
+    // Set all pixel values to 0 
     this.frameBuffer[index] = 0;
     this.frameBuffer[index + 1] = 0;
     this.frameBuffer[index + 2] = 0;
