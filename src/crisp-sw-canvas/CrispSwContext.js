@@ -69,6 +69,13 @@ class CrispSwContext {
     translate(x, y) {
         this.currentState.transform = this.currentState.transform.translate(x, y);
     }
+    
+    /**
+     * Resets the current transformation matrix to the identity matrix
+     */
+    resetTransform() {
+        this.currentState.transform.reset();
+    }
 
     // Style setters
     set fillStyle(style) {

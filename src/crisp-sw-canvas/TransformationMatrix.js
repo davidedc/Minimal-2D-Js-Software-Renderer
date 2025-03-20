@@ -12,6 +12,19 @@ class TransformationMatrix {
         clonedMatrix.elements.set(this.elements);
         return clonedMatrix;
     }
+    
+    /**
+     * Resets the transformation matrix to the identity matrix
+     * @returns {TransformationMatrix} The identity matrix
+     */
+    reset() {
+        this.elements.set([
+            1, 0, 0, // first column
+            0, 1, 0, // second column
+            0, 0, 1 // third column
+        ]);
+        return this;
+    }
 
     get(row, col) {
         return this.elements[col * 3 + row];
