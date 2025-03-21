@@ -93,44 +93,68 @@ class SWRendererLine {
 
   drawLineThick(x1, y1, x2, y2, thickness, r, g, b, a) {
     // Tweaks to make the sw render more closely match the canvas render.
+    // Canvas coordinates are offset by 0.5 pixels, so adjusting here
     x1 -= 0.5;
     y1 -= 0.5;
     x2 -= 0.5;
     y2 -= 0.5;
 
+    // Calculate the line's direction vector and length
     const dx = x2 - x1;
     const dy = y2 - y1;
     const length = Math.sqrt(dx * dx + dy * dy);
     
+    // Skip empty lines
     if (length === 0) return;
     
+    // Calculate a perpendicular unit vector to the line
+    // This vector points 90 degrees to the line direction
     const perpX = -dy / length;
     const perpY = dx / length;
     
+    // Calculate half the thickness to offset from the line center
     const halfThickness = thickness / 2;
+    
+    // Calculate the four corners of the rectangle formed by the thick line
+    // These are the endpoints offset perpendicular to the line by half thickness
     const corners = [
-      [x1 + perpX * halfThickness, y1 + perpY * halfThickness],
-      [x1 - perpX * halfThickness, y1 - perpY * halfThickness],
-      [x2 + perpX * halfThickness, y2 + perpY * halfThickness],
-      [x2 - perpX * halfThickness, y2 - perpY * halfThickness]
+      [x1 + perpX * halfThickness, y1 + perpY * halfThickness], // Top-left
+      [x1 - perpX * halfThickness, y1 - perpY * halfThickness], // Bottom-left
+      [x2 + perpX * halfThickness, y2 + perpY * halfThickness], // Top-right
+      [x2 - perpX * halfThickness, y2 - perpY * halfThickness]  // Bottom-right
     ];
     
+    // Determine the bounding box of the thick line
+    // This optimizes rendering by only checking pixels within this box
     const minX = Math.floor(Math.min(...corners.map(c => c[0])));
     const maxX = Math.ceil(Math.max(...corners.map(c => c[0])));
     const minY = Math.floor(Math.min(...corners.map(c => c[1])));
     const maxY = Math.ceil(Math.max(...corners.map(c => c[1])));
     
+    // For each pixel in the bounding box, check if it should be colored
     for (let y = minY; y <= maxY; y++) {
       for (let x = minX; x <= maxX; x++) {
+        // Calculate the vector from the line start to the current pixel
         const px = x - x1;
         const py = y - y1;
+        
+        // Calculate the projection of pixel position onto the line
+        // The dot product tells us how far along the line the closest point is
         const dot = (px * dx + py * dy) / length;
+        
+        // Calculate the coordinates of the projected point on the line
         const projX = (dx / length) * dot;
         const projY = (dy / length) * dot;
+        
+        // Calculate the distance from the pixel to its closest point on the line
         const distX = px - projX;
         const distY = py - projY;
         const dist = Math.sqrt(distX * distX + distY * distY);
         
+        // If the pixel is both:
+        // 1. Within the line segment (not beyond endpoints)
+        // 2. Within the specified thickness from the line
+        // Then draw it
         if (dot >= 0 && dot <= length && dist <= halfThickness) {
           this.pixelRenderer.setPixel(x, y, r, g, b, a);
         }
