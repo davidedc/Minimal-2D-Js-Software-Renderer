@@ -203,4 +203,218 @@ class SWRendererPixel {
       }
     }
   }
+
+  /**
+   * Set pixel runs with fill and stroke colors in a single pass
+   * @param {Number} startY - Starting Y coordinate
+   * @param {Array} runs - Array of [xFill, fillLen, xStroke1, stroke1Len, xStroke2, stroke2Len] sextuplets
+   * @param {Number} fillR - Fill red component (0-255)
+   * @param {Number} fillG - Fill green component (0-255)
+   * @param {Number} fillB - Fill blue component (0-255)
+   * @param {Number} fillA - Fill alpha component (0-255)
+   * @param {Number} strokeR - Stroke red component (0-255)
+   * @param {Number} strokeG - Stroke green component (0-255)
+   * @param {Number} strokeB - Stroke blue component (0-255)
+   * @param {Number} strokeA - Stroke alpha component (0-255)
+   */
+  // Called by SWRendererCircle.drawFullCircleFastest
+  // Not used. The idea was that in tha case we have both a stroke and a fill,
+  // we could collect the runs for both, and then render them in a single batch operation that
+  // scans the rows from top to bottom only once, for each line drawing the fill and then stroke
+  // The hope was that although the number of set pixels doesn't change, this would be more cache-friendly
+  // as it scans the lines sequentially only once (instead of twice), and therefore faster.
+  // However, this was not faster than the other approach of doing first a pass for the fill,
+  setPixelFillAndStrokeRuns(startY, runs, fillR, fillG, fillB, fillA, strokeR, strokeG, strokeB, strokeA) {
+    // Cache frequently used constants
+    startY += 2;
+    const width = this.width;
+    const height = this.height;
+    const globalAlpha = this.context.globalAlpha;
+    const hasClipping = this.context.currentState;
+    const clippingMask = hasClipping ? this.context.currentState.clippingMask : null;
+    
+    // Batch alpha calculations for fill
+    const fillIncomingAlpha = (fillA / 255) * globalAlpha;
+    const fillInverseIncomingAlpha = 1 - fillIncomingAlpha;
+    
+    // Batch alpha calculations for stroke
+    const strokeIncomingAlpha = (strokeA / 255) * globalAlpha;
+    const strokeInverseIncomingAlpha = 1 - strokeIncomingAlpha;
+    
+    // Skip processing if both are fully transparent
+    if (fillIncomingAlpha <= 0 && strokeIncomingAlpha <= 0) return;
+    
+    let y = startY;
+    
+    for (let i = 0; i < runs.length; i += 6) {
+      // Skip if y is out of bounds
+      if (y < 0 || y >= height) {
+        y++;
+        continue;
+      }
+      
+      // Extract segment data
+      let xFill = runs[i] !== -1 ? runs[i] | 0 : -1;
+      let fillLen = runs[i+1] !== -1 ? runs[i+1] | 0 : -1;
+      let xStroke1 = runs[i+2] !== -1 ? runs[i+2] | 0 : -1;
+      let stroke1Len = runs[i+3] !== -1 ? runs[i+3] | 0 : -1;
+      let xStroke2 = runs[i+4] !== -1 ? runs[i+4] | 0 : -1;
+      let stroke2Len = runs[i+5] !== -1 ? runs[i+5] | 0 : -1;
+      
+      // Process segments for this scanline
+      const hasFill = xFill !== -1 && fillLen > 0 && fillIncomingAlpha > 0;
+      const hasStroke1 = xStroke1 !== -1 && stroke1Len > 0 && strokeIncomingAlpha > 0;
+      const hasStroke2 = xStroke2 !== -1 && stroke2Len > 0 && strokeIncomingAlpha > 0;
+      
+      // Skip if nothing to draw on this line
+      if (!hasFill && !hasStroke1 && !hasStroke2) {
+        y++;
+        continue;
+      }
+      
+      // Prepare for fill segment
+      if (hasFill) {
+        // Handle horizontal clipping for fill
+        if (xFill < 0) {
+          fillLen += xFill;
+          xFill = 0;
+        }
+        
+        // Clip to right edge
+        if (xFill + fillLen > width) {
+          fillLen = width - xFill;
+        }
+        
+        // Skip if invalid after clipping
+        if (fillLen <= 0) {
+          xFill = -1;
+          fillLen = 0;
+        }
+      }
+      
+      // Prepare for stroke1 segment
+      if (hasStroke1) {
+        // Handle horizontal clipping for stroke1
+        if (xStroke1 < 0) {
+          stroke1Len += xStroke1;
+          xStroke1 = 0;
+        }
+        
+        // Clip to right edge
+        if (xStroke1 + stroke1Len > width) {
+          stroke1Len = width - xStroke1;
+        }
+        
+        // Skip if invalid after clipping
+        if (stroke1Len <= 0) {
+          xStroke1 = -1;
+          stroke1Len = 0;
+        }
+      }
+      
+      // Prepare for stroke2 segment
+      if (hasStroke2) {
+        // Handle horizontal clipping for stroke2
+        if (xStroke2 < 0) {
+          stroke2Len += xStroke2;
+          xStroke2 = 0;
+        }
+        
+        // Clip to right edge
+        if (xStroke2 + stroke2Len > width) {
+          stroke2Len = width - xStroke2;
+        }
+        
+        // Skip if invalid after clipping
+        if (stroke2Len <= 0) {
+          xStroke2 = -1;
+          stroke2Len = 0;
+        }
+      }
+      
+      // Process segments in order: fill, then stroke1, then stroke2
+      for (let segmentType = 0; segmentType < 3; segmentType++) {
+        // Select segment parameters based on type
+        let x, length, r, g, b, incomingAlpha, inverseIncomingAlpha;
+        
+        // Segment type: 0 = fill, 1 = stroke1, 2 = stroke2
+        if (segmentType === 0) {
+          if (!hasFill || xFill === -1) continue;
+          x = xFill;
+          length = fillLen;
+          r = fillR;
+          g = fillG;
+          b = fillB;
+          incomingAlpha = fillIncomingAlpha;
+          inverseIncomingAlpha = fillInverseIncomingAlpha;
+        } else if (segmentType === 1) {
+          if (!hasStroke1 || xStroke1 === -1) continue;
+          x = xStroke1;
+          length = stroke1Len;
+          r = strokeR;
+          g = strokeG;
+          b = strokeB;
+          incomingAlpha = strokeIncomingAlpha;
+          inverseIncomingAlpha = strokeInverseIncomingAlpha;
+        } else {
+          if (!hasStroke2 || xStroke2 === -1) continue;
+          x = xStroke2;
+          length = stroke2Len;
+          r = strokeR;
+          g = strokeG;
+          b = strokeB;
+          incomingAlpha = strokeIncomingAlpha;
+          inverseIncomingAlpha = strokeInverseIncomingAlpha;
+        }
+        
+        // Calculate base position for this segment
+        let pixelPos = y * width + x;
+        let index = pixelPos * 4;
+        
+        // Draw the run
+        for (let j = 0; j < length; j++, pixelPos++, index += 4) {
+          // Check clipping if needed
+          if (hasClipping) {
+            const clippingMaskByteIndex = pixelPos >> 3;
+            
+            // Quick check for fully clipped byte
+            if (clippingMask[clippingMaskByteIndex] === 0) {
+              // Skip to the end of this byte boundary
+              const pixelsInThisByte = 8 - (pixelPos & 7);
+              const pixelsToSkip = Math.min(pixelsInThisByte, length - j);
+              j += pixelsToSkip - 1; // -1 because loop also increments j
+              pixelPos += pixelsToSkip - 1;
+              index += (pixelsToSkip - 1) * 4;
+              continue;
+            }
+            
+            // Bit-level check
+            const bitIndex = pixelPos & 7;
+            if ((clippingMask[clippingMaskByteIndex] & (1 << (7 - bitIndex))) === 0) {
+              continue;
+            }
+          }
+          
+          // Get existing pixel alpha
+          const oldAlpha = this.frameBuffer[index + 3] / 255;
+          const oldAlphaScaled = oldAlpha * inverseIncomingAlpha;
+          const newAlpha = incomingAlpha + oldAlphaScaled;
+          
+          // Skip fully transparent pixels
+          if (newAlpha <= 0) continue;
+          
+          // Pre-calculate division factor once for this pixel
+          const blendFactor = 1 / newAlpha;
+          
+          // Apply color blending
+          this.frameBuffer[index] = (r * incomingAlpha + this.frameBuffer[index] * oldAlphaScaled) * blendFactor;
+          this.frameBuffer[index + 1] = (g * incomingAlpha + this.frameBuffer[index + 1] * oldAlphaScaled) * blendFactor;
+          this.frameBuffer[index + 2] = (b * incomingAlpha + this.frameBuffer[index + 2] * oldAlphaScaled) * blendFactor;
+          this.frameBuffer[index + 3] = newAlpha * 255;
+        }
+      }
+      
+      y++;
+    }
+  }
 }
