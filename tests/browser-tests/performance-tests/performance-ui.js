@@ -100,12 +100,19 @@ function runTest(testType, callback = null, clearResults = true) {
   const htmlIncrement = parseInt(htmlIncrementSize.value);
   const requiredExceedances = parseInt(consecutiveExceedances.value);
   const includeBlitting = includeBlittingCheckbox.checked;
+  const isSilentMode = silentModeCheckbox.checked;
   
   // Clear previous results if not part of "Run All Tests"
   if (clearResults) {
-    resultsContainer.innerHTML = `Running ${testType} test with SW increment ${swIncrement}, HTML increment ${htmlIncrement}${includeBlitting ? ' (including blitting time)' : ' (excluding blitting time)'}...\n\n`;
+    let header = `Running ${testType} test with SW increment ${swIncrement}, HTML increment ${htmlIncrement}`;
+    header += `${includeBlitting ? ' (including blitting time)' : ' (excluding blitting time)'}`;
+    header += `${isSilentMode ? ' in silent mode' : ''}...\n\n`;
+    resultsContainer.innerHTML = header;
   } else {
-    resultsContainer.innerHTML += `\nRunning ${testType} test with SW increment ${swIncrement}, HTML increment ${htmlIncrement}${includeBlitting ? ' (including blitting time)' : ' (excluding blitting time)'}...\n\n`;
+    let header = `\nRunning ${testType} test with SW increment ${swIncrement}, HTML increment ${htmlIncrement}`;
+    header += `${includeBlitting ? ' (including blitting time)' : ' (excluding blitting time)'}`;
+    header += `${isSilentMode ? ' in silent mode' : ''}...\n\n`;
+    resultsContainer.innerHTML += header;
   }
   
   // Show progress bar
@@ -120,6 +127,7 @@ function runTest(testType, callback = null, clearResults = true) {
     htmlIncrement,
     includeBlitting,
     requiredExceedances,
+    isSilentMode,
     // Software Canvas results
     swShapeCounts: [],
     swTimings: [],
@@ -132,6 +140,9 @@ function runTest(testType, callback = null, clearResults = true) {
   
   // First phase: Test Software Canvas
   resultsContainer.innerHTML += "PHASE 1: Testing Software Canvas...\n";
+  if (isSilentMode) {
+    resultsContainer.innerHTML += "(Running in silent mode, only periodic updates will be shown)\n";
+  }
   resultsContainer.scrollTop = resultsContainer.scrollHeight;
   
   // Start with the software canvas test
@@ -139,6 +150,9 @@ function runTest(testType, callback = null, clearResults = true) {
     
     // After SW canvas test completes, run HTML5 canvas test
     resultsContainer.innerHTML += "\nPHASE 2: Testing HTML5 Canvas...\n";
+    if (isSilentMode) {
+      resultsContainer.innerHTML += "(Running in silent mode, only periodic updates will be shown)\n";
+    }
     resultsContainer.scrollTop = resultsContainer.scrollHeight;
     
     runHTML5CanvasRampTest(testType, STARTING_SHAPE_COUNT, htmlIncrement, requiredExceedances, testData, () => {

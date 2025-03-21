@@ -66,6 +66,14 @@ function detectRefreshRate(callback) {
   requestAnimationFrame(measureFrames);
 }
 
+// Helper function to log results based on silent mode
+function logResult(message) {
+  if (!silentModeCheckbox.checked) {
+    resultsContainer.innerHTML += message;
+    resultsContainer.scrollTop = resultsContainer.scrollHeight;
+  }
+}
+
 // Find the maximum number of shapes that stayed within the frame budget
 function findMaxShapes(shapeCounts, timings) {
   // If we have no data, return 0
@@ -90,11 +98,22 @@ function runSoftwareCanvasRampTest(testType, startCount, incrementSize, includeB
   let totalPhaseSteps = 1000; // Just an estimate for progress bar
   let currentPhaseStep = 0;
   let consecutiveExceedances = 0;
+  let lastLoggedShapeCount = 0;
+  let isSilentMode = silentModeCheckbox.checked;
+  
+  // Always log the initial phase info, even in silent mode
+  resultsContainer.innerHTML += "PHASE 1: Testing Software Canvas...\n";
+  if (isSilentMode) {
+    resultsContainer.innerHTML += "(Running in silent mode, suppressing frame-by-frame logs)\n";
+  }
+  resultsContainer.scrollTop = resultsContainer.scrollHeight;
   
   function testNextShapeCount() {
     if (abortRequested || exceededBudget) {
       // All done, report back
       testData.swMaxShapes = findMaxShapes(testData.swShapeCounts, testData.swTimings);
+      
+      // Always log the final result, even in silent mode
       resultsContainer.innerHTML += `Software Canvas Maximum Shapes: ${testData.swMaxShapes}\n`;
       resultsContainer.scrollTop = resultsContainer.scrollHeight;
       callback();
@@ -134,23 +153,31 @@ function runSoftwareCanvasRampTest(testType, startCount, incrementSize, includeB
     let elapsedTime = endTime - startTime;
     
     const avgTime = elapsedTime;
-    const stdDev = 0; // No standard deviation with single measurement
     
     // Store results
     testData.swShapeCounts.push(currentShapeCount);
     testData.swTimings.push(avgTime);
     
-    // Log to results
-    resultsContainer.innerHTML += `SW Canvas with ${currentShapeCount} shapes: ${avgTime.toFixed(2)}ms\n`;
-    // Auto-scroll to show latest results
-    resultsContainer.scrollTop = resultsContainer.scrollHeight;
+    // Log to results if not in silent mode, or every 100 shape count increment in silent mode
+    if (!isSilentMode || (isSilentMode && (currentShapeCount - lastLoggedShapeCount >= 100 || consecutiveExceedances > 0))) {
+      // In silent mode, log at shape count increments or when approaching the limit
+      resultsContainer.innerHTML += `SW Canvas with ${currentShapeCount} shapes: ${avgTime.toFixed(2)}ms\n`;
+      lastLoggedShapeCount = currentShapeCount;
+      
+      // Auto-scroll to show latest results
+      resultsContainer.scrollTop = resultsContainer.scrollHeight;
+    }
     
     // Check if we exceeded the frame budget
     if (avgTime > FRAME_BUDGET) {
       consecutiveExceedances++;
-      resultsContainer.innerHTML += `  Exceeded budget (${consecutiveExceedances}/${requiredExceedances})\n`;
-      // Auto-scroll to show exceedance messages
-      resultsContainer.scrollTop = resultsContainer.scrollHeight;
+      
+      // Always log exceedances even in silent mode
+      if (consecutiveExceedances === 1 || !isSilentMode) {
+        resultsContainer.innerHTML += `  Exceeded budget (${consecutiveExceedances}/${requiredExceedances})\n`;
+        // Auto-scroll to show exceedance messages
+        resultsContainer.scrollTop = resultsContainer.scrollHeight;
+      }
       
       // Only stop if we've exceeded enough times consecutively
       if (consecutiveExceedances >= requiredExceedances) {
@@ -181,11 +208,22 @@ function runHTML5CanvasRampTest(testType, startCount, incrementSize, requiredExc
   let totalPhaseSteps = 1000; // Just an estimate for progress bar
   let currentPhaseStep = 0;
   let consecutiveExceedances = 0;
+  let lastLoggedShapeCount = 0;
+  let isSilentMode = silentModeCheckbox.checked;
+  
+  // Always log the initial phase info, even in silent mode
+  resultsContainer.innerHTML += "\nPHASE 2: Testing HTML5 Canvas...\n";
+  if (isSilentMode) {
+    resultsContainer.innerHTML += "(Running in silent mode, suppressing frame-by-frame logs)\n";
+  }
+  resultsContainer.scrollTop = resultsContainer.scrollHeight;
   
   function testNextShapeCount() {
     if (abortRequested || exceededBudget) {
       // All done, report back
       testData.canvasMaxShapes = findMaxShapes(testData.canvasShapeCounts, testData.canvasTimings);
+      
+      // Always log the final result, even in silent mode
       resultsContainer.innerHTML += `HTML5 Canvas Maximum Shapes: ${testData.canvasMaxShapes}\n`;
       resultsContainer.scrollTop = resultsContainer.scrollHeight;
       callback();
@@ -220,23 +258,31 @@ function runHTML5CanvasRampTest(testType, startCount, incrementSize, requiredExc
     let elapsedTime = endTime - startTime;
     
     const avgTime = elapsedTime;
-    const stdDev = 0; // No standard deviation with single measurement
     
     // Store results
     testData.canvasShapeCounts.push(currentShapeCount);
     testData.canvasTimings.push(avgTime);
     
-    // Log to results
-    resultsContainer.innerHTML += `HTML5 Canvas with ${currentShapeCount} shapes: ${avgTime.toFixed(2)}ms\n`;
-    // Auto-scroll to show latest results
-    resultsContainer.scrollTop = resultsContainer.scrollHeight;
+    // Log to results if not in silent mode, or every 100 shape count increment in silent mode
+    if (!isSilentMode || (isSilentMode && (currentShapeCount - lastLoggedShapeCount >= 1000 || consecutiveExceedances > 0))) {
+      // In silent mode, log at larger shape count increments or when approaching the limit
+      resultsContainer.innerHTML += `HTML5 Canvas with ${currentShapeCount} shapes: ${avgTime.toFixed(2)}ms\n`;
+      lastLoggedShapeCount = currentShapeCount;
+      
+      // Auto-scroll to show latest results
+      resultsContainer.scrollTop = resultsContainer.scrollHeight;
+    }
     
     // Check if we exceeded the frame budget
     if (avgTime > FRAME_BUDGET) {
       consecutiveExceedances++;
-      resultsContainer.innerHTML += `  Exceeded budget (${consecutiveExceedances}/${requiredExceedances})\n`;
-      // Auto-scroll to show exceedance messages
-      resultsContainer.scrollTop = resultsContainer.scrollHeight;
+      
+      // Always log exceedances even in silent mode
+      if (consecutiveExceedances === 1 || !isSilentMode) {
+        resultsContainer.innerHTML += `  Exceeded budget (${consecutiveExceedances}/${requiredExceedances})\n`;
+        // Auto-scroll to show exceedance messages
+        resultsContainer.scrollTop = resultsContainer.scrollHeight;
+      }
       
       // Only stop if we've exceeded enough times consecutively
       if (consecutiveExceedances >= requiredExceedances) {
@@ -271,7 +317,13 @@ function displayRampTestResults(testData) {
   results += `- SW Canvas increment: ${testData.swIncrement}\n`;
   results += `- HTML5 Canvas increment: ${testData.htmlIncrement}\n`;
   results += `- Consecutive exceedances required: ${testData.requiredExceedances}\n`;
-  results += `- Blitting time: ${testData.includeBlitting ? "Included" : "Excluded"}\n\n`;
+  results += `- Blitting time: ${testData.includeBlitting ? "Included" : "Excluded"}\n`;
+  if (testData.isSilentMode) {
+    results += `- Log mode: Silent (frame-by-frame logs suppressed)\n`;
+  } else {
+    results += `- Log mode: Verbose (all frames logged)\n`;
+  }
+  results += `\n`;
   
   results += `Software Canvas Performance:\n`;
   results += `- Maximum shapes per frame: ${testData.swMaxShapes}\n\n`;
@@ -296,7 +348,8 @@ function displayOverallResults(allResults) {
   // Format overall results
   let results = "\n=== OVERALL TEST RESULTS ===\n";
   results += `Display refresh rate: ${DETECTED_FPS} fps (${FRAME_BUDGET.toFixed(2)}ms budget)\n`;
-  results += `Tests run: ${allResults.tests.length}\n\n`;
+  results += `Tests run: ${allResults.tests.length}\n`;
+  results += `Log mode: ${silentModeCheckbox.checked ? "Silent" : "Verbose"}\n\n`;
   
   // Test specific summary
   results += "Test Summary:\n";
