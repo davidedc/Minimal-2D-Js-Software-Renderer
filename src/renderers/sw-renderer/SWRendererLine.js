@@ -1,6 +1,19 @@
 class SWRendererLine {
   constructor(pixelRenderer) {
     this.pixelRenderer = pixelRenderer;
+    
+    // Pre-allocated arrays for the polygon scan algorithm
+    this._corners = [
+      { x: 0, y: 0 }, { x: 0, y: 0 }, { x: 0, y: 0 }, { x: 0, y: 0 }
+    ];
+    this._edges = [
+      { p1: this._corners[0], p2: this._corners[1], invDeltaY: 0, deltaX: 0 },
+      { p1: this._corners[1], p2: this._corners[2], invDeltaY: 0, deltaX: 0 },
+      { p1: this._corners[2], p2: this._corners[3], invDeltaY: 0, deltaX: 0 },
+      { p1: this._corners[3], p2: this._corners[0], invDeltaY: 0, deltaX: 0 }
+    ];
+    this._intersections = new Array(8); // Pre-allocate space for intersections
+    this._pixelRuns = []; // This will grow as needed
   }
 
   drawLine(shape) {
@@ -471,23 +484,25 @@ class SWRendererLine {
    * Treats the thick line as a four-sided polygon and directly computes spans
    * Optimized to eliminate sorting with direct span calculation
    */
+
   drawLineThickPolygonScan(x1, y1, x2, y2, thickness, r, g, b, a) {
     const dx = x2 - x1;
     const dy = y2 - y1;
     const lineLength = Math.sqrt(dx * dx + dy * dy);
     
-    // Array to collect pixel runs for batch rendering
-    const pixelRuns = [];
+    // Reuse the pre-allocated pixel runs array, but clear it first
+    const pixelRuns = this._pixelRuns;
+    pixelRuns.length = 0;
     
     if (lineLength === 0) {
       // Handle zero-length line case
-      const radius = Math.floor(thickness / 2);
-      const centerX = Math.round(x1);
-      const centerY = Math.round(y1);
+      const radius = thickness >> 1; // Bitwise right shift by 1 = divide by 2 and floor
+      const centerX = x1 | 0; // Faster rounding using bitwise OR
+      const centerY = y1 | 0;
       
       for (let py = -radius; py <= radius; py++) {
         // Add a complete horizontal run for each row
-        pixelRuns.push(centerX - radius, centerY + py, 2 * radius + 1);
+        pixelRuns.push(centerX - radius, centerY + py, (radius << 1) + 1); // (radius * 2) + 1
       }
       
       // Render all runs in a single batch
@@ -495,67 +510,89 @@ class SWRendererLine {
       return;
     }
     
-    // Calculate perpendicular vector
-    const perpX = -dy / lineLength;
-    const perpY = dx / lineLength;
+    // Cache common calculations - inverse line length to avoid division
+    const invLineLength = 1 / lineLength;
+    
+    // Calculate perpendicular vector using multiplication instead of division
+    const perpX = -dy * invLineLength;
+    const perpY = dx * invLineLength;
     
     // Calculate half thickness
-    const halfThick = thickness / 2;
+    const halfThick = thickness * 0.5;
     
-    // Calculate the four corners of the rectangle
-    const corners = [
-      { x: x1 + perpX * halfThick, y: y1 + perpY * halfThick }, // 0: top-left for positive slope
-      { x: x1 - perpX * halfThick, y: y1 - perpY * halfThick }, // 1: bottom-left for positive slope
-      { x: x2 - perpX * halfThick, y: y2 - perpY * halfThick }, // 2: bottom-right for positive slope
-      { x: x2 + perpX * halfThick, y: y2 + perpY * halfThick }  // 3: top-right for positive slope
-    ];
+    // Reuse pre-allocated corner objects
+    const corners = this._corners;
     
-    // Find overall bounding box in a single pass
-    // Direct comparisons are faster than iterative min/max
-    const minY = Math.floor(Math.min(corners[0].y, corners[1].y, corners[2].y, corners[3].y));
-    const maxY = Math.ceil(Math.max(corners[0].y, corners[1].y, corners[2].y, corners[3].y));
+    // Cache perpendicular offsets for corner calculations
+    const perpXHalfThick = perpX * halfThick;
+    const perpYHalfThick = perpY * halfThick;
     
-    // Define all four edges
-    const edges = [
-      [corners[0], corners[1]],
-      [corners[1], corners[2]],
-      [corners[2], corners[3]],
-      [corners[3], corners[0]]
-    ];
+    // Update the corners in-place to avoid allocations
+    corners[0].x = x1 + perpXHalfThick;  corners[0].y = y1 + perpYHalfThick;  // top-left
+    corners[1].x = x1 - perpXHalfThick;  corners[1].y = y1 - perpYHalfThick;  // bottom-left
+    corners[2].x = x2 - perpXHalfThick;  corners[2].y = y2 - perpYHalfThick;  // bottom-right
+    corners[3].x = x2 + perpXHalfThick;  corners[3].y = y2 + perpYHalfThick;  // top-right
+    
+    // Find bounding box using bitwise operations for faster floor/ceil
+    const minY = (Math.min(corners[0].y, corners[1].y, corners[2].y, corners[3].y)) | 0;
+    const maxY = (Math.max(corners[0].y, corners[1].y, corners[2].y, corners[3].y) + 0.999) | 0;
+    
+    // Pre-compute edge data to avoid recalculating slopes
+    const edges = this._edges;
+    
+    for (let i = 0; i < 4; i++) {
+      const edge = edges[i];
+      const p1 = corners[i];
+      const p2 = corners[(i + 1) & 3]; // Faster modulo for power of 2 using bitwise AND
+      
+      // Update edge endpoints
+      edge.p1 = p1;
+      edge.p2 = p2;
+      
+      // Pre-compute inverse delta Y to avoid division during scanline processing
+      // Only update if not horizontal to avoid division by zero
+      if (p1.y !== p2.y) {
+        edge.invDeltaY = 1 / (p2.y - p1.y);
+        edge.deltaX = p2.x - p1.x;
+      }
+    }
+    
+    // Reuse pre-allocated intersections array
+    const intersections = this._intersections;
     
     // Scan each row
     for (let y = minY; y <= maxY; y++) {
-      // Find intersections with all edges
-      const intersections = [];
+      // Counter for intersections
+      let intersectionCount = 0;
       
-      for (const [p1, p2] of edges) {
+      for (let i = 0; i < 4; i++) {
+        const edge = edges[i];
+        const p1 = edge.p1;
+        const p2 = edge.p2;
+        
         // Skip horizontal edges
         if (p1.y === p2.y) continue;
         
         // Check if scanline intersects this edge
         if ((y >= p1.y && y < p2.y) || (y >= p2.y && y < p1.y)) {
-          // Calculate x-intersection using linear interpolation
-          const t = (y - p1.y) / (p2.y - p1.y);
-          const x = p1.x + t * (p2.x - p1.x);
-          intersections.push(x);
+          // Use pre-computed values for x-intersection
+          const t = (y - p1.y) * edge.invDeltaY;
+          intersections[intersectionCount++] = p1.x + t * edge.deltaX;
         }
       }
       
-      // If we have intersections (should be 0 or 2 for a convex quad)
-      //if (intersections.length == 3 )
-      //  debugger;
-
-      if (intersections.length === 1) {
+      if (intersectionCount === 1) {
         // Single intersection case - just draw one pixel
-        const x = Math.floor(intersections[0]);
+        const x = intersections[0] | 0; // Faster floor using bitwise OR
         pixelRuns.push(x, y, 1);
-      } else if (intersections.length === 2) {
+      }
+      else if (intersectionCount === 2) {
         // Two intersections case - draw span between them
         const x1 = intersections[0];
         const x2 = intersections[1];
         // No need to sort - just compare directly
-        const leftX = Math.floor(Math.min(x1, x2));
-        const rightX = Math.ceil(Math.max(x1, x2));
+        const leftX = x1 < x2 ? x1 | 0 : x2 | 0; // Math.floor using bitwise OR
+        const rightX = x1 > x2 ? (x1 + 0.999) | 0 : (x2 + 0.999) | 0; // Math.ceil approximation
         const spanLength = rightX - leftX;
         
         if (spanLength > 0) {
