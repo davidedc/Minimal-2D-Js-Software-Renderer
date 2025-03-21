@@ -467,9 +467,9 @@ class SWRendererLine {
   }
 
   /**
-   * Algorithm 5: Active Edge Table implementation with pixel runs
-   * Optimized to completely eliminate sorting during rendering
-   * Uses incremental updates for edge tracking and intersection calculation
+   * Algorithm 5: Direct Rectangle Calculation with pixel runs
+   * Treats the thick line as a four-sided polygon and directly computes spans
+   * Optimized to eliminate sorting with direct span calculation
    */
   drawLineThickPolygonScan(x1, y1, x2, y2, thickness, r, g, b, a) {
     // Adjust for canvas coordinate system
@@ -516,91 +516,68 @@ class SWRendererLine {
       { x: x2 + perpX * halfThick, y: y2 + perpY * halfThick }  // 3: top-right for positive slope
     ];
     
-    // Define edges (each connects two corners)
-    const edges = [];
+    // Find overall bounding box
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
     
-    // Connect corners to form the four edges
-    for (let i = 0; i < 4; i++) {
-      const p1 = corners[i];
-      const p2 = corners[(i + 1) % 4];
-      
-      // Skip horizontal edges (won't be used in scanline algorithm)
-      if (p1.y === p2.y) continue;
-      
-      // Ensure p1 is always the top point (lower y value)
-      const top = p1.y < p2.y ? p1 : p2;
-      const bottom = p1.y < p2.y ? p2 : p1;
-      
-      // Calculate edge parameters for incremental update
-      const edge = {
-        yStart: Math.floor(top.y),     // Start y (integer scanline)
-        yEnd: Math.ceil(bottom.y),     // End y (integer scanline)
-        x: top.x,                       // Current x at top y
-        dx: (bottom.x - top.x) / (bottom.y - top.y) // Change in x per unit y
-      };
-      
-      edges.push(edge);
+    for (const corner of corners) {
+      minX = Math.min(minX, corner.x);
+      minY = Math.min(minY, corner.y);
+      maxX = Math.max(maxX, corner.x);
+      maxY = Math.max(maxY, corner.y);
     }
     
-    // Find y bounds for all edges
-    let minY = Infinity;
-    let maxY = -Infinity;
+    // Convert to integer boundary
+    minX = Math.floor(minX);
+    minY = Math.floor(minY);
+    maxX = Math.ceil(maxX);
+    maxY = Math.ceil(maxY);
     
-    for (const edge of edges) {
-      minY = Math.min(minY, edge.yStart);
-      maxY = Math.max(maxY, edge.yEnd);
-    }
+    // Define all four edges
+    const edges = [
+      [corners[0], corners[1]],
+      [corners[1], corners[2]],
+      [corners[2], corners[3]],
+      [corners[3], corners[0]]
+    ];
     
-    // Create the Active Edge Table - initially empty
-    const activeEdges = [];
-    
-    // Process each scanline
+    // Scan each row
     for (let y = minY; y <= maxY; y++) {
-      // Step 1: Add new edges that start at this scanline
-      for (let i = 0; i < edges.length; i++) {
-        const edge = edges[i];
-        if (edge.yStart === y) {
-          activeEdges.push({
-            yEnd: edge.yEnd,
-            x: edge.x,
-            dx: edge.dx
-          });
+      // Find intersections with all edges
+      const intersections = [];
+      
+      for (const [p1, p2] of edges) {
+        // Skip horizontal edges
+        if (p1.y === p2.y) continue;
+        
+        // Check if scanline intersects this edge
+        if ((y >= p1.y && y < p2.y) || (y >= p2.y && y < p1.y)) {
+          // Calculate x-intersection using linear interpolation
+          const t = (y - p1.y) / (p2.y - p1.y);
+          const x = p1.x + t * (p2.x - p1.x);
+          intersections.push(x);
         }
       }
       
-      // Step 2: Remove edges that end before this scanline
-      for (let i = activeEdges.length - 1; i >= 0; i--) {
-        if (activeEdges[i].yEnd <= y) {
-          activeEdges.splice(i, 1);
-        }
-      }
-      
-      // Step 3: Generate scanline spans from active edges
-      if (activeEdges.length >= 2) {
-        // Find leftmost and rightmost intersection points
-        // No sorting needed! Just find min and max directly
-        let minX = Infinity;
-        let maxX = -Infinity;
-        
-        for (const edge of activeEdges) {
-          minX = Math.min(minX, edge.x);
-          maxX = Math.max(maxX, edge.x);
-        }
-        
-        // Convert to integer pixel coordinates with proper rounding
-        const leftX = Math.floor(minX);
-        const rightX = Math.ceil(maxX);
+      // If we have intersections (should be 0 or 2 for a convex quad)
+      //if (intersections.length == 3 )
+      //  debugger;
+
+      if (intersections.length === 1) {
+        // Single intersection case - just draw one pixel
+        const x = Math.floor(intersections[0]);
+        pixelRuns.push(x, y, 1);
+      } else if (intersections.length === 2) {
+        // Two intersections case - draw span between them
+        const x1 = intersections[0];
+        const x2 = intersections[1];
+        // No need to sort - just compare directly
+        const leftX = Math.floor(Math.min(x1, x2));
+        const rightX = Math.ceil(Math.max(x1, x2));
         const spanLength = rightX - leftX;
         
-        // Add horizontal span to output
         if (spanLength > 0) {
           pixelRuns.push(leftX, y, spanLength);
         }
-      }
-      
-      // Step 4: Update x-coordinates for the next scanline
-      for (const edge of activeEdges) {
-        edge.x += edge.dx;
       }
     }
     
