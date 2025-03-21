@@ -472,12 +472,6 @@ class SWRendererLine {
    * Optimized to eliminate sorting with direct span calculation
    */
   drawLineThickPolygonScan(x1, y1, x2, y2, thickness, r, g, b, a) {
-    // Adjust for canvas coordinate system
-    //x1 -= 0.5;
-    //y1 -= 0.5;
-    //x2 -= 0.5;
-    //y2 -= 0.5;
-    
     const dx = x2 - x1;
     const dy = y2 - y1;
     const lineLength = Math.sqrt(dx * dx + dy * dy);
@@ -516,21 +510,10 @@ class SWRendererLine {
       { x: x2 + perpX * halfThick, y: y2 + perpY * halfThick }  // 3: top-right for positive slope
     ];
     
-    // Find overall bounding box
-    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-    
-    for (const corner of corners) {
-      minX = Math.min(minX, corner.x);
-      minY = Math.min(minY, corner.y);
-      maxX = Math.max(maxX, corner.x);
-      maxY = Math.max(maxY, corner.y);
-    }
-    
-    // Convert to integer boundary
-    minX = Math.floor(minX);
-    minY = Math.floor(minY);
-    maxX = Math.ceil(maxX);
-    maxY = Math.ceil(maxY);
+    // Find overall bounding box in a single pass
+    // Direct comparisons are faster than iterative min/max
+    const minY = Math.floor(Math.min(corners[0].y, corners[1].y, corners[2].y, corners[3].y));
+    const maxY = Math.ceil(Math.max(corners[0].y, corners[1].y, corners[2].y, corners[3].y));
     
     // Define all four edges
     const edges = [
