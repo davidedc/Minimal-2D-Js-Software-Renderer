@@ -174,6 +174,13 @@
   <div class="test-controls">
     <h2>Test Configuration</h2>
     
+    <div class="profiling-button-container" style="margin-bottom: 15px;">
+      <button id="btn-profiling-mode" class="profiling-button" style="background-color: #007bff;">Enable Profiling Mode</button>
+      <span class="profiling-hint" style="margin-left: 10px; font-size: 0.9em; color: #666;">
+        Sets high exceedance threshold and enables silent mode for browser profiling
+      </span>
+    </div>
+    
     <div>
       <label for="sw-increment-size">SW Canvas increment size:</label>
       <input type="number" id="sw-increment-size" min="1" max="100" value="1" style="width: 60px;">
@@ -186,7 +193,7 @@
     
     <div>
       <label for="consecutive-exceedances">Consecutive budget exceedances:</label>
-      <input type="number" id="consecutive-exceedances" min="1" max="20" value="10" style="width: 60px;">
+      <input type="number" id="consecutive-exceedances" min="1" max="100000" value="10" style="width: 60px;">
     </div>
     
     <div class="checkbox-group">

@@ -21,6 +21,31 @@ function initializeUI() {
   }
 }
 
+// Profiling mode toggle
+document.getElementById('btn-profiling-mode').addEventListener('click', function() {
+  const button = this;
+  const isProfilingMode = button.textContent.includes('Disable');
+  
+  if (isProfilingMode) {
+    // Disable profiling mode
+    button.textContent = 'Enable Profiling Mode';
+    button.style.backgroundColor = '#007bff';
+    consecutiveExceedances.value = '10';
+    silentModeCheckbox.checked = false;
+  } else {
+    // Enable profiling mode
+    button.textContent = 'Disable Profiling Mode';
+    button.style.backgroundColor = '#ff4d4d';
+    consecutiveExceedances.value = '100000';
+    silentModeCheckbox.checked = true;
+    
+    // Show a quick hint
+    const originalHtml = resultsContainer.innerHTML;
+    resultsContainer.innerHTML = "Profiling mode enabled. Tests will run without stopping at the frame budget, allowing you to use browser profiling tools on stable rendering.\n\n" + originalHtml;
+    resultsContainer.scrollTop = resultsContainer.scrollHeight;
+  }
+});
+
 // Button event listeners
 btnLinesTest.addEventListener('click', () => runTest('lines'));
 btnRectsTest.addEventListener('click', () => runTest('rects'));
