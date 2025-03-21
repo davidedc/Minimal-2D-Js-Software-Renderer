@@ -1,0 +1,422 @@
+// Performance testing utilities
+
+// Constants
+const CANVAS_WIDTH = 500;
+const CANVAS_HEIGHT = 400;
+const FRAME_BUDGET = 16.7; // milliseconds (60fps)
+const STARTING_SHAPE_COUNT = 10;
+
+// Set up test state
+let currentTest = null;
+let abortRequested = false;
+let animationFrameId = null;
+
+// Find the maximum number of shapes that stayed within the frame budget
+function findMaxShapes(shapeCounts, timings) {
+  // If we have no data, return 0
+  if (shapeCounts.length === 0) {
+    return 0;
+  }
+  
+  // Start from the end and find the first shape count before we exceeded budget 10 times in a row
+  // This is the last shape count we tested
+  let lastShapeCount = shapeCounts[shapeCounts.length - 1];
+  
+  // If we have shape counts and last entry is the one that exceeded budget,
+  // return the last shape count that didn't consistently exceed budget 
+  // (which is the last shape count before exceeding budget 10 times)
+  return lastShapeCount;
+}
+
+// Software Canvas Ramp Test
+function runSoftwareCanvasRampTest(testType, startCount, incrementSize, includeBlitting, requiredExceedances, testData, callback) {
+  let currentShapeCount = startCount;
+  let exceededBudget = false;
+  let totalPhaseSteps = 1000; // Just an estimate for progress bar
+  let currentPhaseStep = 0;
+  let consecutiveExceedances = 0;
+  
+  function testNextShapeCount() {
+    if (abortRequested || exceededBudget) {
+      // All done, report back
+      testData.swMaxShapes = findMaxShapes(testData.swShapeCounts, testData.swTimings);
+      resultsContainer.innerHTML += `Software Canvas Maximum Shapes: ${testData.swMaxShapes}\n`;
+      resultsContainer.scrollTop = resultsContainer.scrollHeight;
+      callback();
+      return;
+    }
+    
+    // Update progress for this phase
+    currentPhaseStep++;
+    const progress = Math.min(100, Math.round((currentPhaseStep / totalPhaseSteps) * 50)); // First phase is 50% of total
+    progressBar.style.width = `${progress}%`;
+    progressBar.textContent = `${progress}%`;
+    
+    // Clear canvas
+    swCtx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+    
+    // Seed random for consistent shapes
+    SeededRandom.seedWithInteger(currentPhaseStep);
+    
+    // Run the specific test and measure time
+    let startTime = performance.now();
+    
+    // Draw shapes based on test type
+    if (testType === 'lines') {
+      drawRandomLines(swCtx, currentShapeCount);
+    } else if (testType === 'rects') {
+      drawRandomRects(swCtx, currentShapeCount);
+    } else if (testType === 'circles') {
+      drawRandomCircles(swCtx, currentShapeCount);
+    }
+    
+    // Include blitting time if requested
+    if (includeBlitting) {
+      swCtx.blitToCanvas(swCanvas);
+    }
+    
+    let endTime = performance.now();
+    let elapsedTime = endTime - startTime;
+    
+    const avgTime = elapsedTime;
+    const stdDev = 0; // No standard deviation with single measurement
+    
+    // Store results
+    testData.swShapeCounts.push(currentShapeCount);
+    testData.swTimings.push(avgTime);
+    
+    // Log to results
+    resultsContainer.innerHTML += `SW Canvas with ${currentShapeCount} shapes: ${avgTime.toFixed(2)}ms\n`;
+    // Auto-scroll to show latest results
+    resultsContainer.scrollTop = resultsContainer.scrollHeight;
+    
+    // Check if we exceeded the frame budget
+    if (avgTime > FRAME_BUDGET) {
+      consecutiveExceedances++;
+      resultsContainer.innerHTML += `  Exceeded budget (${consecutiveExceedances}/${requiredExceedances})\n`;
+      // Auto-scroll to show exceedance messages
+      resultsContainer.scrollTop = resultsContainer.scrollHeight;
+      
+      // Only stop if we've exceeded enough times consecutively
+      if (consecutiveExceedances >= requiredExceedances) {
+        exceededBudget = true;
+      } else {
+        // Continue with the same shape count to confirm if it consistently exceeds budget
+        // No need to increment here
+      }
+    } else {
+      // Reset consecutive exceedances counter
+      consecutiveExceedances = 0;
+      // Increment shape count and continue testing
+      currentShapeCount += incrementSize;
+    }
+    
+    // Wait for the next frame before proceeding to next shape count
+    animationFrameId = requestAnimationFrame(testNextShapeCount);
+  }
+  
+  // Start with the first shape count
+  testNextShapeCount();
+}
+
+// HTML5 Canvas Ramp Test
+function runHTML5CanvasRampTest(testType, startCount, incrementSize, requiredExceedances, testData, callback) {
+  let currentShapeCount = startCount;
+  let exceededBudget = false;
+  let totalPhaseSteps = 1000; // Just an estimate for progress bar
+  let currentPhaseStep = 0;
+  let consecutiveExceedances = 0;
+  
+  function testNextShapeCount() {
+    if (abortRequested || exceededBudget) {
+      // All done, report back
+      testData.canvasMaxShapes = findMaxShapes(testData.canvasShapeCounts, testData.canvasTimings);
+      resultsContainer.innerHTML += `HTML5 Canvas Maximum Shapes: ${testData.canvasMaxShapes}\n`;
+      resultsContainer.scrollTop = resultsContainer.scrollHeight;
+      callback();
+      return;
+    }
+    
+    // Update progress for this phase
+    currentPhaseStep++;
+    const progress = Math.min(100, 50 + Math.round((currentPhaseStep / totalPhaseSteps) * 50)); // Second phase is last 50%
+    progressBar.style.width = `${progress}%`;
+    progressBar.textContent = `${progress}%`;
+    
+    // Clear canvas
+    ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+    
+    // Seed random for consistent shapes
+    SeededRandom.seedWithInteger(currentPhaseStep);
+    
+    // Run the specific test and measure time
+    let startTime = performance.now();
+    
+    // Draw shapes based on test type
+    if (testType === 'lines') {
+      drawRandomLinesHTML5(ctx, currentShapeCount);
+    } else if (testType === 'rects') {
+      drawRandomRectsHTML5(ctx, currentShapeCount);
+    } else if (testType === 'circles') {
+      drawRandomCirclesHTML5(ctx, currentShapeCount);
+    }
+    
+    let endTime = performance.now();
+    let elapsedTime = endTime - startTime;
+    
+    const avgTime = elapsedTime;
+    const stdDev = 0; // No standard deviation with single measurement
+    
+    // Store results
+    testData.canvasShapeCounts.push(currentShapeCount);
+    testData.canvasTimings.push(avgTime);
+    
+    // Log to results
+    resultsContainer.innerHTML += `HTML5 Canvas with ${currentShapeCount} shapes: ${avgTime.toFixed(2)}ms\n`;
+    // Auto-scroll to show latest results
+    resultsContainer.scrollTop = resultsContainer.scrollHeight;
+    
+    // Check if we exceeded the frame budget
+    if (avgTime > FRAME_BUDGET) {
+      consecutiveExceedances++;
+      resultsContainer.innerHTML += `  Exceeded budget (${consecutiveExceedances}/${requiredExceedances})\n`;
+      // Auto-scroll to show exceedance messages
+      resultsContainer.scrollTop = resultsContainer.scrollHeight;
+      
+      // Only stop if we've exceeded enough times consecutively
+      if (consecutiveExceedances >= requiredExceedances) {
+        exceededBudget = true;
+      } else {
+        // Continue with the same shape count to confirm if it consistently exceeds budget
+        // No need to increment here
+      }
+    } else {
+      // Reset consecutive exceedances counter
+      consecutiveExceedances = 0;
+      // Increment shape count and continue testing
+      currentShapeCount += incrementSize;
+    }
+    
+    // Wait for the next frame before proceeding to next shape count
+    animationFrameId = requestAnimationFrame(testNextShapeCount);
+  }
+  
+  // Start with the first shape count
+  testNextShapeCount();
+}
+
+// Results display functions
+function displayRampTestResults(testData) {
+  // Format results
+  let results = "";
+  results += `\n=== ${testData.testType.toUpperCase()} TEST RESULTS ===\n`;
+  results += `Test Parameters:\n`;
+  results += `- Frame budget: ${FRAME_BUDGET}ms (60fps)\n`;
+  results += `- SW Canvas increment: ${testData.swIncrement}\n`;
+  results += `- HTML5 Canvas increment: ${testData.htmlIncrement}\n`;
+  results += `- Consecutive exceedances required: ${testData.requiredExceedances}\n`;
+  results += `- Blitting time: ${testData.includeBlitting ? "Included" : "Excluded"}\n\n`;
+  
+  results += `Software Canvas Performance:\n`;
+  results += `- Maximum shapes per frame: ${testData.swMaxShapes}\n\n`;
+  
+  results += `HTML5 Canvas Performance:\n`;
+  results += `- Maximum shapes per frame: ${testData.canvasMaxShapes}\n\n`;
+  
+  results += `Performance Ratio (HTML5 / Software): ${testData.ratio.toFixed(2)}x\n`;
+  results += `HTML5 canvas can render ${testData.ratio.toFixed(2)}x ${testData.ratio > 1 ? "more" : "fewer"} shapes than Software canvas within frame budget.\n\n`;
+  
+  // Append results to container
+  resultsContainer.innerHTML += results;
+  resultsContainer.scrollTop = resultsContainer.scrollHeight;
+}
+
+function displayOverallResults(allResults) {
+  // Calculate overall statistics
+  const avgSwMaxShapes = calculateAverage(allResults.swMaxShapes);
+  const avgCanvasMaxShapes = calculateAverage(allResults.canvasMaxShapes);
+  const avgRatio = calculateAverage(allResults.ratios);
+  
+  // Format overall results
+  let results = "\n=== OVERALL TEST RESULTS ===\n";
+  results += `Tests run: ${allResults.tests.length}\n\n`;
+  
+  // Test specific summary
+  results += "Test Summary:\n";
+  for (let i = 0; i < allResults.tests.length; i++) {
+    results += `- ${allResults.tests[i].toUpperCase()}: SW Canvas ${allResults.swMaxShapes[i]} shapes, HTML5 Canvas ${allResults.canvasMaxShapes[i]} shapes, Ratio ${allResults.ratios[i].toFixed(2)}x\n`;
+  }
+  results += "\n";
+  
+  results += "Average Performance Across All Tests:\n";
+  results += `- Software Canvas: ${Math.round(avgSwMaxShapes)} shapes/frame\n`;
+  results += `- HTML5 Canvas: ${Math.round(avgCanvasMaxShapes)} shapes/frame\n`;
+  results += `- Average Ratio: ${avgRatio.toFixed(2)}x\n`;
+  results += `HTML5 canvas can render on average ${avgRatio.toFixed(2)}x ${avgRatio > 1 ? "more" : "fewer"} shapes than Software canvas within frame budget.\n\n`;
+  
+  // Append results to container
+  resultsContainer.innerHTML += results;
+  resultsContainer.scrollTop = resultsContainer.scrollHeight;
+}
+
+// Simple chart generation function
+function generatePerformanceChart(testData) {
+  // Clear previous chart if any
+  chartContainer.innerHTML = '';
+  
+  // Create canvas for chart
+  const chartCanvas = document.createElement('canvas');
+  chartCanvas.width = chartContainer.clientWidth - 20;
+  chartCanvas.height = chartContainer.clientHeight - 20;
+  chartContainer.appendChild(chartCanvas);
+  
+  const chartCtx = chartCanvas.getContext('2d');
+  
+  // Chart settings
+  const chartPadding = { top: 40, right: 40, bottom: 40, left: 60 };
+  const chartWidth = chartCanvas.width - chartPadding.left - chartPadding.right;
+  const chartHeight = chartCanvas.height - chartPadding.top - chartPadding.bottom;
+  
+  // Find max values for scaling
+  const maxShapeCount = Math.max(
+    ...testData.swShapeCounts,
+    ...testData.canvasShapeCounts
+  );
+  
+  const maxTime = Math.max(
+    ...testData.swTimings,
+    ...testData.canvasTimings,
+    FRAME_BUDGET * 1.5 // Ensure frame budget line is visible
+  );
+  
+  // Draw chart background
+  chartCtx.fillStyle = '#f8f8f8';
+  chartCtx.fillRect(0, 0, chartCanvas.width, chartCanvas.height);
+  
+  // Draw frame budget line
+  const budgetY = chartPadding.top + chartHeight - (FRAME_BUDGET / maxTime) * chartHeight;
+  
+  chartCtx.beginPath();
+  chartCtx.moveTo(chartPadding.left, budgetY);
+  chartCtx.lineTo(chartPadding.left + chartWidth, budgetY);
+  chartCtx.strokeStyle = 'rgba(255, 0, 0, 0.7)';
+  chartCtx.lineWidth = 2;
+  chartCtx.setLineDash([5, 5]);
+  chartCtx.stroke();
+  chartCtx.setLineDash([]);
+  
+  // Add frame budget label
+  chartCtx.fillStyle = 'rgba(255, 0, 0, 0.9)';
+  chartCtx.font = '12px Arial';
+  chartCtx.textAlign = 'right';
+  chartCtx.fillText(`Frame Budget (${FRAME_BUDGET}ms)`, chartPadding.left + chartWidth - 10, budgetY - 5);
+  
+  // Draw axes
+  chartCtx.beginPath();
+  chartCtx.moveTo(chartPadding.left, chartPadding.top);
+  chartCtx.lineTo(chartPadding.left, chartPadding.top + chartHeight);
+  chartCtx.lineTo(chartPadding.left + chartWidth, chartPadding.top + chartHeight);
+  chartCtx.strokeStyle = '#333';
+  chartCtx.lineWidth = 2;
+  chartCtx.stroke();
+  
+  // Draw axis labels
+  chartCtx.fillStyle = '#333';
+  chartCtx.font = '14px Arial';
+  chartCtx.textAlign = 'center';
+  chartCtx.fillText('Number of Shapes', chartPadding.left + chartWidth / 2, chartPadding.top + chartHeight + 30);
+  
+  chartCtx.save();
+  chartCtx.translate(15, chartPadding.top + chartHeight / 2);
+  chartCtx.rotate(-Math.PI / 2);
+  chartCtx.textAlign = 'center';
+  chartCtx.fillText('Render Time (ms)', 0, 0);
+  chartCtx.restore();
+  
+  // Draw title
+  chartCtx.font = '16px Arial';
+  chartCtx.textAlign = 'center';
+  chartCtx.fillText(`${testData.testType.toUpperCase()} Test: Render Time vs. Shape Count`, chartPadding.left + chartWidth / 2, 20);
+  
+  // Draw Software Canvas data points
+  drawChartLine(
+    chartCtx,
+    testData.swShapeCounts,
+    testData.swTimings,
+    maxShapeCount,
+    maxTime,
+    chartPadding,
+    chartWidth,
+    chartHeight,
+    'rgba(0, 0, 255, 0.8)',
+    'Software Canvas'
+  );
+  
+  // Draw HTML5 Canvas data points
+  drawChartLine(
+    chartCtx,
+    testData.canvasShapeCounts,
+    testData.canvasTimings,
+    maxShapeCount,
+    maxTime,
+    chartPadding,
+    chartWidth,
+    chartHeight,
+    'rgba(0, 128, 0, 0.8)',
+    'HTML5 Canvas'
+  );
+  
+  // Draw legend
+  const legendY = chartPadding.top + 20;
+  
+  // Software Canvas legend
+  chartCtx.fillStyle = 'rgba(0, 0, 255, 0.8)';
+  chartCtx.fillRect(chartPadding.left + 10, legendY, 20, 10);
+  chartCtx.fillStyle = '#333';
+  chartCtx.textAlign = 'left';
+  chartCtx.fillText('Software Canvas', chartPadding.left + 40, legendY + 9);
+  
+  // HTML5 Canvas legend
+  chartCtx.fillStyle = 'rgba(0, 128, 0, 0.8)';
+  chartCtx.fillRect(chartPadding.left + 180, legendY, 20, 10);
+  chartCtx.fillStyle = '#333';
+  chartCtx.fillText('HTML5 Canvas', chartPadding.left + 210, legendY + 9);
+}
+
+function drawChartLine(ctx, xValues, yValues, maxX, maxY, padding, width, height, color, label) {
+  if (xValues.length < 2) return;
+  
+  ctx.beginPath();
+  
+  for (let i = 0; i < xValues.length; i++) {
+    const x = padding.left + (xValues[i] / maxX) * width;
+    const y = padding.top + height - (yValues[i] / maxY) * height;
+    
+    if (i === 0) {
+      ctx.moveTo(x, y);
+    } else {
+      ctx.lineTo(x, y);
+    }
+    
+    // Draw data point
+    ctx.fillStyle = color;
+    ctx.fillRect(x - 3, y - 3, 6, 6);
+  }
+  
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+}
+
+// Utility functions
+function calculateAverage(values) {
+  if (values.length === 0) return 0;
+  return values.reduce((sum, val) => sum + val, 0) / values.length;
+}
+
+function calculateStandardDeviation(values, avg) {
+  if (values.length <= 1) return 0;
+  const squareDiffs = values.map(value => Math.pow(value - avg, 2));
+  const avgSquareDiff = calculateAverage(squareDiffs);
+  return Math.sqrt(avgSquareDiff);
+}
