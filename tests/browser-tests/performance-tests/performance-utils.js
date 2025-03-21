@@ -3,13 +3,68 @@
 // Constants
 const CANVAS_WIDTH = 500;
 const CANVAS_HEIGHT = 400;
-const FRAME_BUDGET = 16.7; // milliseconds (60fps)
+let FRAME_BUDGET = 16.7; // Default milliseconds (60fps), will be updated after detection
+let DETECTED_FPS = 60; // Default, will be updated after detection
 const STARTING_SHAPE_COUNT = 10;
 
 // Set up test state
 let currentTest = null;
 let abortRequested = false;
 let animationFrameId = null;
+let refreshRateDetected = false;
+
+// Detect display refresh rate and update frame budget
+function detectRefreshRate(callback) {
+  let times = [];
+  let lastTime = performance.now();
+  let frameCount = 0;
+  
+  function measureFrames(timestamp) {
+    // Calculate time since last frame
+    const currentTime = performance.now();
+    const deltaTime = currentTime - lastTime;
+    lastTime = currentTime;
+    
+    // Only count frames after the first one (which might be delayed)
+    if (frameCount > 0) {
+      times.push(deltaTime);
+    }
+    
+    frameCount++;
+    
+    // Collect 20 samples
+    if (frameCount <= 20) {
+      requestAnimationFrame(measureFrames);
+    } else {
+      // Remove outliers (slow first frames, etc.)
+      times.sort((a, b) => a - b);
+      // Use the middle 60% of samples for better accuracy
+      const startIdx = Math.floor(times.length * 0.2);
+      const endIdx = Math.ceil(times.length * 0.8);
+      const reliableTimes = times.slice(startIdx, endIdx);
+      
+      // Calculate average frame time
+      const avgFrameTime = reliableTimes.reduce((sum, time) => sum + time, 0) / reliableTimes.length;
+      
+      // Calculate FPS (round to nearest whole number)
+      const detectedFPS = Math.round(1000 / avgFrameTime);
+      
+      // Update global variables
+      DETECTED_FPS = detectedFPS;
+      FRAME_BUDGET = 1000 / detectedFPS;
+      refreshRateDetected = true;
+      
+      // Update UI display and call callback
+      document.getElementById('detected-fps').textContent = DETECTED_FPS;
+      document.getElementById('frame-budget').textContent = FRAME_BUDGET.toFixed(2);
+      
+      if (callback) callback();
+    }
+  }
+  
+  // Start measurements
+  requestAnimationFrame(measureFrames);
+}
 
 // Find the maximum number of shapes that stayed within the frame budget
 function findMaxShapes(shapeCounts, timings) {
@@ -211,7 +266,8 @@ function displayRampTestResults(testData) {
   let results = "";
   results += `\n=== ${testData.testType.toUpperCase()} TEST RESULTS ===\n`;
   results += `Test Parameters:\n`;
-  results += `- Frame budget: ${FRAME_BUDGET}ms (60fps)\n`;
+  results += `- Display refresh rate: ${DETECTED_FPS} fps\n`;
+  results += `- Frame budget: ${FRAME_BUDGET.toFixed(2)}ms\n`;
   results += `- SW Canvas increment: ${testData.swIncrement}\n`;
   results += `- HTML5 Canvas increment: ${testData.htmlIncrement}\n`;
   results += `- Consecutive exceedances required: ${testData.requiredExceedances}\n`;
@@ -239,6 +295,7 @@ function displayOverallResults(allResults) {
   
   // Format overall results
   let results = "\n=== OVERALL TEST RESULTS ===\n";
+  results += `Display refresh rate: ${DETECTED_FPS} fps (${FRAME_BUDGET.toFixed(2)}ms budget)\n`;
   results += `Tests run: ${allResults.tests.length}\n\n`;
   
   // Test specific summary
@@ -309,7 +366,7 @@ function generatePerformanceChart(testData) {
   chartCtx.fillStyle = 'rgba(255, 0, 0, 0.9)';
   chartCtx.font = '12px Arial';
   chartCtx.textAlign = 'right';
-  chartCtx.fillText(`Frame Budget (${FRAME_BUDGET}ms)`, chartPadding.left + chartWidth - 10, budgetY - 5);
+  chartCtx.fillText(`Frame Budget (${FRAME_BUDGET.toFixed(2)}ms @ ${DETECTED_FPS}fps)`, chartPadding.left + chartWidth - 10, budgetY - 5);
   
   // Draw axes
   chartCtx.beginPath();

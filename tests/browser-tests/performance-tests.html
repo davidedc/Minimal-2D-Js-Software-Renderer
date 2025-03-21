@@ -109,11 +109,51 @@
       border: 1px solid #ddd;
       background-color: #fff;
     }
+    
+    .system-info {
+      background-color: #e9f7ef;
+      padding: 10px 15px;
+      border-radius: 4px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    
+    .system-info-item {
+      display: flex;
+      align-items: center;
+    }
+    
+    .system-info-label {
+      font-weight: bold;
+      margin-right: 5px;
+    }
+    
+    .system-info-value {
+      padding: 3px 8px;
+      background-color: #fff;
+      border-radius: 3px;
+      border: 1px solid #ddd;
+      min-width: 30px;
+      text-align: center;
+    }
   </style>
 </head>
 
 <body>
   <h1>Performance Tests - Software Canvas vs HTML5 Canvas</h1>
+  
+  <div class="system-info">
+    <div class="system-info-item">
+      <span class="system-info-label">Display refresh rate:</span>
+      <span id="detected-fps" class="system-info-value">60</span> fps
+    </div>
+    <div class="system-info-item">
+      <span class="system-info-label">Frame budget:</span>
+      <span id="frame-budget" class="system-info-value">16.70</span> ms
+    </div>
+  </div>
   
   <div class="test-controls">
     <h2>Test Configuration</h2>

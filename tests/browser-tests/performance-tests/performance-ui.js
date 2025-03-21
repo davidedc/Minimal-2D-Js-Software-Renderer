@@ -1,5 +1,26 @@
 // Main user interface functionality for performance tests
 
+// Initialize UI
+function initializeUI() {
+  // Detect refresh rate before allowing tests to run
+  if (!refreshRateDetected) {
+    // Disable test buttons until refresh rate is detected
+    setButtonsState(false);
+    
+    // Show detection message
+    resultsContainer.innerHTML = "Detecting display refresh rate... Please wait.\n";
+    
+    // Start refresh rate detection
+    detectRefreshRate(() => {
+      // Enable buttons once detection is complete
+      setButtonsState(true);
+      
+      // Show detection result
+      resultsContainer.innerHTML = `Display refresh rate detected: ${DETECTED_FPS} fps (${FRAME_BUDGET.toFixed(2)}ms budget)\nReady to run tests.\n`;
+    });
+  }
+}
+
 // Button event listeners
 btnLinesTest.addEventListener('click', () => runTest('lines'));
 btnRectsTest.addEventListener('click', () => runTest('rects'));
@@ -141,3 +162,6 @@ function runTest(testType, callback = null, clearResults = true) {
     });
   });
 }
+
+// Initialize UI when script loads
+initializeUI();
