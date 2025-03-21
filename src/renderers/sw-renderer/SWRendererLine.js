@@ -92,6 +92,21 @@ class SWRendererLine {
   }
 
   drawLineThick(x1, y1, x2, y2, thickness, r, g, b, a) {
+    // Original algorithm - bounding box with distance check
+    //this.drawLineThickBoundingBox(x1, y1, x2, y2, thickness, r, g, b, a);
+    
+    // Uncomment one of these to use a different algorithm:
+    // this.drawLineThickModifiedBresenham(x1, y1, x2, y2, thickness, r, g, b, a);
+    // this.drawLineThickDistanceOptimized(x1, y1, x2, y2, thickness, r, g, b, a);
+    // this.drawLineThickParallelOffset(x1, y1, x2, y2, thickness, r, g, b, a);
+    this.drawLineThickPolygonScan(x1, y1, x2, y2, thickness, r, g, b, a);
+  }
+
+  /**
+   * Algorithm 1: Original bounding box algorithm
+   * Scans a rectangle containing the entire thick line and checks each pixel's distance
+   */
+  drawLineThickBoundingBox(x1, y1, x2, y2, thickness, r, g, b, a) {
     // Tweaks to make the sw render more closely match the canvas render.
     // Canvas coordinates are offset by 0.5 pixels, so adjusting here
     x1 -= 0.5;
@@ -159,6 +174,401 @@ class SWRendererLine {
           this.pixelRenderer.setPixel(x, y, r, g, b, a);
         }
       }
+    }
+  }
+
+  /**
+   * Algorithm 2: Modified Bresenham algorithm for thick lines
+   * Extends the classic Bresenham line algorithm to draw perpendicular segments
+   */
+  drawLineThickModifiedBresenham(x1, y1, x2, y2, thickness, r, g, b, a) {
+    // Adjust for canvas coordinate system
+    x1 = Math.floor(x1 - 0.5);
+    y1 = Math.floor(y1 - 0.5);
+    x2 = Math.floor(x2 - 0.5);
+    y2 = Math.floor(y2 - 0.5);
+    
+    const dx = Math.abs(x2 - x1);
+    const dy = Math.abs(y2 - y1);
+    const sx = x1 < x2 ? 1 : -1;
+    const sy = y1 < y2 ? 1 : -1;
+    
+    // Calculate perpendicular direction
+    let perpX, perpY;
+    const lineLength = Math.sqrt(dx * dx + dy * dy);
+    
+    if (lineLength === 0) {
+      // Handle zero-length line case (draw a square)
+      const halfThick = Math.floor(thickness / 2);
+      for (let py = -halfThick; py <= halfThick; py++) {
+        for (let px = -halfThick; px <= halfThick; px++) {
+          this.pixelRenderer.setPixel(x1 + px, y1 + py, r, g, b, a);
+        }
+      }
+      return;
+    }
+    
+    perpX = -dy / lineLength;
+    perpY = dx / lineLength;
+    
+    // Half thickness for extending in both directions
+    const halfThick = thickness / 2;
+    
+    let err = dx - dy;
+    let x = x1;
+    let y = y1;
+    
+    // For each point along the line
+    while (true) {
+      // Draw perpendicular segment at each point
+      this.drawPerpendicularSegment(x, y, perpX, perpY, halfThick, r, g, b, a);
+      
+      if (x === x2 && y === y2) break;
+      
+      const e2 = 2 * err;
+      if (e2 > -dy) { err -= dy; x += sx; }
+      if (e2 < dx) { err += dx; y += sy; }
+    }
+    
+    // Draw square caps at endpoints
+    const dirX1 = (x2 - x1) / lineLength;
+    const dirY1 = (y2 - y1) / lineLength;
+    this.drawSquareCap(x1, y1, perpX, perpY, halfThick, -dirX1, -dirY1, r, g, b, a);
+    this.drawSquareCap(x2, y2, perpX, perpY, halfThick, dirX1, dirY1, r, g, b, a);
+  }
+  
+  /**
+   * Helper method to draw a perpendicular segment at a point
+   */
+  drawPerpendicularSegment(x, y, perpX, perpY, halfThick, r, g, b, a) {
+    const steps = Math.ceil(halfThick);
+    
+    // Draw center pixel
+    this.pixelRenderer.setPixel(x, y, r, g, b, a);
+    
+    // Draw pixels along the perpendicular direction
+    for (let i = 1; i <= steps; i++) {
+      const ratio = i / steps * halfThick;
+      // Draw in both perpendicular directions
+      const px1 = Math.round(x + perpX * ratio);
+      const py1 = Math.round(y + perpY * ratio);
+      const px2 = Math.round(x - perpX * ratio);
+      const py2 = Math.round(y - perpY * ratio);
+      
+      this.pixelRenderer.setPixel(px1, py1, r, g, b, a);
+      this.pixelRenderer.setPixel(px2, py2, r, g, b, a);
+    }
+  }
+  
+  /**
+   * Draw a square cap at the endpoint of a line
+   */
+  drawSquareCap(x, y, perpX, perpY, halfThick, dirX, dirY, r, g, b, a) {
+    const steps = Math.ceil(halfThick);
+    
+    for (let i = 1; i <= steps; i++) {
+      const ratio = i / steps * halfThick;
+      // Draw in the direction of the line extension
+      const extX = Math.round(x + dirX * ratio);
+      const extY = Math.round(y + dirY * ratio);
+      
+      // Draw perpendicular segment at this extended point
+      this.drawPerpendicularSegment(extX, extY, perpX, perpY, halfThick, r, g, b, a);
+    }
+  }
+
+  /**
+   * Algorithm 3: Distance-based approach with center line optimization
+   * First rasterizes the center line, then draws perpendicular spans
+   */
+  drawLineThickDistanceOptimized(x1, y1, x2, y2, thickness, r, g, b, a) {
+    // Adjust for canvas coordinate system
+    x1 = Math.floor(x1 - 0.5);
+    y1 = Math.floor(y1 - 0.5);
+    x2 = Math.floor(x2 - 0.5);
+    y2 = Math.floor(y2 - 0.5);
+    
+    const dx = Math.abs(x2 - x1);
+    const dy = Math.abs(y2 - y1);
+    const sx = x1 < x2 ? 1 : -1;
+    const sy = y1 < y2 ? 1 : -1;
+    
+    // For perpendicular spans
+    const lineLength = Math.sqrt((x2-x1)**2 + (y2-y1)**2);
+    if (lineLength === 0) {
+      // Handle zero-length line case
+      const radius = Math.floor(thickness / 2);
+      for (let py = -radius; py <= radius; py++) {
+        for (let px = -radius; px <= radius; px++) {
+          this.pixelRenderer.setPixel(x1 + px, y1 + py, r, g, b, a);
+        }
+      }
+      return;
+    }
+    
+    // Unit vector perpendicular to the line
+    const perpX = -((y2 - y1) / lineLength);
+    const perpY = ((x2 - x1) / lineLength);
+    
+    // Half thickness for extending in both directions
+    const halfThick = Math.floor(thickness / 2);
+    
+    // Draw the center line using Bresenham's algorithm
+    let err = dx - dy;
+    let x = x1;
+    let y = y1;
+    
+    // Collect center line points
+    const centerPoints = [];
+    while (true) {
+      centerPoints.push({ x, y });
+      if (x === x2 && y === y2) break;
+      
+      const e2 = 2 * err;
+      if (e2 > -dy) { err -= dy; x += sx; }
+      if (e2 < dx) { err += dx; y += sy; }
+    }
+    
+    // Draw horizontal spans at each center point
+    for (const point of centerPoints) {
+      for (let t = -halfThick; t <= halfThick; t++) {
+        const px = Math.round(point.x + perpX * t);
+        const py = Math.round(point.y + perpY * t);
+        this.pixelRenderer.setPixel(px, py, r, g, b, a);
+      }
+    }
+    
+    // Draw square caps
+    // For start cap
+    const dirX1 = -(x2 - x1) / lineLength;
+    const dirY1 = -(y2 - y1) / lineLength;
+    for (let i = 1; i <= halfThick; i++) {
+      const capX = Math.round(x1 + dirX1 * i);
+      const capY = Math.round(y1 + dirY1 * i);
+      
+      // Draw horizontal span at this cap point
+      for (let t = -halfThick; t <= halfThick; t++) {
+        const px = Math.round(capX + perpX * t);
+        const py = Math.round(capY + perpY * t);
+        this.pixelRenderer.setPixel(px, py, r, g, b, a);
+      }
+    }
+    
+    // For end cap
+    const dirX2 = (x2 - x1) / lineLength;
+    const dirY2 = (y2 - y1) / lineLength;
+    for (let i = 1; i <= halfThick; i++) {
+      const capX = Math.round(x2 + dirX2 * i);
+      const capY = Math.round(y2 + dirY2 * i);
+      
+      // Draw horizontal span at this cap point
+      for (let t = -halfThick; t <= halfThick; t++) {
+        const px = Math.round(capX + perpX * t);
+        const py = Math.round(capY + perpY * t);
+        this.pixelRenderer.setPixel(px, py, r, g, b, a);
+      }
+    }
+  }
+
+  /**
+   * Algorithm 4: Parallel offset lines approach
+   * Creates multiple parallel lines offset from the center line to create thickness
+   */
+  drawLineThickParallelOffset(x1, y1, x2, y2, thickness, r, g, b, a) {
+    // Adjust for canvas coordinate system
+    x1 = Math.floor(x1 - 0.5);
+    y1 = Math.floor(y1 - 0.5);
+    x2 = Math.floor(x2 - 0.5);
+    y2 = Math.floor(y2 - 0.5);
+    
+    const lineLength = Math.sqrt((x2-x1)**2 + (y2-y1)**2);
+    if (lineLength === 0) {
+      // Handle zero-length line case
+      const radius = Math.floor(thickness / 2);
+      for (let py = -radius; py <= radius; py++) {
+        for (let px = -radius; px <= radius; px++) {
+          this.pixelRenderer.setPixel(x1 + px, y1 + py, r, g, b, a);
+        }
+      }
+      return;
+    }
+    
+    // Calculate perpendicular vector
+    const perpX = -((y2 - y1) / lineLength);
+    const perpY = ((x2 - x1) / lineLength);
+    
+    // Line direction unit vector for caps
+    const dirX = (x2 - x1) / lineLength;
+    const dirY = (y2 - y1) / lineLength;
+    
+    // Half thickness
+    const halfThick = thickness / 2;
+    
+    // Draw offset lines
+    const offsetCount = Math.ceil(halfThick);
+    for (let offset = -offsetCount; offset <= offsetCount; offset++) {
+      // Calculate offset ratio to ensure even coverage
+      const offsetRatio = offset / offsetCount * halfThick;
+      
+      // Calculate offset points
+      const ox1 = x1 + perpX * offsetRatio;
+      const oy1 = y1 + perpY * offsetRatio;
+      const ox2 = x2 + perpX * offsetRatio;
+      const oy2 = y2 + perpY * offsetRatio;
+      
+      // Draw the offset line using Bresenham's algorithm
+      this.drawBresenhamLine(Math.round(ox1), Math.round(oy1), 
+                           Math.round(ox2), Math.round(oy2), 
+                           r, g, b, a);
+    }
+    
+    // Draw square caps
+    // For start cap
+    for (let offset = -offsetCount; offset <= offsetCount; offset++) {
+      const offsetRatio = offset / offsetCount * halfThick;
+      
+      for (let i = 1; i <= halfThick; i++) {
+        const capX = Math.round(x1 - dirX * i + perpX * offsetRatio);
+        const capY = Math.round(y1 - dirY * i + perpY * offsetRatio);
+        this.pixelRenderer.setPixel(capX, capY, r, g, b, a);
+      }
+    }
+    
+    // For end cap
+    for (let offset = -offsetCount; offset <= offsetCount; offset++) {
+      const offsetRatio = offset / offsetCount * halfThick;
+      
+      for (let i = 1; i <= halfThick; i++) {
+        const capX = Math.round(x2 + dirX * i + perpX * offsetRatio);
+        const capY = Math.round(y2 + dirY * i + perpY * offsetRatio);
+        this.pixelRenderer.setPixel(capX, capY, r, g, b, a);
+      }
+    }
+  }
+  
+  /**
+   * Helper function: Standard Bresenham line algorithm
+   */
+  drawBresenhamLine(x1, y1, x2, y2, r, g, b, a) {
+    const dx = Math.abs(x2 - x1);
+    const dy = Math.abs(y2 - y1);
+    const sx = x1 < x2 ? 1 : -1;
+    const sy = y1 < y2 ? 1 : -1;
+    let err = dx - dy;
+    
+    while (true) {
+      this.pixelRenderer.setPixel(x1, y1, r, g, b, a);
+      if (x1 === x2 && y1 === y2) break;
+      
+      const e2 = 2 * err;
+      if (e2 > -dy) { err -= dy; x1 += sx; }
+      if (e2 < dx) { err += dx; y1 += sy; }
+    }
+  }
+
+  /**
+   * Algorithm 5: Polygon scan conversion approach with pixel runs
+   * Treats the thick line as a four-sided polygon and uses scanline fill
+   * Optimized with setPixelRuns for faster rendering
+   */
+  drawLineThickPolygonScan(x1, y1, x2, y2, thickness, r, g, b, a) {
+    // Adjust for canvas coordinate system
+    //x1 -= 0.5;
+    //y1 -= 0.5;
+    //x2 -= 0.5;
+    //y2 -= 0.5;
+    
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const lineLength = Math.sqrt(dx * dx + dy * dy);
+    
+    // Array to collect pixel runs for batch rendering
+    const pixelRuns = [];
+    
+    if (lineLength === 0) {
+      // Handle zero-length line case
+      const radius = Math.floor(thickness / 2);
+      const centerX = Math.round(x1);
+      const centerY = Math.round(y1);
+      
+      for (let py = -radius; py <= radius; py++) {
+        // Add a complete horizontal run for each row
+        pixelRuns.push(centerX - radius, centerY + py, 2 * radius + 1);
+      }
+      
+      // Render all runs in a single batch
+      this.pixelRenderer.setPixelRuns(pixelRuns, r, g, b, a);
+      return;
+    }
+    
+    // Calculate perpendicular vector
+    const perpX = -dy / lineLength;
+    const perpY = dx / lineLength;
+    
+    // Calculate half thickness
+    const halfThick = thickness / 2;
+    
+    // Calculate the four corners of the rectangle
+    const corners = [
+      { x: x1 + perpX * halfThick, y: y1 + perpY * halfThick },
+      { x: x1 - perpX * halfThick, y: y1 - perpY * halfThick },
+      { x: x2 - perpX * halfThick, y: y2 - perpY * halfThick },
+      { x: x2 + perpX * halfThick, y: y2 + perpY * halfThick }
+    ];
+    
+    // Find min and max y for scanline loop
+    const yValues = corners.map(p => p.y);
+    const minY = Math.floor(Math.min(...yValues));
+    const maxY = Math.ceil(Math.max(...yValues));
+    
+    // Define polygon edges
+    const edges = [
+      [corners[0], corners[1]],
+      [corners[1], corners[2]],
+      [corners[2], corners[3]],
+      [corners[3], corners[0]]
+    ];
+    
+    // For each scanline
+    for (let y = minY; y <= maxY; y++) {
+      // Find intersections with all edges
+      const intersections = [];
+      
+      for (const [p1, p2] of edges) {
+        // Skip horizontal edges
+        if (p1.y === p2.y) continue;
+        
+        // Check if scanline intersects this edge
+        if ((y >= p1.y && y < p2.y) || (y >= p2.y && y < p1.y)) {
+          // Calculate x-intersection using linear interpolation
+          const t = (y - p1.y) / (p2.y - p1.y);
+          const x = p1.x + t * (p2.x - p1.x);
+          intersections.push(x);
+        }
+      }
+      
+      // Sort intersections
+      intersections.sort((a, b) => a - b);
+      
+      // Collect horizontal spans between intersection pairs as runs
+      for (let i = 0; i < intersections.length; i += 2) {
+        if (i + 1 < intersections.length) {
+          const startX = Math.floor(intersections[i]);
+          const endX = Math.ceil(intersections[i + 1]);
+          const spanLength = endX - startX;
+          
+          // Only add runs with positive length
+          if (spanLength > 0) {
+            // Add the pixel run: [x, y, length]
+            pixelRuns.push(startX, y, spanLength);
+          }
+        }
+      }
+    }
+    
+    // Render all collected pixel runs in a single batch operation
+    if (pixelRuns.length > 0) {
+      this.pixelRenderer.setPixelRuns(pixelRuns, r, g, b, a);
     }
   }
 }
