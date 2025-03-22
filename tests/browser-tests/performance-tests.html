@@ -221,14 +221,13 @@
     <div id="progress-bar">0%</div>
   </div>
   
-  <div class="canvas-container">
-    <div class="canvas-wrapper">
-      <h3>Software Canvas</h3>
-      <canvas id="sw-canvas" width="500" height="400"></canvas>
+  <h3 id="canvas-label">Graphics will be shown here when tests start</h3>
+  <div class="canvas-container" style="justify-content: flex-start;">
+    <div class="canvas-wrapper" id="sw-canvas-container" style="display: none;">
+      <canvas id="sw-canvas" width="800" height="600"></canvas>
     </div>
-    <div class="canvas-wrapper">
-      <h3>HTML5 Canvas</h3>
-      <canvas id="canvas" width="500" height="400"></canvas>
+    <div class="canvas-wrapper" id="html5-canvas-container" style="display: none;">
+      <canvas id="canvas" width="800" height="600"></canvas>
     </div>
   </div>
   

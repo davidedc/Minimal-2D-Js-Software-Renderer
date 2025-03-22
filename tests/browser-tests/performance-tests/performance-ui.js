@@ -2,6 +2,9 @@
 
 // Initialize UI
 function initializeUI() {
+  // Hide all canvases initially
+  hideAllCanvases();
+  
   // Detect refresh rate before allowing tests to run
   if (!refreshRateDetected) {
     // Disable test buttons until refresh rate is detected
@@ -96,6 +99,7 @@ function abortTests() {
     cancelAnimationFrame(animationFrameId);
     animationFrameId = null;
   }
+  hideAllCanvases();
   resetTestState();
   resultsContainer.innerHTML += "Tests aborted by user.\n";
 }
@@ -171,9 +175,11 @@ function runTest(testType, callback = null, clearResults = true) {
   resultsContainer.scrollTop = resultsContainer.scrollHeight;
   
   // Start with the software canvas test
+  showSwCanvas();
   runSoftwareCanvasRampTest(testType, STARTING_SHAPE_COUNT, swIncrement, includeBlitting, requiredExceedances, testData, () => {
     
     // After SW canvas test completes, run HTML5 canvas test
+    showHtml5Canvas();
     resultsContainer.innerHTML += "\nPHASE 2: Testing HTML5 Canvas...\n";
     if (isSilentMode) {
       resultsContainer.innerHTML += "(Running in silent mode, only periodic updates will be shown)\n";
@@ -184,6 +190,9 @@ function runTest(testType, callback = null, clearResults = true) {
       
       // Calculate performance ratio
       testData.ratio = testData.canvasMaxShapes / testData.swMaxShapes;
+      
+      // Hide all canvases when test is complete
+      hideAllCanvases();
       
       // Display final results
       displayRampTestResults(testData);

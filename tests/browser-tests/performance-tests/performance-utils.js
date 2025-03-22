@@ -1,8 +1,8 @@
 // Performance testing utilities
 
 // Constants
-const CANVAS_WIDTH = 500;
-const CANVAS_HEIGHT = 400;
+const CANVAS_WIDTH = 800;
+const CANVAS_HEIGHT = 600;
 let FRAME_BUDGET = 16.7; // Default milliseconds (60fps), will be updated after detection
 let DETECTED_FPS = 60; // Default, will be updated after detection
 const STARTING_SHAPE_COUNT = 10;
@@ -539,4 +539,23 @@ function calculateStandardDeviation(values, avg) {
   const squareDiffs = values.map(value => Math.pow(value - avg, 2));
   const avgSquareDiff = calculateAverage(squareDiffs);
   return Math.sqrt(avgSquareDiff);
+}
+
+// Canvas visibility management functions
+function showSwCanvas() {
+  document.getElementById("sw-canvas-container").style.display = "block";
+  document.getElementById("html5-canvas-container").style.display = "none";
+  document.getElementById("canvas-label").textContent = "Software Canvas";
+}
+
+function showHtml5Canvas() {
+  document.getElementById("sw-canvas-container").style.display = "none";
+  document.getElementById("html5-canvas-container").style.display = "block";
+  document.getElementById("canvas-label").textContent = "HTML5 Canvas";
+}
+
+function hideAllCanvases() {
+  document.getElementById("sw-canvas-container").style.display = "none";
+  document.getElementById("html5-canvas-container").style.display = "none";
+  document.getElementById("canvas-label").textContent = "Graphics will be shown here when tests start";
 }
