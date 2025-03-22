@@ -224,10 +224,10 @@
   <h3 id="canvas-label">Graphics will be shown here when tests start</h3>
   <div class="canvas-container" style="justify-content: flex-start;">
     <div class="canvas-wrapper" id="sw-canvas-container" style="display: none;">
-      <canvas id="sw-canvas" width="800" height="600"></canvas>
+      <canvas id="sw-canvas"></canvas>
     </div>
     <div class="canvas-wrapper" id="html5-canvas-container" style="display: none;">
-      <canvas id="canvas" width="800" height="600"></canvas>
+      <canvas id="canvas"></canvas>
     </div>
   </div>
   
@@ -239,6 +239,7 @@
   <!-- Load library scripts -->
   <script src="../../build/crisp-sw-canvas-v1.0.2.min.js"></script>
   <script src="../../src/scene-creation/SeededRandom.js"></script>
+  <script src="performance-tests/performance-utils.js"></script>
   
   <script>
     // Elements
@@ -248,6 +249,12 @@
     const progressContainer = document.getElementById('progress-container');
     const progressBar = document.getElementById('progress-bar');
     const chartContainer = document.getElementById('chart-container');
+    
+    // Set canvas dimensions immediately
+    swCanvas.width = CANVAS_WIDTH;
+    swCanvas.height = CANVAS_HEIGHT;
+    canvas.width = CANVAS_WIDTH;
+    canvas.height = CANVAS_HEIGHT;
     
     // Canvas contexts
     const swCtx = new CrispSwContext(swCanvas);
@@ -272,7 +279,6 @@
   <script src="performance-tests/lines-test.js"></script>
   <script src="performance-tests/rects-test.js"></script>
   <script src="performance-tests/circles-test.js"></script>
-  <script src="performance-tests/performance-utils.js"></script>
   <script src="performance-tests/performance-ui.js"></script>
 </body>
 </html>
