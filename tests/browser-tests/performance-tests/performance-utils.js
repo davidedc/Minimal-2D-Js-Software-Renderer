@@ -137,7 +137,7 @@ function runSoftwareCanvasRampTest(testType, startCount, incrementSize, includeB
     
     // Draw shapes based on test type
     if (testType === 'lines') {
-      drawRandomLines(swCtx, currentShapeCount);
+      drawLongRandomLines(swCtx, currentShapeCount);
     } else if (testType === 'rects') {
       drawRandomRects(swCtx, currentShapeCount);
     } else if (testType === 'circles') {
@@ -252,7 +252,7 @@ function runHTML5CanvasRampTest(testType, startCount, incrementSize, requiredExc
     
     // Draw shapes based on test type
     if (testType === 'lines') {
-      drawRandomLinesHTML5(ctx, currentShapeCount);
+      drawLongRandomLinesHTML5(ctx, currentShapeCount);
     } else if (testType === 'rects') {
       drawRandomRectsHTML5(ctx, currentShapeCount);
     } else if (testType === 'circles') {
