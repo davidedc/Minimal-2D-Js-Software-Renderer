@@ -1,5 +1,5 @@
-// Rectangles test functions for performance testing
-function drawRandomRects(ctx, count) {
+// Medium filled and stroked rectangles test functions for performance testing
+function drawMediumFilledStrokedRectangles(ctx, count) {
   for (let i = 0; i < count; i++) {
     const x = Math.floor(SeededRandom.getRandom() * CANVAS_WIDTH);
     const y = Math.floor(SeededRandom.getRandom() * CANVAS_HEIGHT);
@@ -26,7 +26,7 @@ function drawRandomRects(ctx, count) {
   }
 }
 
-function drawRandomRectsHTML5(ctx, count) {
+function drawMediumFilledStrokedRectanglesHTML5(ctx, count) {
   for (let i = 0; i < count; i++) {
     const x = Math.floor(SeededRandom.getRandom() * CANVAS_WIDTH);
     const y = Math.floor(SeededRandom.getRandom() * CANVAS_HEIGHT);

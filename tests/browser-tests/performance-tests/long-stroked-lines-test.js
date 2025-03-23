@@ -1,5 +1,5 @@
-// Long random lines test functions for performance testing
-function drawLongRandomLines(ctx, count) {
+// Long stroked lines test functions for performance testing
+function drawLongStrokedLines(ctx, count) {
   for (let i = 0; i < count; i++) {
     const x1 = Math.floor(SeededRandom.getRandom() * CANVAS_WIDTH);
     const y1 = Math.floor(SeededRandom.getRandom() * CANVAS_HEIGHT);
@@ -17,7 +17,7 @@ function drawLongRandomLines(ctx, count) {
   }
 }
 
-function drawLongRandomLinesHTML5(ctx, count) {
+function drawLongStrokedLinesHTML5(ctx, count) {
   for (let i = 0; i < count; i++) {
     const x1 = Math.floor(SeededRandom.getRandom() * CANVAS_WIDTH);
     const y1 = Math.floor(SeededRandom.getRandom() * CANVAS_HEIGHT);

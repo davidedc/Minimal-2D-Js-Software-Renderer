@@ -137,11 +137,11 @@ function runSoftwareCanvasRampTest(testType, startCount, incrementSize, includeB
     
     // Draw shapes based on test type
     if (testType === 'lines') {
-      drawLongRandomLines(swCtx, currentShapeCount);
+      drawLongStrokedLines(swCtx, currentShapeCount);
     } else if (testType === 'rects') {
-      drawRandomRects(swCtx, currentShapeCount);
+      drawMediumFilledStrokedRectangles(swCtx, currentShapeCount);
     } else if (testType === 'circles') {
-      drawRandomCircles(swCtx, currentShapeCount);
+      drawMediumFilledStrokedCircles(swCtx, currentShapeCount);
     }
     
     // Include blitting time if requested
@@ -252,11 +252,11 @@ function runHTML5CanvasRampTest(testType, startCount, incrementSize, requiredExc
     
     // Draw shapes based on test type
     if (testType === 'lines') {
-      drawLongRandomLinesHTML5(ctx, currentShapeCount);
+      drawLongStrokedLinesHTML5(ctx, currentShapeCount);
     } else if (testType === 'rects') {
-      drawRandomRectsHTML5(ctx, currentShapeCount);
+      drawMediumFilledStrokedRectanglesHTML5(ctx, currentShapeCount);
     } else if (testType === 'circles') {
-      drawRandomCirclesHTML5(ctx, currentShapeCount);
+      drawMediumFilledStrokedCirclesHTML5(ctx, currentShapeCount);
     }
     
     let endTime = performance.now();
