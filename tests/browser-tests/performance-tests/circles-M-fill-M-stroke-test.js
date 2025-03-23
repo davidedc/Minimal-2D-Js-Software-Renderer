@@ -1,5 +1,5 @@
-// Medium filled and stroked circles test functions for performance testing
-function drawMediumFilledStrokedCircles(ctx, count) {
+// Circles with medium fill and medium stroke test functions
+function drawCirclesMFillMStroke(ctx, count) {
   for (let i = 0; i < count; i++) {
     const centerX = Math.floor(SeededRandom.getRandom() * CANVAS_WIDTH);
     const centerY = Math.floor(SeededRandom.getRandom() * CANVAS_HEIGHT);
@@ -36,7 +36,7 @@ function drawMediumFilledStrokedCircles(ctx, count) {
   }
 }
 
-function drawMediumFilledStrokedCirclesHTML5(ctx, count) {
+function drawCirclesMFillMStrokeHTML5(ctx, count) {
   for (let i = 0; i < count; i++) {
     const centerX = Math.floor(SeededRandom.getRandom() * CANVAS_WIDTH);
     const centerY = Math.floor(SeededRandom.getRandom() * CANVAS_HEIGHT);

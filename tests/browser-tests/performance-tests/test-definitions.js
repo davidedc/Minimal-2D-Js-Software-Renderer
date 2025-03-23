@@ -3,28 +3,28 @@
 
 // The TESTS object contains all available performance tests with their properties
 const TESTS = {
-  LONG_STROKED_LINES: {
-    id: 'long-stroked-lines',
-    swDrawFunction: drawLongStrokedLines,
-    html5DrawFunction: drawLongStrokedLinesHTML5,
-    displayName: 'Long stroked lines',
-    description: 'Tests drawing long lines with variable stroke widths across the canvas.'
+  LINES_NO_FILL_L_STROKE: {
+    id: 'lines-no-fill-L-stroke',
+    swDrawFunction: drawLinesNoFillLStroke,
+    html5DrawFunction: drawLinesNoFillLStrokeHTML5,
+    displayName: 'Lines (no fill, L stroke)',
+    description: 'Tests drawing lines with large strokes across the canvas.'
   },
   
-  MEDIUM_FILLED_STROKED_RECTANGLES: {
-    id: 'medium-filled-stroked-rectangles',
-    swDrawFunction: drawMediumFilledStrokedRectangles,
-    html5DrawFunction: drawMediumFilledStrokedRectanglesHTML5,
-    displayName: 'Medium filled & stroked rectangles',
-    description: 'Tests drawing medium-sized rectangles with both fill and stroke operations.'
+  RECTANGLES_M_FILL_M_STROKE: {
+    id: 'rectangles-M-fill-M-stroke',
+    swDrawFunction: drawRectanglesMFillMStroke,
+    html5DrawFunction: drawRectanglesMFillMStrokeHTML5,
+    displayName: 'Rectangles (M fill, M stroke)',
+    description: 'Tests drawing rectangles with medium fill and medium stroke operations.'
   },
   
-  MEDIUM_FILLED_STROKED_CIRCLES: {
-    id: 'medium-filled-stroked-circles',
-    swDrawFunction: drawMediumFilledStrokedCircles,
-    html5DrawFunction: drawMediumFilledStrokedCirclesHTML5,
-    displayName: 'Medium filled & stroked circles',
-    description: 'Tests drawing medium-sized circles with both fill and stroke operations.'
+  CIRCLES_M_FILL_M_STROKE: {
+    id: 'circles-M-fill-M-stroke',
+    swDrawFunction: drawCirclesMFillMStroke,
+    html5DrawFunction: drawCirclesMFillMStrokeHTML5,
+    displayName: 'Circles (M fill, M stroke)',
+    description: 'Tests drawing circles with medium fill and medium stroke operations.'
   }
 };
 

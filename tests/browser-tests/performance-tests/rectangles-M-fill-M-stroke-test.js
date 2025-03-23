@@ -1,5 +1,5 @@
-// Medium filled and stroked rectangles test functions for performance testing
-function drawMediumFilledStrokedRectangles(ctx, count) {
+// Rectangles with medium fill and medium stroke test functions
+function drawRectanglesMFillMStroke(ctx, count) {
   for (let i = 0; i < count; i++) {
     const x = Math.floor(SeededRandom.getRandom() * CANVAS_WIDTH);
     const y = Math.floor(SeededRandom.getRandom() * CANVAS_HEIGHT);
@@ -26,7 +26,7 @@ function drawMediumFilledStrokedRectangles(ctx, count) {
   }
 }
 
-function drawMediumFilledStrokedRectanglesHTML5(ctx, count) {
+function drawRectanglesMFillMStrokeHTML5(ctx, count) {
   for (let i = 0; i < count; i++) {
     const x = Math.floor(SeededRandom.getRandom() * CANVAS_WIDTH);
     const y = Math.floor(SeededRandom.getRandom() * CANVAS_HEIGHT);

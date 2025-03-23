@@ -1,5 +1,5 @@
-// Long stroked lines test functions for performance testing
-function drawLongStrokedLines(ctx, count) {
+// Lines with no fill and large stroke test functions
+function drawLinesNoFillLStroke(ctx, count) {
   for (let i = 0; i < count; i++) {
     const x1 = Math.floor(SeededRandom.getRandom() * CANVAS_WIDTH);
     const y1 = Math.floor(SeededRandom.getRandom() * CANVAS_HEIGHT);
@@ -17,7 +17,7 @@ function drawLongStrokedLines(ctx, count) {
   }
 }
 
-function drawLongStrokedLinesHTML5(ctx, count) {
+function drawLinesNoFillLStrokeHTML5(ctx, count) {
   for (let i = 0; i < count; i++) {
     const x1 = Math.floor(SeededRandom.getRandom() * CANVAS_WIDTH);
     const y1 = Math.floor(SeededRandom.getRandom() * CANVAS_HEIGHT);
