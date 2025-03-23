@@ -209,9 +209,7 @@
     </div>
     
     <div class="test-buttons">
-      <button id="btn-lines-test">Long stroked lines</button>
-      <button id="btn-rects-test">Medium filled & stroked rectangles</button>
-      <button id="btn-circles-test">Medium filled & stroked circles</button>
+      <!-- Test buttons will be generated dynamically based on test-definitions.js -->
       <button id="btn-run-all">All Tests</button>
       <button id="btn-abort" disabled>Abort</button>
     </div>
@@ -267,10 +265,7 @@
     const includeBlittingCheckbox = document.getElementById('include-blitting');
     const silentModeCheckbox = document.getElementById('silent-mode');
     
-    // Buttons
-    const btnLinesTest = document.getElementById('btn-lines-test');
-    const btnRectsTest = document.getElementById('btn-rects-test');
-    const btnCirclesTest = document.getElementById('btn-circles-test');
+    // Buttons - only static buttons
     const btnRunAll = document.getElementById('btn-run-all');
     const btnAbort = document.getElementById('btn-abort');
   </script>
@@ -279,6 +274,7 @@
   <script src="performance-tests/long-stroked-lines-test.js"></script>
   <script src="performance-tests/medium-filled-stroked-rectangles-test.js"></script>
   <script src="performance-tests/medium-filled-stroked-circles-test.js"></script>
+  <script src="performance-tests/test-definitions.js"></script>
   <script src="performance-tests/performance-ui.js"></script>
 </body>
 </html>

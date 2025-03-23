@@ -136,13 +136,7 @@ function runSoftwareCanvasRampTest(testType, startCount, incrementSize, includeB
     let startTime = performance.now();
     
     // Draw shapes based on test type
-    if (testType === 'lines') {
-      drawLongStrokedLines(swCtx, currentShapeCount);
-    } else if (testType === 'rects') {
-      drawMediumFilledStrokedRectangles(swCtx, currentShapeCount);
-    } else if (testType === 'circles') {
-      drawMediumFilledStrokedCircles(swCtx, currentShapeCount);
-    }
+    TestRunner.drawWithSoftwareRenderer(testType, swCtx, currentShapeCount);
     
     // Include blitting time if requested
     if (includeBlitting) {
@@ -251,13 +245,7 @@ function runHTML5CanvasRampTest(testType, startCount, incrementSize, requiredExc
     let startTime = performance.now();
     
     // Draw shapes based on test type
-    if (testType === 'lines') {
-      drawLongStrokedLinesHTML5(ctx, currentShapeCount);
-    } else if (testType === 'rects') {
-      drawMediumFilledStrokedRectanglesHTML5(ctx, currentShapeCount);
-    } else if (testType === 'circles') {
-      drawMediumFilledStrokedCirclesHTML5(ctx, currentShapeCount);
-    }
+    TestRunner.drawWithHtml5Canvas(testType, ctx, currentShapeCount);
     
     let endTime = performance.now();
     let elapsedTime = endTime - startTime;
@@ -320,7 +308,7 @@ function runHTML5CanvasRampTest(testType, startCount, incrementSize, requiredExc
 function displayRampTestResults(testData) {
   // Format results
   let results = "";
-  results += `\n=== ${testData.testType.toUpperCase()} TEST RESULTS ===\n`;
+  results += `\n=== ${testData.testDisplayName.toUpperCase()} TEST RESULTS ===\n`;
   results += `Test Parameters:\n`;
   results += `- Display refresh rate: ${DETECTED_FPS} fps\n`;
   results += `- Frame budget: ${FRAME_BUDGET.toFixed(2)}ms\n`;
@@ -456,7 +444,7 @@ function generatePerformanceChart(testData) {
   // Draw title
   chartCtx.font = '16px Arial';
   chartCtx.textAlign = 'center';
-  chartCtx.fillText(`${testData.testType.toUpperCase()} Test: Render Time vs. Shape Count`, chartPadding.left + chartWidth / 2, 20);
+  chartCtx.fillText(`${testData.testDisplayName} Test: Render Time vs. Shape Count`, chartPadding.left + chartWidth / 2, 20);
   
   // Draw Software Canvas data points
   drawChartLine(

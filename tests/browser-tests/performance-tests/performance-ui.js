@@ -1,9 +1,41 @@
 // Main user interface functionality for performance tests
 
+// Function to dynamically generate test buttons
+function generateTestButtons() {
+  // Only build dynamic buttons if we're in a modern environment
+  if (typeof document.querySelector !== 'function') return;
+  
+  const testsContainer = document.querySelector('.test-buttons');
+  if (!testsContainer) return;
+  
+  // Get references to the static buttons
+  const runAllButton = document.getElementById('btn-run-all');
+  
+  // Clear existing buttons except the standard controls - need to convert NodeList to Array first
+  const dynamicButtons = Array.from(testsContainer.querySelectorAll('button')).filter(btn => {
+    return btn.id !== 'btn-run-all' && btn.id !== 'btn-abort';
+  });
+  
+  // Remove any existing dynamic buttons
+  dynamicButtons.forEach(btn => testsContainer.removeChild(btn));
+  
+  // Add buttons for each test before the static Run All button
+  Object.values(TESTS).forEach(test => {
+    const button = document.createElement('button');
+    button.textContent = test.displayName;
+    button.addEventListener('click', () => runTest(test));
+    button.className = 'test-button'; // Add a class for easier selection
+    testsContainer.insertBefore(button, runAllButton);
+  });
+}
+
 // Initialize UI
 function initializeUI() {
   // Hide all canvases initially
   hideAllCanvases();
+  
+  // Generate test buttons dynamically based on test definitions
+  generateTestButtons();
   
   // Detect refresh rate before allowing tests to run
   if (!refreshRateDetected) {
@@ -49,15 +81,12 @@ document.getElementById('btn-profiling-mode').addEventListener('click', function
   }
 });
 
-// Button event listeners
-btnLinesTest.addEventListener('click', () => runTest('lines'));
-btnRectsTest.addEventListener('click', () => runTest('rects'));
-btnCirclesTest.addEventListener('click', () => runTest('circles'));
+// Button event listeners for standard controls
 btnRunAll.addEventListener('click', runAllTests);
 btnAbort.addEventListener('click', abortTests);
 
 function runAllTests() {
-  const tests = ['lines', 'rects', 'circles'];
+  const tests = TestRunner.getAllAsArray();
   let currentIndex = 0;
   
   // Clear previous results
@@ -75,7 +104,7 @@ function runAllTests() {
     if (currentIndex < tests.length && !abortRequested) {
       runTest(tests[currentIndex], (testResults) => {
         // Store individual test results
-        allResults.tests.push(tests[currentIndex]);
+        allResults.tests.push(tests[currentIndex].displayName);
         allResults.swMaxShapes.push(testResults.swMaxShapes);
         allResults.canvasMaxShapes.push(testResults.canvasMaxShapes);
         allResults.ratios.push(testResults.ratio);
@@ -112,11 +141,16 @@ function resetTestState() {
 }
 
 function setButtonsState(enabled) {
-  btnLinesTest.disabled = !enabled;
-  btnRectsTest.disabled = !enabled;
-  btnCirclesTest.disabled = !enabled;
+  // Disable static buttons
   btnRunAll.disabled = !enabled;
   btnAbort.disabled = enabled;
+  
+  // Disable all test buttons
+  document.querySelectorAll('.test-buttons button').forEach(btn => {
+    if (btn !== btnAbort) { // All buttons except Abort
+      btn.disabled = !enabled;
+    }
+  });
 }
 
 function runTest(testType, callback = null, clearResults = true) {
@@ -131,14 +165,17 @@ function runTest(testType, callback = null, clearResults = true) {
   const includeBlitting = includeBlittingCheckbox.checked;
   const isSilentMode = silentModeCheckbox.checked;
   
+  // Get the test's display name
+  const testDisplayName = testType.displayName;
+  
   // Clear previous results if not part of "Run All Tests"
   if (clearResults) {
-    let header = `Running ${testType} test with SW increment ${swIncrement}, HTML increment ${htmlIncrement}`;
+    let header = `Running ${testDisplayName} test with SW increment ${swIncrement}, HTML increment ${htmlIncrement}`;
     header += `${includeBlitting ? ' (including blitting time)' : ' (excluding blitting time)'}`;
     header += `${isSilentMode ? ' in silent mode' : ''}...\n\n`;
     resultsContainer.innerHTML = header;
   } else {
-    let header = `\nRunning ${testType} test with SW increment ${swIncrement}, HTML increment ${htmlIncrement}`;
+    let header = `\nRunning ${testDisplayName} test with SW increment ${swIncrement}, HTML increment ${htmlIncrement}`;
     header += `${includeBlitting ? ' (including blitting time)' : ' (excluding blitting time)'}`;
     header += `${isSilentMode ? ' in silent mode' : ''}...\n\n`;
     resultsContainer.innerHTML += header;
@@ -151,7 +188,8 @@ function runTest(testType, callback = null, clearResults = true) {
   
   // Testing data structure
   const testData = {
-    testType,
+    testType: testType,
+    testDisplayName: testDisplayName,
     swIncrement,
     htmlIncrement,
     includeBlitting,
