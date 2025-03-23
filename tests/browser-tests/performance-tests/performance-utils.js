@@ -1,8 +1,8 @@
 // Performance testing utilities
 
 // Constants
-const CANVAS_WIDTH = 800;
-const CANVAS_HEIGHT = 600;
+const CANVAS_WIDTH = 1200;
+const CANVAS_HEIGHT = 800;
 let FRAME_BUDGET = 16.7; // Default milliseconds (60fps), will be updated after detection
 let DETECTED_FPS = 60; // Default, will be updated after detection
 const STARTING_SHAPE_COUNT = 10;
