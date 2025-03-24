@@ -19,6 +19,26 @@ function detectRefreshRate(callback) {
   let lastTime = performance.now();
   let frameCount = 0;
   
+  // Standard refresh rates in Hz
+  const STANDARD_REFRESH_RATES = [60, 75, 90, 120, 144, 165, 240, 360, 500];
+  
+  // Helper function to find closest standard refresh rate
+  function findClosestRefreshRate(detectedFPS) {
+    // Find the closest standard rate to the detected one
+    let closestRate = STANDARD_REFRESH_RATES[0];
+    let minDifference = Math.abs(detectedFPS - closestRate);
+    
+    for (let i = 1; i < STANDARD_REFRESH_RATES.length; i++) {
+      const currentDifference = Math.abs(detectedFPS - STANDARD_REFRESH_RATES[i]);
+      if (currentDifference < minDifference) {
+        closestRate = STANDARD_REFRESH_RATES[i];
+        minDifference = currentDifference;
+      }
+    }
+    
+    return closestRate;
+  }
+  
   function measureFrames(timestamp) {
     // Calculate time since last frame
     const currentTime = performance.now();
@@ -47,15 +67,21 @@ function detectRefreshRate(callback) {
       const avgFrameTime = reliableTimes.reduce((sum, time) => sum + time, 0) / reliableTimes.length;
       
       // Calculate FPS (round to nearest whole number)
-      const detectedFPS = Math.round(1000 / avgFrameTime);
+      const rawDetectedFPS = Math.round(1000 / avgFrameTime);
+      
+      // Find the closest standard refresh rate
+      const closestStandardFPS = findClosestRefreshRate(rawDetectedFPS);
+      
+      // Store raw detected value for display purposes
+      window.RAW_DETECTED_FPS = rawDetectedFPS;
       
       // Update global variables
-      DETECTED_FPS = detectedFPS;
-      FRAME_BUDGET = 1000 / detectedFPS;
+      DETECTED_FPS = closestStandardFPS;
+      FRAME_BUDGET = 1000 / closestStandardFPS;
       refreshRateDetected = true;
       
       // Update UI display and call callback
-      document.getElementById('detected-fps').textContent = DETECTED_FPS;
+      document.getElementById('detected-fps').textContent = `${DETECTED_FPS} (raw: ${RAW_DETECTED_FPS})`;
       document.getElementById('frame-budget').textContent = FRAME_BUDGET.toFixed(2);
       
       if (callback) callback();
@@ -310,7 +336,7 @@ function displayRampTestResults(testData) {
   let results = "";
   results += `\n=== ${testData.testDisplayName.toUpperCase()} TEST RESULTS ===\n`;
   results += `Test Parameters:\n`;
-  results += `- Display refresh rate: ${DETECTED_FPS} fps\n`;
+  results += `- Display refresh rate: ${DETECTED_FPS} fps (standard rate, raw detected: ${window.RAW_DETECTED_FPS || DETECTED_FPS} fps)\n`;
   results += `- Frame budget: ${FRAME_BUDGET.toFixed(2)}ms\n`;
   results += `- SW Canvas increment: ${testData.swIncrement}\n`;
   results += `- HTML5 Canvas increment: ${testData.htmlIncrement}\n`;
@@ -345,7 +371,8 @@ function displayOverallResults(allResults) {
   
   // Format overall results
   let results = "\n=== OVERALL TEST RESULTS ===\n";
-  results += `Display refresh rate: ${DETECTED_FPS} fps (${FRAME_BUDGET.toFixed(2)}ms budget)\n`;
+  results += `Display refresh rate: ${DETECTED_FPS} fps (standard rate, raw detected: ${window.RAW_DETECTED_FPS || DETECTED_FPS} fps)\n`;
+  results += `Frame budget: ${FRAME_BUDGET.toFixed(2)}ms\n`;
   results += `Tests run: ${allResults.tests.length}\n`;
   results += `Log mode: ${silentModeCheckbox.checked ? "Silent" : "Verbose"}\n\n`;
   
@@ -417,7 +444,8 @@ function generatePerformanceChart(testData) {
   chartCtx.fillStyle = 'rgba(255, 0, 0, 0.9)';
   chartCtx.font = '12px Arial';
   chartCtx.textAlign = 'right';
-  chartCtx.fillText(`Frame Budget (${FRAME_BUDGET.toFixed(2)}ms @ ${DETECTED_FPS}fps)`, chartPadding.left + chartWidth - 10, budgetY - 5);
+  const rawFpsDisplay = window.RAW_DETECTED_FPS ? `, raw: ${window.RAW_DETECTED_FPS}fps` : '';
+  chartCtx.fillText(`Frame Budget (${FRAME_BUDGET.toFixed(2)}ms @ ${DETECTED_FPS}fps${rawFpsDisplay})`, chartPadding.left + chartWidth - 10, budgetY - 5);
   
   // Draw axes
   chartCtx.beginPath();

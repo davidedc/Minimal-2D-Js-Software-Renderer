@@ -51,7 +51,7 @@ function initializeUI() {
       setButtonsState(true);
       
       // Show detection result
-      resultsContainer.innerHTML = `Display refresh rate detected: ${DETECTED_FPS} fps (${FRAME_BUDGET.toFixed(2)}ms budget)\nReady to run tests.\n`;
+      resultsContainer.innerHTML = `Display refresh rate detected: ${DETECTED_FPS} fps (standard rate, raw detected: ${window.RAW_DETECTED_FPS || DETECTED_FPS} fps)\nFrame budget: ${FRAME_BUDGET.toFixed(2)}ms\nReady to run tests.\n`;
     });
   }
 }
