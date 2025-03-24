@@ -22,7 +22,7 @@ Examples:
 
 ### Size Indicators
 Size is indicated using these standardized labels:
-- `no`: Not applicable (e.g., lines have no fill)
+- `no`: Not applicable (e.g., lines have no fill, only stroke, and the stroke size accounts for both thickness and length of the line).
 - `XS`: Extra small
 - `S`: Small
 - `M`: Medium
@@ -33,8 +33,7 @@ Size is indicated using these standardized labels:
 Functions should follow the pattern: `draw[Shape][SizeFill]Fill[SizeStroke]Stroke`
 
 Examples:
-- `drawLinesNoFillLStroke` (for software renderer)
-- `drawLinesNoFillLStrokeHTML5` (for HTML5 Canvas)
+- `drawLinesNoFillLStroke`
 - `drawRectanglesMFillMStroke`
 - `drawCirclesMFillSStroke`
 
@@ -45,23 +44,18 @@ Create a file following the naming pattern above:
 Example for small circles with large stroke:
 `circles-S-fill-L-stroke-test.js`
 
-## Step 2: Implement Draw Functions
+## Step 2: Implement Draw Function
 
-In your test file, implement both the software renderer and HTML5 Canvas renderer functions:
+Like so:
 
 ```javascript
 // Circles with small fill and large stroke test functions
 function drawCirclesSFillLStroke(ctx, count) {
   for (let i = 0; i < count; i++) {
-    // Implementation for software renderer
+    // Implementation
   }
 }
 
-function drawCirclesSFillLStrokeHTML5(ctx, count) {
-  for (let i = 0; i < count; i++) {
-    // Implementation for HTML5 Canvas
-  }
-}
 ```
 
 ## Step 3: Register the Test in test-definitions.js
@@ -71,8 +65,7 @@ Add your test to the TESTS object in `test-definitions.js`:
 ```javascript
 CIRCLES_S_FILL_L_STROKE: {
   id: 'circles-S-fill-L-stroke',
-  swDrawFunction: drawCirclesSFillLStroke,
-  html5DrawFunction: drawCirclesSFillLStrokeHTML5,
+  drawFunction: drawCirclesSFillLStroke,
   displayName: 'Circles (S fill, L stroke)',
   description: 'Tests drawing circles with small fill and large stroke operations.'
 }
@@ -80,8 +73,7 @@ CIRCLES_S_FILL_L_STROKE: {
 
 The properties should include:
 - `id`: A unique identifier for the test (used internally)
-- `swDrawFunction`: Reference to the software renderer implementation
-- `html5DrawFunction`: Reference to the HTML5 Canvas implementation
+- `drawFunction`: Reference to the implementation
 - `displayName`: Human-readable name that appears on the button
 - `description`: Longer description of what the test evaluates
 

@@ -162,7 +162,7 @@ function runSoftwareCanvasRampTest(testType, startCount, incrementSize, includeB
     let startTime = performance.now();
     
     // Draw shapes based on test type
-    TestRunner.drawWithSoftwareRenderer(testType, swCtx, currentShapeCount);
+    testType.drawFunction(swCtx, currentShapeCount);
     
     // Include blitting time if requested
     if (includeBlitting) {
@@ -271,7 +271,7 @@ function runHTML5CanvasRampTest(testType, startCount, incrementSize, requiredExc
     let startTime = performance.now();
     
     // Draw shapes based on test type
-    TestRunner.drawWithHtml5Canvas(testType, ctx, currentShapeCount);
+    testType.drawFunction(ctx, currentShapeCount);
     
     let endTime = performance.now();
     let elapsedTime = endTime - startTime;
