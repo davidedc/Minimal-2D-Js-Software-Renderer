@@ -1,5 +1,5 @@
-// Rectangles with medium fill and medium stroke test functions
-function drawRectanglesMFillMStroke(ctx, count) {
+// Rectangles with medium opaque fill and medium opaque stroke test functions
+function draw_rectangles__M_opaque_fill__M_opaque_stroke(ctx, count) {
   for (let i = 0; i < count; i++) {
     const x = Math.floor(SeededRandom.getRandom() * CANVAS_WIDTH);
     const y = Math.floor(SeededRandom.getRandom() * CANVAS_HEIGHT);

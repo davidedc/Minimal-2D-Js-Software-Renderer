@@ -1,5 +1,5 @@
-// Lines with no fill and large stroke test functions
-function drawLinesNoFillLStroke(ctx, count) {
+// Lines with no fill and large opaque stroke test functions
+function draw_lines__no_fill__L_opaque_stroke(ctx, count) {
   for (let i = 0; i < count; i++) {
     const x1 = Math.floor(SeededRandom.getRandom() * CANVAS_WIDTH);
     const y1 = Math.floor(SeededRandom.getRandom() * CANVAS_HEIGHT);
