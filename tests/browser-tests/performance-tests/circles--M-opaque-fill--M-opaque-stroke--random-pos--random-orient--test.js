@@ -1,5 +1,5 @@
-// Circles with medium opaque fill and medium opaque stroke test functions
-function draw_circles__M_opaque_fill__M_opaque_stroke(ctx, count) {
+// Circles with medium opaque fill and medium opaque stroke, random positioning and orientation
+function draw_circles__M_opaque_fill__M_opaque_stroke__random_pos__random_orient(ctx, count) {
   for (let i = 0; i < count; i++) {
     const centerX = Math.floor(SeededRandom.getRandom() * CANVAS_WIDTH);
     const centerY = Math.floor(SeededRandom.getRandom() * CANVAS_HEIGHT);

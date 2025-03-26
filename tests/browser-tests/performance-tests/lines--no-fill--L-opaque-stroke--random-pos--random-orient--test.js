@@ -1,5 +1,5 @@
-// Lines with no fill and large opaque stroke test functions
-function draw_lines__no_fill__L_opaque_stroke(ctx, count) {
+// Lines with no fill and large opaque stroke, random positioning and orientation
+function draw_lines__no_fill__L_opaque_stroke__random_pos__random_orient(ctx, count) {
   for (let i = 0; i < count; i++) {
     const x1 = Math.floor(SeededRandom.getRandom() * CANVAS_WIDTH);
     const y1 = Math.floor(SeededRandom.getRandom() * CANVAS_HEIGHT);

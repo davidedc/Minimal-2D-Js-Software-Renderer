@@ -10,19 +10,20 @@ a more maintainable structure.
 
 ## Naming Convention
 
-Tests now follow a standardized naming pattern that clearly indicates shape type, fill properties (size and opacity), and stroke properties (size and opacity):
+Tests follow a standardized naming pattern that clearly indicates shape type, fill properties (size and opacity), stroke properties (size and opacity), positioning, and orientation:
 
 ### File Naming
-Files should follow the pattern: `[shape]--[sizeFill]-[opacityFill]-fill--[sizeStroke]-[opacityStroke]-stroke--test.js`
+Files should follow the pattern: `[shape]--[sizeFill]-[opacityFill]-fill--[sizeStroke]-[opacityStroke]-stroke--[positioning]-pos--[orientation]-orient--test.js`
 
 Major sections are separated by double dashes (`--`), while components within sections use single dashes (`-`).
 
 Examples:
-- `circles--M-opaque-fill--L-opaque-stroke--test.js` (medium opaque fill, large opaque stroke)
-- `circles--M-semi-fill--L-opaque-stroke--test.js` (medium semi-transparent fill, large opaque stroke)
-- `circles--no-fill--L-opaque-stroke--test.js` (no fill, large opaque stroke)
-- `rectangles--M-opaque-fill--M-semi-stroke--test.js` (medium opaque fill, medium semi-transparent stroke)
-- `lines--no-fill--L-opaque-stroke--test.js` (lines with large opaque stroke, no fill)
+- `circles--M-opaque-fill--L-opaque-stroke--random-pos--random-orient--test.js` (medium opaque fill, large opaque stroke, random positioning and orientation)
+- `circles--M-semi-fill--L-opaque-stroke--crisp-pos--horizontal-orient--test.js` (medium semi-transparent fill, large opaque stroke, crisp positioning, horizontal orientation)
+- `circles--no-fill--L-opaque-stroke--random-pos--45deg-orient--test.js` (no fill, large opaque stroke, random positioning, 45-degree orientation)
+- `rectangles--M-opaque-fill--M-semi-stroke--crisp-pos--vertical-orient--test.js` (medium opaque fill, medium semi-transparent stroke, crisp positioning, vertical orientation)
+- `lines--no-fill--L-opaque-stroke--random-pos--square-orient--test.js` (lines with large opaque stroke, no fill, random positioning, square orientation)
+- `lines--no-fill--1px-opaque-stroke--crisp-pos--horizontal-orient--test.js` (lines with exactly 1-pixel opaque stroke, crisp positioning, horizontal orientation)
 
 ### Size Indicators
 Size is indicated using these standardized labels:
@@ -32,39 +33,54 @@ Size is indicated using these standardized labels:
 - `M`: Medium
 - `L`: Large
 - `XL`: Extra large
+- `npx`: Explicit pixel size (e.g., `1px`, `2px`, `3px`, etc.) for stroke sizes
 
 ### Opacity Indicators
 Opacity is indicated using these standardized labels:
 - `opaque`: Fully opaque (alpha = 1.0)
 - `semi`: Semi-transparent (alpha < 1.0)
 
+### Positioning Indicators
+Positioning is indicated using these standardized labels:
+- `random`: Random positioning (geometry expressed in any float values)
+- `crisp`: Crisp positioning (geometry aligned to the pixel grid for sharp edges)
+
+### Orientation Indicators
+Orientation is indicated using these standardized labels:
+- `random`: Random orientation
+- `horizontal`: Horizontal orientation
+- `vertical`: Vertical orientation
+- `square`: Square orientation (either horizontal or vertical)
+- `45deg`: 45-degree orientation
+
 ### Function Naming
-Functions should follow the pattern: `draw_[shape]__[sizeFill]_[opacityFill]_fill__[sizeStroke]_[opacityStroke]_stroke`
+Functions should follow the pattern: `draw_[shape]__[sizeFill]_[opacityFill]_fill__[sizeStroke]_[opacityStroke]_stroke__[positioning]_pos__[orientation]_orient`
 
 Function names use underscores, with double underscores matching the double dashes in file names.
 
 Examples:
-- `draw_circles__M_opaque_fill__L_opaque_stroke`
-- `draw_circles__no_fill__L_opaque_stroke`
-- `draw_rectangles__M_opaque_fill__M_semi_stroke`
-- `draw_lines__no_fill__L_opaque_stroke`
+- `draw_circles__M_opaque_fill__L_opaque_stroke__random_pos__random_orient`
+- `draw_circles__no_fill__L_opaque_stroke__crisp_pos__horizontal_orient`
+- `draw_rectangles__M_opaque_fill__M_semi_stroke__random_pos__vertical_orient`
+- `draw_lines__no_fill__L_opaque_stroke__crisp_pos__45deg_orient`
+- `draw_lines__no_fill__1px_opaque_stroke__crisp_pos__horizontal_orient`
 
 ## Step 1: Create a Test File
 
 Create a file following the naming pattern above:
 
-Example for small circles with semi-transparent fill and large opaque stroke:
-`circles--S-semi-fill--L-opaque-stroke--test.js`
+Example for small circles with semi-transparent fill and large opaque stroke, crisp positioning and horizontal orientation:
+`circles--S-semi-fill--L-opaque-stroke--crisp-pos--horizontal-orient--test.js`
 
 ## Step 2: Implement Draw Function
 
 Like so:
 
 ```javascript
-// Circles with small semi-transparent fill and large opaque stroke test functions
-function draw_circles__S_semi_fill__L_opaque_stroke(ctx, count) {
+// Circles with small semi-transparent fill and large opaque stroke, crisp positioning and horizontal orientation
+function draw_circles__S_semi_fill__L_opaque_stroke__crisp_pos__horizontal_orient(ctx, count) {
   for (let i = 0; i < count; i++) {
-    // Implementation
+    // Implementation with crisp positioning and horizontal orientation
   }
 }
 
@@ -75,11 +91,11 @@ function draw_circles__S_semi_fill__L_opaque_stroke(ctx, count) {
 Add your test to the TESTS object in `test-definitions.js`:
 
 ```javascript
-CIRCLES__S_SEMI_FILL__L_OPAQUE_STROKE: {
-  id: 'circles--S-semi-fill--L-opaque-stroke',
-  drawFunction: draw_circles__S_semi_fill__L_opaque_stroke,
-  displayName: 'Circles (S semi-transparent fill, L opaque stroke)',
-  description: 'Tests drawing circles with small semi-transparent fill and large opaque stroke operations.'
+CIRCLES__S_SEMI_FILL__L_OPAQUE_STROKE__CRISP_POS__HORIZONTAL_ORIENT: {
+  id: 'circles--S-semi-fill--L-opaque-stroke--crisp-pos--horizontal-orient',
+  drawFunction: draw_circles__S_semi_fill__L_opaque_stroke__crisp_pos__horizontal_orient,
+  displayName: 'Circles (S semi fill, L opaque stroke, crisp pos, horizontal orient)',
+  description: 'Tests drawing circles with small semi-transparent fill, large opaque stroke, crisp positioning and horizontal orientation.'
 }
 ```
 
@@ -101,10 +117,10 @@ Ensure your test file is included in the HTML, **before** the test-definitions.j
 
 ```html
 <!-- Load test implementation files first -->
-<script src="performance-tests/lines--no-fill--L-opaque-stroke--test.js"></script>
-<script src="performance-tests/rectangles--M-opaque-fill--M-opaque-stroke--test.js"></script>
-<script src="performance-tests/circles--M-opaque-fill--M-opaque-stroke--test.js"></script>
-<script src="performance-tests/circles--S-semi-fill--L-opaque-stroke--test.js"></script> <!-- Your new test -->
+<script src="performance-tests/lines--no-fill--L-opaque-stroke--random-pos--random-orient--test.js"></script>
+<script src="performance-tests/rectangles--M-opaque-fill--M-opaque-stroke--random-pos--random-orient--test.js"></script>
+<script src="performance-tests/circles--M-opaque-fill--M-opaque-stroke--random-pos--random-orient--test.js"></script>
+<script src="performance-tests/circles--S-semi-fill--L-opaque-stroke--crisp-pos--horizontal-orient--test.js"></script> <!-- Your new test -->
 
 <!-- Then load the test definitions that reference those implementations -->
 <script src="performance-tests/test-definitions.js"></script>
