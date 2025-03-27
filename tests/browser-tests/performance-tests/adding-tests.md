@@ -43,7 +43,7 @@ Opacity is indicated using these standardized labels:
 ### Positioning Indicators
 Positioning is indicated using these standardized labels:
 - `random`: Random positioning (geometry expressed in any float values)
-- `crisp`: Crisp positioning (geometry aligned to the pixel grid for sharp edges)
+- `crisp`: Crisp positioning (geometry aligned to the pixel grid for sharp edges - this is largely how UI-type shapes are positioned)
 
 ### Orientation Indicators
 Orientation is indicated using these standardized labels:
