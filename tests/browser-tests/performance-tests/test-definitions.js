@@ -22,6 +22,13 @@ const TESTS = {
     drawFunction: draw_circles__M_opaque_fill__M_opaque_stroke__random_pos__random_orient,
     displayName: 'Circles (M opaque fill, M opaque stroke, random pos, random orient)',
     description: 'Tests drawing circles with medium opaque fill and medium opaque stroke, random positioning and orientation.'
+  },
+  
+  CIRCLES__XL_OPAQUE_FILL__1PX_OPAQUE_STROKE__RANDOM_POS__RANDOM_ORIENT: {
+    id: 'circles--XL-opaque-fill--1px-opaque-stroke--random-pos--random-orient',
+    drawFunction: draw_circles__XL_opaque_fill__1px_opaque_stroke__random_pos__random_orient,
+    displayName: 'Circles (XL opaque fill, 1px opaque stroke, random pos, random orient)',
+    description: 'Tests drawing circles with extra large opaque fill and 1px opaque stroke, random positioning and orientation.'
   }
 };
 
