@@ -71,6 +71,19 @@ class SWRendererPixel {
       if ((clippingMask[clippingMaskByteIndex] & (1 << (7 - bitIndex))) === 0) return;
     }
     
+    // Check for fast path with opaque colors
+    const isOpaque = (a === 255) && (globalAlpha >= 1.0);
+    
+    if (isOpaque) {
+      // Fast path for opaque colors - direct pixel setting without blending
+      this.frameBuffer[index] = r;
+      this.frameBuffer[index + 1] = g;
+      this.frameBuffer[index + 2] = b;
+      this.frameBuffer[index + 3] = 255; // Fully opaque
+      return;
+    }
+    
+    // Standard path with alpha blending
     // Batch alpha calculations to reduce divisions
     const incomingAlpha = (a / 255) * globalAlpha;
     const oldAlpha = this.frameBuffer[index + 3] / 255;
@@ -127,9 +140,12 @@ class SWRendererPixel {
     const hasClipping = this.context.currentState;
     const clippingMask = hasClipping ? this.context.currentState.clippingMask : null;
     
-    // Batch alpha calculations 
-    const incomingAlpha = (a / 255) * globalAlpha;
-    const inverseIncomingAlpha = 1 - incomingAlpha;
+    // Check for fast path with opaque colors
+    const isOpaque = (a === 255) && (globalAlpha >= 1.0);
+    
+    // For non-opaque colors, we need alpha calculations
+    const incomingAlpha = isOpaque ? 1.0 : (a / 255) * globalAlpha;
+    const inverseIncomingAlpha = isOpaque ? 0.0 : 1 - incomingAlpha;
     
     // Skip processing if fully transparent
     if (incomingAlpha <= 0) return;
@@ -184,6 +200,17 @@ class SWRendererPixel {
           }
         }
         
+        // Fast path for opaque colors
+        if (isOpaque) {
+          // Direct pixel setting without blending
+          this.frameBuffer[index] = r;
+          this.frameBuffer[index + 1] = g;
+          this.frameBuffer[index + 2] = b;
+          this.frameBuffer[index + 3] = 255; // Fully opaque
+          continue;
+        }
+        
+        // Standard path with alpha blending
         // Get existing pixel alpha
         const oldAlpha = this.frameBuffer[index + 3] / 255;
         const oldAlphaScaled = oldAlpha * inverseIncomingAlpha;
