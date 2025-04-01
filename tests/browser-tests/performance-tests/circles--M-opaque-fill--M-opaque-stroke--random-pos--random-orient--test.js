@@ -12,12 +12,12 @@ function draw_circles__M_opaque_fill__M_opaque_stroke__random_pos__random_orient
     const r = Math.floor(SeededRandom.getRandom() * 256);
     const g = Math.floor(SeededRandom.getRandom() * 256);
     const b = Math.floor(SeededRandom.getRandom() * 256);
-    const a = Math.floor((0.3 + SeededRandom.getRandom() * 0.7) * 255);
+    const a = 255; // fully opaque fill
     
     const sr = Math.floor(SeededRandom.getRandom() * 256);
     const sg = Math.floor(SeededRandom.getRandom() * 256);
     const sb = Math.floor(SeededRandom.getRandom() * 256);
-    const sa = Math.floor((0.3 + SeededRandom.getRandom() * 0.7) * 255);
+    const sa = 255; // fully opaque stroke
     
     ctx.fillAndStrokeCircle(
       centerX, centerY, radius,

@@ -9,7 +9,7 @@ function draw_lines__no_fill__L_opaque_stroke__random_pos__random_orient(ctx, co
     const r = Math.floor(SeededRandom.getRandom() * 256);
     const g = Math.floor(SeededRandom.getRandom() * 256);
     const b = Math.floor(SeededRandom.getRandom() * 256);
-    const a = 0.3 + SeededRandom.getRandom() * 0.7;
+    const a = 255; // fully opaque stroke
     
     ctx.lineWidth = lineWidth;
     ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${a})`;

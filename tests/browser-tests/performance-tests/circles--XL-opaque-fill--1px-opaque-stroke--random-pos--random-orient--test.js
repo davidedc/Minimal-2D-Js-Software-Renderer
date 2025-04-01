@@ -11,9 +11,9 @@ function draw_circles__XL_opaque_fill__1px_opaque_stroke__random_pos__random_ori
     const r = Math.floor(SeededRandom.getRandom() * 256);
     const g = Math.floor(SeededRandom.getRandom() * 256);
     const b = Math.floor(SeededRandom.getRandom() * 256);
-    const a = 255; // Fully opaque
+    const a = 255; // Fully opaque fill
+
     const strokeWidth = 1; // Fixed 1px stroke
-    
     const sr = Math.floor(SeededRandom.getRandom() * 256);
     const sg = Math.floor(SeededRandom.getRandom() * 256);
     const sb = Math.floor(SeededRandom.getRandom() * 256);
