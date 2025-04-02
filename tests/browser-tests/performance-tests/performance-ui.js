@@ -230,11 +230,7 @@ function runTest(testType, callback = null, clearResults = true) {
     canvasMaxShapes: 0
   };
   
-  // First phase: Test Software Canvas
-  resultsContainer.innerHTML += "PHASE 1: Testing Software Canvas...\n";
-  if (isQuietMode) {
-    resultsContainer.innerHTML += "(Running in quieter mode, only periodic updates will be shown)\n";
-  }
+  // First phase message is now added in the runSoftwareCanvasRampTest function
   resultsContainer.scrollTop = resultsContainer.scrollHeight;
   
   // Start with the software canvas test
@@ -243,10 +239,7 @@ function runTest(testType, callback = null, clearResults = true) {
     
     // After SW canvas test completes, run HTML5 canvas test
     showHtml5Canvas();
-    resultsContainer.innerHTML += "\nPHASE 2: Testing HTML5 Canvas...\n";
-    if (isQuietMode) {
-      resultsContainer.innerHTML += "(Running in quieter mode, only periodic updates will be shown)\n";
-    }
+    // Phase 2 message is now added in the runHTML5CanvasRampTest function
     resultsContainer.scrollTop = resultsContainer.scrollHeight;
     
     runHTML5CanvasRampTest(testType, STARTING_SHAPE_COUNT, htmlIncrement, requiredExceedances, testData, () => {
