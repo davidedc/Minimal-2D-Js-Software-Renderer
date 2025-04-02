@@ -24,14 +24,14 @@ class SWRendererLine {
       color: { r: strokeR, g: strokeG, b: strokeB, a: strokeA }
     } = shape;
 
-    if (strokeWidth === 1) {
-      this.drawLine1px(x1, y1, x2, y2, strokeR, strokeG, strokeB, strokeA);
-    } else {
+    // Handle the thick line case
+    if (strokeWidth !== 1) {
       this.drawLineThick(x1, y1, x2, y2, strokeWidth, strokeR, strokeG, strokeB, strokeA);
+      return;
     }
-  }
-
-  drawLine1px(x1, y1, x2, y2, r, g, b, a) {
+    
+    // 1px line path follows
+    
     // Tweaks to make the sw render match more closely the canvas render.
     // -----------------------------------------------------------------
     // For an intuition about why this works, imagine a thin vertical line.
@@ -47,10 +47,10 @@ class SWRendererLine {
     // We choose the right one, but in general the floor() means that
     // we pick the one that is closer to the center of the path (which should be the
     // darker one as it's the most covered by the path).
-    x1 = Math.floor(x1);
-    y1 = Math.floor(y1);
-    x2 = Math.floor(x2);
-    y2 = Math.floor(y2);
+    let floorX1 = Math.floor(x1);
+    let floorY1 = Math.floor(y1);
+    let floorX2 = Math.floor(x2);
+    let floorY2 = Math.floor(y2);
     
     // MOREOVER, in Canvas you reason in terms of grid lines, so
     // in case of a vertical line, where you want the two renders to be
@@ -84,20 +84,331 @@ class SWRendererLine {
     // in oblique lines, however a) you don't expect the renders to be
     // identical in those cases as sw render doesn't support anti-aliasing / sub-pixel
     // rendering anyways and b) the difference is barely noticeable in those cases.
+    if (floorX1 === floorX2) floorY2 > floorY1 ? floorY2-- : floorY1--;
+    if (floorY1 === floorY2) floorX2 > floorX1 ? floorX2-- : floorX1--;
 
-    if (x1 === x2) y2 > y1 ? y2-- : y1--;
-    // same as above but for shortening the line by 1 pixel if it's horizontal
-    if (y1 === y2) x2 > x1 ? x2-- : x1--;
+    // Skip if fully transparent
+    const globalAlpha = this.pixelRenderer.context.globalAlpha;
+    if ((strokeA === 0) || (globalAlpha <= 0)) return;
 
-    const dx = Math.abs(x2 - x1);
-    const dy = Math.abs(y2 - y1);
+    // Calculate absolute differences for orientation detection
+    const dx = Math.abs(floorX2 - floorX1);
+    const dy = Math.abs(floorY2 - floorY1);
+
+    // Dispatch to specialized renderers based on line orientation
+    if (dx === 0) {
+      // Vertical line
+      return this.drawLine1px_vertical(floorX1, floorY1, floorY2, strokeR, strokeG, strokeB, strokeA);
+    } else if (dy === 0) {
+      // Horizontal line
+      return this.drawLine1px_horizontal(floorX1, floorX2, floorY1, strokeR, strokeG, strokeB, strokeA);
+    } else if (dx === dy) {
+      // Perfect 45-degree line
+      return this.drawLine1px_45degrees(floorX1, floorY1, floorX2, floorY2, strokeR, strokeG, strokeB, strokeA);
+    } else {
+      // All other lines
+      return this.drawLine1px_genericOrientations(floorX1, floorY1, floorX2, floorY2, dx, dy, strokeR, strokeG, strokeB, strokeA);
+    }
+  }
+
+  drawLine1px_horizontal(x1, x2, y, r, g, b, a) {
+    // Cache renderer properties for performance
+    const frameBuffer = this.pixelRenderer.frameBuffer;
+    const width = this.pixelRenderer.width;
+    const height = this.pixelRenderer.height;
+    const hasClipping = this.pixelRenderer.context.currentState;
+    const clippingMask = hasClipping ? this.pixelRenderer.context.currentState.clippingMask : null;
+    const globalAlpha = this.pixelRenderer.context.globalAlpha;
+
+    // Early bounds check
+    if (y < 0 || y >= height) return;
+    
+    // Fast path for opaque colors
+    const isOpaque = (a === 255) && (globalAlpha >= 1.0);
+    
+    // For non-opaque colors, pre-compute alpha values
+    const incomingAlpha = isOpaque ? 1.0 : (a / 255) * globalAlpha;
+    const inverseIncomingAlpha = isOpaque ? 0.0 : 1 - incomingAlpha;
+    
+    // Ensure x1 < x2 for simpler logic
+    if (x1 > x2) {
+      let temp = x1;
+      x1 = x2;
+      x2 = temp;
+    }
+    
+    // Clip to canvas boundaries
+    if (x1 < 0) x1 = 0;
+    if (x2 >= width) x2 = width - 1;
+    if (x1 > x2) return;
+    
+    // Calculate base index for the row
+    const baseIndex = (y * width + x1) * 4;
+    
+    // Draw the horizontal line
+    for (let x = x1; x <= x2; x++) {
+      const index = baseIndex + (x - x1) * 4;
+      
+      // Check clipping if needed
+      if (hasClipping) {
+        const pixelPos = y * width + x;
+        const clippingMaskByteIndex = pixelPos >> 3;
+        const bitIndex = pixelPos & 7;
+        
+        if (clippingMask[clippingMaskByteIndex] === 0) continue;
+        if ((clippingMask[clippingMaskByteIndex] & (1 << (7 - bitIndex))) === 0) continue;
+      }
+      
+      if (isOpaque) {
+        // Fast path for opaque pixels
+        frameBuffer[index] = r;
+        frameBuffer[index + 1] = g;
+        frameBuffer[index + 2] = b;
+        frameBuffer[index + 3] = 255;
+      } else {
+        // Alpha blending
+        const oldAlpha = frameBuffer[index + 3] / 255;
+        const oldAlphaScaled = oldAlpha * inverseIncomingAlpha;
+        const newAlpha = incomingAlpha + oldAlphaScaled;
+        
+        if (newAlpha <= 0) continue;
+        
+        const blendFactor = 1 / newAlpha;
+        frameBuffer[index] = (r * incomingAlpha + frameBuffer[index] * oldAlphaScaled) * blendFactor;
+        frameBuffer[index + 1] = (g * incomingAlpha + frameBuffer[index + 1] * oldAlphaScaled) * blendFactor;
+        frameBuffer[index + 2] = (b * incomingAlpha + frameBuffer[index + 2] * oldAlphaScaled) * blendFactor;
+        frameBuffer[index + 3] = newAlpha * 255;
+      }
+    }
+  }
+
+  drawLine1px_vertical(x, y1, y2, r, g, b, a) {
+    // Cache renderer properties for performance
+    const frameBuffer = this.pixelRenderer.frameBuffer;
+    const width = this.pixelRenderer.width;
+    const height = this.pixelRenderer.height;
+    const hasClipping = this.pixelRenderer.context.currentState;
+    const clippingMask = hasClipping ? this.pixelRenderer.context.currentState.clippingMask : null;
+    const globalAlpha = this.pixelRenderer.context.globalAlpha;
+
+    // Early bounds check
+    if (x < 0 || x >= width) return;
+    
+    // Fast path for opaque colors
+    const isOpaque = (a === 255) && (globalAlpha >= 1.0);
+    
+    // For non-opaque colors, pre-compute alpha values
+    const incomingAlpha = isOpaque ? 1.0 : (a / 255) * globalAlpha;
+    const inverseIncomingAlpha = isOpaque ? 0.0 : 1 - incomingAlpha;
+    
+    // Ensure y1 < y2 for simpler logic
+    if (y1 > y2) {
+      let temp = y1;
+      y1 = y2;
+      y2 = temp;
+    }
+    
+    // Clip to canvas boundaries
+    if (y1 < 0) y1 = 0;
+    if (y2 >= height) y2 = height - 1;
+    if (y1 > y2) return;
+    
+    // Draw the vertical line
+    for (let y = y1; y <= y2; y++) {
+      const index = (y * width + x) * 4;
+      
+      // Check clipping if needed
+      if (hasClipping) {
+        const pixelPos = y * width + x;
+        const clippingMaskByteIndex = pixelPos >> 3;
+        const bitIndex = pixelPos & 7;
+        
+        if (clippingMask[clippingMaskByteIndex] === 0) continue;
+        if ((clippingMask[clippingMaskByteIndex] & (1 << (7 - bitIndex))) === 0) continue;
+      }
+      
+      if (isOpaque) {
+        // Fast path for opaque pixels
+        frameBuffer[index] = r;
+        frameBuffer[index + 1] = g;
+        frameBuffer[index + 2] = b;
+        frameBuffer[index + 3] = 255;
+      } else {
+        // Alpha blending
+        const oldAlpha = frameBuffer[index + 3] / 255;
+        const oldAlphaScaled = oldAlpha * inverseIncomingAlpha;
+        const newAlpha = incomingAlpha + oldAlphaScaled;
+        
+        if (newAlpha <= 0) continue;
+        
+        const blendFactor = 1 / newAlpha;
+        frameBuffer[index] = (r * incomingAlpha + frameBuffer[index] * oldAlphaScaled) * blendFactor;
+        frameBuffer[index + 1] = (g * incomingAlpha + frameBuffer[index + 1] * oldAlphaScaled) * blendFactor;
+        frameBuffer[index + 2] = (b * incomingAlpha + frameBuffer[index + 2] * oldAlphaScaled) * blendFactor;
+        frameBuffer[index + 3] = newAlpha * 255;
+      }
+    }
+  }
+
+  drawLine1px_45degrees(x1, y1, x2, y2, r, g, b, a) {
+    // Cache renderer properties for performance
+    const frameBuffer = this.pixelRenderer.frameBuffer;
+    const width = this.pixelRenderer.width;
+    const height = this.pixelRenderer.height;
+    const hasClipping = this.pixelRenderer.context.currentState;
+    const clippingMask = hasClipping ? this.pixelRenderer.context.currentState.clippingMask : null;
+    const globalAlpha = this.pixelRenderer.context.globalAlpha;
+
+    // Fast path for opaque colors
+    const isOpaque = (a === 255) && (globalAlpha >= 1.0);
+    
+    // For non-opaque colors, pre-compute alpha values
+    const incomingAlpha = isOpaque ? 1.0 : (a / 255) * globalAlpha;
+    const inverseIncomingAlpha = isOpaque ? 0.0 : 1 - incomingAlpha;
+    
+    // Direction of movement (1 or -1) in each axis
     const sx = x1 < x2 ? 1 : -1;
     const sy = y1 < y2 ? 1 : -1;
-    let err = dx - dy;
-
+    
+    // Since this is a 45-degree line, we always step diagonally
+    // No error tracking needed as with Bresenham algorithm
+    let x = x1;
+    let y = y1;
+    
+    // Draw the 45-degree line
     while (true) {
-      this.pixelRenderer.setPixel(x1, y1, r, g, b, a);
+      // Break if we've gone out of bounds entirely
+      if (x < 0 && sx < 0) break; // Moving left and already off left edge
+      if (x >= width && sx > 0) break; // Moving right and already off right edge
+      if (y < 0 && sy < 0) break; // Moving up and already off top edge
+      if (y >= height && sy > 0) break; // Moving down and already off bottom edge
+      
+      // Check if we're in bounds for this pixel
+      if (x >= 0 && x < width && y >= 0 && y < height) {
+        const index = (y * width + x) * 4;
+        const pixelPos = y * width + x;
+        
+        // Check clipping if needed
+        let drawPixel = true;
+        
+        if (hasClipping) {
+          const clippingMaskByteIndex = pixelPos >> 3;
+          const bitIndex = pixelPos & 7;
+          
+          // Skip if clipping mask indicates pixel should be clipped
+          if (clippingMaskByteIndex >= clippingMask.length ||
+              clippingMask[clippingMaskByteIndex] === 0 || 
+              (clippingMask[clippingMaskByteIndex] & (1 << (7 - bitIndex))) === 0) {
+            drawPixel = false;
+          }
+        }
+        
+        if (drawPixel) {
+          if (isOpaque) {
+            // Fast path for opaque pixels
+            frameBuffer[index] = r;
+            frameBuffer[index + 1] = g;
+            frameBuffer[index + 2] = b;
+            frameBuffer[index + 3] = 255;
+          } else {
+            // Alpha blending
+            const oldAlpha = frameBuffer[index + 3] / 255;
+            const oldAlphaScaled = oldAlpha * inverseIncomingAlpha;
+            const newAlpha = incomingAlpha + oldAlphaScaled;
+            
+            if (newAlpha > 0) {
+              const blendFactor = 1 / newAlpha;
+              frameBuffer[index] = (r * incomingAlpha + frameBuffer[index] * oldAlphaScaled) * blendFactor;
+              frameBuffer[index + 1] = (g * incomingAlpha + frameBuffer[index + 1] * oldAlphaScaled) * blendFactor;
+              frameBuffer[index + 2] = (b * incomingAlpha + frameBuffer[index + 2] * oldAlphaScaled) * blendFactor;
+              frameBuffer[index + 3] = newAlpha * 255;
+            }
+          }
+        }
+      }
+      
+      // Check if we've reached the end point
+      if (x === x2 && y === y2) break;
+      
+      // Move diagonally - for 45-degree lines, we move by 1 in both directions each time
+      x += sx;
+      y += sy;
+    }
+  }
+
+  drawLine1px_genericOrientations(x1, y1, x2, y2, dx, dy, r, g, b, a) {
+    // Cache renderer properties for performance
+    const frameBuffer = this.pixelRenderer.frameBuffer;
+    const width = this.pixelRenderer.width;
+    const height = this.pixelRenderer.height;
+    const hasClipping = this.pixelRenderer.context.currentState;
+    const clippingMask = hasClipping ? this.pixelRenderer.context.currentState.clippingMask : null;
+    const globalAlpha = this.pixelRenderer.context.globalAlpha;
+
+    // Fast path for opaque colors
+    const isOpaque = (a === 255) && (globalAlpha >= 1.0);
+    
+    // For non-opaque colors, pre-compute alpha values
+    const incomingAlpha = isOpaque ? 1.0 : (a / 255) * globalAlpha;
+    const inverseIncomingAlpha = isOpaque ? 0.0 : 1 - incomingAlpha;
+    
+    // Direction of movement in each axis
+    const sx = x1 < x2 ? 1 : -1;
+    const sy = y1 < y2 ? 1 : -1;
+    
+    // Initialize Bresenham algorithm state
+    let err = dx - dy;
+    
+    // We prefer to do bounds checking inside the loop for generic orientations
+    // Since they can enter and exit the viewable area multiple times
+    while (true) {
+      // Check if current pixel is in bounds
+      if (x1 >= 0 && x1 < width && y1 >= 0 && y1 < height) {
+        const index = (y1 * width + x1) * 4;
+        const pixelPos = y1 * width + x1;
+        
+        // Check clipping if needed
+        let drawPixel = true;
+        
+        if (hasClipping) {
+          const clippingMaskByteIndex = pixelPos >> 3;
+          const bitIndex = pixelPos & 7;
+          
+          if (clippingMaskByteIndex >= clippingMask.length ||
+              clippingMask[clippingMaskByteIndex] === 0 || 
+              (clippingMask[clippingMaskByteIndex] & (1 << (7 - bitIndex))) === 0) {
+            drawPixel = false;
+          }
+        }
+        
+        if (drawPixel) {
+          if (isOpaque) {
+            // Fast path for opaque pixels
+            frameBuffer[index] = r;
+            frameBuffer[index + 1] = g;
+            frameBuffer[index + 2] = b;
+            frameBuffer[index + 3] = 255;
+          } else {
+            // Alpha blending
+            const oldAlpha = frameBuffer[index + 3] / 255;
+            const oldAlphaScaled = oldAlpha * inverseIncomingAlpha;
+            const newAlpha = incomingAlpha + oldAlphaScaled;
+            
+            if (newAlpha > 0) {
+              const blendFactor = 1 / newAlpha;
+              frameBuffer[index] = (r * incomingAlpha + frameBuffer[index] * oldAlphaScaled) * blendFactor;
+              frameBuffer[index + 1] = (g * incomingAlpha + frameBuffer[index + 1] * oldAlphaScaled) * blendFactor;
+              frameBuffer[index + 2] = (b * incomingAlpha + frameBuffer[index + 2] * oldAlphaScaled) * blendFactor;
+              frameBuffer[index + 3] = newAlpha * 255;
+            }
+          }
+        }
+      }
+      
+      // Break after processing the last pixel
       if (x1 === x2 && y1 === y2) break;
+      
+      // Calculate next pixel position using Bresenham algorithm
       const e2 = 2 * err;
       if (e2 > -dy) { err -= dy; x1 += sx; }
       if (e2 < dx) { err += dx; y1 += sy; }
