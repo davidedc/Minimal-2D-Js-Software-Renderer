@@ -213,8 +213,8 @@
       </label>
       
       <label class="checkbox-label">
-        <input type="checkbox" id="silent-mode">
-        Silent mode (hide frame-by-frame logs)
+        <input type="checkbox" id="quiet-mode" checked>
+        Quieter mode (fewer logs)
       </label>
     </div>
     
@@ -293,7 +293,7 @@
     const htmlIncrementSize = document.getElementById('html-increment-size');
     const consecutiveExceedances = document.getElementById('consecutive-exceedances');
     const includeBlittingCheckbox = document.getElementById('include-blitting');
-    const silentModeCheckbox = document.getElementById('silent-mode');
+    const quietModeCheckbox = document.getElementById('quiet-mode');
     
     // Buttons - only static buttons
     const btnRunAll = document.getElementById('btn-run-all');

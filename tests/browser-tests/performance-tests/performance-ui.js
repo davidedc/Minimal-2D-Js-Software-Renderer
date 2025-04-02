@@ -72,13 +72,13 @@ document.getElementById('btn-profiling-mode').addEventListener('click', function
     button.textContent = 'Enable Profiling Mode';
     button.style.backgroundColor = '#007bff';
     consecutiveExceedances.value = '10';
-    silentModeCheckbox.checked = false;
+    quietModeCheckbox.checked = true; // Keep quiet mode enabled by default
   } else {
     // Enable profiling mode
     button.textContent = 'Disable Profiling Mode';
     button.style.backgroundColor = '#ff4d4d';
     consecutiveExceedances.value = '100000';
-    silentModeCheckbox.checked = true;
+    quietModeCheckbox.checked = true;
     
     // Show a quick hint
     const originalHtml = resultsContainer.innerHTML;
@@ -188,7 +188,7 @@ function runTest(testType, callback = null, clearResults = true) {
   const htmlIncrement = parseInt(htmlIncrementSize.value);
   const requiredExceedances = parseInt(consecutiveExceedances.value);
   const includeBlitting = includeBlittingCheckbox.checked;
-  const isSilentMode = silentModeCheckbox.checked;
+  const isQuietMode = quietModeCheckbox.checked;
   
   // Get the test's display name
   const testDisplayName = testType.displayName;
@@ -197,12 +197,12 @@ function runTest(testType, callback = null, clearResults = true) {
   if (clearResults) {
     let header = `Running ${testDisplayName} test with SW increment ${swIncrement}, HTML increment ${htmlIncrement}`;
     header += `${includeBlitting ? ' (including blitting time)' : ' (excluding blitting time)'}`;
-    header += `${isSilentMode ? ' in silent mode' : ''}...\n\n`;
+    header += `${isQuietMode ? ' in quieter mode' : ''}...\n\n`;
     resultsContainer.innerHTML = header;
   } else {
     let header = `\nRunning ${testDisplayName} test with SW increment ${swIncrement}, HTML increment ${htmlIncrement}`;
     header += `${includeBlitting ? ' (including blitting time)' : ' (excluding blitting time)'}`;
-    header += `${isSilentMode ? ' in silent mode' : ''}...\n\n`;
+    header += `${isQuietMode ? ' in quieter mode' : ''}...\n\n`;
     resultsContainer.innerHTML += header;
   }
   
@@ -219,7 +219,7 @@ function runTest(testType, callback = null, clearResults = true) {
     htmlIncrement,
     includeBlitting,
     requiredExceedances,
-    isSilentMode,
+    isQuietMode,
     // Software Canvas results
     swShapeCounts: [],
     swTimings: [],
@@ -232,8 +232,8 @@ function runTest(testType, callback = null, clearResults = true) {
   
   // First phase: Test Software Canvas
   resultsContainer.innerHTML += "PHASE 1: Testing Software Canvas...\n";
-  if (isSilentMode) {
-    resultsContainer.innerHTML += "(Running in silent mode, only periodic updates will be shown)\n";
+  if (isQuietMode) {
+    resultsContainer.innerHTML += "(Running in quieter mode, only periodic updates will be shown)\n";
   }
   resultsContainer.scrollTop = resultsContainer.scrollHeight;
   
@@ -244,8 +244,8 @@ function runTest(testType, callback = null, clearResults = true) {
     // After SW canvas test completes, run HTML5 canvas test
     showHtml5Canvas();
     resultsContainer.innerHTML += "\nPHASE 2: Testing HTML5 Canvas...\n";
-    if (isSilentMode) {
-      resultsContainer.innerHTML += "(Running in silent mode, only periodic updates will be shown)\n";
+    if (isQuietMode) {
+      resultsContainer.innerHTML += "(Running in quieter mode, only periodic updates will be shown)\n";
     }
     resultsContainer.scrollTop = resultsContainer.scrollHeight;
     

@@ -92,9 +92,10 @@ function detectRefreshRate(callback) {
   requestAnimationFrame(measureFrames);
 }
 
-// Helper function to log results based on silent mode
+// Helper function to log results based on quiet mode
 function logResult(message) {
-  if (!silentModeCheckbox.checked) {
+  // Use the current checkbox state since this could be called from various places
+  if (!quietModeCheckbox.checked) {
     resultsContainer.innerHTML += message;
     resultsContainer.scrollTop = resultsContainer.scrollHeight;
   }
@@ -125,12 +126,13 @@ function runSoftwareCanvasRampTest(testType, startCount, incrementSize, includeB
   let currentPhaseStep = 0;
   let consecutiveExceedances = 0;
   let lastLoggedShapeCount = 0;
-  let isSilentMode = silentModeCheckbox.checked;
+  // Use isQuietMode from testData, passed from UI
+  const isQuietMode = testData.isQuietMode;
   
-  // Always log the initial phase info, even in silent mode
+  // Always log the initial phase info, even in quiet mode
   resultsContainer.innerHTML += "PHASE 1: Testing Software Canvas...\n";
-  if (isSilentMode) {
-    resultsContainer.innerHTML += "(Running in silent mode, suppressing frame-by-frame logs)\n";
+  if (isQuietMode) {
+    resultsContainer.innerHTML += "(Running in quieter mode, suppressing frame-by-frame logs)\n";
   }
   resultsContainer.scrollTop = resultsContainer.scrollHeight;
   
@@ -178,10 +180,10 @@ function runSoftwareCanvasRampTest(testType, startCount, incrementSize, includeB
     testData.swShapeCounts.push(currentShapeCount);
     testData.swTimings.push(avgTime);
     
-    // Log to results if not in silent mode, or every 100 shape count increment in silent mode
-    // In silent mode, don't log during budget exceedance tests (only first and last exceedance)
-    if (!isSilentMode || (isSilentMode && (currentShapeCount - lastLoggedShapeCount >= 100) && consecutiveExceedances === 0)) {
-      // In silent mode, log at shape count increments (but not during exceedance testing)
+    // Log to results if not in quiet mode, or every 100 shape count increment in quiet mode
+    // In quiet mode, don't log during budget exceedance tests (only first and last exceedance)
+    if (!isQuietMode || (isQuietMode && (currentShapeCount - lastLoggedShapeCount >= 100) && consecutiveExceedances === 0)) {
+      // In quiet mode, log at shape count increments (but not during exceedance testing)
       resultsContainer.innerHTML += `SW Canvas with ${currentShapeCount} shapes: ${avgTime.toFixed(2)}ms\n`;
       lastLoggedShapeCount = currentShapeCount;
       
@@ -193,10 +195,10 @@ function runSoftwareCanvasRampTest(testType, startCount, incrementSize, includeB
     if (avgTime > FRAME_BUDGET) {
       consecutiveExceedances++;
       
-      // In silent mode, only log first and last exceedance
-      if (!isSilentMode || consecutiveExceedances === 1 || consecutiveExceedances === requiredExceedances) {
-        // Only log the shape count info in silent mode for first or last exceedance
-        if (isSilentMode) {
+      // In quiet mode, only log first and last exceedance
+      if (!isQuietMode || consecutiveExceedances === 1 || consecutiveExceedances === requiredExceedances) {
+        // Only log the shape count info in quiet mode for first or last exceedance
+        if (isQuietMode) {
           resultsContainer.innerHTML += `SW Canvas with ${currentShapeCount} shapes: ${avgTime.toFixed(2)}ms\n`;
         }
         resultsContainer.innerHTML += `  Exceeded budget (${consecutiveExceedances}/${requiredExceedances})\n`;
@@ -234,12 +236,13 @@ function runHTML5CanvasRampTest(testType, startCount, incrementSize, requiredExc
   let currentPhaseStep = 0;
   let consecutiveExceedances = 0;
   let lastLoggedShapeCount = 0;
-  let isSilentMode = silentModeCheckbox.checked;
+  // Use isQuietMode from testData, passed from UI
+  const isQuietMode = testData.isQuietMode;
   
-  // Always log the initial phase info, even in silent mode
+  // Always log the initial phase info, even in quiet mode
   resultsContainer.innerHTML += "\nPHASE 2: Testing HTML5 Canvas...\n";
-  if (isSilentMode) {
-    resultsContainer.innerHTML += "(Running in silent mode, suppressing frame-by-frame logs)\n";
+  if (isQuietMode) {
+    resultsContainer.innerHTML += "(Running in quieter mode, suppressing frame-by-frame logs)\n";
   }
   resultsContainer.scrollTop = resultsContainer.scrollHeight;
   
@@ -282,10 +285,10 @@ function runHTML5CanvasRampTest(testType, startCount, incrementSize, requiredExc
     testData.canvasShapeCounts.push(currentShapeCount);
     testData.canvasTimings.push(avgTime);
     
-    // Log to results if not in silent mode, or every 1000 shape count increment in silent mode
-    // In silent mode, don't log during budget exceedance tests (only first and last exceedance)
-    if (!isSilentMode || (isSilentMode && (currentShapeCount - lastLoggedShapeCount >= 1000) && consecutiveExceedances === 0)) {
-      // In silent mode, log at larger shape count increments (but not during exceedance testing)
+    // Log to results if not in quiet mode, or every 1000 shape count increment in quiet mode
+    // In quiet mode, don't log during budget exceedance tests (only first and last exceedance)
+    if (!isQuietMode || (isQuietMode && (currentShapeCount - lastLoggedShapeCount >= 1000) && consecutiveExceedances === 0)) {
+      // In quiet mode, log at larger shape count increments (but not during exceedance testing)
       resultsContainer.innerHTML += `HTML5 Canvas with ${currentShapeCount} shapes: ${avgTime.toFixed(2)}ms\n`;
       lastLoggedShapeCount = currentShapeCount;
       
@@ -297,10 +300,10 @@ function runHTML5CanvasRampTest(testType, startCount, incrementSize, requiredExc
     if (avgTime > FRAME_BUDGET) {
       consecutiveExceedances++;
       
-      // In silent mode, only log first and last exceedance
-      if (!isSilentMode || consecutiveExceedances === 1 || consecutiveExceedances === requiredExceedances) {
-        // Only log the shape count info in silent mode for first or last exceedance
-        if (isSilentMode) {
+      // In quiet mode, only log first and last exceedance
+      if (!isQuietMode || consecutiveExceedances === 1 || consecutiveExceedances === requiredExceedances) {
+        // Only log the shape count info in quiet mode for first or last exceedance
+        if (isQuietMode) {
           resultsContainer.innerHTML += `HTML5 Canvas with ${currentShapeCount} shapes: ${avgTime.toFixed(2)}ms\n`;
         }
         resultsContainer.innerHTML += `  Exceeded budget (${consecutiveExceedances}/${requiredExceedances})\n`;
