@@ -5,27 +5,33 @@ function generateTestButtons() {
   // Only build dynamic buttons if we're in a modern environment
   if (typeof document.querySelector !== 'function') return;
   
-  const testsContainer = document.querySelector('.test-buttons');
-  if (!testsContainer) return;
+  // Get containers for each test type
+  const lineTestsContainer = document.getElementById('line-tests');
+  const rectangleTestsContainer = document.getElementById('rectangle-tests');
+  const circleTestsContainer = document.getElementById('circle-tests');
   
-  // Get references to the static buttons
-  const runAllButton = document.getElementById('btn-run-all');
+  if (!lineTestsContainer || !rectangleTestsContainer || !circleTestsContainer) return;
   
-  // Clear existing buttons except the standard controls - need to convert NodeList to Array first
-  const dynamicButtons = Array.from(testsContainer.querySelectorAll('button')).filter(btn => {
-    return btn.id !== 'btn-run-all' && btn.id !== 'btn-abort';
-  });
+  // Clear existing buttons from each container
+  lineTestsContainer.innerHTML = '';
+  rectangleTestsContainer.innerHTML = '';
+  circleTestsContainer.innerHTML = '';
   
-  // Remove any existing dynamic buttons
-  dynamicButtons.forEach(btn => testsContainer.removeChild(btn));
-  
-  // Add buttons for each test before the static Run All button
+  // Add buttons for each test in the appropriate container
   Object.values(TESTS).forEach(test => {
     const button = document.createElement('button');
     button.textContent = test.displayName;
     button.addEventListener('click', () => runTest(test));
     button.className = 'test-button'; // Add a class for easier selection
-    testsContainer.insertBefore(button, runAllButton);
+    
+    // Determine which container to add the button to based on test id
+    if (test.id.startsWith('lines')) {
+      lineTestsContainer.appendChild(button);
+    } else if (test.id.startsWith('rectangles')) {
+      rectangleTestsContainer.appendChild(button);
+    } else if (test.id.startsWith('circles')) {
+      circleTestsContainer.appendChild(button);
+    }
   });
 }
 
@@ -146,10 +152,8 @@ function setButtonsState(enabled) {
   btnAbort.disabled = enabled;
   
   // Disable all test buttons
-  document.querySelectorAll('.test-buttons button').forEach(btn => {
-    if (btn !== btnAbort) { // All buttons except Abort
-      btn.disabled = !enabled;
-    }
+  document.querySelectorAll('.test-button').forEach(btn => {
+    btn.disabled = !enabled;
   });
 }
 

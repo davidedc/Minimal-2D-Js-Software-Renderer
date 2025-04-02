@@ -37,10 +37,14 @@
       margin-bottom: 10px;
     }
     
-    .test-buttons {
+    .test-buttons-container {
+      margin-top: 15px;
+    }
+    
+    .test-buttons-row {
       display: flex;
       gap: 10px;
-      margin-top: 15px;
+      margin-bottom: 10px;
     }
     
     button {
@@ -208,10 +212,21 @@
       </label>
     </div>
     
-    <div class="test-buttons">
+    <div class="test-buttons-container">
       <!-- Test buttons will be generated dynamically based on test-definitions.js -->
-      <button id="btn-run-all">All Tests</button>
-      <button id="btn-abort" disabled>Abort</button>
+      <div id="line-tests" class="test-buttons-row">
+        <!-- Line test buttons will be inserted here -->
+      </div>
+      <div id="rectangle-tests" class="test-buttons-row">
+        <!-- Rectangle test buttons will be inserted here -->
+      </div>
+      <div id="circle-tests" class="test-buttons-row">
+        <!-- Circle test buttons will be inserted here -->
+      </div>
+      <div id="control-buttons" class="test-buttons-row">
+        <button id="btn-run-all">All Tests</button>
+        <button id="btn-abort" disabled>Abort</button>
+      </div>
     </div>
   </div>
   
