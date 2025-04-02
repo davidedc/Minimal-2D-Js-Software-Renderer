@@ -98,6 +98,11 @@ function runAllTests() {
   // Clear previous results
   resultsContainer.innerHTML = "Running all tests...\n\n";
   
+  // Show overall progress bar
+  overallProgressContainer.style.display = 'block';
+  overallProgressBar.style.width = '0%';
+  overallProgressBar.textContent = '0%';
+  
   // Store results for overall summary
   const allResults = {
     tests: [],
@@ -108,6 +113,11 @@ function runAllTests() {
   
   function runNextTest() {
     if (currentIndex < tests.length && !abortRequested) {
+      // Update overall progress
+      const overallProgress = Math.round((currentIndex / tests.length) * 100);
+      overallProgressBar.style.width = overallProgress + '%';
+      overallProgressBar.textContent = overallProgress + '%';
+      
       runTest(tests[currentIndex], (testResults) => {
         // Store individual test results
         allResults.tests.push(tests[currentIndex].displayName);
@@ -119,8 +129,18 @@ function runAllTests() {
         runNextTest();
       }, false);
     } else {
+      // Update overall progress to 100% when done
+      overallProgressBar.style.width = '100%';
+      overallProgressBar.textContent = '100%';
+      
       // Show overall results after all tests are done
       displayOverallResults(allResults);
+      
+      // Hide overall progress bar after a short delay
+      setTimeout(() => {
+        overallProgressContainer.style.display = 'none';
+      }, 1000);
+      
       resetTestState();
     }
   }
@@ -143,7 +163,8 @@ function resetTestState() {
   currentTest = null;
   abortRequested = false;
   setButtonsState(true);
-  progressContainer.style.display = 'none';
+  currentTestProgressContainer.style.display = 'none';
+  overallProgressContainer.style.display = 'none'; // Also hide overall progress bar
 }
 
 function setButtonsState(enabled) {
@@ -186,9 +207,9 @@ function runTest(testType, callback = null, clearResults = true) {
   }
   
   // Show progress bar
-  progressContainer.style.display = 'block';
-  progressBar.style.width = '0%';
-  progressBar.textContent = '0%';
+  currentTestProgressContainer.style.display = 'block';
+  currentTestProgressBar.style.width = '0%';
+  currentTestProgressBar.textContent = '0%';
   
   // Testing data structure
   const testData = {

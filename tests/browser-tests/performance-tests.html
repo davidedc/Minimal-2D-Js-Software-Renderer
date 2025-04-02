@@ -77,15 +77,15 @@
       overflow-y: auto;
     }
     
-    #progress-container {
+    #overall-progress-container,
+    #current-test-progress-container {
       width: 100%;
-      background-color: #ddd;
-      border-radius: 4px;
       margin-top: 10px;
       margin-bottom: 20px;
     }
     
-    #progress-bar {
+    #overall-progress-bar,
+    #current-test-progress-bar {
       height: 20px;
       width: 0;
       background-color: #4CAF50;
@@ -93,6 +93,12 @@
       text-align: center;
       color: white;
       line-height: 20px;
+    }
+    
+    .progress-label {
+      font-size: 0.9em;
+      margin-bottom: 3px;
+      color: #555;
     }
     
     label {
@@ -230,8 +236,14 @@
     </div>
   </div>
   
-  <div id="progress-container" style="display: none;">
-    <div id="progress-bar">0%</div>
+  <div id="overall-progress-container" style="display: none;">
+    <div class="progress-label">Overall progress:</div>
+    <div id="overall-progress-bar">0%</div>
+  </div>
+  
+  <div id="current-test-progress-container" style="display: none;">
+    <div class="progress-label">Current test progress:</div>
+    <div id="current-test-progress-bar">0%</div>
   </div>
   
   <h3 id="canvas-label">Graphics will be shown here when tests start</h3>
@@ -260,8 +272,10 @@
     const swCanvas = document.getElementById('sw-canvas');
     const canvas = document.getElementById('canvas');
     const resultsContainer = document.getElementById('results-container');
-    const progressContainer = document.getElementById('progress-container');
-    const progressBar = document.getElementById('progress-bar');
+    const currentTestProgressContainer = document.getElementById('current-test-progress-container');
+    const currentTestProgressBar = document.getElementById('current-test-progress-bar');
+    const overallProgressContainer = document.getElementById('overall-progress-container');
+    const overallProgressBar = document.getElementById('overall-progress-bar');
     const chartContainer = document.getElementById('chart-container');
     
     // Set canvas dimensions immediately

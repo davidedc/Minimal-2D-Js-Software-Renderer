@@ -149,8 +149,8 @@ function runSoftwareCanvasRampTest(testType, startCount, incrementSize, includeB
     // Update progress for this phase
     currentPhaseStep++;
     const progress = Math.min(100, Math.round((currentPhaseStep / totalPhaseSteps) * 50)); // First phase is 50% of total
-    progressBar.style.width = `${progress}%`;
-    progressBar.textContent = `${progress}%`;
+    currentTestProgressBar.style.width = `${progress}%`;
+    currentTestProgressBar.textContent = `${progress}%`;
     
     // Clear canvas
     swCtx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
@@ -258,8 +258,8 @@ function runHTML5CanvasRampTest(testType, startCount, incrementSize, requiredExc
     // Update progress for this phase
     currentPhaseStep++;
     const progress = Math.min(100, 50 + Math.round((currentPhaseStep / totalPhaseSteps) * 50)); // Second phase is last 50%
-    progressBar.style.width = `${progress}%`;
-    progressBar.textContent = `${progress}%`;
+    currentTestProgressBar.style.width = `${progress}%`;
+    currentTestProgressBar.textContent = `${progress}%`;
     
     // Clear canvas
     ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
