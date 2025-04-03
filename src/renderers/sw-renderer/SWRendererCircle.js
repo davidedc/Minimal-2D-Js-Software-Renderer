@@ -666,158 +666,122 @@ class SWRendererCircle {
 
   /**
    * Optimized method for drawing a circle with 1px stroke and no fill using Bresenham's algorithm.
-   * Uses floor(radius) for Bresenham path, then explicitly adds floor-based boundary pixels.
-   * @param {Number} centerX - X coordinate of circle center (can be float)
-   * @param {Number} centerY - Y coordinate of circle center (can be float)
-   * @param {Number} radius - Radius of the circle (can be float)
+   * If the original radius has a fractional part of exactly 0.5, the top half is shifted
+   * down 1px and the left half is shifted right 1px relative to the standard rounded rendering.
+   * @param {Number} centerX - X coordinate of circle center
+   * @param {Number} centerY - Y coordinate of circle center
+   * @param {Number} radius - Radius of the circle (float)
    * @param {Number} r - Red component of stroke color (0-255)
    * @param {Number} g - Green component of stroke color (0-255)
    * @param {Number} b - Blue component of stroke color (0-255)
    * @param {Number} a - Alpha component of stroke color (0-255)
    */
   drawFullCircleBresenham(centerX, centerY, radius, r, g, b, a) {
-    // --- Input Validation and Early Exit ---
-    if (radius < 0) return;
+    // Store original radius for the half-pixel check
+    const originalRadius = radius;
 
-    const globalAlpha = this.pixelRenderer.context.globalAlpha;
-    if (a === 0 || globalAlpha <= 0) return;
+    // Use integer centers (equivalent to Math.floor)
+    const cX = Math.floor(centerX); // Use floor for anchor
+    const cY = Math.floor(centerY); // Use floor for anchor
 
-    // --- Coordinate and Parameter Preparation ---
+    // Round radius to nearest integer for the algorithm
+    const intRadius = Math.floor(originalRadius); // Use standard rounding for path shape
 
-    // Integer center anchor points using floor() for Bresenham algorithm origin
-    const cX_floor = Math.floor(centerX);
-    const cY_floor = Math.floor(centerY);
+    // Early reject if radius is non-positive (after rounding)
+    // Note: A very small positive radius (e.g., 0.3) might round to 0 here.
+    if (intRadius <= 0) {
+        // Handle near-zero radius: draw a single pixel at the rounded center?
+        if (originalRadius >= 0) { // Draw if original was non-negative
+            const centerPx = Math.round(centerX);
+            const centerPy = Math.round(centerY);
+            this.pixelRenderer.setPixel(centerPx, centerPy, r, g, b, a); // Assuming drawPixel helper exists
+        }
+        return;
+    }
 
-    // Use floored radius for the main Bresenham path generation.
-    // This ensures top/left boundaries are met and right/bottom don't exceed floor(c+r).
-    const intRadius_floor = Math.floor(radius);
+    // --- Determine Offsets for .5 Radius Case ---
+    let xOffset = 0;
+    let yOffset = 0;
+    // Check if originalRadius * 2 is an odd integer (reliable way to check for exactly .5 fractional part)
+    // Add a small tolerance for floating point inaccuracies if necessary, e.g., Math.abs((originalRadius * 2) % 2 - 1) < 1e-9
+    if (originalRadius > 0 && (originalRadius * 2) % 2 === 1) {
+        // Radius ends in .5, apply the requested shifts
+        xOffset = 1; // Shift left-half pixels right
+        yOffset = 1; // Shift top-half pixels down
+    }
 
-    // Calculate the strict target pixel boundaries using floor()
-    const minX = Math.floor(centerX - radius);
-    const maxX = Math.floor(centerX + radius);
-    const minY = Math.floor(centerY - radius);
-    const maxY = Math.floor(centerY + radius); // <-- Corrected line ending
-
-    // Rounded integer center needed for placing forced boundary pixels on centerlines
-    const cX_round = Math.round(centerX);
-    const cY_round = Math.round(centerY);
-
-
-    // --- Caching and Canvas Bounds Check ---
+    // Cache renderer properties
     const width = this.pixelRenderer.width;
     const height = this.pixelRenderer.height;
+    const globalAlpha = this.pixelRenderer.context.globalAlpha;
+    const hasClipping = this.pixelRenderer.context.currentState;
+    const clippingMask = hasClipping ? this.pixelRenderer.context.currentState.clippingMask : null;
 
-    // Preliminary check using the strict floor bounds.
-    if (maxX < 0 || minX >= width || maxY < 0 || minY >= height) {
-        return; // No part of the strict bounding box is on canvas
-    }
+    // Skip if integer bounding box is outside canvas bounds (loose check)
+    if (cX + intRadius + xOffset < 0 || cX - intRadius >= width || cY + intRadius + yOffset < 0 || cY - intRadius >= height) return;
 
-    // --- Handle Radius Zero / Small Cases ---
-    if (radius === 0) {
-        // Check if the single pixel (using rounded center) falls within the strict bounds
-        if (cX_round >= minX && cX_round <= maxX && cY_round >= minY && cY_round <= maxY) {
-            this.setPixel(cX_round, cY_round, r, g, b, a);
-        }
-        return;
-    }
-    // If radius is small but > 0, floor(radius) might be 0.
-    if (intRadius_floor < 0) { // Should only happen if input radius < 0, already handled.
-      return; // Or handle 0 < radius < 1 case specifically if needed.
-    }
-    // If intRadius_floor is 0 (meaning 0 <= radius < 1)
-    if (intRadius_floor === 0 && radius > 0) {
-        // Draw the pixel at the rounded center if it's within the strict bounds.
-        // For 0<r<1, min/max X/Y will typically be cX_floor/cX_floor+1 etc.
-          if (cX_round >= minX && cX_round <= maxX && cY_round >= minY && cY_round <= maxY) {
-            this.setPixel(cX_round, cY_round, r, g, b, a);
-        }
-        return;
-    }
-    // Now we expect intRadius_floor >= 1 for the main loop
+    // Skip if fully transparent
+    if (a === 0 || globalAlpha <= 0) return;
 
-
-    // --- Bresenham Algorithm Initialization (using Floor values) ---
+    // --- Bresenham Initialization ---
     let x = 0;
-    let y = intRadius_floor; // Use floored radius
-    let d = 3 - 2 * intRadius_floor; // Decision parameter
+    let y = intRadius; // Use rounded radius for algorithm calculation
+    let d = 3 - 2 * intRadius;
 
-    // Set to collect unique final pixels
-    const finalPixels = new Set();
+    // Use a Set to store unique pixel coordinates to avoid duplicates, especially with offsets
+    const uniquePixels = new Set();
 
-    // --- Helper to add pixels to the final set (checks bounds, clipping, uniqueness) ---
-    const addPixelToSet = (px, py) => {
-        // 1. Check canvas bounds
+    // --- Helper function to add a unique pixel (handles bounds, clipping) ---
+    const addUniquePixelToPlot = (px, py) => {
+        // Skip if outside canvas bounds
         if (px < 0 || px >= width || py < 0 || py >= height) return;
-        // 3. Add unique pixel to the set
-        finalPixels.add(`${px},${py}`);
+        // Add unique pixel coordinates (e.g., as a string "x,y")
+        const coordStr = `${px},${py}`;
+        if (uniquePixels.has(coordStr)) {
+            console.log(`Duplicate pixel found at (${px}, ${py})`);
+        }
+        uniquePixels.add(coordStr);
     };
 
-    // --- Bresenham Algorithm Loop (using Floor values) ---
-    // Plot initial points using floor center and radius
-    addPixelToSet(cX_floor + x, cY_floor + y);
-    addPixelToSet(cX_floor - x, cY_floor + y);
-    addPixelToSet(cX_floor + x, cY_floor - y);
-    addPixelToSet(cX_floor - x, cY_floor - y);
-    if (x !== y) {
-        addPixelToSet(cX_floor + y, cY_floor + x);
-        addPixelToSet(cX_floor - y, cY_floor + x);
-        addPixelToSet(cX_floor + y, cY_floor - x);
-        addPixelToSet(cX_floor - y, cY_floor - x);
-    }
+    // --- Bresenham Loop with Conditional Offsets ---
+    while (x <= y) {
+        // Apply offsets based on octant for the .5 radius case
+
+        // Top-Right Quadrant (Octants 1 & 2) -> Apply +yOffset
+        addUniquePixelToPlot(cX + x, cY + y); // Octant 1 (y is positive component)
+        addUniquePixelToPlot(cX + y, cY + x); // Octant 2 (x is positive component)
+
+        // Bottom-Right Quadrant (Octants 3 & 4) -> No offsets
+        addUniquePixelToPlot(cX + y, cY - x - yOffset);           // Octant 3
+        addUniquePixelToPlot(cX + x, cY - y - yOffset);           // Octant 4
+
+        // Bottom-Left Quadrant (Octants 5 & 6) -> Apply +xOffset
+        addUniquePixelToPlot(cX - x - xOffset, cY - y - yOffset); // Octant 5
+        addUniquePixelToPlot(cX - y - xOffset, cY - x - yOffset); // Octant 6
+
+        // Top-Left Quadrant (Octants 7 & 8) -> Apply +xOffset and +yOffset
+        addUniquePixelToPlot(cX - y - xOffset, cY + x); // Octant 7
+        addUniquePixelToPlot(cX - x - xOffset, cY + y); // Octant 8
 
 
-    while (x < y) { // Loop until x crosses y
-        // Update Bresenham state FIRST
+        // Update Bresenham algorithm state
         if (d < 0) {
-            // Move East
             d = d + 4 * x + 6;
-            x++;
         } else {
-            // Move South-East
             d = d + 4 * (x - y) + 10;
-            x++;
             y--;
         }
-
-        // Add the 8 symmetric points for the new (x, y) relative to floor center
-        addPixelToSet(cX_floor + x, cY_floor + y);
-        addPixelToSet(cX_floor - x, cY_floor + y);
-        addPixelToSet(cX_floor + x, cY_floor - y);
-        addPixelToSet(cX_floor - x, cY_floor - y);
-
-        if (x !== y) { // Avoid double-plotting diagonal pixels
-            addPixelToSet(cX_floor + y, cY_floor + x);
-            addPixelToSet(cX_floor - y, cY_floor + x);
-            addPixelToSet(cX_floor + y, cY_floor - x);
-            addPixelToSet(cX_floor - y, cY_floor - x);
-        }
-    } // End while loop
-
-    // --- Force Add Cardinal Boundary Pixels ---
-    // Explicitly add the pixels at the min/max X/Y boundaries, using the
-    // rounded center coordinates (cX_round, cY_round) for the axis alignment.
-    // The addPixelToSet function handles bounds, clipping, and prevents duplicates.
-    if (radius > 0) { // Only add boundary points if radius is positive
-        addPixelToSet(minX, cY_round); // Leftmost on rounded horizontal center
-        addPixelToSet(maxX, cY_round); // Rightmost on rounded horizontal center
-        addPixelToSet(cX_round, minY); // Topmost on rounded vertical center
-        addPixelToSet(cX_round, maxY); // Bottommost on rounded vertical center
+        x++;
     }
 
-
-    // --- Render Final Pixels ---
-    if (finalPixels.size > 0) {
-        const pixelRuns = [];
-        finalPixels.forEach(coordStr => {
+    // --- Render Pixels ---
+    if (uniquePixels.size > 0) {
+        // Convert unique coordinates back to flat array for renderer
+        uniquePixels.forEach(coordStr => {
             const [px, py] = coordStr.split(',').map(Number);
-            pixelRuns.push(px, py, 1); // Add x, y, runLength=1
+            this.pixelRenderer.setPixel(px, py, r, g, b, a);
         });
-
-        // Render all pixels in a single batch
-        // Assuming setPixelRuns handles alpha blending internally based on 'a' and globalAlpha
-        this.pixelRenderer.setPixelRuns(pixelRuns, r, g, b, a);
 
     }
   }
-
 }
