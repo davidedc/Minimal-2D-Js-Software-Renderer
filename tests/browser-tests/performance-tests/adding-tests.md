@@ -10,20 +10,20 @@ a more maintainable structure.
 
 ## Naming Convention
 
-Tests follow a standardized naming pattern that clearly indicates shape type, fill properties (size and opacity), stroke properties (size and opacity), positioning, and orientation:
+Tests follow a standardized naming pattern that clearly indicates shape type, size, fill properties (opacity), stroke properties (size and opacity), positioning, and orientation:
 
 ### File Naming
-Files should follow the pattern: `[shape]--[sizeFill]-[opacityFill]-fill--[sizeStroke]-[opacityStroke]-stroke--[positioning]-pos--[orientation]-orient--test.js`
+Files should follow the pattern: `[shape]--[size]-size--[opacityFill]-fill--[sizeStroke]-[opacityStroke]-stroke--[positioning]-pos--[orientation]-orient--test.js`
 
 Major sections are separated by double dashes (`--`), while components within sections use single dashes (`-`).
 
 Examples:
-- `circles--M-opaque-fill--L-opaque-stroke--random-pos--random-orient--test.js` (medium opaque fill, large opaque stroke, random positioning and orientation)
-- `circles--M-semi-fill--L-opaque-stroke--crisp-pos--horizontal-orient--test.js` (medium semi-transparent fill, large opaque stroke, crisp positioning, horizontal orientation)
-- `circles--no-fill--L-opaque-stroke--random-pos--45deg-orient--test.js` (no fill, large opaque stroke, random positioning, 45-degree orientation)
-- `rectangles--M-opaque-fill--M-semi-stroke--crisp-pos--vertical-orient--test.js` (medium opaque fill, medium semi-transparent stroke, crisp positioning, vertical orientation)
-- `lines--no-fill--L-opaque-stroke--random-pos--square-orient--test.js` (lines with large opaque stroke, no fill, random positioning, square orientation)
-- `lines--no-fill--1px-opaque-stroke--crisp-pos--horizontal-orient--test.js` (lines with exactly 1-pixel opaque stroke, crisp positioning, horizontal orientation)
+- `circles--M-size--opaque-fill--L-opaque-stroke--random-pos--random-orient--test.js` (medium sized circles with opaque fill, large opaque stroke, random positioning and orientation)
+- `circles--M-size--semi-fill--L-opaque-stroke--crisp-pos--horizontal-orient--test.js` (medium sized circles with semi-transparent fill, large opaque stroke, crisp positioning, horizontal orientation)
+- `circles--XL-size--no-fill--L-opaque-stroke--random-pos--45deg-orient--test.js` (extra large sized circles with no fill, large opaque stroke, random positioning, 45-degree orientation)
+- `rectangles--M-size--opaque-fill--M-semi-stroke--crisp-pos--vertical-orient--test.js` (medium sized rectangles with opaque fill, medium semi-transparent stroke, crisp positioning, vertical orientation)
+- `lines--M-size--no-fill--L-opaque-stroke--random-pos--square-orient--test.js` (medium sized lines with large opaque stroke, no fill, random positioning, square orientation)
+- `lines--L-size--no-fill--1px-opaque-stroke--crisp-pos--horizontal-orient--test.js` (large sized lines with exactly 1-pixel opaque stroke, crisp positioning, horizontal orientation)
 
 ### Size Indicators
 Size is indicated using these standardized labels:
@@ -54,31 +54,31 @@ Orientation is indicated using these standardized labels:
 - `45deg`: 45-degree orientation
 
 ### Function Naming
-Functions should follow the pattern: `draw_[shape]__[sizeFill]_[opacityFill]_fill__[sizeStroke]_[opacityStroke]_stroke__[positioning]_pos__[orientation]_orient`
+Functions should follow the pattern: `draw_[shape]__[size]_size__[opacityFill]_fill__[sizeStroke]_[opacityStroke]_stroke__[positioning]_pos__[orientation]_orient`
 
 Function names use underscores, with double underscores matching the double dashes in file names.
 
 Examples:
-- `draw_circles__M_opaque_fill__L_opaque_stroke__random_pos__random_orient`
-- `draw_circles__no_fill__L_opaque_stroke__crisp_pos__horizontal_orient`
-- `draw_rectangles__M_opaque_fill__M_semi_stroke__random_pos__vertical_orient`
-- `draw_lines__no_fill__L_opaque_stroke__crisp_pos__45deg_orient`
-- `draw_lines__no_fill__1px_opaque_stroke__crisp_pos__horizontal_orient`
+- `draw_circles__M_size__opaque_fill__L_opaque_stroke__random_pos__random_orient`
+- `draw_circles__XL_size__no_fill__L_opaque_stroke__crisp_pos__horizontal_orient`
+- `draw_rectangles__M_size__opaque_fill__M_semi_stroke__random_pos__vertical_orient`
+- `draw_lines__M_size__no_fill__L_opaque_stroke__crisp_pos__45deg_orient`
+- `draw_lines__L_size__no_fill__1px_opaque_stroke__crisp_pos__horizontal_orient`
 
 ## Step 1: Create a Test File
 
 Create a file following the naming pattern above:
 
-Example for small circles with semi-transparent fill and large opaque stroke, crisp positioning and horizontal orientation:
-`circles--S-semi-fill--L-opaque-stroke--crisp-pos--horizontal-orient--test.js`
+Example for small sized circles with semi-transparent fill and large opaque stroke, crisp positioning and horizontal orientation:
+`circles--S-size--semi-fill--L-opaque-stroke--crisp-pos--horizontal-orient--test.js`
 
 ## Step 2: Implement Draw Function
 
 Like so:
 
 ```javascript
-// Circles with small semi-transparent fill and large opaque stroke, crisp positioning and horizontal orientation
-function draw_circles__S_semi_fill__L_opaque_stroke__crisp_pos__horizontal_orient(ctx, count) {
+// Circles with small size, semi-transparent fill and large opaque stroke, crisp positioning and horizontal orientation
+function draw_circles__S_size__semi_fill__L_opaque_stroke__crisp_pos__horizontal_orient(ctx, count) {
   for (let i = 0; i < count; i++) {
     // Implementation with crisp positioning and horizontal orientation
   }
@@ -91,11 +91,11 @@ function draw_circles__S_semi_fill__L_opaque_stroke__crisp_pos__horizontal_orien
 Add your test to the TESTS object in `test-definitions.js`:
 
 ```javascript
-CIRCLES__S_SEMI_FILL__L_OPAQUE_STROKE__CRISP_POS__HORIZONTAL_ORIENT: {
-  id: 'circles--S-semi-fill--L-opaque-stroke--crisp-pos--horizontal-orient',
-  drawFunction: draw_circles__S_semi_fill__L_opaque_stroke__crisp_pos__horizontal_orient,
-  displayName: 'Circles (S semi fill, L opaque stroke, crisp pos, horizontal orient)',
-  description: 'Tests drawing circles with small semi-transparent fill, large opaque stroke, crisp positioning and horizontal orientation.'
+CIRCLES__S_SIZE__SEMI_FILL__L_OPAQUE_STROKE__CRISP_POS__HORIZONTAL_ORIENT: {
+  id: 'circles--S-size--semi-fill--L-opaque-stroke--crisp-pos--horizontal-orient',
+  drawFunction: draw_circles__S_size__semi_fill__L_opaque_stroke__crisp_pos__horizontal_orient,
+  displayName: 'Circles (S size, semi fill, L opaque stroke, crisp pos, horizontal orient)',
+  description: 'Tests drawing circles with small size, semi-transparent fill, large opaque stroke, crisp positioning and horizontal orientation.'
 }
 ```
 
@@ -139,12 +139,18 @@ The correct loading order is critical:
 When implementing drawing functions, follow these guidelines for consistent results:
 
 - **Lines**: 
+  - Use line lengths based on the size indicator:
+    - XS: 5-20px
+    - S: 15-40px
+    - M: 30-100px
+    - L: 80-200px
+    - XL: 150-400px
   - Use variable line widths based on the stroke size indicator
   - Use opacity based on the stroke opacity indicator
-  - Generate random endpoints within canvas dimensions
+  - Generate endpoints based on the specified size range
 
 - **Rectangles**:
-  - Use sizes based on the fill size indicator: 
+  - Use sizes based on the size indicator: 
     - XS: 5-15px
     - S: 10-30px
     - M: 20-120px
@@ -159,9 +165,10 @@ When implementing drawing functions, follow these guidelines for consistent resu
   - Use opacity based on the fill and stroke opacity indicators:
     - opaque: alpha = 1.0
     - semi: alpha = 0.2-0.8 (randomly chosen)
+    - no: no fill/stroke applied
 
 - **Circles**:
-  - Use radii based on the fill size indicator:
+  - Use radii based on the size indicator:
     - XS: 2-8px
     - S: 5-15px
     - M: 10-50px

@@ -1,14 +1,17 @@
-// Lines with no fill and 1px opaque stroke, random positioning and horizontal orientation
+// Lines with medium size, no fill and 1px opaque stroke, random positioning and horizontal orientation
 function draw_lines__no_fill__1px_opaque_stroke__random_pos__horizontal_orient(ctx, count) {
   for (let i = 0; i < count; i++) {
     // Generate random y position
     const y = Math.floor(SeededRandom.getRandom() * CANVAS_HEIGHT);
     
-    // Generate random x positions, ensuring line stays within canvas bounds
-    const minX = 0;
-    const maxX = CANVAS_WIDTH - 1;
-    const x1 = Math.floor(SeededRandom.getRandom() * (maxX - minX)) + minX;
-    const x2 = Math.floor(SeededRandom.getRandom() * (maxX - minX)) + minX;
+    // Medium line length: 30-100px
+    const lineLength = Math.floor(SeededRandom.getRandom() * 70) + 30;
+    
+    // Random starting x, ensuring line stays within canvas
+    const x1 = Math.floor(SeededRandom.getRandom() * (CANVAS_WIDTH - lineLength));
+    
+    // Horizontal line with medium length
+    const x2 = x1 + lineLength;
     
     // Keep y2 the same as y1 for horizontal orientation
     const y1 = y;

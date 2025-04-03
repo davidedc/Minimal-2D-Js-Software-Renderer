@@ -4,77 +4,77 @@
 // The TESTS object contains all available performance tests with their properties
 const TESTS = {
   // Lines with large stroke
-  LINES__NO_FILL__L_OPAQUE_STROKE__RANDOM_POS__RANDOM_ORIENT: {
-    id: 'lines--no-fill--L-opaque-stroke--random-pos--random-orient',
+  LINES__M_SIZE__NO_FILL__L_OPAQUE_STROKE__RANDOM_POS__RANDOM_ORIENT: {
+    id: 'lines--M-size--no-fill--L-opaque-stroke--random-pos--random-orient',
     drawFunction: draw_lines__no_fill__L_opaque_stroke__random_pos__random_orient,
-    displayName: 'Lines (no fill, L opaque stroke, random pos, random orient)',
-    description: 'Tests drawing lines with large opaque strokes, random positioning and orientation.'
+    displayName: 'Lines (M size, no fill, L opaque stroke, random pos, random orient)',
+    description: 'Tests drawing medium-sized lines with large opaque strokes, random positioning and orientation.'
   },
   
   // Lines with 1px stroke - different orientations
-  LINES__NO_FILL__1PX_OPAQUE_STROKE__RANDOM_POS__RANDOM_ORIENT: {
-    id: 'lines--no-fill--1px-opaque-stroke--random-pos--random-orient',
+  LINES__M_SIZE__NO_FILL__1PX_OPAQUE_STROKE__RANDOM_POS__RANDOM_ORIENT: {
+    id: 'lines--M-size--no-fill--1px-opaque-stroke--random-pos--random-orient',
     drawFunction: draw_lines__no_fill__1px_opaque_stroke__random_pos__random_orient,
-    displayName: 'Lines (no fill, 1px opaque stroke, random pos, random orient)',
-    description: 'Tests drawing lines with 1px opaque strokes, random positioning and orientation.'
+    displayName: 'Lines (M size, no fill, 1px opaque stroke, random pos, random orient)',
+    description: 'Tests drawing medium-sized lines with 1px opaque strokes, random positioning and orientation.'
   },
   
-  LINES__NO_FILL__1PX_OPAQUE_STROKE__RANDOM_POS__HORIZONTAL_ORIENT: {
-    id: 'lines--no-fill--1px-opaque-stroke--random-pos--horizontal-orient',
+  LINES__M_SIZE__NO_FILL__1PX_OPAQUE_STROKE__RANDOM_POS__HORIZONTAL_ORIENT: {
+    id: 'lines--M-size--no-fill--1px-opaque-stroke--random-pos--horizontal-orient',
     drawFunction: draw_lines__no_fill__1px_opaque_stroke__random_pos__horizontal_orient,
-    displayName: 'Lines (no fill, 1px opaque stroke, random pos, horizontal orient)',
-    description: 'Tests drawing horizontal lines with 1px opaque strokes and random positioning.'
+    displayName: 'Lines (M size, no fill, 1px opaque stroke, random pos, horizontal orient)',
+    description: 'Tests drawing medium-sized horizontal lines with 1px opaque strokes and random positioning.'
   },
   
-  LINES__NO_FILL__1PX_OPAQUE_STROKE__RANDOM_POS__VERTICAL_ORIENT: {
-    id: 'lines--no-fill--1px-opaque-stroke--random-pos--vertical-orient',
+  LINES__M_SIZE__NO_FILL__1PX_OPAQUE_STROKE__RANDOM_POS__VERTICAL_ORIENT: {
+    id: 'lines--M-size--no-fill--1px-opaque-stroke--random-pos--vertical-orient',
     drawFunction: draw_lines__no_fill__1px_opaque_stroke__random_pos__vertical_orient,
-    displayName: 'Lines (no fill, 1px opaque stroke, random pos, vertical orient)',
-    description: 'Tests drawing vertical lines with 1px opaque strokes and random positioning.'
+    displayName: 'Lines (M size, no fill, 1px opaque stroke, random pos, vertical orient)',
+    description: 'Tests drawing medium-sized vertical lines with 1px opaque strokes and random positioning.'
   },
   
-  LINES__NO_FILL__1PX_OPAQUE_STROKE__RANDOM_POS__SQUARE_ORIENT: {
-    id: 'lines--no-fill--1px-opaque-stroke--random-pos--square-orient',
+  LINES__M_SIZE__NO_FILL__1PX_OPAQUE_STROKE__RANDOM_POS__SQUARE_ORIENT: {
+    id: 'lines--M-size--no-fill--1px-opaque-stroke--random-pos--square-orient',
     drawFunction: draw_lines__no_fill__1px_opaque_stroke__random_pos__square_orient,
-    displayName: 'Lines (no fill, 1px opaque stroke, random pos, square orient)',
-    description: 'Tests drawing horizontal and vertical lines (square patterns) with 1px opaque strokes and random positioning.'
+    displayName: 'Lines (M size, no fill, 1px opaque stroke, random pos, square orient)',
+    description: 'Tests drawing medium-sized horizontal and vertical lines (square patterns) with 1px opaque strokes and random positioning.'
   },
   
-  LINES__NO_FILL__1PX_OPAQUE_STROKE__RANDOM_POS__45DEG_ORIENT: {
-    id: 'lines--no-fill--1px-opaque-stroke--random-pos--45deg-orient',
+  LINES__M_SIZE__NO_FILL__1PX_OPAQUE_STROKE__RANDOM_POS__45DEG_ORIENT: {
+    id: 'lines--M-size--no-fill--1px-opaque-stroke--random-pos--45deg-orient',
     drawFunction: draw_lines__no_fill__1px_opaque_stroke__random_pos__45deg_orient,
-    displayName: 'Lines (no fill, 1px opaque stroke, random pos, 45deg orient)',
-    description: 'Tests drawing diagonal lines at 45-degree angles with 1px opaque strokes and random positioning.'
+    displayName: 'Lines (M size, no fill, 1px opaque stroke, random pos, 45deg orient)',
+    description: 'Tests drawing medium-sized diagonal lines at 45-degree angles with 1px opaque strokes and random positioning.'
   },
   
   // Rectangles
-  RECTANGLES__M_OPAQUE_FILL__M_OPAQUE_STROKE__RANDOM_POS__RANDOM_ORIENT: {
-    id: 'rectangles--M-opaque-fill--M-opaque-stroke--random-pos--random-orient',
+  RECTANGLES__M_SIZE__OPAQUE_FILL__M_OPAQUE_STROKE__RANDOM_POS__RANDOM_ORIENT: {
+    id: 'rectangles--M-size--opaque-fill--M-opaque-stroke--random-pos--random-orient',
     drawFunction: draw_rectangles__M_opaque_fill__M_opaque_stroke__random_pos__random_orient,
-    displayName: 'Rectangles (M opaque fill, M opaque stroke, random pos, random orient)',
-    description: 'Tests drawing rectangles with medium opaque fill and medium opaque stroke, random positioning and orientation.'
+    displayName: 'Rectangles (M size, opaque fill, M opaque stroke, random pos, random orient)',
+    description: 'Tests drawing medium-sized rectangles with opaque fill and medium opaque stroke, random positioning and orientation.'
   },
   
   // Circles
-  CIRCLES__M_OPAQUE_FILL__M_OPAQUE_STROKE__RANDOM_POS__RANDOM_ORIENT: {
-    id: 'circles--M-opaque-fill--M-opaque-stroke--random-pos--random-orient',
+  CIRCLES__M_SIZE__OPAQUE_FILL__M_OPAQUE_STROKE__RANDOM_POS__RANDOM_ORIENT: {
+    id: 'circles--M-size--opaque-fill--M-opaque-stroke--random-pos--random-orient',
     drawFunction: draw_circles__M_opaque_fill__M_opaque_stroke__random_pos__random_orient,
-    displayName: 'Circles (M opaque fill, M opaque stroke, random pos, random orient)',
-    description: 'Tests drawing circles with medium opaque fill and medium opaque stroke, random positioning and orientation.'
+    displayName: 'Circles (M size, opaque fill, M opaque stroke, random pos, random orient)',
+    description: 'Tests drawing medium-sized circles with opaque fill and medium opaque stroke, random positioning and orientation.'
   },
   
-  CIRCLES__XL_OPAQUE_FILL__1PX_OPAQUE_STROKE__RANDOM_POS__RANDOM_ORIENT: {
-    id: 'circles--XL-opaque-fill--1px-opaque-stroke--random-pos--random-orient',
+  CIRCLES__XL_SIZE__OPAQUE_FILL__1PX_OPAQUE_STROKE__RANDOM_POS__RANDOM_ORIENT: {
+    id: 'circles--XL-size--opaque-fill--1px-opaque-stroke--random-pos--random-orient',
     drawFunction: draw_circles__XL_opaque_fill__1px_opaque_stroke__random_pos__random_orient,
-    displayName: 'Circles (XL opaque fill, 1px opaque stroke, random pos, random orient)',
-    description: 'Tests drawing circles with extra large opaque fill and 1px opaque stroke, random positioning and orientation.'
+    displayName: 'Circles (XL size, opaque fill, 1px opaque stroke, random pos, random orient)',
+    description: 'Tests drawing extra large-sized circles with opaque fill and 1px opaque stroke, random positioning and orientation.'
   },
   
-  CIRCLES__XL_OPAQUE_FILL__XL_OPAQUE_STROKE__RANDOM_POS__RANDOM_ORIENT: {
-    id: 'circles--XL-opaque-fill--XL-opaque-stroke--random-pos--random-orient',
+  CIRCLES__XL_SIZE__OPAQUE_FILL__XL_OPAQUE_STROKE__RANDOM_POS__RANDOM_ORIENT: {
+    id: 'circles--XL-size--opaque-fill--XL-opaque-stroke--random-pos--random-orient',
     drawFunction: draw_circles__XL_opaque_fill__XL_opaque_stroke__random_pos__random_orient,
-    displayName: 'Circles (XL opaque fill, XL opaque stroke, random pos, random orient)',
-    description: 'Tests drawing circles with extra large opaque fill and extra large opaque stroke, random positioning and orientation.'
+    displayName: 'Circles (XL size, opaque fill, XL opaque stroke, random pos, random orient)',
+    description: 'Tests drawing extra large-sized circles with opaque fill and extra large opaque stroke, random positioning and orientation.'
   }
 };
 
