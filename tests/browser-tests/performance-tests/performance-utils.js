@@ -141,7 +141,7 @@ function runSoftwareCanvasRampTest(testType, startCount, incrementSize, includeB
       // All done, report back
       testData.swMaxShapes = findMaxShapes(testData.swShapeCounts, testData.swTimings);
       
-      // Always log the final result, even in silent mode
+      // Always log the final result, even in quiet mode
       resultsContainer.innerHTML += `Software Canvas Maximum Shapes: ${testData.swMaxShapes}\n`;
       resultsContainer.scrollTop = resultsContainer.scrollHeight;
       callback();
@@ -251,7 +251,7 @@ function runHTML5CanvasRampTest(testType, startCount, incrementSize, requiredExc
       // All done, report back
       testData.canvasMaxShapes = findMaxShapes(testData.canvasShapeCounts, testData.canvasTimings);
       
-      // Always log the final result, even in silent mode
+      // Always log the final result, even in quiet mode
       resultsContainer.innerHTML += `HTML5 Canvas Maximum Shapes: ${testData.canvasMaxShapes}\n`;
       resultsContainer.scrollTop = resultsContainer.scrollHeight;
       callback();
@@ -345,8 +345,8 @@ function displayRampTestResults(testData) {
   results += `- HTML5 Canvas increment: ${testData.htmlIncrement}\n`;
   results += `- Consecutive exceedances required: ${testData.requiredExceedances}\n`;
   results += `- Blitting time: ${testData.includeBlitting ? "Included" : "Excluded"}\n`;
-  if (testData.isSilentMode) {
-    results += `- Log mode: Silent (frame-by-frame logs suppressed)\n`;
+  if (testData.isQuietMode) {
+    results += `- Log mode: Quieter (frame-by-frame logs suppressed)\n`;
   } else {
     results += `- Log mode: Verbose (all frames logged)\n`;
   }
@@ -377,7 +377,7 @@ function displayOverallResults(allResults) {
   results += `Display refresh rate: ${DETECTED_FPS} fps (standard rate, raw detected: ${window.RAW_DETECTED_FPS || DETECTED_FPS} fps)\n`;
   results += `Frame budget: ${FRAME_BUDGET.toFixed(2)}ms\n`;
   results += `Tests run: ${allResults.tests.length}\n`;
-  results += `Log mode: ${silentModeCheckbox.checked ? "Silent" : "Verbose"}\n\n`;
+  results += `Log mode: ${quietModeCheckbox.checked ? "Quiet" : "Verbose"}\n\n`;
   
   // Test specific summary
   results += "Test Summary:\n";
