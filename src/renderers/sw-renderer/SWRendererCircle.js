@@ -677,35 +677,36 @@ class SWRendererCircle {
    * @param {Number} a - Alpha component of stroke color (0-255)
    */
   drawFullCircleBresenham(centerX, centerY, radius, r, g, b, a) {
-    // Store original radius for the half-pixel check
     const originalRadius = radius;
+    const cX = Math.floor(centerX);
+    const cY = Math.floor(centerY);
+    const intRadius = Math.floor(originalRadius); // Use floor radius for consistency? Or round? Let's stick to floor as per original. Check if Math.round is better.
+                                                  // Using floor might make the .5 logic slightly offset from true rounding, but let's match original code first.
 
-    // Use integer centers (equivalent to Math.floor)
-    const cX = Math.floor(centerX); // Use floor for anchor
-    const cY = Math.floor(centerY); // Use floor for anchor
+    if (intRadius < 0) return; // Cannot draw circle with negative integer radius
 
-    // Round radius to nearest integer for the algorithm
-    const intRadius = Math.floor(originalRadius); // Use standard rounding for path shape
-
-    // Early reject if radius is non-positive (after rounding)
-    // Note: A very small positive radius (e.g., 0.3) might round to 0 here.
-    if (intRadius <= 0) {
-        // Handle near-zero radius: draw a single pixel at the rounded center?
-        if (originalRadius >= 0) { // Draw if original was non-negative
-            const centerPx = Math.round(centerX);
+    // Handle zero or near-zero radius (draw single pixel at rounded center)
+    if (intRadius === 0) {
+        if (originalRadius >= 0) { // Only draw if original wasn't negative
+            const centerPx = Math.round(centerX); // Round for the single pixel case
             const centerPy = Math.round(centerY);
-            this.pixelRenderer.setPixel(centerPx, centerPy, r, g, b, a); // Assuming drawPixel helper exists
+            // Check bounds for the single pixel
+            if (centerPx >= 0 && centerPx < this.pixelRenderer.width && centerPy >= 0 && centerPy < this.pixelRenderer.height) {
+              this.pixelRenderer.setPixel(centerPx, centerPy, r, g, b, a);
+            }
         }
         return;
     }
+
 
     // --- Determine Offsets for .5 Radius Case ---
     let xOffset = 0;
     let yOffset = 0;
     // Check if originalRadius * 2 is an odd integer (reliable way to check for exactly .5 fractional part)
-    // Add a small tolerance for floating point inaccuracies if necessary, e.g., Math.abs((originalRadius * 2) % 2 - 1) < 1e-9
-    if (originalRadius > 0 && (originalRadius * 2) % 2 === 1) {
-        // Radius ends in .5, apply the requested shifts
+    // Adding a small tolerance for floating point math might be safer:
+    // const epsilon = 1e-9;
+    // if (originalRadius > 0 && Math.abs((originalRadius * 2) % 2 - 1) < epsilon) {
+    if (originalRadius > 0 && (originalRadius * 2) % 2 === 1) { // Original check - often sufficient
         xOffset = 1; // Shift left-half pixels right
         yOffset = 1; // Shift top-half pixels down
     }
@@ -713,55 +714,52 @@ class SWRendererCircle {
     // Cache renderer properties
     const width = this.pixelRenderer.width;
     const height = this.pixelRenderer.height;
-    const globalAlpha = this.pixelRenderer.context.globalAlpha;
-    const hasClipping = this.pixelRenderer.context.currentState;
-    const clippingMask = hasClipping ? this.pixelRenderer.context.currentState.clippingMask : null;
+    const globalAlpha = this.pixelRenderer.context.globalAlpha; // Assuming context is accessible
 
-    // Skip if integer bounding box is outside canvas bounds (loose check)
-    if (cX + intRadius + xOffset < 0 || cX - intRadius >= width || cY + intRadius + yOffset < 0 || cY - intRadius >= height) return;
-
-    // Skip if fully transparent
+    // Early exit checks
     if (a === 0 || globalAlpha <= 0) return;
+
+    // Skip if integer bounding box is completely outside canvas bounds (loose check)
+    // Adjusted bounds check slightly for clarity
+    const minX = cX - intRadius - xOffset; // Furthest left pixel possible
+    const maxX = cX + intRadius;           // Furthest right pixel possible
+    const minY = cY - intRadius - yOffset; // Furthest up pixel possible
+    const maxY = cY + intRadius;           // Furthest down pixel possible
+    if (maxX < 0 || minX >= width || maxY < 0 || minY >= height) return;
 
     // --- Bresenham Initialization ---
     let x = 0;
-    let y = intRadius; // Use rounded radius for algorithm calculation
+    let y = intRadius; // Use integer radius for algorithm calculation
     let d = 3 - 2 * intRadius;
 
-    // Use a Set to store unique pixel coordinates to avoid duplicates, especially with offsets
-    const uniquePixels = new Set();
-
-    // --- Helper function to add a unique pixel (handles bounds, clipping) ---
-    const addUniquePixelToPlot = (px, py) => {
-        // Skip if outside canvas bounds
-        if (px < 0 || px >= width || py < 0 || py >= height) return;
-        // Add unique pixel coordinates (e.g., as a string "x,y")
-        const coordStr = `${px},${py}`;
-        if (uniquePixels.has(coordStr)) {
-            console.log(`Duplicate pixel found at (${px}, ${py})`);
-        }
-        uniquePixels.add(coordStr);
-    };
+    // Use a Set to store unique pixel keys (integer)
+    const uniquePixelKeys = new Set(); // *** OPTIMIZATION: Use numbers ***
 
     // --- Bresenham Loop with Conditional Offsets ---
+    // We plot points relative to the calculated cX, cY using the offsets
+    // The coordinate calculation is complex due to the offset rules.
+    // Let's define the 8 points based on the original code's logic.
     while (x <= y) {
-        // Apply offsets based on octant for the .5 radius case
+        // Calculate all 8 potential pixel coordinates *before* adding to set
+        const p1x = cX + x; const p1y = cY + y;
+        const p2x = cX + y; const p2y = cY + x;
+        const p3x = cX + y; const p3y = cY - x - yOffset;
+        const p4x = cX + x; const p4y = cY - y - yOffset;
+        const p5x = cX - x - xOffset; const p5y = cY - y - yOffset;
+        const p6x = cX - y - xOffset; const p6y = cY - x - yOffset;
+        const p7x = cX - y - xOffset; const p7y = cY + x;
+        const p8x = cX - x - xOffset; const p8y = cY + y;
 
-        // Top-Right Quadrant (Octants 1 & 2) -> Apply +yOffset
-        addUniquePixelToPlot(cX + x, cY + y); // Octant 1 (y is positive component)
-        addUniquePixelToPlot(cX + y, cY + x); // Octant 2 (x is positive component)
-
-        // Bottom-Right Quadrant (Octants 3 & 4) -> No offsets
-        addUniquePixelToPlot(cX + y, cY - x - yOffset);           // Octant 3
-        addUniquePixelToPlot(cX + x, cY - y - yOffset);           // Octant 4
-
-        // Bottom-Left Quadrant (Octants 5 & 6) -> Apply +xOffset
-        addUniquePixelToPlot(cX - x - xOffset, cY - y - yOffset); // Octant 5
-        addUniquePixelToPlot(cX - y - xOffset, cY - x - yOffset); // Octant 6
-
-        // Top-Left Quadrant (Octants 7 & 8) -> Apply +xOffset and +yOffset
-        addUniquePixelToPlot(cX - y - xOffset, cY + x); // Octant 7
-        addUniquePixelToPlot(cX - x - xOffset, cY + y); // Octant 8
+        // Add unique pixel keys, checking bounds inline
+        // *** OPTIMIZATION: Inline bounds check and use integer key ***
+        if (p1x >= 0 && p1x < width && p1y >= 0 && p1y < height) uniquePixelKeys.add(p1y * width + p1x);
+        if (p2x >= 0 && p2x < width && p2y >= 0 && p2y < height) uniquePixelKeys.add(p2y * width + p2x);
+        if (p3x >= 0 && p3x < width && p3y >= 0 && p3y < height) uniquePixelKeys.add(p3y * width + p3x);
+        if (p4x >= 0 && p4x < width && p4y >= 0 && p4y < height) uniquePixelKeys.add(p4y * width + p4x);
+        if (p5x >= 0 && p5x < width && p5y >= 0 && p5y < height) uniquePixelKeys.add(p5y * width + p5x);
+        if (p6x >= 0 && p6x < width && p6y >= 0 && p6y < height) uniquePixelKeys.add(p6y * width + p6x);
+        if (p7x >= 0 && p7x < width && p7y >= 0 && p7y < height) uniquePixelKeys.add(p7y * width + p7x);
+        if (p8x >= 0 && p8x < width && p8y >= 0 && p8y < height) uniquePixelKeys.add(p8y * width + p8x);
 
 
         // Update Bresenham algorithm state
@@ -769,19 +767,20 @@ class SWRendererCircle {
             d = d + 4 * x + 6;
         } else {
             d = d + 4 * (x - y) + 10;
-            y--;
+            y--; // Only decrement y when d >= 0
         }
-        x++;
+        x++; // Always increment x
     }
 
     // --- Render Pixels ---
-    if (uniquePixels.size > 0) {
-        // Convert unique coordinates back to flat array for renderer
-        uniquePixels.forEach(coordStr => {
-            const [px, py] = coordStr.split(',').map(Number);
+    if (uniquePixelKeys.size > 0) {
+        // *** OPTIMIZATION: Iterate Set of numbers and extract coords ***
+        uniquePixelKeys.forEach(key => {
+            const py = Math.floor(key / width); // Use Math.floor for safety
+            const px = key % width;
+
             this.pixelRenderer.setPixel(px, py, r, g, b, a);
         });
-
     }
   }
 }
