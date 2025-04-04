@@ -16,11 +16,22 @@ class SWRendererCircle {
 
     if (!hasFill && is1pxStroke) {
       // Optimize for 1px stroke with no fill using Bresenham circle algorithm
-      this.drawFullCircleBresenham(
-        center.x, center.y, 
-        radius,
-        strokeR, strokeG, strokeB, strokeA
-      );
+      // Dispatch to either opaque or semi-transparent version based on alpha
+      const isOpaque = strokeA === 255 && this.pixelRenderer.context.globalAlpha >= 1.0;
+      
+      if (isOpaque) {
+        this.draw1PxStrokeFullCircleBresenhamOpaque(
+          center.x, center.y, 
+          radius,
+          strokeR, strokeG, strokeB
+        );
+      } else {
+        this.draw1PxStrokeFullCircleBresenhamAlpha(
+          center.x, center.y, 
+          radius,
+          strokeR, strokeG, strokeB, strokeA
+        );
+      }
       return;
     }
 
@@ -665,10 +676,167 @@ class SWRendererCircle {
   }
 
   /**
-   * Optimized method for drawing a circle with 1px stroke and no fill using Bresenham's algorithm.
+   * Optimized method for drawing a circle with 1px opaque stroke and no fill using Bresenham's algorithm.
    * If the original radius has a fractional part of exactly 0.5, the top half is shifted
    * down 1px and the left half is shifted right 1px relative to the standard rounded rendering.
-   * setPixel logic is inlined. Skips uniqueness check via Set for fully opaque colors.
+   * setPixel logic is inlined for maximum performance with fully opaque colors.
+   * @param {Number} centerX - X coordinate of circle center
+   * @param {Number} centerY - Y coordinate of circle center
+   * @param {Number} radius - Radius of the circle (float)
+   * @param {Number} r - Red component of stroke color (0-255)
+   * @param {Number} g - Green component of stroke color (0-255)
+   * @param {Number} b - Blue component of stroke color (0-255)
+   */
+  draw1PxStrokeFullCircleBresenhamOpaque(centerX, centerY, radius, r, g, b) {
+    // --- Early Exit & Renderer Property Caching ---
+    const renderer = this.pixelRenderer;
+    if (!renderer) {
+      console.error("Pixel renderer not found!");
+      return;
+    }
+
+    const width = renderer.width;
+    const height = renderer.height;
+    const frameBuffer = renderer.frameBuffer;
+    const context = renderer.context;
+    const clippingMask = context.currentState ? context.currentState.clippingMask : null;
+
+    // --- Radius and Center Calculation ---
+    const originalRadius = radius;
+    const cX = Math.floor(centerX);
+    const cY = Math.floor(centerY);
+    const intRadius = Math.floor(originalRadius);
+
+    if (intRadius < 0) return; // Cannot draw circle with negative integer radius
+
+    // --- Handle Zero Radius Case (Single Pixel) ---
+    if (intRadius === 0) {
+      if (originalRadius >= 0) {
+        const centerPx = Math.round(centerX);
+        const centerPy = Math.round(centerY);
+        renderer.setPixel(centerPx, centerPy, r, g, b, 255);
+      }
+      return; // Done if radius was zero
+    }
+
+    // --- Determine Offsets for .5 Radius Case ---
+    let xOffset = 0;
+    let yOffset = 0;
+    if (originalRadius > 0 && (originalRadius * 2) % 2 === 1) {
+      xOffset = 1;
+      yOffset = 1;
+    }
+
+    // Skip if integer bounding box is completely outside canvas bounds (loose check)
+    const minX = cX - intRadius - xOffset;
+    const maxX = cX + intRadius;
+    const minY = cY - intRadius - yOffset;
+    const maxY = cY + intRadius;
+    if (maxX < 0 || minX >= width || maxY < 0 || minY >= height) return;
+
+    // --- Bresenham Initialization ---
+    let x = 0;
+    let y = intRadius;
+    let d = 3 - 2 * intRadius;
+
+    // Draw directly, no Set needed for opaque path
+    while (x <= y) {
+      // Calculate all 8 potential pixel coordinates
+      const p1x = cX + x; const p1y = cY + y;
+      const p2x = cX + y; const p2y = cY + x;
+      const p3x = cX + y; const p3y = cY - x - yOffset;
+      const p4x = cX + x; const p4y = cY - y - yOffset;
+      const p5x = cX - x - xOffset; const p5y = cY - y - yOffset;
+      const p6x = cX - y - xOffset; const p6y = cY - x - yOffset;
+      const p7x = cX - y - xOffset; const p7y = cY + x;
+      const p8x = cX - x - xOffset; const p8y = cY + y;
+
+      // Plot 8 points directly with bounds and clipping checks
+      // Point 1
+      if (p1x >= 0 && p1x < width && p1y >= 0 && p1y < height) {
+        const pixelPos = p1y * width + p1x;
+        const index = pixelPos * 4;
+        if (!clippingMask || ((clippingMask[pixelPos >> 3] !== 0) && ((clippingMask[pixelPos >> 3] & (1 << (7 - (pixelPos & 7)))) !== 0))) {
+          frameBuffer[index] = r; frameBuffer[index + 1] = g; frameBuffer[index + 2] = b; frameBuffer[index + 3] = 255;
+        }
+      }
+      // Point 2 (Check needed for x == y)
+      if (p2x >= 0 && p2x < width && p2y >= 0 && p2y < height) {
+        if (x !== y) { // Avoid plotting diagonal twice when x == y
+          const pixelPos = p2y * width + p2x;
+          const index = pixelPos * 4;
+          if (!clippingMask || ((clippingMask[pixelPos >> 3] !== 0) && ((clippingMask[pixelPos >> 3] & (1 << (7 - (pixelPos & 7)))) !== 0))) {
+            frameBuffer[index] = r; frameBuffer[index + 1] = g; frameBuffer[index + 2] = b; frameBuffer[index + 3] = 255;
+          }
+        }
+      }
+      // Point 3
+      if (p3x >= 0 && p3x < width && p3y >= 0 && p3y < height) {
+        const pixelPos = p3y * width + p3x;
+        const index = pixelPos * 4;
+        if (!clippingMask || ((clippingMask[pixelPos >> 3] !== 0) && ((clippingMask[pixelPos >> 3] & (1 << (7 - (pixelPos & 7)))) !== 0))) {
+          frameBuffer[index] = r; frameBuffer[index + 1] = g; frameBuffer[index + 2] = b; frameBuffer[index + 3] = 255;
+        }
+      }
+      // Point 4
+      if (p4x >= 0 && p4x < width && p4y >= 0 && p4y < height) {
+        const pixelPos = p4y * width + p4x;
+        const index = pixelPos * 4;
+        if (!clippingMask || ((clippingMask[pixelPos >> 3] !== 0) && ((clippingMask[pixelPos >> 3] & (1 << (7 - (pixelPos & 7)))) !== 0))) {
+          frameBuffer[index] = r; frameBuffer[index + 1] = g; frameBuffer[index + 2] = b; frameBuffer[index + 3] = 255;
+        }
+      }
+      // Point 5
+      if (p5x >= 0 && p5x < width && p5y >= 0 && p5y < height) {
+        const pixelPos = p5y * width + p5x;
+        const index = pixelPos * 4;
+        if (!clippingMask || ((clippingMask[pixelPos >> 3] !== 0) && ((clippingMask[pixelPos >> 3] & (1 << (7 - (pixelPos & 7)))) !== 0))) {
+          frameBuffer[index] = r; frameBuffer[index + 1] = g; frameBuffer[index + 2] = b; frameBuffer[index + 3] = 255;
+        }
+      }
+      // Point 6 (Check needed for x == y)
+      if (p6x >= 0 && p6x < width && p6y >= 0 && p6y < height) {
+        if (x !== y) { // Avoid plotting diagonal twice when x == y
+          const pixelPos = p6y * width + p6x;
+          const index = pixelPos * 4;
+          if (!clippingMask || ((clippingMask[pixelPos >> 3] !== 0) && ((clippingMask[pixelPos >> 3] & (1 << (7 - (pixelPos & 7)))) !== 0))) {
+            frameBuffer[index] = r; frameBuffer[index + 1] = g; frameBuffer[index + 2] = b; frameBuffer[index + 3] = 255;
+          }
+        }
+      }
+      // Point 7
+      if (p7x >= 0 && p7x < width && p7y >= 0 && p7y < height) {
+        const pixelPos = p7y * width + p7x;
+        const index = pixelPos * 4;
+        if (!clippingMask || ((clippingMask[pixelPos >> 3] !== 0) && ((clippingMask[pixelPos >> 3] & (1 << (7 - (pixelPos & 7)))) !== 0))) {
+          frameBuffer[index] = r; frameBuffer[index + 1] = g; frameBuffer[index + 2] = b; frameBuffer[index + 3] = 255;
+        }
+      }
+      // Point 8
+      if (p8x >= 0 && p8x < width && p8y >= 0 && p8y < height) {
+        const pixelPos = p8y * width + p8x;
+        const index = pixelPos * 4;
+        if (!clippingMask || ((clippingMask[pixelPos >> 3] !== 0) && ((clippingMask[pixelPos >> 3] & (1 << (7 - (pixelPos & 7)))) !== 0))) {
+          frameBuffer[index] = r; frameBuffer[index + 1] = g; frameBuffer[index + 2] = b; frameBuffer[index + 3] = 255;
+        }
+      }
+
+      // Update Bresenham algorithm state
+      if (d < 0) {
+        d = d + 4 * x + 6;
+      } else {
+        d = d + 4 * (x - y) + 10;
+        y--;
+      }
+      x++;
+    }
+  }
+
+  /**
+   * Optimized method for drawing a circle with 1px semi-transparent stroke and no fill using Bresenham's algorithm.
+   * Uses a Set for uniqueness checking and performs alpha blending for each pixel.
+   * If the original radius has a fractional part of exactly 0.5, the top half is shifted
+   * down 1px and the left half is shifted right 1px relative to the standard rounded rendering.
    * @param {Number} centerX - X coordinate of circle center
    * @param {Number} centerY - Y coordinate of circle center
    * @param {Number} radius - Radius of the circle (float)
@@ -677,235 +845,130 @@ class SWRendererCircle {
    * @param {Number} b - Blue component of stroke color (0-255)
    * @param {Number} a - Alpha component of stroke color (0-255)
    */
-    drawFullCircleBresenham(centerX, centerY, radius, r, g, b, a) {
-      // --- Early Exit & Renderer Property Caching ---
-      const renderer = this.pixelRenderer;
-      if (!renderer) {
-        console.error("Pixel renderer not found!");
-        return;
-      }
-
-      const globalAlpha = renderer.context.globalAlpha;
-      if (a === 0 || globalAlpha <= 0) return; // Fully transparent
-
-      const width = renderer.width;
-      const height = renderer.height;
-      const frameBuffer = renderer.frameBuffer;
-      const context = renderer.context;
-      const clippingMask = context.currentState ? context.currentState.clippingMask : null;
-
-      // --- Determine if Opaque Path Can Be Used ---
-      const isOpaque = (a === 255) && (globalAlpha >= 1.0);
-
-      // --- Pre-calculate Alpha Blending Values (only needed if !isOpaque) ---
-      let incomingAlpha = 0;
-      let inverseIncomingAlpha = 0;
-      if (!isOpaque) {
-        incomingAlpha = (a / 255) * globalAlpha;
-        inverseIncomingAlpha = 1 - incomingAlpha; // Cache this
-        if (incomingAlpha <= 0) return; // Effective alpha is zero
-      }
-
-      // --- Radius and Center Calculation ---
-      const originalRadius = radius;
-      const cX = Math.floor(centerX);
-      const cY = Math.floor(centerY);
-      const intRadius = Math.floor(originalRadius);
-
-      if (intRadius < 0) return; // Cannot draw circle with negative integer radius
-
-      // --- Handle Zero Radius Case (Single Pixel) ---
-      if (intRadius === 0) {
-        if (originalRadius >= 0) {
-          const centerPx = Math.round(centerX);
-          const centerPy = Math.round(centerY);
-          renderer.setPixel(centerPx, centerPy, r, g, b, a);
-        }
-        return; // Done if radius was zero
-      }
-
-
-      // --- Determine Offsets for .5 Radius Case ---
-      let xOffset = 0;
-      let yOffset = 0;
-      if (originalRadius > 0 && (originalRadius * 2) % 2 === 1) {
-        xOffset = 1;
-        yOffset = 1;
-      }
-
-      // Skip if integer bounding box is completely outside canvas bounds (loose check)
-      const minX = cX - intRadius - xOffset;
-      const maxX = cX + intRadius;
-      const minY = cY - intRadius - yOffset;
-      const maxY = cY + intRadius;
-      if (maxX < 0 || minX >= width || maxY < 0 || minY >= height) return;
-
-      // --- Bresenham Initialization ---
-      let x = 0;
-      let y = intRadius;
-      let d = 3 - 2 * intRadius;
-
-      // --- Choose Drawing Path (Opaque vs. Blending) ---
-
-      if (isOpaque) {
-        // --- OPAQUE PATH: Draw directly, no Set needed ---
-        while (x <= y) {
-          // Calculate all 8 potential pixel coordinates
-          const p1x = cX + x; const p1y = cY + y;
-          const p2x = cX + y; const p2y = cY + x;
-          const p3x = cX + y; const p3y = cY - x - yOffset;
-          const p4x = cX + x; const p4y = cY - y - yOffset;
-          const p5x = cX - x - xOffset; const p5y = cY - y - yOffset;
-          const p6x = cX - y - xOffset; const p6y = cY - x - yOffset;
-          const p7x = cX - y - xOffset; const p7y = cY + x;
-          const p8x = cX - x - xOffset; const p8y = cY + y;
-
-          // Plot 8 points directly with bounds and clipping checks
-          // Point 1
-          if (p1x >= 0 && p1x < width && p1y >= 0 && p1y < height) {
-            const pixelPos = p1y * width + p1x;
-            const index = pixelPos * 4;
-            if (!clippingMask || ((clippingMask[pixelPos >> 3] !== 0) && ((clippingMask[pixelPos >> 3] & (1 << (7 - (pixelPos & 7)))) !== 0))) {
-              frameBuffer[index] = r; frameBuffer[index + 1] = g; frameBuffer[index + 2] = b; frameBuffer[index + 3] = 255;
-            }
-          }
-          // Point 2 (Check needed for x == y)
-          if (p2x >= 0 && p2x < width && p2y >= 0 && p2y < height) {
-            if (x !== y) { // Avoid plotting diagonal twice when x == y
-              const pixelPos = p2y * width + p2x;
-              const index = pixelPos * 4;
-              if (!clippingMask || ((clippingMask[pixelPos >> 3] !== 0) && ((clippingMask[pixelPos >> 3] & (1 << (7 - (pixelPos & 7)))) !== 0))) {
-                frameBuffer[index] = r; frameBuffer[index + 1] = g; frameBuffer[index + 2] = b; frameBuffer[index + 3] = 255;
-              }
-            }
-          }
-          // Point 3
-          if (p3x >= 0 && p3x < width && p3y >= 0 && p3y < height) {
-            const pixelPos = p3y * width + p3x;
-            const index = pixelPos * 4;
-            if (!clippingMask || ((clippingMask[pixelPos >> 3] !== 0) && ((clippingMask[pixelPos >> 3] & (1 << (7 - (pixelPos & 7)))) !== 0))) {
-              frameBuffer[index] = r; frameBuffer[index + 1] = g; frameBuffer[index + 2] = b; frameBuffer[index + 3] = 255;
-            }
-          }
-          // Point 4 *** REMOVED "if (x !== 0)" CHECK ***
-          if (p4x >= 0 && p4x < width && p4y >= 0 && p4y < height) {
-            const pixelPos = p4y * width + p4x;
-            const index = pixelPos * 4;
-            if (!clippingMask || ((clippingMask[pixelPos >> 3] !== 0) && ((clippingMask[pixelPos >> 3] & (1 << (7 - (pixelPos & 7)))) !== 0))) {
-              frameBuffer[index] = r; frameBuffer[index + 1] = g; frameBuffer[index + 2] = b; frameBuffer[index + 3] = 255;
-            }
-          }
-          // Point 5
-          if (p5x >= 0 && p5x < width && p5y >= 0 && p5y < height) {
-            const pixelPos = p5y * width + p5x;
-            const index = pixelPos * 4;
-            if (!clippingMask || ((clippingMask[pixelPos >> 3] !== 0) && ((clippingMask[pixelPos >> 3] & (1 << (7 - (pixelPos & 7)))) !== 0))) {
-              frameBuffer[index] = r; frameBuffer[index + 1] = g; frameBuffer[index + 2] = b; frameBuffer[index + 3] = 255;
-            }
-          }
-          // Point 6 (Check needed for x == y)
-          if (p6x >= 0 && p6x < width && p6y >= 0 && p6y < height) {
-            if (x !== y) { // Avoid plotting diagonal twice when x == y
-              const pixelPos = p6y * width + p6x;
-              const index = pixelPos * 4;
-              if (!clippingMask || ((clippingMask[pixelPos >> 3] !== 0) && ((clippingMask[pixelPos >> 3] & (1 << (7 - (pixelPos & 7)))) !== 0))) {
-                frameBuffer[index] = r; frameBuffer[index + 1] = g; frameBuffer[index + 2] = b; frameBuffer[index + 3] = 255;
-              }
-            }
-          }
-          // Point 7
-          if (p7x >= 0 && p7x < width && p7y >= 0 && p7y < height) {
-            const pixelPos = p7y * width + p7x;
-            const index = pixelPos * 4;
-            if (!clippingMask || ((clippingMask[pixelPos >> 3] !== 0) && ((clippingMask[pixelPos >> 3] & (1 << (7 - (pixelPos & 7)))) !== 0))) {
-              frameBuffer[index] = r; frameBuffer[index + 1] = g; frameBuffer[index + 2] = b; frameBuffer[index + 3] = 255;
-            }
-          }
-          // Point 8 *** REMOVED "if (x !== 0)" CHECK ***
-          if (p8x >= 0 && p8x < width && p8y >= 0 && p8y < height) {
-            const pixelPos = p8y * width + p8x;
-            const index = pixelPos * 4;
-            if (!clippingMask || ((clippingMask[pixelPos >> 3] !== 0) && ((clippingMask[pixelPos >> 3] & (1 << (7 - (pixelPos & 7)))) !== 0))) {
-              frameBuffer[index] = r; frameBuffer[index + 1] = g; frameBuffer[index + 2] = b; frameBuffer[index + 3] = 255;
-            }
-          }
-
-          // Update Bresenham algorithm state
-          if (d < 0) {
-            d = d + 4 * x + 6;
-          } else {
-            d = d + 4 * (x - y) + 10;
-            y--;
-          }
-          x++;
-        }
-      } // End Opaque Path
-      else {
-        // --- BLENDING PATH: Use Set for uniqueness ---
-        const uniquePixelKeys = new Set();
-
-        while (x <= y) {
-          // Calculate all 8 potential pixel coordinates
-          const p1x = cX + x; const p1y = cY + y;
-          const p2x = cX + y; const p2y = cY + x;
-          const p3x = cX + y; const p3y = cY - x - yOffset;
-          const p4x = cX + x; const p4y = cY - y - yOffset;
-          const p5x = cX - x - xOffset; const p5y = cY - y - yOffset;
-          const p6x = cX - y - xOffset; const p6y = cY - x - yOffset;
-          const p7x = cX - y - xOffset; const p7y = cY + x;
-          const p8x = cX - x - xOffset; const p8y = cY + y;
-
-          // Add unique pixel keys, checking bounds inline
-          if (p1x >= 0 && p1x < width && p1y >= 0 && p1y < height) uniquePixelKeys.add(p1y * width + p1x);
-          if (p2x >= 0 && p2x < width && p2y >= 0 && p2y < height) uniquePixelKeys.add(p2y * width + p2x);
-          if (p3x >= 0 && p3x < width && p3y >= 0 && p3y < height) uniquePixelKeys.add(p3y * width + p3x);
-          if (p4x >= 0 && p4x < width && p4y >= 0 && p4y < height) uniquePixelKeys.add(p4y * width + p4x);
-          if (p5x >= 0 && p5x < width && p5y >= 0 && p5y < height) uniquePixelKeys.add(p5y * width + p5x);
-          if (p6x >= 0 && p6x < width && p6y >= 0 && p6y < height) uniquePixelKeys.add(p6y * width + p6x);
-          if (p7x >= 0 && p7x < width && p7y >= 0 && p7y < height) uniquePixelKeys.add(p7y * width + p7x);
-          if (p8x >= 0 && p8x < width && p8y >= 0 && p8y < height) uniquePixelKeys.add(p8y * width + p8x);
-
-          // Update Bresenham algorithm state
-          if (d < 0) {
-            d = d + 4 * x + 6;
-          } else {
-            d = d + 4 * (x - y) + 10;
-            y--;
-          }
-          x++;
-        }
-
-        // Render pixels from the Set using blending
-        if (uniquePixelKeys.size > 0) {
-          uniquePixelKeys.forEach(pixelPos => {
-            const index = pixelPos * 4;
-
-            // Clipping check
-            let clipped = false;
-            if (clippingMask) {
-              const clippingMaskByteIndex = pixelPos >> 3;
-              const bitIndex = pixelPos & 7;
-              if (clippingMask[clippingMaskByteIndex] === 0 || (clippingMask[clippingMaskByteIndex] & (1 << (7 - bitIndex))) === 0) {
-                clipped = true;
-              }
-            }
-
-            if (!clipped) {
-              // Standard path with alpha blending
-              const oldAlpha = frameBuffer[index + 3] / 255;
-              const oldAlphaScaled = oldAlpha * inverseIncomingAlpha; // Use cached inverseIncomingAlpha
-              const newAlpha = incomingAlpha + oldAlphaScaled;
-
-              if (newAlpha > 0) { // Avoid division by zero/negative
-                const blendFactor = 1 / newAlpha;
-                frameBuffer[index] = (r * incomingAlpha + frameBuffer[index] * oldAlphaScaled) * blendFactor;
-                frameBuffer[index + 1] = (g * incomingAlpha + frameBuffer[index + 1] * oldAlphaScaled) * blendFactor;
-                frameBuffer[index + 2] = (b * incomingAlpha + frameBuffer[index + 2] * oldAlphaScaled) * blendFactor;
-                frameBuffer[index + 3] = newAlpha * 255;
-              }
-            }
-          });
-        }
-      } // End if(isOpaque) / else
+  draw1PxStrokeFullCircleBresenhamAlpha(centerX, centerY, radius, r, g, b, a) {
+    // --- Early Exit & Renderer Property Caching ---
+    const renderer = this.pixelRenderer;
+    if (!renderer) {
+      console.error("Pixel renderer not found!");
+      return;
     }
+
+    const globalAlpha = renderer.context.globalAlpha;
+    if (a === 0 || globalAlpha <= 0) return; // Fully transparent
+
+    const width = renderer.width;
+    const height = renderer.height;
+    const frameBuffer = renderer.frameBuffer;
+    const context = renderer.context;
+    const clippingMask = context.currentState ? context.currentState.clippingMask : null;
+
+    // Pre-calculate alpha blending values
+    const incomingAlpha = (a / 255) * globalAlpha;
+    const inverseIncomingAlpha = 1 - incomingAlpha;
+    if (incomingAlpha <= 0) return; // Effective alpha is zero
+
+    // --- Radius and Center Calculation ---
+    const originalRadius = radius;
+    const cX = Math.floor(centerX);
+    const cY = Math.floor(centerY);
+    const intRadius = Math.floor(originalRadius);
+
+    if (intRadius < 0) return; // Cannot draw circle with negative integer radius
+
+    // --- Handle Zero Radius Case (Single Pixel) ---
+    if (intRadius === 0) {
+      if (originalRadius >= 0) {
+        const centerPx = Math.round(centerX);
+        const centerPy = Math.round(centerY);
+        renderer.setPixel(centerPx, centerPy, r, g, b, a);
+      }
+      return; // Done if radius was zero
+    }
+
+    // --- Determine Offsets for .5 Radius Case ---
+    let xOffset = 0;
+    let yOffset = 0;
+    if (originalRadius > 0 && (originalRadius * 2) % 2 === 1) {
+      xOffset = 1;
+      yOffset = 1;
+    }
+
+    // Skip if integer bounding box is completely outside canvas bounds (loose check)
+    const minX = cX - intRadius - xOffset;
+    const maxX = cX + intRadius;
+    const minY = cY - intRadius - yOffset;
+    const maxY = cY + intRadius;
+    if (maxX < 0 || minX >= width || maxY < 0 || minY >= height) return;
+
+    // --- Bresenham Initialization ---
+    let x = 0;
+    let y = intRadius;
+    let d = 3 - 2 * intRadius;
+
+    // --- Use Set for uniqueness in semi-transparent path ---
+    const uniquePixelKeys = new Set();
+
+    while (x <= y) {
+      // Calculate all 8 potential pixel coordinates
+      const p1x = cX + x; const p1y = cY + y;
+      const p2x = cX + y; const p2y = cY + x;
+      const p3x = cX + y; const p3y = cY - x - yOffset;
+      const p4x = cX + x; const p4y = cY - y - yOffset;
+      const p5x = cX - x - xOffset; const p5y = cY - y - yOffset;
+      const p6x = cX - y - xOffset; const p6y = cY - x - yOffset;
+      const p7x = cX - y - xOffset; const p7y = cY + x;
+      const p8x = cX - x - xOffset; const p8y = cY + y;
+
+      // Add unique pixel keys, checking bounds inline
+      if (p1x >= 0 && p1x < width && p1y >= 0 && p1y < height) uniquePixelKeys.add(p1y * width + p1x);
+      if (p2x >= 0 && p2x < width && p2y >= 0 && p2y < height) uniquePixelKeys.add(p2y * width + p2x);
+      if (p3x >= 0 && p3x < width && p3y >= 0 && p3y < height) uniquePixelKeys.add(p3y * width + p3x);
+      if (p4x >= 0 && p4x < width && p4y >= 0 && p4y < height) uniquePixelKeys.add(p4y * width + p4x);
+      if (p5x >= 0 && p5x < width && p5y >= 0 && p5y < height) uniquePixelKeys.add(p5y * width + p5x);
+      if (p6x >= 0 && p6x < width && p6y >= 0 && p6y < height) uniquePixelKeys.add(p6y * width + p6x);
+      if (p7x >= 0 && p7x < width && p7y >= 0 && p7y < height) uniquePixelKeys.add(p7y * width + p7x);
+      if (p8x >= 0 && p8x < width && p8y >= 0 && p8y < height) uniquePixelKeys.add(p8y * width + p8x);
+
+      // Update Bresenham algorithm state
+      if (d < 0) {
+        d = d + 4 * x + 6;
+      } else {
+        d = d + 4 * (x - y) + 10;
+        y--;
+      }
+      x++;
+    }
+
+    // Render pixels from the Set using blending
+    if (uniquePixelKeys.size > 0) {
+      uniquePixelKeys.forEach(pixelPos => {
+        const index = pixelPos * 4;
+
+        // Clipping check
+        let clipped = false;
+        if (clippingMask) {
+          const clippingMaskByteIndex = pixelPos >> 3;
+          const bitIndex = pixelPos & 7;
+          if (clippingMask[clippingMaskByteIndex] === 0 || (clippingMask[clippingMaskByteIndex] & (1 << (7 - bitIndex))) === 0) {
+            clipped = true;
+          }
+        }
+
+        if (!clipped) {
+          // Standard path with alpha blending
+          const oldAlpha = frameBuffer[index + 3] / 255;
+          const oldAlphaScaled = oldAlpha * inverseIncomingAlpha;
+          const newAlpha = incomingAlpha + oldAlphaScaled;
+
+          if (newAlpha > 0) { // Avoid division by zero/negative
+            const blendFactor = 1 / newAlpha;
+            frameBuffer[index] = (r * incomingAlpha + frameBuffer[index] * oldAlphaScaled) * blendFactor;
+            frameBuffer[index + 1] = (g * incomingAlpha + frameBuffer[index + 1] * oldAlphaScaled) * blendFactor;
+            frameBuffer[index + 2] = (b * incomingAlpha + frameBuffer[index + 2] * oldAlphaScaled) * blendFactor;
+            frameBuffer[index + 3] = newAlpha * 255;
+          }
+        }
+      });
+    }
+  }
 }
