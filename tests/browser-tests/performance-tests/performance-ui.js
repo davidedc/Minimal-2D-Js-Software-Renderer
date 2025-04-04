@@ -1,8 +1,8 @@
 // Main user interface functionality for performance tests
 
-// Function to dynamically generate test buttons
+// Function to dynamically generate test list with checkboxes and run buttons
 function generateTestButtons() {
-  // Only build dynamic buttons if we're in a modern environment
+  // Only build dynamic UI if we're in a modern environment
   if (typeof document.querySelector !== 'function') return;
   
   // Get containers for each test type
@@ -12,27 +12,138 @@ function generateTestButtons() {
   
   if (!lineTestsContainer || !rectangleTestsContainer || !circleTestsContainer) return;
   
-  // Clear existing buttons from each container
+  // Clear existing content from each container
   lineTestsContainer.innerHTML = '';
   rectangleTestsContainer.innerHTML = '';
   circleTestsContainer.innerHTML = '';
   
-  // Add buttons for each test in the appropriate container
+  // Create test list containers
+  const linesList = createTestList('Lines Tests');
+  const rectanglesList = createTestList('Rectangle Tests');
+  const circlesList = createTestList('Circle Tests');
+  
+  lineTestsContainer.appendChild(linesList);
+  rectangleTestsContainer.appendChild(rectanglesList);
+  circleTestsContainer.appendChild(circlesList);
+  
+  // Add test entries to the appropriate list
   Object.values(TESTS).forEach(test => {
-    const button = document.createElement('button');
-    button.textContent = test.displayName;
-    button.addEventListener('click', () => runTest(test));
-    button.className = 'test-button'; // Add a class for easier selection
+    let listContainer;
     
-    // Determine which container to add the button to based on test id
+    // Determine which container to add the test to based on test id
     if (test.id.startsWith('lines')) {
-      lineTestsContainer.appendChild(button);
+      listContainer = linesList;
     } else if (test.id.startsWith('rectangles')) {
-      rectangleTestsContainer.appendChild(button);
+      listContainer = rectanglesList;
     } else if (test.id.startsWith('circles')) {
-      circleTestsContainer.appendChild(button);
+      listContainer = circlesList;
+    }
+    
+    if (listContainer) {
+      createTestEntry(test, listContainer);
     }
   });
+}
+
+// Create a test list container with a title and check/uncheck all buttons
+function createTestList(title) {
+  const listContainer = document.createElement('div');
+  listContainer.className = 'test-list-container';
+  
+  // Create header container with title and buttons
+  const headerContainer = document.createElement('div');
+  headerContainer.className = 'test-list-header';
+  
+  // Create title
+  const listTitle = document.createElement('h4');
+  listTitle.textContent = title;
+  listTitle.className = 'test-list-title';
+  
+  // Create check/uncheck buttons container
+  const buttonContainer = document.createElement('div');
+  buttonContainer.className = 'checkbox-buttons';
+  
+  // Check all button
+  const checkAllBtn = document.createElement('button');
+  checkAllBtn.textContent = 'Check All';
+  checkAllBtn.className = 'small-button';
+  checkAllBtn.addEventListener('click', () => {
+    // Find all checkboxes in this list and check them
+    const container = listContainer.querySelector('.test-list');
+    if (container) {
+      container.querySelectorAll('.test-checkbox').forEach(checkbox => {
+        checkbox.checked = true;
+      });
+    }
+  });
+  
+  // Uncheck all button
+  const uncheckAllBtn = document.createElement('button');
+  uncheckAllBtn.textContent = 'Uncheck All';
+  uncheckAllBtn.className = 'small-button';
+  uncheckAllBtn.addEventListener('click', () => {
+    // Find all checkboxes in this list and uncheck them
+    const container = listContainer.querySelector('.test-list');
+    if (container) {
+      container.querySelectorAll('.test-checkbox').forEach(checkbox => {
+        checkbox.checked = false;
+      });
+    }
+  });
+  
+  // Add buttons to container
+  buttonContainer.appendChild(checkAllBtn);
+  buttonContainer.appendChild(uncheckAllBtn);
+  
+  // Add title and buttons to header
+  headerContainer.appendChild(listTitle);
+  headerContainer.appendChild(buttonContainer);
+  
+  // Create list for test items
+  const list = document.createElement('div');
+  list.className = 'test-list';
+  
+  // Add components to container
+  listContainer.appendChild(headerContainer);
+  listContainer.appendChild(list);
+  
+  return list;
+}
+
+// Create a test entry with checkbox and run button
+function createTestEntry(test, container) {
+  const testItem = document.createElement('div');
+  testItem.className = 'test-item';
+  
+  // Create checkbox for test selection
+  const checkbox = document.createElement('input');
+  checkbox.type = 'checkbox';
+  checkbox.className = 'test-checkbox';
+  checkbox.dataset.testId = test.id;
+  
+  // Create label for test description
+  const label = document.createElement('label');
+  label.className = 'test-label';
+  label.textContent = test.displayName;
+  
+  // Create run button for individual test
+  const runButton = document.createElement('button');
+  runButton.textContent = 'Run';
+  runButton.className = 'test-button run-button';
+  runButton.dataset.testId = test.id;
+  
+  // Add event listener to run button
+  runButton.addEventListener('click', () => runTest(test));
+  
+  // Add elements to test item
+  testItem.appendChild(checkbox);
+  testItem.appendChild(label);
+  testItem.appendChild(runButton);
+  
+  // Add test item to container
+  container.appendChild(testItem);
+  
+  return testItem;
 }
 
 // Initialize UI
@@ -42,6 +153,10 @@ function initializeUI() {
   
   // Generate test buttons dynamically based on test definitions
   generateTestButtons();
+  
+  // Add event listeners for check/uncheck all buttons
+  document.getElementById('btn-check-all').addEventListener('click', checkAllTests);
+  document.getElementById('btn-uncheck-all').addEventListener('click', uncheckAllTests);
   
   // Detect refresh rate before allowing tests to run
   if (!refreshRateDetected) {
@@ -60,6 +175,20 @@ function initializeUI() {
       resultsContainer.innerHTML = `Display refresh rate detected: ${DETECTED_FPS} fps (standard rate, raw detected: ${window.RAW_DETECTED_FPS || DETECTED_FPS} fps)\nFrame budget: ${FRAME_BUDGET.toFixed(2)}ms\nReady to run tests.\n`;
     });
   }
+}
+
+// Check all tests across all categories
+function checkAllTests() {
+  document.querySelectorAll('.test-checkbox').forEach(checkbox => {
+    checkbox.checked = true;
+  });
+}
+
+// Uncheck all tests across all categories
+function uncheckAllTests() {
+  document.querySelectorAll('.test-checkbox').forEach(checkbox => {
+    checkbox.checked = false;
+  });
 }
 
 // Profiling mode toggle
@@ -88,20 +217,58 @@ document.getElementById('btn-profiling-mode').addEventListener('click', function
 });
 
 // Button event listeners for standard controls
+btnRunChecked.addEventListener('click', runCheckedTests);
 btnRunAll.addEventListener('click', runAllTests);
 btnAbort.addEventListener('click', abortTests);
 
+// Run all checked tests
+function runCheckedTests() {
+  // Get all checked checkboxes
+  const checkedBoxes = document.querySelectorAll('.test-checkbox:checked');
+  
+  // Create array of tests to run
+  const testsToRun = [];
+  checkedBoxes.forEach(checkbox => {
+    const testId = checkbox.dataset.testId;
+    const test = findTestById(testId);
+    if (test) {
+      testsToRun.push(test);
+    }
+  });
+  
+  // Check if no tests are selected
+  if (testsToRun.length === 0) {
+    resultsContainer.innerHTML = "No tests selected. Please check at least one test to run.\n";
+    return;
+  }
+  
+  // Run the selected tests
+  runTestSeries(testsToRun, `Running ${testsToRun.length} checked tests...`);
+}
+
+// Run all tests regardless of checkbox state
 function runAllTests() {
-  const tests = TestRunner.getAllAsArray();
+  const testsToRun = TestRunner.getAllAsArray();
+  runTestSeries(testsToRun, "Running all tests...");
+}
+
+// Common function to run a series of tests
+function runTestSeries(testsToRun, statusMessage) {
   let currentIndex = 0;
   
   // Clear previous results
-  resultsContainer.innerHTML = "Running all tests...\n\n";
+  resultsContainer.innerHTML = statusMessage + "\n\n";
+  
+  // Update overall progress label to include test count
+  document.querySelector('#overall-progress-container .progress-label').textContent = `Overall progress (0/${testsToRun.length}):`;
   
   // Show overall progress bar
   overallProgressContainer.style.display = 'block';
   overallProgressBar.style.width = '0%';
   overallProgressBar.textContent = '0%';
+  
+  // Set text color to dark when progress is 0%
+  overallProgressBar.style.color = '#333';
   
   // Store results for overall summary
   const allResults = {
@@ -112,15 +279,24 @@ function runAllTests() {
   };
   
   function runNextTest() {
-    if (currentIndex < tests.length && !abortRequested) {
+    if (currentIndex < testsToRun.length && !abortRequested) {
       // Update overall progress
-      const overallProgress = Math.round((currentIndex / tests.length) * 100);
+      const overallProgress = Math.round((currentIndex / testsToRun.length) * 100);
       overallProgressBar.style.width = overallProgress + '%';
       overallProgressBar.textContent = overallProgress + '%';
       
-      runTest(tests[currentIndex], (testResults) => {
+      // Set text color to white when progress is greater than 0%
+      if (overallProgress > 0) {
+        overallProgressBar.style.color = 'white';
+      }
+      
+      // Update test count in progress label
+      document.querySelector('#overall-progress-container .progress-label').textContent = 
+        `Overall progress (${currentIndex + 1}/${testsToRun.length}):`;
+      
+      runTest(testsToRun[currentIndex], (testResults) => {
         // Store individual test results
-        allResults.tests.push(tests[currentIndex].displayName);
+        allResults.tests.push(testsToRun[currentIndex].displayName);
         allResults.swMaxShapes.push(testResults.swMaxShapes);
         allResults.canvasMaxShapes.push(testResults.canvasMaxShapes);
         allResults.ratios.push(testResults.ratio);
@@ -148,6 +324,11 @@ function runAllTests() {
   runNextTest();
 }
 
+// Find test by ID
+function findTestById(testId) {
+  return Object.values(TESTS).find(test => test.id === testId);
+}
+
 function abortTests() {
   abortRequested = true;
   if (animationFrameId) {
@@ -163,18 +344,39 @@ function resetTestState() {
   currentTest = null;
   abortRequested = false;
   setButtonsState(true);
+  
+  // Reset the test progress labels to default
+  document.querySelector('#current-test-progress-container .progress-label').textContent = 'Current test progress:';
+  document.querySelector('#overall-progress-container .progress-label').textContent = 'Overall progress:';
+  
+  // Reset progress bars
+  currentTestProgressBar.style.width = '0%';
+  currentTestProgressBar.textContent = '0%';
+  currentTestProgressBar.style.color = '#333';
+  
+  overallProgressBar.style.width = '0%';
+  overallProgressBar.textContent = '0%';
+  overallProgressBar.style.color = '#333';
+  
+  // Hide progress bars
   currentTestProgressContainer.style.display = 'none';
   overallProgressContainer.style.display = 'none'; // Also hide overall progress bar
 }
 
 function setButtonsState(enabled) {
   // Disable static buttons
+  btnRunChecked.disabled = !enabled;
   btnRunAll.disabled = !enabled;
   btnAbort.disabled = enabled;
   
-  // Disable all test buttons
-  document.querySelectorAll('.test-button').forEach(btn => {
+  // Disable all run buttons
+  document.querySelectorAll('.run-button').forEach(btn => {
     btn.disabled = !enabled;
+  });
+  
+  // Disable all checkboxes
+  document.querySelectorAll('.test-checkbox').forEach(checkbox => {
+    checkbox.disabled = !enabled;
   });
 }
 
@@ -206,10 +408,16 @@ function runTest(testType, callback = null, clearResults = true) {
     resultsContainer.innerHTML += header;
   }
   
+  // Update current test label to include test name
+  document.querySelector('#current-test-progress-container .progress-label').textContent = `Current test progress (${testDisplayName}):`;
+  
   // Show progress bar
   currentTestProgressContainer.style.display = 'block';
   currentTestProgressBar.style.width = '0%';
   currentTestProgressBar.textContent = '0%';
+  
+  // Set text color to dark when progress is 0%
+  currentTestProgressBar.style.color = '#333';
   
   // Testing data structure
   const testData = {

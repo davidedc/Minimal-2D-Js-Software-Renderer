@@ -154,6 +154,11 @@ function runSoftwareCanvasRampTest(testType, startCount, incrementSize, includeB
     currentTestProgressBar.style.width = `${progress}%`;
     currentTestProgressBar.textContent = `${progress}%`;
     
+    // Set text color based on progress
+    if (progress > 0) {
+      currentTestProgressBar.style.color = 'white';
+    }
+    
     // Clear canvas
     swCtx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
     
@@ -263,6 +268,11 @@ function runHTML5CanvasRampTest(testType, startCount, incrementSize, requiredExc
     const progress = Math.min(100, 50 + Math.round((currentPhaseStep / totalPhaseSteps) * 50)); // Second phase is last 50%
     currentTestProgressBar.style.width = `${progress}%`;
     currentTestProgressBar.textContent = `${progress}%`;
+    
+    // Set text color based on progress
+    if (progress > 0) {
+      currentTestProgressBar.style.color = 'white';
+    }
     
     // Clear canvas
     ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
