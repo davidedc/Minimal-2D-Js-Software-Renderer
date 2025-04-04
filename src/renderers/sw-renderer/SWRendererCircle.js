@@ -941,7 +941,7 @@ class SWRendererCircle {
 
     // Render pixels from the Set using blending
     if (uniquePixelKeys.size > 0) {
-      uniquePixelKeys.forEach(pixelPos => {
+      for (const pixelPos of uniquePixelKeys) { // faster than a forEach
         const index = pixelPos * 4;
 
         // Clipping check
@@ -968,7 +968,7 @@ class SWRendererCircle {
             frameBuffer[index + 3] = newAlpha * 255;
           }
         }
-      });
+      }
     }
   }
 }
