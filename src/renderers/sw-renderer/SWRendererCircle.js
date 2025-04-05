@@ -753,6 +753,7 @@ class SWRendererCircle {
 
       // Plot 8 points directly with bounds and clipping checks
       // Point 1
+      // 4th octant - lower-right quadrant
       if (p1x >= 0 && p1x < width && p1y >= 0 && p1y < height) {
         const pixelPos = p1y * width + p1x;
         const index = pixelPos * 4;
@@ -761,6 +762,7 @@ class SWRendererCircle {
         }
       }
       // Point 2 (Check needed for x == y)
+      // 3rd octant - lower-right quadrant
       if (p2x >= 0 && p2x < width && p2y >= 0 && p2y < height) {
         if (x !== y) { // Avoid plotting diagonal twice when x == y
           const pixelPos = p2y * width + p2x;
@@ -771,6 +773,7 @@ class SWRendererCircle {
         }
       }
       // Point 3
+      // 2nd octant - upper-right quadrant
       if (p3x >= 0 && p3x < width && p3y >= 0 && p3y < height) {
         const pixelPos = p3y * width + p3x;
         const index = pixelPos * 4;
@@ -779,6 +782,7 @@ class SWRendererCircle {
         }
       }
       // Point 4
+      // 1st octant - upper-right quadrant
       if (p4x >= 0 && p4x < width && p4y >= 0 && p4y < height) {
         const pixelPos = p4y * width + p4x;
         const index = pixelPos * 4;
@@ -787,6 +791,7 @@ class SWRendererCircle {
         }
       }
       // Point 5
+      // 8th octant - upper-left quadrant
       if (p5x >= 0 && p5x < width && p5y >= 0 && p5y < height) {
         const pixelPos = p5y * width + p5x;
         const index = pixelPos * 4;
@@ -795,6 +800,7 @@ class SWRendererCircle {
         }
       }
       // Point 6 (Check needed for x == y)
+      // 7th octant - upper-left quadrant
       if (p6x >= 0 && p6x < width && p6y >= 0 && p6y < height) {
         if (x !== y) { // Avoid plotting diagonal twice when x == y
           const pixelPos = p6y * width + p6x;
@@ -805,6 +811,7 @@ class SWRendererCircle {
         }
       }
       // Point 7
+      // 6th octant - lower-left quadrant
       if (p7x >= 0 && p7x < width && p7y >= 0 && p7y < height) {
         const pixelPos = p7y * width + p7x;
         const index = pixelPos * 4;
@@ -813,6 +820,7 @@ class SWRendererCircle {
         }
       }
       // Point 8
+      // 5th octant - lower-left quadrant
       if (p8x >= 0 && p8x < width && p8y >= 0 && p8y < height) {
         const pixelPos = p8y * width + p8x;
         const index = pixelPos * 4;
