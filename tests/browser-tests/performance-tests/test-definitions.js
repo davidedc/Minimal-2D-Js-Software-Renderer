@@ -78,6 +78,41 @@ const TESTS = {
   },
   
   // Circles with no fill - size variations
+  CIRCLES__XS_SIZE__OPAQUE_FILL__NO_NA_STROKE__RANDOM_POS__RANDOM_ORIENT: {
+    id: 'circles--XS-size--opaque-fill--no-NA-stroke--random-pos--random-orient',
+    drawFunction: draw_circles__XS_size__opaque_fill__no_NA_stroke__random_pos__random_orient,
+    displayName: 'Circles (XS size, opaque fill, no stroke, random pos, random orient)',
+    description: 'Tests drawing extra small-sized circles with opaque fill and no stroke, random positioning and orientation.'
+  },
+  
+  CIRCLES__S_SIZE__OPAQUE_FILL__NO_NA_STROKE__RANDOM_POS__RANDOM_ORIENT: {
+    id: 'circles--S-size--opaque-fill--no-NA-stroke--random-pos--random-orient',
+    drawFunction: draw_circles__S_size__opaque_fill__no_NA_stroke__random_pos__random_orient,
+    displayName: 'Circles (S size, opaque fill, no stroke, random pos, random orient)',
+    description: 'Tests drawing small-sized circles with opaque fill and no stroke, random positioning and orientation.'
+  },
+  
+  CIRCLES__M_SIZE__OPAQUE_FILL__NO_NA_STROKE__RANDOM_POS__RANDOM_ORIENT: {
+    id: 'circles--M-size--opaque-fill--no-NA-stroke--random-pos--random-orient',
+    drawFunction: draw_circles__M_size__opaque_fill__no_NA_stroke__random_pos__random_orient,
+    displayName: 'Circles (M size, opaque fill, no stroke, random pos, random orient)',
+    description: 'Tests drawing medium-sized circles with opaque fill and no stroke, random positioning and orientation.'
+  },
+  
+  CIRCLES__L_SIZE__OPAQUE_FILL__NO_NA_STROKE__RANDOM_POS__RANDOM_ORIENT: {
+    id: 'circles--L-size--opaque-fill--no-NA-stroke--random-pos--random-orient',
+    drawFunction: draw_circles__L_size__opaque_fill__no_NA_stroke__random_pos__random_orient,
+    displayName: 'Circles (L size, opaque fill, no stroke, random pos, random orient)',
+    description: 'Tests drawing large-sized circles with opaque fill and no stroke, random positioning and orientation.'
+  },
+  
+  CIRCLES__XL_SIZE__OPAQUE_FILL__NO_NA_STROKE__RANDOM_POS__RANDOM_ORIENT: {
+    id: 'circles--XL-size--opaque-fill--no-NA-stroke--random-pos--random-orient',
+    drawFunction: draw_circles__XL_size__opaque_fill__no_NA_stroke__random_pos__random_orient,
+    displayName: 'Circles (XL size, opaque fill, no stroke, random pos, random orient)',
+    description: 'Tests drawing extra large-sized circles with opaque fill and no stroke, random positioning and orientation.'
+  },
+  
   CIRCLES__XS_SIZE__NO_FILL__1PX_OPAQUE_STROKE__RANDOM_POS__RANDOM_ORIENT: {
     id: 'circles--XS-size--no-fill--1px-opaque-stroke--random-pos--random-orient',
     drawFunction: draw_circles__XS_size__no_fill__1px_opaque_stroke__random_pos__random_orient,
