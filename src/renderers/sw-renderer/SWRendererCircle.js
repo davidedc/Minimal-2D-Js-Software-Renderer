@@ -35,6 +35,21 @@ class SWRendererCircle {
       return;
     }
 
+    // Check for opaque fill with no stroke case - special optimization
+    const hasStroke = strokeWidth > 0 && strokeA > 0;
+    const isOpaqueFill = fillA === 255 && this.pixelRenderer.context.globalAlpha >= 1.0;
+    
+    
+    if (hasFill && !hasStroke && isOpaqueFill) {
+      // Optimize for opaque fill with no stroke using Bresenham circle algorithm
+      this.drawOpaqueFillFullCircleBresenham(
+        center.x, center.y,
+        radius,
+        fillR, fillG, fillB
+      );
+      return;
+    }
+
     const innerRadius = strokeWidth > 0 ? radius - strokeWidth / 2 : radius;
     const outerRadius = radius + strokeWidth / 2;
 
@@ -977,4 +992,270 @@ class SWRendererCircle {
       }
     }
   }
+
+  /**
+   * Generates relative horizontal extents for a circle.
+   * This data describes the shape of the circle relative to its integer center,
+   * suitable for scanline filling.
+   * @param {Number} radius - Radius of the circle (float)
+   * @returns {Object|null} An object { relativeExtents, intRadius, xOffset, yOffset } or null for invalid radius.
+   *          relativeExtents: Array where index is rel_y and value is max_rel_x.
+   *          intRadius: Integer part of the radius.
+   *          xOffset, yOffset: Offsets for handling radius with fractional part 0.5.
+   */
+  _generateRelativeHorizontalExtents(radius) {
+    const originalRadius = radius;
+    const intRadius = Math.floor(originalRadius);
+
+    if (intRadius < 0) return null; // Invalid radius
+
+    // Determine offsets for .5 radius case (affects how filler uses the extents)
+    let xOffset = 0;
+    let yOffset = 0;
+    // Check if fractional part is exactly 0.5
+    if (originalRadius > 0 && (originalRadius * 2) % 2 === 1) {
+      xOffset = 1;
+      yOffset = 1;
+    }
+
+    // Handle zero radius separately (returns valid structure for consistency)
+    if (intRadius === 0) {
+        // Although no Bresenham runs, provide the structure expected by the filler
+        return { relativeExtents: [0], intRadius: 0, xOffset: xOffset, yOffset: yOffset };
+    }
+
+    // --- Bresenham Initialization for Extents ---
+    const relativeExtents = new Array(intRadius + 1).fill(0);
+    let x = 0;
+    let y = intRadius;
+    let d = 3 - 2 * intRadius;
+
+    // --- Bresenham Loop to Calculate Extents ---
+    while (x <= y) {
+      // Update extents based on the current (x, y) point and its symmetry
+      // For rel_y = y, the horizontal extent is at least x
+      relativeExtents[y] = Math.max(relativeExtents[y], x);
+      // For rel_y = x, the horizontal extent is at least y
+      relativeExtents[x] = Math.max(relativeExtents[x], y);
+
+      // Update Bresenham algorithm state
+      if (d < 0) {
+        d = d + 4 * x + 6;
+      } else {
+        d = d + 4 * (x - y) + 10;
+        y--; // Move closer to the horizontal axis
+      }
+      x++; // Move further from the vertical axis
+    }
+
+    return { relativeExtents, intRadius, xOffset, yOffset };
+  }
+
+  /**
+   * Draws a filled opaque circle using scanline conversion based on Bresenham-derived extents.
+   * Handles fractional radius of 0.5 by shifting pixels as described in the original function.
+   * Pixel setting logic is inlined for performance with fully opaque colors.
+   * @param {Number} centerX - X coordinate of circle center
+   * @param {Number} centerY - Y coordinate of circle center
+   * @param {Number} radius - Radius of the circle (float)
+   * @param {Number} r - Red component of fill color (0-255)
+   * @param {Number} g - Green component of fill color (0-255)
+   * @param {Number} b - Blue component of fill color (0-255)
+   */
+  drawOpaqueFillFullCircleBresenham(centerX, centerY, radius, r, g, b) {
+    // --- Early Exit & Renderer Property Caching ---
+    const renderer = this.pixelRenderer;
+    if (!renderer) {
+      console.error("Pixel renderer not found!");
+      return;
+    }
+
+    const width = renderer.width;
+    const height = renderer.height;
+    const frameBuffer = renderer.frameBuffer;
+    const frameBuffer32 = new Uint32Array(frameBuffer.buffer); // Create Uint32Array view
+    const context = renderer.context; // Assuming context holds clippingMask if needed
+    const clippingMask = context && context.currentState ? context.currentState.clippingMask : null;
+
+    // Pre-calculate the packed 32-bit color (assuming ABGR format in memory for little-endian)
+    // Format is typically RGBA in canvas, but ArrayBuffer/DataView are little-endian
+    // Check system endianness if needed, but this order (ABGR) is common for canvas ImageData
+    const packedColor = (255 << 24) | (b << 16) | (g << 8) | r;
+
+    // --- Generate Relative Extents ---
+    const extentData = this._generateRelativeHorizontalExtents(radius);
+    if (!extentData) return; // Invalid radius handled by generator
+
+    const { relativeExtents, intRadius, xOffset, yOffset } = extentData;
+
+    // --- Handle Zero Radius Case (Single Pixel) ---
+    // Note: generator returns intRadius=0 even for 0 <= radius < 1
+    if (intRadius === 0 && radius >= 0) {
+        const centerPx = Math.round(centerX); // Use Math.round for single pixel placement
+        const centerPy = Math.round(centerY);
+
+        // Check bounds for the single pixel
+        if (centerPx >= 0 && centerPx < width && centerPy >= 0 && centerPy < height) {
+            const pixelPos = centerPy * width + centerPx;
+            // Check clipping mask for the single pixel
+             if (!clippingMask || ((clippingMask[pixelPos >> 3] !== 0) && ((clippingMask[pixelPos >> 3] & (1 << (7 - (pixelPos & 7)))) !== 0))) {
+                // Use the 32-bit write
+                frameBuffer32[pixelPos] = packedColor;
+            }
+        }
+        return; // Done if radius effectively zero
+    }
+    // Now we know intRadius > 0
+
+    // --- Calculate Absolute Center and Bounds ---
+    const cX = Math.floor(centerX);
+    const cY = Math.floor(centerY);
+
+    // Optional: Loose bounding box check (can save loop iterations)
+    const maxExt = relativeExtents[0]; // Widest extent is at rel_y = 0
+    const minX = cX - maxExt - xOffset;
+    const maxX = cX + maxExt;
+    const minY = cY - intRadius - yOffset;
+    const maxY = cY + intRadius;
+    if (maxX < 0 || minX >= width || maxY < 0 || minY >= height) return;
+
+    // --- Scanline Filling Loop ---
+    // Hoist clipping check outside the main loop
+    if (!clippingMask) {
+      // --- Version WITHOUT Clipping Check ---
+      for (let rel_y = 0; rel_y <= intRadius; rel_y++) {
+        const max_rel_x = relativeExtents[rel_y];
+        const abs_x_min = cX - max_rel_x - xOffset;
+        const abs_x_max = cX + max_rel_x;
+        const abs_y_bottom = cY + rel_y;
+        const abs_y_top = cY - rel_y - yOffset;
+
+        // --- Draw Bottom Scanline (No Clip) ---
+        if (abs_y_bottom >= 0 && abs_y_bottom < height) {
+          const startX = Math.max(0, abs_x_min);
+          const endX = Math.min(width - 1, abs_x_max);
+          let currentPixelPos = abs_y_bottom * width + startX;
+          // Remove currentIndex, use currentPixelPos directly with frameBuffer32
+          const endPixelPos = abs_y_bottom * width + endX;
+          while (currentPixelPos <= endPixelPos) {
+             frameBuffer32[currentPixelPos] = packedColor; // Use 32-bit write
+             // Remove currentIndex update
+             currentPixelPos++;
+          }
+        }
+
+        // --- Draw Top Scanline (No Clip) ---
+        if (rel_y > 0 && abs_y_top >= 0 && abs_y_top < height) {
+          const startX = Math.max(0, abs_x_min);
+          const endX = Math.min(width - 1, abs_x_max);
+          let currentPixelPos = abs_y_top * width + startX;
+          // Remove currentIndex
+          const endPixelPos = abs_y_top * width + endX;
+          while (currentPixelPos <= endPixelPos) {
+             frameBuffer32[currentPixelPos] = packedColor; // Use 32-bit write
+             // Remove currentIndex update
+             currentPixelPos++;
+          }
+        }
+      }
+    } else {
+      // --- Version WITH Clipping Check (Optimized) ---
+      for (let rel_y = 0; rel_y <= intRadius; rel_y++) {
+        const max_rel_x = relativeExtents[rel_y];
+        const abs_x_min = cX - max_rel_x - xOffset;
+        const abs_x_max = cX + max_rel_x;
+        const abs_y_bottom = cY + rel_y;
+        const abs_y_top = cY - rel_y - yOffset;
+
+        // --- Draw Bottom Scanline (Optimized Clip Check) ---
+        if (abs_y_bottom >= 0 && abs_y_bottom < height) {
+          const startX = Math.max(0, abs_x_min);
+          const endX = Math.min(width - 1, abs_x_max);
+          const startPixelPos = abs_y_bottom * width + startX;
+          const endPixelPos = abs_y_bottom * width + endX;
+          let currentPixelPos = startPixelPos;
+          // Remove currentIndex
+
+          while (currentPixelPos <= endPixelPos) {
+            const byteIndex = currentPixelPos >> 3;
+            const bitInByte = currentPixelPos & 7;
+
+            // Can we check a full byte?
+            if (bitInByte === 0 && currentPixelPos + 7 <= endPixelPos) {
+              const maskByte = clippingMask[byteIndex];
+              if (maskByte === 0xFF) { // Fully opaque byte
+                // Draw 8 pixels directly using 32-bit writes
+                const loopEndPos = currentPixelPos + 7;
+                while (currentPixelPos <= loopEndPos) {
+                    frameBuffer32[currentPixelPos] = packedColor;
+                    currentPixelPos++;
+                }
+                // Remove currentIndex update
+                continue; // Next iteration of while loop
+              } else if (maskByte === 0x00) { // Fully transparent byte
+                // Skip 8 pixels
+                currentPixelPos += 8;
+                // Remove currentIndex update
+                continue; // Next iteration of while loop
+              } else {
+                // Partial byte - fall through to per-pixel check below
+              }
+            }
+
+            // Per-pixel check (for partial bytes or end of span)
+            const bitMask = 1 << (7 - bitInByte);
+            if ((clippingMask[byteIndex] & bitMask) !== 0) {
+              frameBuffer32[currentPixelPos] = packedColor; // Use 32-bit write
+            }
+            // Remove currentIndex update
+            currentPixelPos++;
+          }
+        }
+
+        // --- Draw Top Scanline (Optimized Clip Check) ---
+        if (rel_y > 0 && abs_y_top >= 0 && abs_y_top < height) {
+            const startX = Math.max(0, abs_x_min);
+            const endX = Math.min(width - 1, abs_x_max);
+            const startPixelPos = abs_y_top * width + startX;
+            const endPixelPos = abs_y_top * width + endX;
+            let currentPixelPos = startPixelPos;
+            // Remove currentIndex
+
+            while (currentPixelPos <= endPixelPos) {
+              const byteIndex = currentPixelPos >> 3;
+              const bitInByte = currentPixelPos & 7;
+
+              // Can we check a full byte?
+              if (bitInByte === 0 && currentPixelPos + 7 <= endPixelPos) {
+                const maskByte = clippingMask[byteIndex];
+                if (maskByte === 0xFF) { // Fully opaque byte
+                  const loopEndPos = currentPixelPos + 7;
+                  while(currentPixelPos <= loopEndPos) {
+                    frameBuffer32[currentPixelPos] = packedColor;
+                    currentPixelPos++;
+                  }
+                  // Remove currentIndex update
+                  continue;
+                } else if (maskByte === 0x00) { // Fully transparent byte
+                  currentPixelPos += 8;
+                  // Remove currentIndex update
+                  continue;
+                } else {
+                  // Partial byte - fall through
+                }
+              }
+
+              // Per-pixel check
+              const bitMask = 1 << (7 - bitInByte);
+              if ((clippingMask[byteIndex] & bitMask) !== 0) {
+                frameBuffer32[currentPixelPos] = packedColor; // Use 32-bit write
+              }
+              // Remove currentIndex update
+              currentPixelPos++;
+            }
+        }
+      }
+    } // End of if (!clippingMask) / else
+  }
+
 }
