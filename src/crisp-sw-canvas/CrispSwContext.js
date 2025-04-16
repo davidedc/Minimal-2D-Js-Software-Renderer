@@ -30,14 +30,14 @@ class CrispSwContext {
         
         // Initialize the context state
         this.stateStack = [new ContextState(canvas.width, canvas.height)];
-        this.frameBuffer = new Uint8ClampedArray(canvas.width * canvas.height * 4).fill(0);
+        this.frameBufferUint8ClampedView = new Uint8ClampedArray(canvas.width * canvas.height * 4).fill(0);
         this.tempClippingMask = new Uint8Array(Math.ceil(canvas.width * canvas.height / 8)).fill(0);
         
         // Initialize renderers
-        this.pixelRenderer = new SWRendererPixel(this.frameBuffer, canvas.width, canvas.height, this);
+        this.pixelRenderer = new SWRendererPixel(this.frameBufferUint8ClampedView, canvas.width, canvas.height, this);
         this.lineRenderer = new SWRendererLine(this.pixelRenderer);
-        this.rectRenderer = new SWRendererRect(this.frameBuffer, canvas.width, canvas.height, this.lineRenderer, this.pixelRenderer);
-        //this.roundedRectRenderer = new SWRendererRoundedRect(this.frameBuffer, canvas.width, canvas.height, this.lineRenderer, this.pixelRenderer);
+        this.rectRenderer = new SWRendererRect(this.frameBufferUint8ClampedView, canvas.width, canvas.height, this.lineRenderer, this.pixelRenderer);
+        //this.roundedRectRenderer = new SWRendererRoundedRect(this.frameBufferUint8ClampedView, canvas.width, canvas.height, this.lineRenderer, this.pixelRenderer);
         this.circleRenderer = new SWRendererCircle(this.pixelRenderer);
         //this.arcRenderer = new SWRendererArc(this.pixelRenderer);
     }
@@ -214,7 +214,7 @@ class CrispSwContext {
     blitToCanvas(canvas) {
         if (isNode) return;
 
-        const imageData = new ImageData(this.frameBuffer, this.canvas.width, this.canvas.height);
+        const imageData = new ImageData(this.frameBufferUint8ClampedView, this.canvas.width, this.canvas.height);
         const ctx = canvas.getContext('2d');
         ctx.putImageData(imageData, 0, 0);
     }
@@ -353,20 +353,20 @@ class CrispSwContext {
         // Create a new buffer for the extracted data
         const extractedData = new Uint8ClampedArray(sw * sh * 4);
         
-        // If the requested area is the entire canvas, we can just return a copy of the frameBuffer
+        // If the requested area is the entire canvas, we can just return a copy of the frameBufferUint8ClampedView
         if (sx === 0 && sy === 0 && sw === canvasWidth && sh === canvasHeight) {
-            extractedData.set(this.frameBuffer);
+            extractedData.set(this.frameBufferUint8ClampedView);
         } else {
-            // Copy pixel data from the frameBuffer to the new buffer
+            // Copy pixel data from the frameBufferUint8ClampedView to the new buffer
             for (let y = 0; y < sh; y++) {
                 for (let x = 0; x < sw; x++) {
                     const srcIdx = ((sy + y) * canvasWidth + (sx + x)) * 4;
                     const destIdx = (y * sw + x) * 4;
                     
-                    extractedData[destIdx] = this.frameBuffer[srcIdx];         // R
-                    extractedData[destIdx + 1] = this.frameBuffer[srcIdx + 1]; // G
-                    extractedData[destIdx + 2] = this.frameBuffer[srcIdx + 2]; // B
-                    extractedData[destIdx + 3] = this.frameBuffer[srcIdx + 3]; // A
+                    extractedData[destIdx] = this.frameBufferUint8ClampedView[srcIdx];         // R
+                    extractedData[destIdx + 1] = this.frameBufferUint8ClampedView[srcIdx + 1]; // G
+                    extractedData[destIdx + 2] = this.frameBufferUint8ClampedView[srcIdx + 2]; // B
+                    extractedData[destIdx + 3] = this.frameBufferUint8ClampedView[srcIdx + 3]; // A
                 }
             }
         }

@@ -712,8 +712,8 @@ class SWRendererCircle {
 
     const width = renderer.width;
     const height = renderer.height;
-    const frameBuffer = renderer.frameBuffer;
-    const frameBuffer32 = new Uint32Array(frameBuffer.buffer); // Create Uint32Array view
+    const frameBufferUint8ClampedView = renderer.frameBufferUint8ClampedView;
+    const frameBuffer32 = new Uint32Array(frameBufferUint8ClampedView.buffer); // Create Uint32Array view
     const context = renderer.context;
     const clippingMask = context.currentState ? context.currentState.clippingMask : null;
 
@@ -879,7 +879,7 @@ class SWRendererCircle {
 
     const width = renderer.width;
     const height = renderer.height;
-    const frameBuffer = renderer.frameBuffer;
+    const frameBufferUint8ClampedView = renderer.frameBufferUint8ClampedView;
     const context = renderer.context;
     const clippingMask = context.currentState ? context.currentState.clippingMask : null;
 
@@ -977,16 +977,16 @@ class SWRendererCircle {
 
         if (!clipped) {
           // Standard path with alpha blending
-          const oldAlpha = frameBuffer[index + 3] / 255;
+          const oldAlpha = frameBufferUint8ClampedView[index + 3] / 255;
           const oldAlphaScaled = oldAlpha * inverseIncomingAlpha;
           const newAlpha = incomingAlpha + oldAlphaScaled;
 
           if (newAlpha > 0) { // Avoid division by zero/negative
             const blendFactor = 1 / newAlpha;
-            frameBuffer[index] = (r * incomingAlpha + frameBuffer[index] * oldAlphaScaled) * blendFactor;
-            frameBuffer[index + 1] = (g * incomingAlpha + frameBuffer[index + 1] * oldAlphaScaled) * blendFactor;
-            frameBuffer[index + 2] = (b * incomingAlpha + frameBuffer[index + 2] * oldAlphaScaled) * blendFactor;
-            frameBuffer[index + 3] = newAlpha * 255;
+            frameBufferUint8ClampedView[index] = (r * incomingAlpha + frameBufferUint8ClampedView[index] * oldAlphaScaled) * blendFactor;
+            frameBufferUint8ClampedView[index + 1] = (g * incomingAlpha + frameBufferUint8ClampedView[index + 1] * oldAlphaScaled) * blendFactor;
+            frameBufferUint8ClampedView[index + 2] = (b * incomingAlpha + frameBufferUint8ClampedView[index + 2] * oldAlphaScaled) * blendFactor;
+            frameBufferUint8ClampedView[index + 3] = newAlpha * 255;
           }
         }
       }
@@ -1072,8 +1072,8 @@ class SWRendererCircle {
 
     const width = renderer.width;
     const height = renderer.height;
-    const frameBuffer = renderer.frameBuffer;
-    const frameBuffer32 = new Uint32Array(frameBuffer.buffer); // Create Uint32Array view
+    const frameBufferUint8ClampedView = renderer.frameBufferUint8ClampedView;
+    const frameBuffer32 = new Uint32Array(frameBufferUint8ClampedView.buffer); // Create Uint32Array view
     const context = renderer.context; // Assuming context holds clippingMask if needed
     const clippingMask = context && context.currentState ? context.currentState.clippingMask : null;
 

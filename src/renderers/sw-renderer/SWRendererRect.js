@@ -1,6 +1,6 @@
 class SWRendererRect {
-  constructor(frameBuffer, width, height, lineRenderer, pixelRenderer) {
-    this.frameBuffer = frameBuffer;
+  constructor(frameBufferUint8ClampedView, width, height, lineRenderer, pixelRenderer) {
+    this.frameBufferUint8ClampedView = frameBufferUint8ClampedView;
     this.width = width;
     this.height = height;
     this.lineRenderer = lineRenderer;
@@ -49,7 +49,7 @@ class SWRendererRect {
         adjustedHeight === this.height &&
         center.x === adjustedWidth / 2 &&
         center.y === adjustedHeight / 2) {
-        this.frameBuffer.fill(0);
+        this.frameBufferUint8ClampedView.fill(0);
         return;
       }
       this.clearAxisAlignedRect(center.x, center.y, adjustedWidth, adjustedHeight);

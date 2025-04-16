@@ -1,6 +1,6 @@
 class SWRendererRoundedRect {
-  constructor(frameBuffer, width, height, lineRenderer, pixelRenderer, swRectRenderer) {
-    this.frameBuffer = frameBuffer;
+  constructor(frameBufferUint8ClampedView, width, height, lineRenderer, pixelRenderer, swRectRenderer) {
+    this.frameBufferUint8ClampedView = frameBufferUint8ClampedView;
     this.width = width;
     this.height = height;
     this.lineRenderer = lineRenderer;

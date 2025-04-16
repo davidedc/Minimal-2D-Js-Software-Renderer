@@ -20,13 +20,13 @@ if (isNodeEnv) {
  * @param {Array} shapes - Array of shape objects to draw
  * @param {boolean} isCanvas - Whether to use canvas (true) or software renderer (false)
  * @param {CanvasRenderingContext2D} ctx - Canvas context (only used if isCanvas=true)
- * @param {Uint8ClampedArray} frameBuffer - Frame buffer for SW rendering (only used if isCanvas=false)
+ * @param {Uint8ClampedArray} frameBufferUint8ClampedView - Frame buffer for SW rendering (only used if isCanvas=false)
  */
-const drawShapesImplFn = function(shapes, isCanvas, ctx = null, frameBuffer) {
-  const pixelRenderer = new SWRendererPixel(frameBuffer, renderTestWidth, renderTestHeight);
+const drawShapesImplFn = function(shapes, isCanvas, ctx = null, frameBufferUint8ClampedView) {
+  const pixelRenderer = new SWRendererPixel(frameBufferUint8ClampedView, renderTestWidth, renderTestHeight);
   const swLineRenderer = new SWRendererLine(pixelRenderer);
-  const swRectRenderer = new SWRendererRect(frameBuffer, renderTestWidth, renderTestHeight, swLineRenderer, pixelRenderer);
-  const swRoundedRectRenderer = new SWRendererRoundedRect(frameBuffer, renderTestWidth, renderTestHeight, swLineRenderer, pixelRenderer, swRectRenderer);
+  const swRectRenderer = new SWRendererRect(frameBufferUint8ClampedView, renderTestWidth, renderTestHeight, swLineRenderer, pixelRenderer);
+  const swRoundedRectRenderer = new SWRendererRoundedRect(frameBufferUint8ClampedView, renderTestWidth, renderTestHeight, swLineRenderer, pixelRenderer, swRectRenderer);
   const swCircleRenderer = new SWRendererCircle(pixelRenderer);
   const swArcRenderer = new SWRendererArc(pixelRenderer);
   

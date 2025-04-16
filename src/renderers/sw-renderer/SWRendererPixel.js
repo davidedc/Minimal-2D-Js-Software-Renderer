@@ -1,6 +1,6 @@
 class SWRendererPixel {
-  constructor(frameBuffer, width, height, context) {
-    this.frameBuffer = frameBuffer;
+  constructor(frameBufferUint8ClampedView, width, height, context) {
+    this.frameBufferUint8ClampedView = frameBufferUint8ClampedView;
     this.width = width;
     this.height = height;
     // if context is null, then it means we are just using the primitives without the
@@ -76,17 +76,17 @@ class SWRendererPixel {
     
     if (isOpaque) {
       // Fast path for opaque colors - direct pixel setting without blending
-      this.frameBuffer[index] = r;
-      this.frameBuffer[index + 1] = g;
-      this.frameBuffer[index + 2] = b;
-      this.frameBuffer[index + 3] = 255; // Fully opaque
+      this.frameBufferUint8ClampedView[index] = r;
+      this.frameBufferUint8ClampedView[index + 1] = g;
+      this.frameBufferUint8ClampedView[index + 2] = b;
+      this.frameBufferUint8ClampedView[index + 3] = 255; // Fully opaque
       return;
     }
     
     // Standard path with alpha blending
     // Batch alpha calculations to reduce divisions
     const incomingAlpha = (a / 255) * globalAlpha;
-    const oldAlpha = this.frameBuffer[index + 3] / 255;
+    const oldAlpha = this.frameBufferUint8ClampedView[index + 3] / 255;
     const inverseIncomingAlpha = 1 - incomingAlpha;
     const oldAlphaScaled = oldAlpha * inverseIncomingAlpha;
     const newAlpha = incomingAlpha + oldAlphaScaled;
@@ -98,10 +98,10 @@ class SWRendererPixel {
     const blendFactor = 1 / newAlpha;
     
     // Apply color blending
-    this.frameBuffer[index] = (r * incomingAlpha + this.frameBuffer[index] * oldAlphaScaled) * blendFactor;
-    this.frameBuffer[index + 1] = (g * incomingAlpha + this.frameBuffer[index + 1] * oldAlphaScaled) * blendFactor;
-    this.frameBuffer[index + 2] = (b * incomingAlpha + this.frameBuffer[index + 2] * oldAlphaScaled) * blendFactor;
-    this.frameBuffer[index + 3] = newAlpha * 255;
+    this.frameBufferUint8ClampedView[index] = (r * incomingAlpha + this.frameBufferUint8ClampedView[index] * oldAlphaScaled) * blendFactor;
+    this.frameBufferUint8ClampedView[index + 1] = (g * incomingAlpha + this.frameBufferUint8ClampedView[index + 1] * oldAlphaScaled) * blendFactor;
+    this.frameBufferUint8ClampedView[index + 2] = (b * incomingAlpha + this.frameBufferUint8ClampedView[index + 2] * oldAlphaScaled) * blendFactor;
+    this.frameBufferUint8ClampedView[index + 3] = newAlpha * 255;
   }
 
   clearPixel(x, y) {
@@ -118,10 +118,10 @@ class SWRendererPixel {
     const index = (y * width + x) * 4;
     
     // Set all pixel values to 0 
-    this.frameBuffer[index] = 0;
-    this.frameBuffer[index + 1] = 0;
-    this.frameBuffer[index + 2] = 0;
-    this.frameBuffer[index + 3] = 0;
+    this.frameBufferUint8ClampedView[index] = 0;
+    this.frameBufferUint8ClampedView[index + 1] = 0;
+    this.frameBufferUint8ClampedView[index + 2] = 0;
+    this.frameBufferUint8ClampedView[index + 3] = 0;
   }
 
   /**
@@ -203,16 +203,16 @@ class SWRendererPixel {
         // Fast path for opaque colors
         if (isOpaque) {
           // Direct pixel setting without blending
-          this.frameBuffer[index] = r;
-          this.frameBuffer[index + 1] = g;
-          this.frameBuffer[index + 2] = b;
-          this.frameBuffer[index + 3] = 255; // Fully opaque
+          this.frameBufferUint8ClampedView[index] = r;
+          this.frameBufferUint8ClampedView[index + 1] = g;
+          this.frameBufferUint8ClampedView[index + 2] = b;
+          this.frameBufferUint8ClampedView[index + 3] = 255; // Fully opaque
           continue;
         }
         
         // Standard path with alpha blending
         // Get existing pixel alpha
-        const oldAlpha = this.frameBuffer[index + 3] / 255;
+        const oldAlpha = this.frameBufferUint8ClampedView[index + 3] / 255;
         const oldAlphaScaled = oldAlpha * inverseIncomingAlpha;
         const newAlpha = incomingAlpha + oldAlphaScaled;
         
@@ -223,10 +223,10 @@ class SWRendererPixel {
         const blendFactor = 1 / newAlpha;
         
         // Apply color blending
-        this.frameBuffer[index] = (r * incomingAlpha + this.frameBuffer[index] * oldAlphaScaled) * blendFactor;
-        this.frameBuffer[index + 1] = (g * incomingAlpha + this.frameBuffer[index + 1] * oldAlphaScaled) * blendFactor;
-        this.frameBuffer[index + 2] = (b * incomingAlpha + this.frameBuffer[index + 2] * oldAlphaScaled) * blendFactor;
-        this.frameBuffer[index + 3] = newAlpha * 255;
+        this.frameBufferUint8ClampedView[index] = (r * incomingAlpha + this.frameBufferUint8ClampedView[index] * oldAlphaScaled) * blendFactor;
+        this.frameBufferUint8ClampedView[index + 1] = (g * incomingAlpha + this.frameBufferUint8ClampedView[index + 1] * oldAlphaScaled) * blendFactor;
+        this.frameBufferUint8ClampedView[index + 2] = (b * incomingAlpha + this.frameBufferUint8ClampedView[index + 2] * oldAlphaScaled) * blendFactor;
+        this.frameBufferUint8ClampedView[index + 3] = newAlpha * 255;
       }
     }
   }
@@ -257,7 +257,7 @@ class SWRendererPixel {
     startY += 2; // This offset seems specific to the caller (Circle) and shouldn't be here
     const width = this.width;
     const height = this.height;
-    const frameBuffer = this.frameBuffer; // Cache framebuffer reference
+    const frameBufferUint8ClampedView = this.frameBufferUint8ClampedView; // Cache frameBufferUint8ClampedView reference
     const globalAlpha = this.context.globalAlpha;
     const hasClipping = this.context.currentState;
     const clippingMask = hasClipping ? this.context.currentState.clippingMask : null;
@@ -447,14 +447,14 @@ class SWRendererPixel {
           if (isOpaque) {
             // --- Opaque Path ---
             // No need to read destination, just write directly
-            frameBuffer[index] = r;
-            frameBuffer[index + 1] = g;
-            frameBuffer[index + 2] = b;
-            frameBuffer[index + 3] = 255; // Fully opaque destination alpha
+            frameBufferUint8ClampedView[index] = r;
+            frameBufferUint8ClampedView[index + 1] = g;
+            frameBufferUint8ClampedView[index + 2] = b;
+            frameBufferUint8ClampedView[index + 3] = 255; // Fully opaque destination alpha
           } else {
             // --- Blending Path (Original Logic) ---
             // Get existing pixel alpha
-            const oldAlpha = frameBuffer[index + 3] / 255;
+            const oldAlpha = frameBufferUint8ClampedView[index + 3] / 255;
             const oldAlphaScaled = oldAlpha * inverseIncomingAlpha;
             const newAlpha = incomingAlpha + oldAlphaScaled;
 
@@ -466,10 +466,10 @@ class SWRendererPixel {
             const blendFactor = 1 / newAlpha;
 
             // Apply color blending (Porter-Duff "source-over")
-            frameBuffer[index] = (r * incomingAlpha + frameBuffer[index] * oldAlphaScaled) * blendFactor;
-            frameBuffer[index + 1] = (g * incomingAlpha + frameBuffer[index + 1] * oldAlphaScaled) * blendFactor;
-            frameBuffer[index + 2] = (b * incomingAlpha + frameBuffer[index + 2] * oldAlphaScaled) * blendFactor;
-            frameBuffer[index + 3] = newAlpha * 255;
+            frameBufferUint8ClampedView[index] = (r * incomingAlpha + frameBufferUint8ClampedView[index] * oldAlphaScaled) * blendFactor;
+            frameBufferUint8ClampedView[index + 1] = (g * incomingAlpha + frameBufferUint8ClampedView[index + 1] * oldAlphaScaled) * blendFactor;
+            frameBufferUint8ClampedView[index + 2] = (b * incomingAlpha + frameBufferUint8ClampedView[index + 2] * oldAlphaScaled) * blendFactor;
+            frameBufferUint8ClampedView[index + 3] = newAlpha * 255;
           }
         } // End inner pixel loop (j)
       } // End segment type loop

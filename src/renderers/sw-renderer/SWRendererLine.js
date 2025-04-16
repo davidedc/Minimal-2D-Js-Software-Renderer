@@ -113,7 +113,7 @@ class SWRendererLine {
 
   drawLine1px_horizontal(x1, x2, y, r, g, b, a) {
     // Cache renderer properties for performance
-    const frameBuffer = this.pixelRenderer.frameBuffer;
+    const frameBufferUint8ClampedView = this.pixelRenderer.frameBufferUint8ClampedView;
     const width = this.pixelRenderer.width;
     const height = this.pixelRenderer.height;
     const hasClipping = this.pixelRenderer.context.currentState;
@@ -161,30 +161,30 @@ class SWRendererLine {
       
       if (isOpaque) {
         // Fast path for opaque pixels
-        frameBuffer[index] = r;
-        frameBuffer[index + 1] = g;
-        frameBuffer[index + 2] = b;
-        frameBuffer[index + 3] = 255;
+        frameBufferUint8ClampedView[index] = r;
+        frameBufferUint8ClampedView[index + 1] = g;
+        frameBufferUint8ClampedView[index + 2] = b;
+        frameBufferUint8ClampedView[index + 3] = 255;
       } else {
         // Alpha blending
-        const oldAlpha = frameBuffer[index + 3] / 255;
+        const oldAlpha = frameBufferUint8ClampedView[index + 3] / 255;
         const oldAlphaScaled = oldAlpha * inverseIncomingAlpha;
         const newAlpha = incomingAlpha + oldAlphaScaled;
         
         if (newAlpha <= 0) continue;
         
         const blendFactor = 1 / newAlpha;
-        frameBuffer[index] = (r * incomingAlpha + frameBuffer[index] * oldAlphaScaled) * blendFactor;
-        frameBuffer[index + 1] = (g * incomingAlpha + frameBuffer[index + 1] * oldAlphaScaled) * blendFactor;
-        frameBuffer[index + 2] = (b * incomingAlpha + frameBuffer[index + 2] * oldAlphaScaled) * blendFactor;
-        frameBuffer[index + 3] = newAlpha * 255;
+        frameBufferUint8ClampedView[index] = (r * incomingAlpha + frameBufferUint8ClampedView[index] * oldAlphaScaled) * blendFactor;
+        frameBufferUint8ClampedView[index + 1] = (g * incomingAlpha + frameBufferUint8ClampedView[index + 1] * oldAlphaScaled) * blendFactor;
+        frameBufferUint8ClampedView[index + 2] = (b * incomingAlpha + frameBufferUint8ClampedView[index + 2] * oldAlphaScaled) * blendFactor;
+        frameBufferUint8ClampedView[index + 3] = newAlpha * 255;
       }
     }
   }
 
   drawLine1px_vertical(x, y1, y2, r, g, b, a) {
     // Cache renderer properties for performance
-    const frameBuffer = this.pixelRenderer.frameBuffer;
+    const frameBufferUint8ClampedView = this.pixelRenderer.frameBufferUint8ClampedView;
     const width = this.pixelRenderer.width;
     const height = this.pixelRenderer.height;
     const hasClipping = this.pixelRenderer.context.currentState;
@@ -229,30 +229,30 @@ class SWRendererLine {
       
       if (isOpaque) {
         // Fast path for opaque pixels
-        frameBuffer[index] = r;
-        frameBuffer[index + 1] = g;
-        frameBuffer[index + 2] = b;
-        frameBuffer[index + 3] = 255;
+        frameBufferUint8ClampedView[index] = r;
+        frameBufferUint8ClampedView[index + 1] = g;
+        frameBufferUint8ClampedView[index + 2] = b;
+        frameBufferUint8ClampedView[index + 3] = 255;
       } else {
         // Alpha blending
-        const oldAlpha = frameBuffer[index + 3] / 255;
+        const oldAlpha = frameBufferUint8ClampedView[index + 3] / 255;
         const oldAlphaScaled = oldAlpha * inverseIncomingAlpha;
         const newAlpha = incomingAlpha + oldAlphaScaled;
         
         if (newAlpha <= 0) continue;
         
         const blendFactor = 1 / newAlpha;
-        frameBuffer[index] = (r * incomingAlpha + frameBuffer[index] * oldAlphaScaled) * blendFactor;
-        frameBuffer[index + 1] = (g * incomingAlpha + frameBuffer[index + 1] * oldAlphaScaled) * blendFactor;
-        frameBuffer[index + 2] = (b * incomingAlpha + frameBuffer[index + 2] * oldAlphaScaled) * blendFactor;
-        frameBuffer[index + 3] = newAlpha * 255;
+        frameBufferUint8ClampedView[index] = (r * incomingAlpha + frameBufferUint8ClampedView[index] * oldAlphaScaled) * blendFactor;
+        frameBufferUint8ClampedView[index + 1] = (g * incomingAlpha + frameBufferUint8ClampedView[index + 1] * oldAlphaScaled) * blendFactor;
+        frameBufferUint8ClampedView[index + 2] = (b * incomingAlpha + frameBufferUint8ClampedView[index + 2] * oldAlphaScaled) * blendFactor;
+        frameBufferUint8ClampedView[index + 3] = newAlpha * 255;
       }
     }
   }
 
   drawLine1px_45degrees(x1, y1, x2, y2, r, g, b, a) {
     // Cache renderer properties for performance
-    const frameBuffer = this.pixelRenderer.frameBuffer;
+    const frameBufferUint8ClampedView = this.pixelRenderer.frameBufferUint8ClampedView;
     const width = this.pixelRenderer.width;
     const height = this.pixelRenderer.height;
     const hasClipping = this.pixelRenderer.context.currentState;
@@ -306,22 +306,22 @@ class SWRendererLine {
         if (drawPixel) {
           if (isOpaque) {
             // Fast path for opaque pixels
-            frameBuffer[index] = r;
-            frameBuffer[index + 1] = g;
-            frameBuffer[index + 2] = b;
-            frameBuffer[index + 3] = 255;
+            frameBufferUint8ClampedView[index] = r;
+            frameBufferUint8ClampedView[index + 1] = g;
+            frameBufferUint8ClampedView[index + 2] = b;
+            frameBufferUint8ClampedView[index + 3] = 255;
           } else {
             // Alpha blending
-            const oldAlpha = frameBuffer[index + 3] / 255;
+            const oldAlpha = frameBufferUint8ClampedView[index + 3] / 255;
             const oldAlphaScaled = oldAlpha * inverseIncomingAlpha;
             const newAlpha = incomingAlpha + oldAlphaScaled;
             
             if (newAlpha > 0) {
               const blendFactor = 1 / newAlpha;
-              frameBuffer[index] = (r * incomingAlpha + frameBuffer[index] * oldAlphaScaled) * blendFactor;
-              frameBuffer[index + 1] = (g * incomingAlpha + frameBuffer[index + 1] * oldAlphaScaled) * blendFactor;
-              frameBuffer[index + 2] = (b * incomingAlpha + frameBuffer[index + 2] * oldAlphaScaled) * blendFactor;
-              frameBuffer[index + 3] = newAlpha * 255;
+              frameBufferUint8ClampedView[index] = (r * incomingAlpha + frameBufferUint8ClampedView[index] * oldAlphaScaled) * blendFactor;
+              frameBufferUint8ClampedView[index + 1] = (g * incomingAlpha + frameBufferUint8ClampedView[index + 1] * oldAlphaScaled) * blendFactor;
+              frameBufferUint8ClampedView[index + 2] = (b * incomingAlpha + frameBufferUint8ClampedView[index + 2] * oldAlphaScaled) * blendFactor;
+              frameBufferUint8ClampedView[index + 3] = newAlpha * 255;
             }
           }
         }
@@ -338,7 +338,7 @@ class SWRendererLine {
 
   drawLine1px_genericOrientations(x1, y1, x2, y2, dx, dy, r, g, b, a) {
     // Cache renderer properties for performance
-    const frameBuffer = this.pixelRenderer.frameBuffer;
+    const frameBufferUint8ClampedView = this.pixelRenderer.frameBufferUint8ClampedView;
     const width = this.pixelRenderer.width;
     const height = this.pixelRenderer.height;
     const hasClipping = this.pixelRenderer.context.currentState;
@@ -384,22 +384,22 @@ class SWRendererLine {
         if (drawPixel) {
           if (isOpaque) {
             // Fast path for opaque pixels
-            frameBuffer[index] = r;
-            frameBuffer[index + 1] = g;
-            frameBuffer[index + 2] = b;
-            frameBuffer[index + 3] = 255;
+            frameBufferUint8ClampedView[index] = r;
+            frameBufferUint8ClampedView[index + 1] = g;
+            frameBufferUint8ClampedView[index + 2] = b;
+            frameBufferUint8ClampedView[index + 3] = 255;
           } else {
             // Alpha blending
-            const oldAlpha = frameBuffer[index + 3] / 255;
+            const oldAlpha = frameBufferUint8ClampedView[index + 3] / 255;
             const oldAlphaScaled = oldAlpha * inverseIncomingAlpha;
             const newAlpha = incomingAlpha + oldAlphaScaled;
             
             if (newAlpha > 0) {
               const blendFactor = 1 / newAlpha;
-              frameBuffer[index] = (r * incomingAlpha + frameBuffer[index] * oldAlphaScaled) * blendFactor;
-              frameBuffer[index + 1] = (g * incomingAlpha + frameBuffer[index + 1] * oldAlphaScaled) * blendFactor;
-              frameBuffer[index + 2] = (b * incomingAlpha + frameBuffer[index + 2] * oldAlphaScaled) * blendFactor;
-              frameBuffer[index + 3] = newAlpha * 255;
+              frameBufferUint8ClampedView[index] = (r * incomingAlpha + frameBufferUint8ClampedView[index] * oldAlphaScaled) * blendFactor;
+              frameBufferUint8ClampedView[index + 1] = (g * incomingAlpha + frameBufferUint8ClampedView[index + 1] * oldAlphaScaled) * blendFactor;
+              frameBufferUint8ClampedView[index + 2] = (b * incomingAlpha + frameBufferUint8ClampedView[index + 2] * oldAlphaScaled) * blendFactor;
+              frameBufferUint8ClampedView[index + 3] = newAlpha * 255;
             }
           }
         }

@@ -14,7 +14,7 @@ class RenderTest {
     // Common initialization - works in both environments
     this.width = renderTestWidth;
     this.height = renderTestHeight;
-    this.frameBuffer = new Uint8ClampedArray(this.width * this.height * 4);
+    this.frameBufferUint8ClampedView = new Uint8ClampedArray(this.width * this.height * 4);
     this.errorCount = 0; // Initialize error count
     this.errors = []; // Track error messages
     this.verbose = false; // Verbose logging flag for Node.js
@@ -66,7 +66,7 @@ class RenderTest {
       this.canvasCtxOfSwRender = {
         canvas: this.canvasOfSwRender, // Important for checks that use canvas.width/height
         getImageData: (x, y, width, height) => {
-          return new ImageData(this.frameBuffer, this.width, this.height);
+          return new ImageData(this.frameBufferUint8ClampedView, this.width, this.height);
         }
       };
     }
@@ -291,11 +291,11 @@ class RenderTest {
   }
 
   clearFrameBuffer() {
-    this.frameBuffer.fill(0);
+    this.frameBufferUint8ClampedView.fill(0);
   }
 
   updateSWRenderOutput() {
-    const imageData = new ImageData(this.frameBuffer, this.width, this.height);
+    const imageData = new ImageData(this.frameBufferUint8ClampedView, this.width, this.height);
     this.canvasCtxOfSwRender.putImageData(imageData, 0, 0);
     if (this.canvasCtxOfSwRender.getHashString) this.updateHashes();
   }
@@ -309,7 +309,7 @@ class RenderTest {
 
   drawSceneSW() {
     this.clearFrameBuffer();
-    drawShapesImpl(this.shapes, false, null, this.frameBuffer);
+    drawShapesImpl(this.shapes, false, null, this.frameBufferUint8ClampedView);
   }
 
   flip() {
