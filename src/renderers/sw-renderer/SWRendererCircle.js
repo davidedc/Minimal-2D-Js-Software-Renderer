@@ -713,7 +713,7 @@ class SWRendererCircle {
     const width = renderer.width;
     const height = renderer.height;
     const frameBufferUint8ClampedView = renderer.frameBufferUint8ClampedView;
-    const frameBuffer32 = new Uint32Array(frameBufferUint8ClampedView.buffer); // Create Uint32Array view
+    const frameBuffer32 = renderer.frameBufferUint32View;
     const context = renderer.context;
     const clippingMask = context.currentState ? context.currentState.clippingMask : null;
 
@@ -1073,7 +1073,7 @@ class SWRendererCircle {
     const width = renderer.width;
     const height = renderer.height;
     const frameBufferUint8ClampedView = renderer.frameBufferUint8ClampedView;
-    const frameBuffer32 = new Uint32Array(frameBufferUint8ClampedView.buffer); // Create Uint32Array view
+    const frameBuffer32 = renderer.frameBufferUint32View;
     const context = renderer.context; // Assuming context holds clippingMask if needed
     const clippingMask = context && context.currentState ? context.currentState.clippingMask : null;
 

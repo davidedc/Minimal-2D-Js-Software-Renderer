@@ -30,13 +30,18 @@ class CrispSwContext {
         
         // Initialize the context state
         this.stateStack = [new ContextState(canvas.width, canvas.height)];
+        
+        // Create the frameBuffer and two views for it
         this.frameBufferUint8ClampedView = new Uint8ClampedArray(canvas.width * canvas.height * 4).fill(0);
+        // this view show optimise for when we deal with pixel values all together rather than r,g,b,a separately
+        this.frameBufferUint32View = new Uint32Array(this.frameBufferUint8ClampedView.buffer);
+        
         this.tempClippingMask = new Uint8Array(Math.ceil(canvas.width * canvas.height / 8)).fill(0);
         
         // Initialize renderers
-        this.pixelRenderer = new SWRendererPixel(this.frameBufferUint8ClampedView, canvas.width, canvas.height, this);
+        this.pixelRenderer = new SWRendererPixel(this.frameBufferUint8ClampedView, this.frameBufferUint32View, canvas.width, canvas.height, this);
         this.lineRenderer = new SWRendererLine(this.pixelRenderer);
-        this.rectRenderer = new SWRendererRect(this.frameBufferUint8ClampedView, canvas.width, canvas.height, this.lineRenderer, this.pixelRenderer);
+        this.rectRenderer = new SWRendererRect(this.frameBufferUint8ClampedView, this.frameBufferUint32View, canvas.width, canvas.height, this.lineRenderer, this.pixelRenderer);
         //this.roundedRectRenderer = new SWRendererRoundedRect(this.frameBufferUint8ClampedView, canvas.width, canvas.height, this.lineRenderer, this.pixelRenderer);
         this.circleRenderer = new SWRendererCircle(this.pixelRenderer);
         //this.arcRenderer = new SWRendererArc(this.pixelRenderer);

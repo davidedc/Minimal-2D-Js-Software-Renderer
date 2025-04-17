@@ -1,6 +1,7 @@
 class SWRendererRect {
-  constructor(frameBufferUint8ClampedView, width, height, lineRenderer, pixelRenderer) {
+  constructor(frameBufferUint8ClampedView, frameBufferUint32View, width, height, lineRenderer, pixelRenderer) {
     this.frameBufferUint8ClampedView = frameBufferUint8ClampedView;
+    this.frameBufferUint32View = frameBufferUint32View;
     this.width = width;
     this.height = height;
     this.lineRenderer = lineRenderer;

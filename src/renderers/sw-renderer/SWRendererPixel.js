@@ -1,6 +1,7 @@
 class SWRendererPixel {
-  constructor(frameBufferUint8ClampedView, width, height, context) {
+  constructor(frameBufferUint8ClampedView, frameBufferUint32View, width, height, context) {
     this.frameBufferUint8ClampedView = frameBufferUint8ClampedView;
+    this.frameBufferUint32View = frameBufferUint32View;
     this.width = width;
     this.height = height;
     // if context is null, then it means we are just using the primitives without the

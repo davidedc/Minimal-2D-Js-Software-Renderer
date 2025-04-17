@@ -22,11 +22,11 @@ if (isNodeEnv) {
  * @param {CanvasRenderingContext2D} ctx - Canvas context (only used if isCanvas=true)
  * @param {Uint8ClampedArray} frameBufferUint8ClampedView - Frame buffer for SW rendering (only used if isCanvas=false)
  */
-const drawShapesImplFn = function(shapes, isCanvas, ctx = null, frameBufferUint8ClampedView) {
-  const pixelRenderer = new SWRendererPixel(frameBufferUint8ClampedView, renderTestWidth, renderTestHeight);
+const drawShapesImplFn = function(shapes, isCanvas, ctx = null, frameBufferUint8ClampedView, frameBufferUint32View) {
+  const pixelRenderer = new SWRendererPixel(frameBufferUint8ClampedView, frameBufferUint32View, renderTestWidth, renderTestHeight);
   const swLineRenderer = new SWRendererLine(pixelRenderer);
-  const swRectRenderer = new SWRendererRect(frameBufferUint8ClampedView, renderTestWidth, renderTestHeight, swLineRenderer, pixelRenderer);
-  const swRoundedRectRenderer = new SWRendererRoundedRect(frameBufferUint8ClampedView, renderTestWidth, renderTestHeight, swLineRenderer, pixelRenderer, swRectRenderer);
+  const swRectRenderer = new SWRendererRect(frameBufferUint8ClampedView, frameBufferUint32View, renderTestWidth, renderTestHeight, swLineRenderer, pixelRenderer);
+  const swRoundedRectRenderer = new SWRendererRoundedRect(frameBufferUint8ClampedView, frameBufferUint32View, renderTestWidth, renderTestHeight, swLineRenderer, pixelRenderer, swRectRenderer);
   const swCircleRenderer = new SWRendererCircle(pixelRenderer);
   const swArcRenderer = new SWRendererArc(pixelRenderer);
   

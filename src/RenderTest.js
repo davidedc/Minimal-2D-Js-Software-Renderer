@@ -14,7 +14,12 @@ class RenderTest {
     // Common initialization - works in both environments
     this.width = renderTestWidth;
     this.height = renderTestHeight;
+
+    // Create the frameeBuffer and two views for it
     this.frameBufferUint8ClampedView = new Uint8ClampedArray(this.width * this.height * 4);
+    // this view show optimise for when we deal with pixel values all together rather than r,g,b,a separately
+    this.frameBufferUint32View = new Uint32Array(this.frameBufferUint8ClampedView.buffer);
+
     this.errorCount = 0; // Initialize error count
     this.errors = []; // Track error messages
     this.verbose = false; // Verbose logging flag for Node.js
@@ -309,7 +314,7 @@ class RenderTest {
 
   drawSceneSW() {
     this.clearFrameBuffer();
-    drawShapesImpl(this.shapes, false, null, this.frameBufferUint8ClampedView);
+    drawShapesImpl(this.shapes, false, null, this.frameBufferUint8ClampedView, this.frameBufferUint32View);
   }
 
   flip() {
