@@ -348,10 +348,15 @@ function displayRampTestResults(testData) {
   // Format results
   let results = "";
   results += `\n=== ${testData.testDisplayName.toUpperCase()} TEST RESULTS ===\n`;
+  if (testData.numRuns && testData.numRuns > 1) {
+      results += `(Averaged over ${testData.numRuns} runs)\n`;
+  }
   results += `Test Parameters:\n`;
   results += `- Display refresh rate: ${DETECTED_FPS} fps (standard rate, raw detected: ${window.RAW_DETECTED_FPS || DETECTED_FPS} fps)\n`;
   results += `- Frame budget: ${FRAME_BUDGET.toFixed(2)}ms\n`;
+  results += `- SW Canvas start count: ${testData.swStartCount}\n`;
   results += `- SW Canvas increment: ${testData.swIncrement}\n`;
+  results += `- HTML5 Canvas start count: ${testData.htmlStartCount}\n`;
   results += `- HTML5 Canvas increment: ${testData.htmlIncrement}\n`;
   results += `- Consecutive exceedances required: ${testData.requiredExceedances}\n`;
   results += `- Blitting time: ${testData.includeBlitting ? "Included" : "Excluded"}\n`;
@@ -368,7 +373,16 @@ function displayRampTestResults(testData) {
   results += `HTML5 Canvas Performance:\n`;
   results += `- Maximum shapes per frame: ${testData.canvasMaxShapes}\n\n`;
   
-  results += `Performance Ratio (HTML5 / Software): ${testData.ratio.toFixed(2)}x\n`;
+  // Display the average ratio
+  results += `Performance Ratio (HTML5 / Software): ${testData.ratio.toFixed(2)}x`;
+
+  // If averaged, also show the individual run ratios
+  if (testData.numRuns && testData.numRuns > 1 && testData.individualRatios && testData.individualRatios.length > 0) {
+    const individualRatiosFormatted = testData.individualRatios.map(r => isNaN(r) ? 'NaN' : r.toFixed(2)).join(', ');
+    results += ` (average of: ${individualRatiosFormatted})`;
+  }
+  results += `\n`; // Add newline after ratio line
+
   results += `HTML5 canvas can render ${testData.ratio.toFixed(2)}x ${testData.ratio > 1 ? "more" : "fewer"} shapes than Software canvas within frame budget.\n\n`;
   
   // Append results to container
@@ -485,7 +499,10 @@ function generatePerformanceChart(testData) {
   // Draw title
   chartCtx.font = '16px Arial';
   chartCtx.textAlign = 'center';
-  chartCtx.fillText(`${testData.testDisplayName} Test: Render Time vs. Shape Count`, chartPadding.left + chartWidth / 2, 20);
+  const chartTitle = testData.numRuns && testData.numRuns > 1 
+      ? `${testData.testDisplayName} Test: Render Time vs. Shape Count (Last Run Data)` 
+      : `${testData.testDisplayName} Test: Render Time vs. Shape Count`;
+  chartCtx.fillText(chartTitle, chartPadding.left + chartWidth / 2, 20);
   
   // Draw Software Canvas data points
   drawChartLine(

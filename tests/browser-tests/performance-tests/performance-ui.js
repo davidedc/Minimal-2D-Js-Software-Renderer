@@ -380,6 +380,11 @@ function setButtonsState(enabled) {
   });
 }
 
+// Get a reference to the new input field at the top level
+const numRunsInput = document.getElementById('num-runs');
+const swStartCountInput = document.getElementById('sw-start-count');
+const htmlStartCountInput = document.getElementById('html-start-count');
+
 function runTest(testType, callback = null, clearResults = true) {
   setButtonsState(false);
   currentTest = testType;
@@ -388,28 +393,32 @@ function runTest(testType, callback = null, clearResults = true) {
   // Get test parameters
   const swIncrement = parseInt(swIncrementSize.value);
   const htmlIncrement = parseInt(htmlIncrementSize.value);
+  const swStartCount = parseInt(swStartCountInput.value) || 10; // Get SW start count, default 10
+  const htmlStartCount = parseInt(htmlStartCountInput.value) || 10; // Get HTML start count, default 10
   const requiredExceedances = parseInt(consecutiveExceedances.value);
   const includeBlitting = includeBlittingCheckbox.checked;
   const isQuietMode = quietModeCheckbox.checked;
+  const numRuns = parseInt(numRunsInput.value) || 1; // Get number of runs, default to 1
   
   // Get the test's display name
   const testDisplayName = testType.displayName;
   
   // Clear previous results if not part of "Run All Tests"
   if (clearResults) {
-    let header = `Running ${testDisplayName} test with SW increment ${swIncrement}, HTML increment ${htmlIncrement}`;
+    let header = `Running ${testDisplayName} test (averaging ${numRuns} runs) with SW increment ${swIncrement}, HTML increment ${htmlIncrement}`;
     header += `${includeBlitting ? ' (including blitting time)' : ' (excluding blitting time)'}`;
     header += `${isQuietMode ? ' in quieter mode' : ''}...\n\n`;
     resultsContainer.innerHTML = header;
   } else {
-    let header = `\nRunning ${testDisplayName} test with SW increment ${swIncrement}, HTML increment ${htmlIncrement}`;
+    let header = `\nRunning ${testDisplayName} test (averaging ${numRuns} runs) with SW increment ${swIncrement}, HTML increment ${htmlIncrement}`;
     header += `${includeBlitting ? ' (including blitting time)' : ' (excluding blitting time)'}`;
     header += `${isQuietMode ? ' in quieter mode' : ''}...\n\n`;
     resultsContainer.innerHTML += header;
   }
   
-  // Update current test label to include test name
-  document.querySelector('#current-test-progress-container .progress-label').textContent = `Current test progress (${testDisplayName}):`;
+  // Update current test label to include test name and run count
+  document.querySelector('#current-test-progress-container .progress-label').textContent = 
+    `Current test progress (${testDisplayName}, ${numRuns} runs):`;
   
   // Show progress bar
   currentTestProgressContainer.style.display = 'block';
@@ -419,60 +428,175 @@ function runTest(testType, callback = null, clearResults = true) {
   // Set text color to dark when progress is 0%
   currentTestProgressBar.style.color = '#333';
   
-  // Testing data structure
-  const testData = {
-    testType: testType,
-    testDisplayName: testDisplayName,
-    swIncrement,
-    htmlIncrement,
-    includeBlitting,
-    requiredExceedances,
-    isQuietMode,
-    // Software Canvas results
-    swShapeCounts: [],
-    swTimings: [],
-    swMaxShapes: 0,
-    // HTML5 Canvas results
-    canvasShapeCounts: [],
-    canvasTimings: [],
-    canvasMaxShapes: 0
+  // Data structure to accumulate results over multiple runs
+  const accumulatedData = {
+    swMaxShapesTotal: 0,
+    canvasMaxShapesTotal: 0,
+    runCount: 0,
+    individualRatios: [] // Array to store ratios from each run
   };
-  
-  // First phase message is now added in the runSoftwareCanvasRampTest function
-  resultsContainer.scrollTop = resultsContainer.scrollHeight;
-  
-  // Start with the software canvas test
-  showSwCanvas();
-  runSoftwareCanvasRampTest(testType, STARTING_SHAPE_COUNT, swIncrement, includeBlitting, requiredExceedances, testData, () => {
+
+  // Variable to store the detailed data from the last completed run for charting
+  let lastSingleRunData = null;
+
+  // Function to run a single iteration of the test
+  function runSingleIteration(iterationCallback) {
+    // Temporary data structure for a single run
+    const singleRunData = {
+      testType: testType,
+      testDisplayName: testDisplayName,
+      swIncrement,
+      htmlIncrement,
+      includeBlitting,
+      requiredExceedances,
+      isQuietMode,
+      swShapeCounts: [],
+      swTimings: [],
+      swMaxShapes: 0,
+      canvasShapeCounts: [],
+      canvasTimings: [],
+      canvasMaxShapes: 0
+    };
     
-    // After SW canvas test completes, run HTML5 canvas test
-    showHtml5Canvas();
-    // Phase 2 message is now added in the runHTML5CanvasRampTest function
+    // Add run number to results log
+    const runNum = accumulatedData.runCount + 1;
+    resultsContainer.innerHTML += `Starting Run ${runNum}/${numRuns}...\n`;
     resultsContainer.scrollTop = resultsContainer.scrollHeight;
     
-    runHTML5CanvasRampTest(testType, STARTING_SHAPE_COUNT, htmlIncrement, requiredExceedances, testData, () => {
+    // Start with the software canvas test
+    showSwCanvas();
+    runSoftwareCanvasRampTest(testType, swStartCount, swIncrement, includeBlitting, requiredExceedances, singleRunData, () => {
+      if (abortRequested) return iterationCallback(null); // Abort early if requested
       
-      // Calculate performance ratio
-      testData.ratio = testData.canvasMaxShapes / testData.swMaxShapes;
+      // After SW canvas test completes, run HTML5 canvas test
+      showHtml5Canvas();
+      resultsContainer.scrollTop = resultsContainer.scrollHeight;
       
-      // Hide all canvases when test is complete
-      hideAllCanvases();
-      
-      // Display final results
-      displayRampTestResults(testData);
-      
-      // Generate performance chart
-      generatePerformanceChart(testData);
-      
-      // Reset test state if not part of "Run All Tests"
-      if (!callback) {
-        resetTestState();
+      runHTML5CanvasRampTest(testType, htmlStartCount, htmlIncrement, requiredExceedances, singleRunData, () => {
+        if (abortRequested) return iterationCallback(null); // Abort early if requested
+        
+        // Accumulate results from this run
+        accumulatedData.swMaxShapesTotal += singleRunData.swMaxShapes;
+        accumulatedData.canvasMaxShapesTotal += singleRunData.canvasMaxShapes;
+        accumulatedData.runCount++;
+
+        // Calculate and store the ratio for this specific run
+        const runRatio = singleRunData.canvasMaxShapes / singleRunData.swMaxShapes;
+        accumulatedData.individualRatios.push(runRatio); 
+
+        // Store this run's data in case it's the last one
+        lastSingleRunData = singleRunData; 
+
+         // Log results for this run
+        resultsContainer.innerHTML += `  Run ${runNum} complete: SW Max = ${singleRunData.swMaxShapes}, HTML Max = ${singleRunData.canvasMaxShapes}\n`;
+        resultsContainer.scrollTop = resultsContainer.scrollHeight;
+        
+        // Call the iteration callback, passing the single run data (though we mainly use accumulated)
+        iterationCallback(singleRunData);
+      });
+    });
+  }
+  
+  // Loop through the required number of runs
+  function runAverageLoop() {
+    if (accumulatedData.runCount < numRuns && !abortRequested) {
+      // Update progress bar based on runs completed within the current test
+      const currentRunProgress = Math.round((accumulatedData.runCount / numRuns) * 100);
+      currentTestProgressBar.style.width = currentRunProgress + '%';
+      currentTestProgressBar.textContent = currentRunProgress + '%';
+      if (currentRunProgress > 0) {
+        currentTestProgressBar.style.color = 'white';
+      } else {
+        currentTestProgressBar.style.color = '#333';
       }
       
-      // Call callback if provided (for runAllTests), passing the results
-      if (callback) callback(testData);
-    });
-  });
+      runSingleIteration(() => {
+        if (!abortRequested) {
+          // Slight delay before starting the next run to allow UI updates
+          setTimeout(runAverageLoop, 50); 
+        } else {
+          // Handle abortion during the loop
+          finalizeTest(null); // Pass null to indicate abortion
+        }
+      });
+    } else {
+      // All runs complete (or aborted)
+      finalizeTest(accumulatedData);
+    }
+  }
+  
+  // Function to finalize the test after all runs (or abortion)
+  function finalizeTest(finalAccumulatedData) {
+    if (abortRequested && !finalAccumulatedData) {
+      resultsContainer.innerHTML += "\nTest aborted during averaging runs.\n";
+      resultsContainer.scrollTop = resultsContainer.scrollHeight;
+      hideAllCanvases();
+      resetTestState();
+      if (callback) callback(null); // Indicate abortion to series runner
+      return;
+    }
+    
+    // Calculate averages
+    const avgSwMaxShapes = finalAccumulatedData.swMaxShapesTotal / finalAccumulatedData.runCount;
+    const avgCanvasMaxShapes = finalAccumulatedData.canvasMaxShapesTotal / finalAccumulatedData.runCount;
+    const avgRatio = avgCanvasMaxShapes / avgSwMaxShapes;
+    
+    // Prepare final results structure (similar to original testData but with averaged values)
+    const finalResultsData = {
+      testType: testType,
+      testDisplayName: testDisplayName,
+      swIncrement,
+      htmlIncrement,
+      swStartCount,
+      htmlStartCount,
+      includeBlitting,
+      requiredExceedances,
+      isQuietMode,
+      numRuns: finalAccumulatedData.runCount, // Store actual number of completed runs
+      // Use averaged results
+      swMaxShapes: avgSwMaxShapes,
+      canvasMaxShapes: avgCanvasMaxShapes,
+      ratio: avgRatio,
+      // Keep timings/counts from the last run for the chart (or could average these too if needed)
+      // For simplicity, let's assume the structure for display/charting uses the last run's details if needed
+      // Use detailed data from the *last* completed run for charting purposes.
+      swShapeCounts: lastSingleRunData ? lastSingleRunData.swShapeCounts : [],
+      swTimings: lastSingleRunData ? lastSingleRunData.swTimings : [],
+      canvasShapeCounts: lastSingleRunData ? lastSingleRunData.canvasShapeCounts : [],
+      canvasTimings: lastSingleRunData ? lastSingleRunData.canvasTimings : [],
+      individualRatios: finalAccumulatedData.individualRatios // Pass the list of individual ratios
+    };
+    
+    // Hide all canvases when test is complete
+    hideAllCanvases();
+    
+    // Display final averaged results
+    displayRampTestResults(finalResultsData); // Ensure this function can handle numRuns property
+    
+    // Generate performance chart (using averaged max shapes, needs consideration for detailed data)
+    generatePerformanceChart(finalResultsData); // Ensure this can handle potentially missing detailed data if not averaged
+    
+    // Update progress bar to 100% for the current test
+    currentTestProgressBar.style.width = '100%';
+    currentTestProgressBar.textContent = '100%';
+    currentTestProgressBar.style.color = 'white';
+    
+    // Hide current test progress bar after a short delay
+    setTimeout(() => {
+      currentTestProgressContainer.style.display = 'none';
+    }, 1000);
+    
+    // Reset test state if not part of "Run All Tests"
+    if (!callback) {
+      resetTestState();
+    }
+    
+    // Call callback if provided (for runTestSeries), passing the final averaged results
+    if (callback) callback(finalResultsData);
+  }
+  
+  // Start the averaging loop
+  runAverageLoop();
 }
 
 // Initialize UI when script loads
