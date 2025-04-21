@@ -74,13 +74,13 @@ class SWRendererPixel {
     
     // Check for fast path with opaque colors
     const isOpaque = (a === 255) && (globalAlpha >= 1.0);
+    let packedColor = 0;
     
     if (isOpaque) {
+      // Calculate packed color once
+      packedColor = (255 << 24) | (b << 16) | (g << 8) | r;
       // Fast path for opaque colors - direct pixel setting without blending
-      this.frameBufferUint8ClampedView[index] = r;
-      this.frameBufferUint8ClampedView[index + 1] = g;
-      this.frameBufferUint8ClampedView[index + 2] = b;
-      this.frameBufferUint8ClampedView[index + 3] = 255; // Fully opaque
+      this.frameBufferUint32View[pixelPos] = packedColor;
       return;
     }
     
@@ -137,12 +137,18 @@ class SWRendererPixel {
     // Cache frequently used constants
     const width = this.width;
     const height = this.height;
+    const frameBufferUint8ClampedView = this.frameBufferUint8ClampedView;
+    const frameBufferUint32View = this.frameBufferUint32View;
     const globalAlpha = this.context.globalAlpha;
     const hasClipping = this.context.currentState;
     const clippingMask = hasClipping ? this.context.currentState.clippingMask : null;
     
     // Check for fast path with opaque colors
     const isOpaque = (a === 255) && (globalAlpha >= 1.0);
+    let packedColor = 0;
+    if (isOpaque) {
+      packedColor = (255 << 24) | (b << 16) | (g << 8) | r;
+    }
     
     // For non-opaque colors, we need alpha calculations
     const incomingAlpha = isOpaque ? 1.0 : (a / 255) * globalAlpha;
@@ -178,56 +184,77 @@ class SWRendererPixel {
       let index = pixelPos * 4;
       
       // Draw the run
-      for (let j = 0; j < length; j++, pixelPos++, index += 4) {
-        // Check clipping if needed
-        if (hasClipping) {
-          const clippingMaskByteIndex = pixelPos >> 3;
-          
-          // Quick check for fully clipped byte
-          if (clippingMask[clippingMaskByteIndex] === 0) {
-            // Skip to the end of this byte boundary
-            const pixelsInThisByte = 8 - (pixelPos & 7);
-            const pixelsToSkip = Math.min(pixelsInThisByte, length - j);
-            j += pixelsToSkip - 1; // -1 because loop also increments j
-            pixelPos += pixelsToSkip - 1;
-            index += (pixelsToSkip - 1) * 4;
-            continue;
+      if (isOpaque) {
+        // --- Opaque Path --- 
+        for (let j = 0; j < length; j++, pixelPos++, index += 4) {
+          // Check clipping if needed
+          if (hasClipping) {
+            const clippingMaskByteIndex = pixelPos >> 3;
+            
+            // Quick check for fully clipped byte
+            if (clippingMask[clippingMaskByteIndex] === 0) {
+              // Skip to the end of this byte boundary
+              const pixelsInThisByte = 8 - (pixelPos & 7);
+              const pixelsToSkip = Math.min(pixelsInThisByte, length - j);
+              j += pixelsToSkip - 1; // -1 because loop also increments j
+              pixelPos += pixelsToSkip - 1;
+              index += (pixelsToSkip - 1) * 4;
+              continue;
+            }
+            
+            // Bit-level check
+            const bitIndex = pixelPos & 7;
+            if ((clippingMask[clippingMaskByteIndex] & (1 << (7 - bitIndex))) === 0) {
+              continue;
+            }
           }
           
-          // Bit-level check
-          const bitIndex = pixelPos & 7;
-          if ((clippingMask[clippingMaskByteIndex] & (1 << (7 - bitIndex))) === 0) {
-            continue;
+          // Direct 32-bit write
+          frameBufferUint32View[pixelPos] = packedColor;
+        }
+      } else {
+        // --- Blending Path --- 
+        for (let j = 0; j < length; j++, pixelPos++, index += 4) {
+          // Check clipping if needed
+          if (hasClipping) {
+            const clippingMaskByteIndex = pixelPos >> 3;
+            
+            // Quick check for fully clipped byte
+            if (clippingMask[clippingMaskByteIndex] === 0) {
+              // Skip to the end of this byte boundary
+              const pixelsInThisByte = 8 - (pixelPos & 7);
+              const pixelsToSkip = Math.min(pixelsInThisByte, length - j);
+              j += pixelsToSkip - 1; // -1 because loop also increments j
+              pixelPos += pixelsToSkip - 1;
+              index += (pixelsToSkip - 1) * 4;
+              continue;
+            }
+            
+            // Bit-level check
+            const bitIndex = pixelPos & 7;
+            if ((clippingMask[clippingMaskByteIndex] & (1 << (7 - bitIndex))) === 0) {
+              continue;
+            }
           }
+          
+          // Standard path with alpha blending
+          // Get existing pixel alpha
+          const oldAlpha = frameBufferUint8ClampedView[index + 3] / 255;
+          const oldAlphaScaled = oldAlpha * inverseIncomingAlpha;
+          const newAlpha = incomingAlpha + oldAlphaScaled;
+          
+          // Skip fully transparent pixels
+          if (newAlpha <= 0) continue;
+          
+          // Pre-calculate division factor once for this pixel
+          const blendFactor = 1 / newAlpha;
+          
+          // Apply color blending
+          frameBufferUint8ClampedView[index] = (r * incomingAlpha + frameBufferUint8ClampedView[index] * oldAlphaScaled) * blendFactor;
+          frameBufferUint8ClampedView[index + 1] = (g * incomingAlpha + frameBufferUint8ClampedView[index + 1] * oldAlphaScaled) * blendFactor;
+          frameBufferUint8ClampedView[index + 2] = (b * incomingAlpha + frameBufferUint8ClampedView[index + 2] * oldAlphaScaled) * blendFactor;
+          frameBufferUint8ClampedView[index + 3] = newAlpha * 255;
         }
-        
-        // Fast path for opaque colors
-        if (isOpaque) {
-          // Direct pixel setting without blending
-          this.frameBufferUint8ClampedView[index] = r;
-          this.frameBufferUint8ClampedView[index + 1] = g;
-          this.frameBufferUint8ClampedView[index + 2] = b;
-          this.frameBufferUint8ClampedView[index + 3] = 255; // Fully opaque
-          continue;
-        }
-        
-        // Standard path with alpha blending
-        // Get existing pixel alpha
-        const oldAlpha = this.frameBufferUint8ClampedView[index + 3] / 255;
-        const oldAlphaScaled = oldAlpha * inverseIncomingAlpha;
-        const newAlpha = incomingAlpha + oldAlphaScaled;
-        
-        // Skip fully transparent pixels
-        if (newAlpha <= 0) continue;
-        
-        // Pre-calculate division factor once for this pixel
-        const blendFactor = 1 / newAlpha;
-        
-        // Apply color blending
-        this.frameBufferUint8ClampedView[index] = (r * incomingAlpha + this.frameBufferUint8ClampedView[index] * oldAlphaScaled) * blendFactor;
-        this.frameBufferUint8ClampedView[index + 1] = (g * incomingAlpha + this.frameBufferUint8ClampedView[index + 1] * oldAlphaScaled) * blendFactor;
-        this.frameBufferUint8ClampedView[index + 2] = (b * incomingAlpha + this.frameBufferUint8ClampedView[index + 2] * oldAlphaScaled) * blendFactor;
-        this.frameBufferUint8ClampedView[index + 3] = newAlpha * 255;
       }
     }
   }
@@ -258,7 +285,8 @@ class SWRendererPixel {
     startY += 2; // This offset seems specific to the caller (Circle) and shouldn't be here
     const width = this.width;
     const height = this.height;
-    const frameBufferUint8ClampedView = this.frameBufferUint8ClampedView; // Cache frameBufferUint8ClampedView reference
+    const frameBufferUint8ClampedView = this.frameBufferUint8ClampedView; // Cache views
+    const frameBufferUint32View = this.frameBufferUint32View;
     const globalAlpha = this.context.globalAlpha;
     const hasClipping = this.context.currentState;
     const clippingMask = hasClipping ? this.context.currentState.clippingMask : null;
@@ -266,14 +294,20 @@ class SWRendererPixel {
     // Batch alpha calculations for fill
     const fillIncomingAlpha = (fillA / 255) * globalAlpha;
     const fillInverseIncomingAlpha = 1 - fillIncomingAlpha;
-    // *** Opaque Optimization: Pre-calculate fill opacity flag ***
     const fillIsOpaque = fillIncomingAlpha >= 1.0;
+    let fillPackedColor = 0;
+    if (fillIsOpaque) {
+      fillPackedColor = (255 << 24) | (fillB << 16) | (fillG << 8) | fillR;
+    }
 
     // Batch alpha calculations for stroke
     const strokeIncomingAlpha = (strokeA / 255) * globalAlpha;
     const strokeInverseIncomingAlpha = 1 - strokeIncomingAlpha;
-    // *** Opaque Optimization: Pre-calculate stroke opacity flag ***
     const strokeIsOpaque = strokeIncomingAlpha >= 1.0;
+    let strokePackedColor = 0;
+    if (strokeIsOpaque) {
+      strokePackedColor = (255 << 24) | (strokeB << 16) | (strokeG << 8) | strokeR;
+    }
 
     // Skip processing if both are fully transparent
     // Note: Even if opaque, alpha can be 0 if globalAlpha or base alpha is 0
@@ -370,6 +404,7 @@ class SWRendererPixel {
       for (let segmentType = 0; segmentType < 3; segmentType++) {
         // Select segment parameters based on type
         let x, length, r, g, b, incomingAlpha, inverseIncomingAlpha, isOpaque;
+        let packedColor = 0; // Added for opaque optimization
 
         // Segment type: 0 = fill, 1 = stroke1, 2 = stroke2
         if (segmentType === 0) {
@@ -382,7 +417,8 @@ class SWRendererPixel {
           b = fillB;
           incomingAlpha = fillIncomingAlpha;
           inverseIncomingAlpha = fillInverseIncomingAlpha;
-          isOpaque = fillIsOpaque; // *** Use pre-calculated fill opacity flag ***
+          isOpaque = fillIsOpaque;
+          if (isOpaque) packedColor = fillPackedColor; // Set packed color if opaque
         } else if (segmentType === 1) {
           // Re-check hasStroke1 and validity after clipping
           if (!hasStroke1 || xStroke1 === -1 || stroke1Len <= 0) continue;
@@ -393,7 +429,8 @@ class SWRendererPixel {
           b = strokeB;
           incomingAlpha = strokeIncomingAlpha;
           inverseIncomingAlpha = strokeInverseIncomingAlpha;
-          isOpaque = strokeIsOpaque; // *** Use pre-calculated stroke opacity flag ***
+          isOpaque = strokeIsOpaque;
+          if (isOpaque) packedColor = strokePackedColor; // Set packed color if opaque
         } else { // segmentType === 2
           // Re-check hasStroke2 and validity after clipping
           if (!hasStroke2 || xStroke2 === -1 || stroke2Len <= 0) continue;
@@ -404,7 +441,8 @@ class SWRendererPixel {
           b = strokeB;
           incomingAlpha = strokeIncomingAlpha;
           inverseIncomingAlpha = strokeInverseIncomingAlpha;
-          isOpaque = strokeIsOpaque; // *** Use pre-calculated stroke opacity flag ***
+          isOpaque = strokeIsOpaque;
+          if (isOpaque) packedColor = strokePackedColor; // Set packed color if opaque
         }
 
         // Calculate base position for this segment
@@ -447,11 +485,8 @@ class SWRendererPixel {
           // *** Opaque Optimization ***
           if (isOpaque) {
             // --- Opaque Path ---
-            // No need to read destination, just write directly
-            frameBufferUint8ClampedView[index] = r;
-            frameBufferUint8ClampedView[index + 1] = g;
-            frameBufferUint8ClampedView[index + 2] = b;
-            frameBufferUint8ClampedView[index + 3] = 255; // Fully opaque destination alpha
+            // Direct 32-bit write
+            frameBufferUint32View[pixelPos] = packedColor;
           } else {
             // --- Blending Path (Original Logic) ---
             // Get existing pixel alpha

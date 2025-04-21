@@ -114,6 +114,7 @@ class SWRendererLine {
   drawLine1px_horizontal(x1, x2, y, r, g, b, a) {
     // Cache renderer properties for performance
     const frameBufferUint8ClampedView = this.pixelRenderer.frameBufferUint8ClampedView;
+    const frameBufferUint32View = this.pixelRenderer.frameBufferUint32View;
     const width = this.pixelRenderer.width;
     const height = this.pixelRenderer.height;
     const hasClipping = this.pixelRenderer.context.currentState;
@@ -125,6 +126,10 @@ class SWRendererLine {
     
     // Fast path for opaque colors
     const isOpaque = (a === 255) && (globalAlpha >= 1.0);
+    let packedColor = 0;
+    if (isOpaque) {
+      packedColor = (255 << 24) | (b << 16) | (g << 8) | r;
+    }
     
     // For non-opaque colors, pre-compute alpha values
     const incomingAlpha = isOpaque ? 1.0 : (a / 255) * globalAlpha;
@@ -148,10 +153,10 @@ class SWRendererLine {
     // Draw the horizontal line
     for (let x = x1; x <= x2; x++) {
       const index = baseIndex + (x - x1) * 4;
+      const pixelPos = y * width + x;
       
       // Check clipping if needed
       if (hasClipping) {
-        const pixelPos = y * width + x;
         const clippingMaskByteIndex = pixelPos >> 3;
         const bitIndex = pixelPos & 7;
         
@@ -160,11 +165,8 @@ class SWRendererLine {
       }
       
       if (isOpaque) {
-        // Fast path for opaque pixels
-        frameBufferUint8ClampedView[index] = r;
-        frameBufferUint8ClampedView[index + 1] = g;
-        frameBufferUint8ClampedView[index + 2] = b;
-        frameBufferUint8ClampedView[index + 3] = 255;
+        // Fast path for opaque pixels - Direct 32-bit write
+        frameBufferUint32View[pixelPos] = packedColor;
       } else {
         // Alpha blending
         const oldAlpha = frameBufferUint8ClampedView[index + 3] / 255;
@@ -185,6 +187,7 @@ class SWRendererLine {
   drawLine1px_vertical(x, y1, y2, r, g, b, a) {
     // Cache renderer properties for performance
     const frameBufferUint8ClampedView = this.pixelRenderer.frameBufferUint8ClampedView;
+    const frameBufferUint32View = this.pixelRenderer.frameBufferUint32View;
     const width = this.pixelRenderer.width;
     const height = this.pixelRenderer.height;
     const hasClipping = this.pixelRenderer.context.currentState;
@@ -196,6 +199,10 @@ class SWRendererLine {
     
     // Fast path for opaque colors
     const isOpaque = (a === 255) && (globalAlpha >= 1.0);
+    let packedColor = 0;
+    if (isOpaque) {
+      packedColor = (255 << 24) | (b << 16) | (g << 8) | r;
+    }
     
     // For non-opaque colors, pre-compute alpha values
     const incomingAlpha = isOpaque ? 1.0 : (a / 255) * globalAlpha;
@@ -216,10 +223,10 @@ class SWRendererLine {
     // Draw the vertical line
     for (let y = y1; y <= y2; y++) {
       const index = (y * width + x) * 4;
+      const pixelPos = y * width + x;
       
       // Check clipping if needed
       if (hasClipping) {
-        const pixelPos = y * width + x;
         const clippingMaskByteIndex = pixelPos >> 3;
         const bitIndex = pixelPos & 7;
         
@@ -228,11 +235,8 @@ class SWRendererLine {
       }
       
       if (isOpaque) {
-        // Fast path for opaque pixels
-        frameBufferUint8ClampedView[index] = r;
-        frameBufferUint8ClampedView[index + 1] = g;
-        frameBufferUint8ClampedView[index + 2] = b;
-        frameBufferUint8ClampedView[index + 3] = 255;
+        // Fast path for opaque pixels - Direct 32-bit write
+        frameBufferUint32View[pixelPos] = packedColor;
       } else {
         // Alpha blending
         const oldAlpha = frameBufferUint8ClampedView[index + 3] / 255;
@@ -253,6 +257,7 @@ class SWRendererLine {
   drawLine1px_45degrees(x1, y1, x2, y2, r, g, b, a) {
     // Cache renderer properties for performance
     const frameBufferUint8ClampedView = this.pixelRenderer.frameBufferUint8ClampedView;
+    const frameBufferUint32View = this.pixelRenderer.frameBufferUint32View;
     const width = this.pixelRenderer.width;
     const height = this.pixelRenderer.height;
     const hasClipping = this.pixelRenderer.context.currentState;
@@ -261,6 +266,10 @@ class SWRendererLine {
 
     // Fast path for opaque colors
     const isOpaque = (a === 255) && (globalAlpha >= 1.0);
+    let packedColor = 0;
+    if (isOpaque) {
+      packedColor = (255 << 24) | (b << 16) | (g << 8) | r;
+    }
     
     // For non-opaque colors, pre-compute alpha values
     const incomingAlpha = isOpaque ? 1.0 : (a / 255) * globalAlpha;
@@ -305,11 +314,8 @@ class SWRendererLine {
         
         if (drawPixel) {
           if (isOpaque) {
-            // Fast path for opaque pixels
-            frameBufferUint8ClampedView[index] = r;
-            frameBufferUint8ClampedView[index + 1] = g;
-            frameBufferUint8ClampedView[index + 2] = b;
-            frameBufferUint8ClampedView[index + 3] = 255;
+            // Fast path for opaque pixels - Direct 32-bit write
+            frameBufferUint32View[pixelPos] = packedColor;
           } else {
             // Alpha blending
             const oldAlpha = frameBufferUint8ClampedView[index + 3] / 255;
@@ -339,6 +345,7 @@ class SWRendererLine {
   drawLine1px_genericOrientations(x1, y1, x2, y2, dx, dy, r, g, b, a) {
     // Cache renderer properties for performance
     const frameBufferUint8ClampedView = this.pixelRenderer.frameBufferUint8ClampedView;
+    const frameBufferUint32View = this.pixelRenderer.frameBufferUint32View;
     const width = this.pixelRenderer.width;
     const height = this.pixelRenderer.height;
     const hasClipping = this.pixelRenderer.context.currentState;
@@ -347,6 +354,10 @@ class SWRendererLine {
 
     // Fast path for opaque colors
     const isOpaque = (a === 255) && (globalAlpha >= 1.0);
+    let packedColor = 0;
+    if (isOpaque) {
+      packedColor = (255 << 24) | (b << 16) | (g << 8) | r;
+    }
     
     // For non-opaque colors, pre-compute alpha values
     const incomingAlpha = isOpaque ? 1.0 : (a / 255) * globalAlpha;
@@ -383,11 +394,8 @@ class SWRendererLine {
         
         if (drawPixel) {
           if (isOpaque) {
-            // Fast path for opaque pixels
-            frameBufferUint8ClampedView[index] = r;
-            frameBufferUint8ClampedView[index + 1] = g;
-            frameBufferUint8ClampedView[index + 2] = b;
-            frameBufferUint8ClampedView[index + 3] = 255;
+            // Fast path for opaque pixels - Direct 32-bit write
+            frameBufferUint32View[pixelPos] = packedColor;
           } else {
             // Alpha blending
             const oldAlpha = frameBufferUint8ClampedView[index + 3] / 255;

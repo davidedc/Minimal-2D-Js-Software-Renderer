@@ -163,11 +163,40 @@ class SWRendererRect {
         return;
       }
   
-      for (let y = Math.floor(fillPos.y); y < Math.ceil(fillPos.y + fillPos.h); y++) {
-        for (let x = Math.floor(fillPos.x); x < Math.ceil(fillPos.x + fillPos.w); x++) {
-          this.pixelRenderer.setPixel(x, y, fillR, fillG, fillB, fillA);
-        }
-      }
+       // Check for fast path with opaque colors
+       const globalAlpha = this.pixelRenderer.context.globalAlpha;
+       const isOpaque = (fillA === 255) && (globalAlpha >= 1.0);
+       let packedColor = 0;
+       if (isOpaque) {
+         packedColor = (255 << 24) | (fillB << 16) | (fillG << 8) | fillR;
+       }
+
+       for (let y = Math.floor(fillPos.y); y < Math.ceil(fillPos.y + fillPos.h); y++) {
+         for (let x = Math.floor(fillPos.x); x < Math.ceil(fillPos.x + fillPos.w); x++) {
+           // Perform bounds check
+           if (x < 0 || x >= this.width || y < 0 || y >= this.height) continue;
+
+           // Pre-calculate pixel position
+           const pixelPos = y * this.width + x;
+
+           // Check for clipping with optimized path
+           if (this.pixelRenderer.context.currentState) {
+             const clippingMask = this.pixelRenderer.context.currentState.clippingMask;
+             const clippingMaskByteIndex = pixelPos >> 3;
+             const bitIndex = pixelPos & 7;
+             if (clippingMask[clippingMaskByteIndex] === 0) continue;
+             if ((clippingMask[clippingMaskByteIndex] & (1 << (7 - bitIndex))) === 0) continue;
+           }
+
+           if (isOpaque) {
+             // Fast path for opaque pixels - Direct 32-bit write
+             this.frameBufferUint32View[pixelPos] = packedColor;
+           } else {
+             // Standard path: Call setPixel for blending
+             this.pixelRenderer.setPixel(x, y, fillR, fillG, fillB, fillA);
+           }
+         }
+       }
     }
   
     // Draw stroke if needed. Note that the stroke can't always be precisely centered on the fill
@@ -250,6 +279,7 @@ class SWRendererRect {
     const maxY = Math.ceil(Math.max(...corners.map(p => p.y)));
     
     // Test each pixel using edge functions
+    const globalAlpha = this.pixelRenderer.context.globalAlpha;
     if (clippingOnly) {
       for(let y = minY; y <= maxY; y++) {
         for(let x = minX; x <= maxX; x++) {
@@ -279,6 +309,13 @@ class SWRendererRect {
       }
     }
     else {
+      // Check for fast path with opaque colors
+      const isOpaque = (a === 255) && (globalAlpha >= 1.0);
+      let packedColor = 0;
+      if (isOpaque) {
+        packedColor = (255 << 24) | (b << 16) | (g << 8) | r;
+      }
+
       for(let y = minY; y <= maxY; y++) {
         for(let x = minX; x <= maxX; x++) {
           // A point is inside if it's on the "inside" of all edges
@@ -287,7 +324,28 @@ class SWRendererRect {
           );
           
           if(inside) {
-            this.pixelRenderer.setPixel(x, y, r, g, b, a);
+            // Perform bounds check
+            if (x < 0 || x >= this.width || y < 0 || y >= this.height) continue;
+
+            // Pre-calculate pixel position
+            const pixelPos = y * this.width + x;
+
+            // Check for clipping with optimized path
+            if (this.pixelRenderer.context.currentState) {
+              const clippingMask = this.pixelRenderer.context.currentState.clippingMask;
+              const clippingMaskByteIndex = pixelPos >> 3;
+              const bitIndex = pixelPos & 7;
+              if (clippingMask[clippingMaskByteIndex] === 0) continue;
+              if ((clippingMask[clippingMaskByteIndex] & (1 << (7 - bitIndex))) === 0) continue;
+            }
+
+            if (isOpaque) {
+              // Fast path for opaque pixels - Direct 32-bit write
+              this.frameBufferUint32View[pixelPos] = packedColor;
+            } else {
+              // Standard path: Call setPixel for blending
+              this.pixelRenderer.setPixel(x, y, r, g, b, a);
+            }
           }
         }
       }

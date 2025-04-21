@@ -165,10 +165,39 @@ class SWRendererRoundedRect {
       return false;
     }
 
+    // Check for fast path with opaque colors
+    const globalAlpha = this.pixelRenderer.context.globalAlpha;
+    const isOpaque = (fillA === 255) && (globalAlpha >= 1.0);
+    let packedColor = 0;
+    if (isOpaque) {
+      packedColor = (255 << 24) | (fillB << 16) | (fillG << 8) | fillR;
+    }
+
     for (let yy = Math.floor(pos.y); yy <= Math.ceil(pos.y + pos.h); yy++) {
       for (let xx = Math.floor(pos.x); xx <= Math.ceil(pos.x + pos.w); xx++) {
         if (isInsideRoundedRect(Math.ceil(xx), Math.ceil(yy))) {
-          this.pixelRenderer.setPixel(xx, yy, fillR, fillG, fillB, fillA);
+           // Perform bounds check
+           if (xx < 0 || xx >= this.width || yy < 0 || yy >= this.height) continue;
+
+           // Pre-calculate pixel position
+           const pixelPos = yy * this.width + xx;
+
+           // Check for clipping with optimized path
+           if (this.pixelRenderer.context.currentState) {
+             const clippingMask = this.pixelRenderer.context.currentState.clippingMask;
+             const clippingMaskByteIndex = pixelPos >> 3;
+             const bitIndex = pixelPos & 7;
+             if (clippingMask[clippingMaskByteIndex] === 0) continue;
+             if ((clippingMask[clippingMaskByteIndex] & (1 << (7 - bitIndex))) === 0) continue;
+           }
+
+           if (isOpaque) {
+             // Fast path for opaque pixels - Direct 32-bit write
+             this.frameBufferUint32View[pixelPos] = packedColor;
+           } else {
+             // Standard path: Call setPixel for blending
+             this.pixelRenderer.setPixel(xx, yy, fillR, fillG, fillB, fillA);
+           }
         }
       }
     }
