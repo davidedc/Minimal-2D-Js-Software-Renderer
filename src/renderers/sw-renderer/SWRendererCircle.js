@@ -1003,7 +1003,7 @@ class SWRendererCircle {
    *          intRadius: Integer part of the radius.
    *          xOffset, yOffset: Offsets for handling radius with fractional part 0.5.
    */
-  _generateRelativeHorizontalExtents(radius) {
+  _generateRelativeHorizontalExtentsBresenham(radius) {
     const originalRadius = radius;
     const intRadius = Math.floor(originalRadius);
 
@@ -1083,7 +1083,7 @@ class SWRendererCircle {
     const packedColor = (255 << 24) | (b << 16) | (g << 8) | r;
 
     // --- Generate Relative Extents ---
-    const extentData = this._generateRelativeHorizontalExtents(radius);
+    const extentData = this._generateRelativeHorizontalExtentsBresenham(radius);
     if (!extentData) return; // Invalid radius handled by generator
 
     const { relativeExtents, intRadius, xOffset, yOffset } = extentData;
