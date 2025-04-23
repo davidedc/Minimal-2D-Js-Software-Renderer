@@ -1108,15 +1108,19 @@ class SWRendererCircle {
     // Now we know intRadius > 0
 
     // --- Calculate Absolute Center and Bounds ---
-    const cX = Math.floor(centerX);
-    const cY = Math.floor(centerY);
+    // ADJUSTMENT: Use center relative to pixel centers for scanline calculation
+    const adjCenterX = Math.floor(centerX - 0.5);
+    const adjCenterY = Math.floor(centerY - 0.5);
+    // const cX = Math.floor(centerX); // Original center (keep for reference/debugging if needed)
+    // const cY = Math.floor(centerY); // Original center
 
     // Optional: Loose bounding box check (can save loop iterations)
+    // Use adjusted center for bounding box check for consistency
     const maxExt = relativeExtents[0]; // Widest extent is at rel_y = 0
-    const minX = cX - maxExt - xOffset;
-    const maxX = cX + maxExt;
-    const minY = cY - intRadius - yOffset;
-    const maxY = cY + intRadius;
+    const minX = adjCenterX - maxExt - xOffset;
+    const maxX = adjCenterX + maxExt;
+    const minY = adjCenterY - intRadius - yOffset;
+    const maxY = adjCenterY + intRadius;
     if (maxX < 0 || minX >= width || maxY < 0 || minY >= height) return;
 
     // --- Scanline Filling Loop ---
@@ -1125,10 +1129,11 @@ class SWRendererCircle {
       // --- Version WITHOUT Clipping Check ---
       for (let rel_y = 0; rel_y <= intRadius; rel_y++) {
         const max_rel_x = relativeExtents[rel_y];
-        const abs_x_min = cX - max_rel_x - xOffset;
-        const abs_x_max = cX + max_rel_x;
-        const abs_y_bottom = cY + rel_y;
-        const abs_y_top = cY - rel_y - yOffset;
+        // Use adjusted center and offsets, with +1 correction for min boundaries
+        const abs_x_min = adjCenterX - max_rel_x - xOffset + 1; // Apply +1 correction
+        const abs_x_max = adjCenterX + max_rel_x;
+        const abs_y_bottom = adjCenterY + rel_y;
+        const abs_y_top = adjCenterY - rel_y - yOffset + 1; // Apply +1 correction
 
         // --- Draw Bottom Scanline (No Clip) ---
         if (abs_y_bottom >= 0 && abs_y_bottom < height) {
@@ -1146,6 +1151,7 @@ class SWRendererCircle {
 
         // --- Draw Top Scanline (No Clip) ---
         if (rel_y > 0 && abs_y_top >= 0 && abs_y_top < height) {
+          // Use adjusted center and offsets
           const startX = Math.max(0, abs_x_min);
           const endX = Math.min(width - 1, abs_x_max);
           let currentPixelPos = abs_y_top * width + startX;
@@ -1162,10 +1168,11 @@ class SWRendererCircle {
       // --- Version WITH Clipping Check (Optimized) ---
       for (let rel_y = 0; rel_y <= intRadius; rel_y++) {
         const max_rel_x = relativeExtents[rel_y];
-        const abs_x_min = cX - max_rel_x - xOffset;
-        const abs_x_max = cX + max_rel_x;
-        const abs_y_bottom = cY + rel_y;
-        const abs_y_top = cY - rel_y - yOffset;
+        // Use adjusted center and offsets, with +1 correction for min boundaries
+        const abs_x_min = adjCenterX - max_rel_x - xOffset + 1; // Apply +1 correction
+        const abs_x_max = adjCenterX + max_rel_x;
+        const abs_y_bottom = adjCenterY + rel_y;
+        const abs_y_top = adjCenterY - rel_y - yOffset + 1; // Apply +1 correction
 
         // --- Draw Bottom Scanline (Optimized Clip Check) ---
         if (abs_y_bottom >= 0 && abs_y_bottom < height) {
@@ -1214,6 +1221,7 @@ class SWRendererCircle {
 
         // --- Draw Top Scanline (Optimized Clip Check) ---
         if (rel_y > 0 && abs_y_top >= 0 && abs_y_top < height) {
+            // Use adjusted center and offsets
             const startX = Math.max(0, abs_x_min);
             const endX = Math.min(width - 1, abs_x_max);
             const startPixelPos = abs_y_top * width + startX;
@@ -1228,7 +1236,7 @@ class SWRendererCircle {
               // Can we check a full byte?
               if (bitInByte === 0 && currentPixelPos + 7 <= endPixelPos) {
                 const maskByte = clippingMask[byteIndex];
-                if (maskByte === 0xFF) { // Fully opaque byte
+                 if (maskByte === 0xFF) { // Fully opaque byte
                   const loopEndPos = currentPixelPos + 7;
                   while(currentPixelPos <= loopEndPos) {
                     frameBuffer32[currentPixelPos] = packedColor;
