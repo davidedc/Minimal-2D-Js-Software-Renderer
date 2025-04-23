@@ -1150,7 +1150,9 @@ class SWRendererCircle {
         }
 
         // --- Draw Top Scanline (No Clip) ---
-        if (rel_y > 0 && abs_y_top >= 0 && abs_y_top < height) {
+        // Skip if rel_y is 0 OR if it's the specific case (rel_y=1, yOffset=0) that would redraw the middle line.
+        const drawTopNoClip = rel_y > 0 && !(rel_y === 1 && yOffset === 0) && abs_y_top >= 0 && abs_y_top < height;
+        if (drawTopNoClip) {
           // Use adjusted center and offsets
           const startX = Math.max(0, abs_x_min);
           const endX = Math.min(width - 1, abs_x_max);
@@ -1220,7 +1222,9 @@ class SWRendererCircle {
         }
 
         // --- Draw Top Scanline (Optimized Clip Check) ---
-        if (rel_y > 0 && abs_y_top >= 0 && abs_y_top < height) {
+        // Skip if rel_y is 0 OR if it's the specific case (rel_y=1, yOffset=0) that would redraw the middle line.
+        const drawTopClip = rel_y > 0 && !(rel_y === 1 && yOffset === 0) && abs_y_top >= 0 && abs_y_top < height;
+        if (drawTopClip) {
             // Use adjusted center and offsets
             const startX = Math.max(0, abs_x_min);
             const endX = Math.min(width - 1, abs_x_max);
