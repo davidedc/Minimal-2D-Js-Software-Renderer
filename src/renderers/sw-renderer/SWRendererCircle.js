@@ -49,6 +49,16 @@ class SWRendererCircle {
       );
       return;
     }
+    // Check for semi-transparent fill with no stroke case
+    else if (hasFill && !hasStroke && !isOpaqueFill) {
+       // Optimize for semi-transparent fill with no stroke using Bresenham circle algorithm
+       this.drawSemiTransparentFillFullCircleBresenham(
+         center.x, center.y,
+         radius,
+         fillR, fillG, fillB, fillA // Pass alpha
+       );
+       return;
+     }
 
     const innerRadius = strokeWidth > 0 ? radius - strokeWidth / 2 : radius;
     const outerRadius = radius + strokeWidth / 2;
@@ -1263,6 +1273,215 @@ class SWRendererCircle {
                 frameBuffer32[currentPixelPos] = packedColor; // Use 32-bit write
               }
               // Remove currentIndex update
+              currentPixelPos++;
+            }
+        }
+      }
+    } // End of if (!clippingMask) / else
+  }
+
+  /**
+   * This is the same as the drawOpaqueFillFullCircleBresenham method, but with alpha blending.
+   * Draws a filled semi-transparent circle using scanline conversion based on Bresenham-derived extents.
+   * Handles fractional radius of 0.5 by shifting pixels as described in the original function.
+   * Uses alpha blending for each pixel.
+   * @param {Number} centerX - X coordinate of circle center
+   * @param {Number} centerY - Y coordinate of circle center
+   * @param {Number} radius - Radius of the circle (float)
+   * @param {Number} r - Red component of fill color (0-255)
+   * @param {Number} g - Green component of fill color (0-255)
+   * @param {Number} b - Blue component of fill color (0-255)
+   * @param {Number} a - Alpha component of fill color (0-255)
+   */
+  drawSemiTransparentFillFullCircleBresenham(centerX, centerY, radius, r, g, b, a) {
+    // --- Early Exit & Renderer Property Caching ---
+    const renderer = this.pixelRenderer;
+    if (!renderer) {
+      console.error("Pixel renderer not found!");
+      return;
+    }
+
+    const globalAlpha = renderer.context.globalAlpha;
+    if (a === 0 || globalAlpha <= 0) return; // Fully transparent
+
+    const width = renderer.width;
+    const height = renderer.height;
+    const frameBufferUint8ClampedView = renderer.frameBufferUint8ClampedView;
+    // const frameBuffer32 = renderer.frameBufferUint32View; // Not needed for blending
+    const context = renderer.context; // Assuming context holds clippingMask if needed
+    const clippingMask = context && context.currentState ? context.currentState.clippingMask : null;
+
+    // Pre-calculate alpha blending values
+    const incomingAlpha = (a / 255) * globalAlpha;
+    const inverseIncomingAlpha = 1 - incomingAlpha;
+    if (incomingAlpha <= 0) return; // Effective alpha is zero
+
+    // Remove packedColor calculation - not used for alpha blending
+    // const packedColor = (255 << 24) | (b << 16) | (g << 8) | r;
+
+    // --- Generate Relative Extents ---
+    const extentData = this._generateRelativeHorizontalExtentsBresenham(radius);
+    if (!extentData) return; // Invalid radius handled by generator
+
+    const { relativeExtents, intRadius, xOffset, yOffset } = extentData;
+
+    // --- Handle Zero Radius Case (Single Pixel) ---
+    // Note: generator returns intRadius=0 even for 0 <= radius < 1
+    if (intRadius === 0 && radius >= 0) {
+        const centerPx = Math.round(centerX); // Use Math.round for single pixel placement
+        const centerPy = Math.round(centerY);
+
+        // Use setPixel which handles bounds, clipping, and alpha blending correctly
+        renderer.setPixel(centerPx, centerPy, r, g, b, a);
+        return; // Done if radius effectively zero
+    }
+    // Now we know intRadius > 0
+
+    // --- Calculate Absolute Center and Bounds ---
+    // ADJUSTMENT: Use center relative to pixel centers for scanline calculation
+    const adjCenterX = Math.floor(centerX - 0.5);
+    const adjCenterY = Math.floor(centerY - 0.5);
+    // const cX = Math.floor(centerX); // Original center (keep for reference/debugging if needed)
+    // const cY = Math.floor(centerY); // Original center
+
+    // Optional: Loose bounding box check (can save loop iterations)
+    // Use adjusted center for bounding box check for consistency
+    const maxExt = relativeExtents[0]; // Widest extent is at rel_y = 0
+    const minX = adjCenterX - maxExt - xOffset;
+    const maxX = adjCenterX + maxExt;
+    const minY = adjCenterY - intRadius - yOffset;
+    const maxY = adjCenterY + intRadius;
+    if (maxX < 0 || minX >= width || maxY < 0 || minY >= height) return;
+
+    // --- Scanline Filling Loop ---
+    // Function to perform alpha blending for a single pixel
+    const blendPixel = (pixelPos) => {
+        const index = pixelPos * 4;
+        const oldAlpha = frameBufferUint8ClampedView[index + 3] / 255;
+        const oldAlphaScaled = oldAlpha * inverseIncomingAlpha;
+        const newAlpha = incomingAlpha + oldAlphaScaled;
+
+        if (newAlpha > 0) { // Avoid division by zero/negative
+            const blendFactor = 1 / newAlpha;
+            frameBufferUint8ClampedView[index]     = (r * incomingAlpha + frameBufferUint8ClampedView[index]     * oldAlphaScaled) * blendFactor;
+            frameBufferUint8ClampedView[index + 1] = (g * incomingAlpha + frameBufferUint8ClampedView[index + 1] * oldAlphaScaled) * blendFactor;
+            frameBufferUint8ClampedView[index + 2] = (b * incomingAlpha + frameBufferUint8ClampedView[index + 2] * oldAlphaScaled) * blendFactor;
+            frameBufferUint8ClampedView[index + 3] = newAlpha * 255;
+        }
+    };
+
+    if (!clippingMask) {
+      // --- Version WITHOUT Clipping Check ---
+      for (let rel_y = 0; rel_y <= intRadius; rel_y++) {
+        const max_rel_x = relativeExtents[rel_y];
+        // Use adjusted center and offsets, with +1 correction for min boundaries
+        const abs_x_min = adjCenterX - max_rel_x - xOffset + 1; // Apply +1 correction
+        const abs_x_max = adjCenterX + max_rel_x;
+        const abs_y_bottom = adjCenterY + rel_y;
+        const abs_y_top = adjCenterY - rel_y - yOffset + 1; // Apply +1 correction
+
+        // --- Draw Bottom Scanline (No Clip) ---
+        if (abs_y_bottom >= 0 && abs_y_bottom < height) {
+          const startX = Math.max(0, abs_x_min);
+          const endX = Math.min(width - 1, abs_x_max);
+          let currentPixelPos = abs_y_bottom * width + startX;
+          const endPixelPos = abs_y_bottom * width + endX;
+          while (currentPixelPos <= endPixelPos) {
+             blendPixel(currentPixelPos); // Use alpha blending
+             currentPixelPos++;
+          }
+        }
+
+        // --- Draw Top Scanline (No Clip) ---
+        // Skip if rel_y is 0 OR if it's the specific case (rel_y=1, yOffset=0) that would redraw the middle line.
+        const drawTopNoClip = rel_y > 0 && !(rel_y === 1 && yOffset === 0) && abs_y_top >= 0 && abs_y_top < height;
+        if (drawTopNoClip) {
+          // Use adjusted center and offsets
+          const startX = Math.max(0, abs_x_min);
+          const endX = Math.min(width - 1, abs_x_max);
+          let currentPixelPos = abs_y_top * width + startX;
+          const endPixelPos = abs_y_top * width + endX;
+          while (currentPixelPos <= endPixelPos) {
+             blendPixel(currentPixelPos); // Use alpha blending
+             currentPixelPos++;
+          }
+        }
+      }
+    } else {
+      // --- Version WITH Clipping Check (Optimized) ---
+      for (let rel_y = 0; rel_y <= intRadius; rel_y++) {
+        const max_rel_x = relativeExtents[rel_y];
+        // Use adjusted center and offsets, with +1 correction for min boundaries
+        const abs_x_min = adjCenterX - max_rel_x - xOffset + 1; // Apply +1 correction
+        const abs_x_max = adjCenterX + max_rel_x;
+        const abs_y_bottom = adjCenterY + rel_y;
+        const abs_y_top = adjCenterY - rel_y - yOffset + 1; // Apply +1 correction
+
+        // --- Draw Bottom Scanline (Optimized Clip Check) ---
+        if (abs_y_bottom >= 0 && abs_y_bottom < height) {
+          const startX = Math.max(0, abs_x_min);
+          const endX = Math.min(width - 1, abs_x_max);
+          const startPixelPos = abs_y_bottom * width + startX;
+          const endPixelPos = abs_y_bottom * width + endX;
+          let currentPixelPos = startPixelPos;
+
+          while (currentPixelPos <= endPixelPos) {
+            const byteIndex = currentPixelPos >> 3;
+            const bitInByte = currentPixelPos & 7;
+            const bitMask = 1 << (7 - bitInByte);
+
+            // Can we check a full byte? (Only optimize skip for fully transparent byte)
+            if (bitInByte === 0 && currentPixelPos + 7 <= endPixelPos) {
+              const maskByte = clippingMask[byteIndex];
+               if (maskByte === 0x00) { // Fully transparent byte
+                // Skip 8 pixels
+                currentPixelPos += 8;
+                continue; // Next iteration of while loop
+              } else {
+                // Partial byte or opaque byte - fall through to per-pixel check below
+              }
+            }
+
+            // Per-pixel check (for partial bytes or end of span or opaque bytes)
+            if ((clippingMask[byteIndex] & bitMask) !== 0) {
+              blendPixel(currentPixelPos); // Use alpha blending
+            }
+            currentPixelPos++;
+          }
+        }
+
+        // --- Draw Top Scanline (Optimized Clip Check) ---
+        // Skip if rel_y is 0 OR if it's the specific case (rel_y=1, yOffset=0) that would redraw the middle line.
+        const drawTopClip = rel_y > 0 && !(rel_y === 1 && yOffset === 0) && abs_y_top >= 0 && abs_y_top < height;
+        if (drawTopClip) {
+            // Use adjusted center and offsets
+            const startX = Math.max(0, abs_x_min);
+            const endX = Math.min(width - 1, abs_x_max);
+            const startPixelPos = abs_y_top * width + startX;
+            const endPixelPos = abs_y_top * width + endX;
+            let currentPixelPos = startPixelPos;
+            // Remove currentIndex
+
+            while (currentPixelPos <= endPixelPos) {
+              const byteIndex = currentPixelPos >> 3;
+              const bitInByte = currentPixelPos & 7;
+              const bitMask = 1 << (7 - bitInByte);
+
+              // Can we check a full byte? (Optimize skip only)
+              if (bitInByte === 0 && currentPixelPos + 7 <= endPixelPos) {
+                const maskByte = clippingMask[byteIndex];
+                 if (maskByte === 0x00) { // Fully transparent byte
+                  currentPixelPos += 8;
+                  continue;
+                } else {
+                  // Partial or opaque byte - fall through
+                }
+              }
+
+              // Per-pixel check
+              if ((clippingMask[byteIndex] & bitMask) !== 0) {
+                blendPixel(currentPixelPos); // Use alpha blending
+              }
               currentPixelPos++;
             }
         }
