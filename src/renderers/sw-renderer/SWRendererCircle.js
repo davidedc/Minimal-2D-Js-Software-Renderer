@@ -60,6 +60,9 @@ class SWRendererCircle {
        return;
      }
 
+    // Fallback for cases not handled by optimized Bresenham methods:
+    // 1. Circles with both fill and stroke.
+    // 2. Stroke-only circles where strokeWidth > 1.
     const innerRadius = strokeWidth > 0 ? radius - strokeWidth / 2 : radius;
     const outerRadius = radius + strokeWidth / 2;
 
