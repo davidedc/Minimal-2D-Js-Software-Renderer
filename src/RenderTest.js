@@ -720,7 +720,7 @@ class RenderTest {
     return this.errorCount === initialErrorCount;
   }
 
-  runMultipleIterations(count, stopAtError = true) {
+  runMultipleIterations(count, stopAtError = true, onComplete = null) {
     let current = 0;
     this.sceneLoggedForCurrentIteration = false; // Initialize flag
     const initialErrorCount = this.errorCount || 0;
@@ -761,6 +761,7 @@ class RenderTest {
                 } else {
                     // Remove progress bar when done
                     progressBar.remove();
+                    if (onComplete) onComplete(); // *** CALL CALLBACK ON NORMAL COMPLETION ***
                 }
             }, 0);
             
@@ -775,9 +776,14 @@ class RenderTest {
             // Remove progress bar on error if we're stopping
             if (stopAtError) {
                 progressBar.remove();
+                if (onComplete) onComplete(error); // *** CALL CALLBACK ON ERROR STOP ***
             } else if (current < count) {
                 // Continue if not stopping at errors
                 requestAnimationFrame(runFrame);
+            } else { 
+                // Reached end even with errors when not stopping
+                progressBar.remove();
+                if (onComplete) onComplete(); // *** CALL CALLBACK ON NON-STOP ERROR COMPLETION ***
             }
         }
     };
@@ -804,6 +810,113 @@ class RenderTest {
       link.className = 'nav-link';
       nav.appendChild(link);
     });
+
+    // Create container for 'Run All' buttons
+    const runAllContainer = document.createElement('div');
+    runAllContainer.style.marginTop = '15px';
+    runAllContainer.style.marginBottom = '10px';
+    runAllContainer.style.display = 'flex';
+    runAllContainer.style.gap = '10px';
+    runAllContainer.style.flexWrap = 'wrap'; // Allow buttons to wrap on smaller screens
+
+    const runAllButtons = []; // To disable/enable them during execution
+
+    // Helper function for sequential execution
+    const runAllSequentially = async (actionFn) => {
+      const tests = Object.values(RenderTest.registry);
+      runAllButtons.forEach(btn => btn.disabled = true); // Disable buttons
+      console.log(`Starting batch action for ${tests.length} tests...`);
+      for (const test of tests) {
+        console.log(`Running action for test: ${test.id}`);
+        // Scroll the test into view slightly before running
+        test.container.scrollIntoView({ behavior: 'smooth', block: 'center' }); 
+        // Small delay to allow scrolling before action
+        await new Promise(resolve => setTimeout(resolve, 100)); 
+        try {
+          await actionFn(test);
+        } catch (error) {
+          console.error(`Error running action for test ${test.id}:`, error);
+          // Decide if you want to stop on error or continue
+          // break; // Uncomment to stop on first error
+        }
+         // Optional small delay between tests
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
+      console.log("Batch action complete.");
+      runAllButtons.forEach(btn => btn.disabled = false); // Re-enable buttons
+    };
+
+    // Button 1: Run All 1 Iteration
+    const runAll1Button = document.createElement('button');
+    runAll1Button.textContent = 'Run All: 1 iter';
+    runAll1Button.className = 'action-button';
+    runAll1Button.onclick = () => runAllSequentially((test) => {
+      // Reset iteration counter to 1 for each test before running
+      test.iterationCounter.value = '1'; 
+      return new Promise(resolve => {
+        // render is synchronous but let's wrap in promise for consistency and potential future async render
+        test.render(test.buildShapesFn, test.canvasCodeFn); 
+        resolve();
+      });
+    });
+    runAllContainer.appendChild(runAll1Button);
+    runAllButtons.push(runAll1Button);
+
+    // Button 2: Run All 10 Iterations
+    const runAll10Button = document.createElement('button');
+    runAll10Button.textContent = 'Run All: 10 iter';
+    runAll10Button.className = 'action-button';
+    runAll10Button.onclick = () => runAllSequentially((test) => {
+      return new Promise((resolve, reject) => {
+        try {
+          // Pass resolve as the onComplete callback
+          test.runMultipleIterations(10, true, resolve);
+        } catch (err) {
+          // Catch synchronous errors during setup, though unlikely
+          reject(err); 
+        }
+      });
+    });
+    runAllContainer.appendChild(runAll10Button);
+    runAllButtons.push(runAll10Button);
+
+    // Button 3: Run All 100 Iterations
+    const runAll100Button = document.createElement('button');
+    runAll100Button.textContent = 'Run All: 100 iter';
+    runAll100Button.className = 'action-button';
+    runAll100Button.onclick = () => runAllSequentially((test) => {
+      return new Promise((resolve, reject) => {
+        try {
+          // Pass resolve as the onComplete callback
+          test.runMultipleIterations(100, true, resolve); 
+        } catch (err) {
+          reject(err);
+        }
+      });
+    });
+    runAllContainer.appendChild(runAll100Button);
+    runAllButtons.push(runAll100Button);
+
+
+    // Button 4: Collect All Defects (1k iter)
+    const collectAllButton = document.createElement('button');
+    collectAllButton.textContent = 'Collect All Defects (1k iter)';
+    collectAllButton.className = 'action-button';
+    collectAllButton.onclick = () => runAllSequentially((test) => {
+      return new Promise((resolve, reject) => {
+         try {
+          // Pass resolve as the onComplete callback
+          test.runMultipleIterations(1000, false, resolve); 
+        } catch (err) {
+          reject(err);
+        }
+      });
+    });
+    runAllContainer.appendChild(collectAllButton);
+    runAllButtons.push(collectAllButton);
+
+    // Add the 'Run All' container before the background control
+    nav.appendChild(runAllContainer); 
 
     // Add background control
     const backgroundControl = document.createElement('div');
