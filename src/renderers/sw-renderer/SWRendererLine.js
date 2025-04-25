@@ -98,20 +98,20 @@ class SWRendererLine {
     // Dispatch to specialized renderers based on line orientation
     if (dx === 0) {
       // Vertical line
-      return this.drawLine1px_vertical(floorX1, floorY1, floorY2, strokeR, strokeG, strokeB, strokeA);
+      return this._drawLine1px_vertical(floorX1, floorY1, floorY2, strokeR, strokeG, strokeB, strokeA);
     } else if (dy === 0) {
       // Horizontal line
-      return this.drawLine1px_horizontal(floorX1, floorX2, floorY1, strokeR, strokeG, strokeB, strokeA);
+      return this._drawLine1px_horizontal(floorX1, floorX2, floorY1, strokeR, strokeG, strokeB, strokeA);
     } else if (dx === dy) {
       // Perfect 45-degree line
-      return this.drawLine1px_45degrees(floorX1, floorY1, floorX2, floorY2, strokeR, strokeG, strokeB, strokeA);
+      return this._drawLine1px_45degrees(floorX1, floorY1, floorX2, floorY2, strokeR, strokeG, strokeB, strokeA);
     } else {
       // All other lines
-      return this.drawLine1px_genericOrientations(floorX1, floorY1, floorX2, floorY2, dx, dy, strokeR, strokeG, strokeB, strokeA);
+      return this._drawLine1px_genericOrientations(floorX1, floorY1, floorX2, floorY2, dx, dy, strokeR, strokeG, strokeB, strokeA);
     }
   }
 
-  drawLine1px_horizontal(x1, x2, y, r, g, b, a) {
+  _drawLine1px_horizontal(x1, x2, y, r, g, b, a) {
     // Cache renderer properties for performance
     const frameBufferUint8ClampedView = this.pixelRenderer.frameBufferUint8ClampedView;
     const frameBufferUint32View = this.pixelRenderer.frameBufferUint32View;
@@ -184,7 +184,7 @@ class SWRendererLine {
     }
   }
 
-  drawLine1px_vertical(x, y1, y2, r, g, b, a) {
+  _drawLine1px_vertical(x, y1, y2, r, g, b, a) {
     // Cache renderer properties for performance
     const frameBufferUint8ClampedView = this.pixelRenderer.frameBufferUint8ClampedView;
     const frameBufferUint32View = this.pixelRenderer.frameBufferUint32View;
@@ -254,7 +254,7 @@ class SWRendererLine {
     }
   }
 
-  drawLine1px_45degrees(x1, y1, x2, y2, r, g, b, a) {
+  _drawLine1px_45degrees(x1, y1, x2, y2, r, g, b, a) {
     // Cache renderer properties for performance
     const frameBufferUint8ClampedView = this.pixelRenderer.frameBufferUint8ClampedView;
     const frameBufferUint32View = this.pixelRenderer.frameBufferUint32View;
@@ -342,7 +342,7 @@ class SWRendererLine {
     }
   }
 
-  drawLine1px_genericOrientations(x1, y1, x2, y2, dx, dy, r, g, b, a) {
+  _drawLine1px_genericOrientations(x1, y1, x2, y2, dx, dy, r, g, b, a) {
     // Cache renderer properties for performance
     const frameBufferUint8ClampedView = this.pixelRenderer.frameBufferUint8ClampedView;
     const frameBufferUint32View = this.pixelRenderer.frameBufferUint32View;
@@ -425,20 +425,20 @@ class SWRendererLine {
 
   drawLineThick(x1, y1, x2, y2, thickness, r, g, b, a) {
     // Original algorithm - bounding box with distance check
-    //this.drawLineThickBoundingBox(x1, y1, x2, y2, thickness, r, g, b, a);
+    //this._drawLineThickBoundingBox(x1, y1, x2, y2, thickness, r, g, b, a);
     
     // Uncomment one of these to use a different algorithm:
-    // this.drawLineThickModifiedBresenham(x1, y1, x2, y2, thickness, r, g, b, a);
-    // this.drawLineThickDistanceOptimized(x1, y1, x2, y2, thickness, r, g, b, a);
-    // this.drawLineThickParallelOffset(x1, y1, x2, y2, thickness, r, g, b, a);
-    this.drawLineThickPolygonScan(x1, y1, x2, y2, thickness, r, g, b, a);
+    // this._drawLineThickModifiedBresenham(x1, y1, x2, y2, thickness, r, g, b, a);
+    // this._drawLineThickDistanceOptimized(x1, y1, x2, y2, thickness, r, g, b, a);
+    // this._drawLineThickParallelOffset(x1, y1, x2, y2, thickness, r, g, b, a);
+    this._drawLineThickPolygonScan(x1, y1, x2, y2, thickness, r, g, b, a);
   }
 
   /**
    * Algorithm 1: Original bounding box algorithm
    * Scans a rectangle containing the entire thick line and checks each pixel's distance
    */
-  drawLineThickBoundingBox(x1, y1, x2, y2, thickness, r, g, b, a) {
+  _drawLineThickBoundingBox(x1, y1, x2, y2, thickness, r, g, b, a) {
     // Tweaks to make the sw render more closely match the canvas render.
     // Canvas coordinates are offset by 0.5 pixels, so adjusting here
     x1 -= 0.5;
@@ -513,7 +513,7 @@ class SWRendererLine {
    * Algorithm 2: Modified Bresenham algorithm for thick lines
    * Extends the classic Bresenham line algorithm to draw perpendicular segments
    */
-  drawLineThickModifiedBresenham(x1, y1, x2, y2, thickness, r, g, b, a) {
+  _drawLineThickModifiedBresenham(x1, y1, x2, y2, thickness, r, g, b, a) {
     // Adjust for canvas coordinate system
     x1 = Math.floor(x1 - 0.5);
     y1 = Math.floor(y1 - 0.5);
@@ -553,7 +553,7 @@ class SWRendererLine {
     // For each point along the line
     while (true) {
       // Draw perpendicular segment at each point
-      this.drawPerpendicularSegment(x, y, perpX, perpY, halfThick, r, g, b, a);
+      this._drawPerpendicularSegment(x, y, perpX, perpY, halfThick, r, g, b, a);
       
       if (x === x2 && y === y2) break;
       
@@ -565,14 +565,14 @@ class SWRendererLine {
     // Draw square caps at endpoints
     const dirX1 = (x2 - x1) / lineLength;
     const dirY1 = (y2 - y1) / lineLength;
-    this.drawSquareCap(x1, y1, perpX, perpY, halfThick, -dirX1, -dirY1, r, g, b, a);
-    this.drawSquareCap(x2, y2, perpX, perpY, halfThick, dirX1, dirY1, r, g, b, a);
+    this._drawSquareCap(x1, y1, perpX, perpY, halfThick, -dirX1, -dirY1, r, g, b, a);
+    this._drawSquareCap(x2, y2, perpX, perpY, halfThick, dirX1, dirY1, r, g, b, a);
   }
   
   /**
    * Helper method to draw a perpendicular segment at a point
    */
-  drawPerpendicularSegment(x, y, perpX, perpY, halfThick, r, g, b, a) {
+  _drawPerpendicularSegment(x, y, perpX, perpY, halfThick, r, g, b, a) {
     const steps = Math.ceil(halfThick);
     
     // Draw center pixel
@@ -595,7 +595,7 @@ class SWRendererLine {
   /**
    * Draw a square cap at the endpoint of a line
    */
-  drawSquareCap(x, y, perpX, perpY, halfThick, dirX, dirY, r, g, b, a) {
+  _drawSquareCap(x, y, perpX, perpY, halfThick, dirX, dirY, r, g, b, a) {
     const steps = Math.ceil(halfThick);
     
     for (let i = 1; i <= steps; i++) {
@@ -605,7 +605,7 @@ class SWRendererLine {
       const extY = Math.round(y + dirY * ratio);
       
       // Draw perpendicular segment at this extended point
-      this.drawPerpendicularSegment(extX, extY, perpX, perpY, halfThick, r, g, b, a);
+      this._drawPerpendicularSegment(extX, extY, perpX, perpY, halfThick, r, g, b, a);
     }
   }
 
@@ -613,7 +613,7 @@ class SWRendererLine {
    * Algorithm 3: Distance-based approach with center line optimization
    * First rasterizes the center line, then draws perpendicular spans
    */
-  drawLineThickDistanceOptimized(x1, y1, x2, y2, thickness, r, g, b, a) {
+  _drawLineThickDistanceOptimized(x1, y1, x2, y2, thickness, r, g, b, a) {
     // Adjust for canvas coordinate system
     x1 = Math.floor(x1 - 0.5);
     y1 = Math.floor(y1 - 0.5);
@@ -706,7 +706,7 @@ class SWRendererLine {
    * Algorithm 4: Parallel offset lines approach
    * Creates multiple parallel lines offset from the center line to create thickness
    */
-  drawLineThickParallelOffset(x1, y1, x2, y2, thickness, r, g, b, a) {
+  _drawLineThickParallelOffset(x1, y1, x2, y2, thickness, r, g, b, a) {
     // Adjust for canvas coordinate system
     x1 = Math.floor(x1 - 0.5);
     y1 = Math.floor(y1 - 0.5);
@@ -749,7 +749,7 @@ class SWRendererLine {
       const oy2 = y2 + perpY * offsetRatio;
       
       // Draw the offset line using Bresenham's algorithm
-      this.drawBresenhamLine(Math.round(ox1), Math.round(oy1), 
+      this._drawBresenhamLine(Math.round(ox1), Math.round(oy1), 
                            Math.round(ox2), Math.round(oy2), 
                            r, g, b, a);
     }
@@ -781,7 +781,7 @@ class SWRendererLine {
   /**
    * Helper function: Standard Bresenham line algorithm
    */
-  drawBresenhamLine(x1, y1, x2, y2, r, g, b, a) {
+  _drawBresenhamLine(x1, y1, x2, y2, r, g, b, a) {
     const dx = Math.abs(x2 - x1);
     const dy = Math.abs(y2 - y1);
     const sx = x1 < x2 ? 1 : -1;
@@ -804,7 +804,7 @@ class SWRendererLine {
    * Optimized to eliminate sorting with direct span calculation
    */
 
-  drawLineThickPolygonScan(x1, y1, x2, y2, thickness, r, g, b, a) {
+  _drawLineThickPolygonScan(x1, y1, x2, y2, thickness, r, g, b, a) {
     const dx = x2 - x1;
     const dy = y2 - y1;
     const lineLength = Math.sqrt(dx * dx + dy * dy);
