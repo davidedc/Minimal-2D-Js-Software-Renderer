@@ -111,6 +111,28 @@ class SWRendererLine {
     }
   }
 
+  // public function to draw a 1px line with orientation dispatch
+  drawLine1px(x1, y1, x2, y2, r, g, b, a) {
+    // first floor the values
+    x1 = Math.floor(x1);
+    y1 = Math.floor(y1);
+    x2 = Math.floor(x2);
+    y2 = Math.floor(y2);
+
+    const dx = Math.abs(x2 - x1);
+    const dy = Math.abs(y2 - y1);
+
+    if (dx === 0) {
+      return this._drawLine1px_vertical(x1, y1, y2, r, g, b, a);
+    } else if (dy === 0) {
+      return this._drawLine1px_horizontal(x1, x2, y1, r, g, b, a);
+    } else if (dx === dy) {
+      return this._drawLine1px_45degrees(x1, y1, x2, y2, r, g, b, a);
+    } else {
+      return this._drawLine1px_genericOrientations(x1, y1, x2, y2, dx, dy, r, g, b, a);
+    }
+  }
+
   _drawLine1px_horizontal(x1, x2, y, r, g, b, a) {
     // Cache renderer properties for performance
     const frameBufferUint8ClampedView = this.pixelRenderer.frameBufferUint8ClampedView;
