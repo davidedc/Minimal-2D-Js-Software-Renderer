@@ -83,6 +83,14 @@ class RenderTest {
   setupForBrowser(id, title, buildShapesFn, canvasCodeFn, testDescription) {
     this.flipState = true;
     
+    // Helper function to create centered labels
+    const createLabel = (text) => {
+      const label = document.createElement('div');
+      label.textContent = text;
+      label.className = 'canvas-label';
+      return label;
+    };
+
     // Create container with anchor
     this.container = document.createElement('div');
     this.container.className = 'test-container';
@@ -139,6 +147,30 @@ class RenderTest {
     this.displayWrapper = document.createElement('div');
     this.displayWrapper.className = 'canvas-wrapper';
     
+    // Create labels
+    this.swLabel = createLabel('Software Renderer');
+    this.canvasLabel = createLabel('HTML5 Canvas');
+
+    // Create label containers for the display canvas
+    this.displayLabelContainer = document.createElement('div');
+    this.displayLabelContainer.className = 'display-label-container';
+
+    // Label for alternating view
+    this.displayAltLabel = createLabel('Alternating View (SW)'); // Initial state
+    this.displayLabelContainer.appendChild(this.displayAltLabel);
+
+    // Container and labels for magnifier view
+    this.displayMagContainer = document.createElement('div');
+    this.displayMagContainer.className = 'magnifier-label-container';
+    this.displayMagContainer.style.display = 'none'; // Initially hidden
+
+    this.displayMagSwLabel = createLabel('Magnified SW');
+    this.displayMagCanvasLabel = createLabel('Magnified Canvas');
+    this.displayMagContainer.appendChild(this.displayMagSwLabel);
+    this.displayMagContainer.appendChild(this.displayMagCanvasLabel);
+
+    this.displayLabelContainer.appendChild(this.displayMagContainer);
+
     // Create hash containers
     this.swHashContainer = document.createElement('div');
     this.swHashContainer.className = 'hash-container';
@@ -147,12 +179,15 @@ class RenderTest {
     this.canvasHashContainer.className = 'hash-container';
     
     // Add canvases and hashes to their wrappers
+    this.swWrapper.appendChild(this.swLabel); // Add SW label
     this.swWrapper.appendChild(this.canvasOfSwRender);
     this.swWrapper.appendChild(this.swHashContainer);
     
+    this.canvasWrapper.appendChild(this.canvasLabel); // Add Canvas label
     this.canvasWrapper.appendChild(this.canvasOfCanvasRender);
     this.canvasWrapper.appendChild(this.canvasHashContainer);
     
+    this.displayWrapper.appendChild(this.displayLabelContainer); // Add display label container
     this.displayWrapper.appendChild(this.canvasOfComparison);
     
     // Add wrappers to container
@@ -270,6 +305,27 @@ class RenderTest {
       .canvas-wrapper {
         display: inline-block;
         vertical-align: top;
+        text-align: center; /* Center content */
+        margin-right: 10px; /* Add some space between wrappers */
+      }
+      .canvas-label {
+        font-size: 12px;
+        color: #555;
+        margin-bottom: 3px;
+        font-weight: bold;
+      }
+      .display-label-container {
+        height: 18px; /* Allocate space for the label */
+        margin-bottom: 3px;
+      }
+       .magnifier-label-container {
+        display: flex; /* Use flexbox for side-by-side labels */
+        justify-content: space-around; /* Distribute space */
+        width: 100%;
+      }
+      .magnifier-label-container .canvas-label {
+         flex-basis: 50%; /* Each label takes half the width */
+         text-align: center;
       }
       .hash-container {
         font-family: monospace;
@@ -328,9 +384,15 @@ class RenderTest {
     
     if (this.flipState) {
       this.canvasCtxOfComparison.drawImage(this.canvasOfSwRender, 0, 0);
+      this.displayAltLabel.textContent = 'Alternating View (SW)'; // Update label text
     } else {
       this.canvasCtxOfComparison.drawImage(this.canvasOfCanvasRender, 0, 0);
+      this.displayAltLabel.textContent = 'Alternating View (Canvas)'; // Update label text
     }
+
+    // Ensure correct label visibility for alternating view
+    this.displayAltLabel.style.display = 'block';
+    this.displayMagContainer.style.display = 'none';
   }
 
   showError(message) {
@@ -971,6 +1033,10 @@ class RenderTest {
     const x = Math.floor(event.clientX - rect.left);
     const y = Math.floor(event.clientY - rect.top);
     
+    // Switch to magnifier labels
+    this.displayAltLabel.style.display = 'none';
+    this.displayMagContainer.style.display = 'flex'; // Use flex for the container
+
     // Clear display canvas
     this.canvasCtxOfComparison.setTransform(1, 0, 0, 1, 0, 0);
     this.canvasCtxOfComparison.clearRect(0, 0, this.canvasOfComparison.width, this.canvasOfComparison.height);    
@@ -1128,7 +1194,7 @@ class RenderTest {
   }
 
   handleMouseOut() {
-    // Restore normal display canvas view
+    // Restore normal display canvas view (and labels via updateFlipOutput)
     this.updateFlipOutput();
   }
 }
