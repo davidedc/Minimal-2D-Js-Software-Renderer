@@ -2440,9 +2440,8 @@ class SWRendererCircle {
     }
   }
 
-  // Helper function to draw a 1px line with orientation dispatch
+  // public function to draw a 1px line with orientation dispatch
   drawLine1px(x1, y1, x2, y2, r, g, b, a) {
-    debugger
     // first floor the values
     x1 = Math.floor(x1);
     y1 = Math.floor(y1);
@@ -4567,45 +4566,7 @@ class SWRendererPixel {
       });
     }
   }
-}// See https://stackoverflow.com/a/47593316
-class SeededRandom {
-    static #currentRandom = null;
-
-    static seedWithInteger(seed) {
-        // XOR the seed with a constant value
-        seed = seed ^ 0xDEADBEEF;
-
-        // Pad seed with Phi, Pi and E.
-        this.#currentRandom = this.#sfc32(0x9E3779B9, 0x243F6A88, 0xB7E15162, seed);
-
-        // Warm up the generator
-        for (let i = 0; i < 15; i++) {
-            this.#currentRandom();
-        }
-    }
-
-    static getRandom() {
-        if (!this.#currentRandom) {
-            throw new Error('SeededRandom must be initialized with seedWithInteger before use');
-        }
-        return this.#currentRandom();
-    }
-
-    // Small Fast Counter (SFC) 32-bit implementation
-    static #sfc32(a, b, c, d) {
-        return function() {
-            a |= 0; b |= 0; c |= 0; d |= 0;
-            let t = (a + b | 0) + d | 0;
-            d = d + 1 | 0;
-            a = b ^ b >>> 9;
-            b = c + (c << 3) | 0;
-            c = (c << 21 | c >>> 11);
-            c = c + t | 0;
-            return (t >>> 0) / 4294967296;
-        }
-    }
-}
-function getRandomArc() {
+}function getRandomArc() {
   const center = getRandomPoint(1);
   const radius = 15 + SeededRandom.getRandom() * 50;
   const startAngle = SeededRandom.getRandom() * 360;
@@ -5840,7 +5801,45 @@ function buildScene(shapes, log, currentIterationNumber) {
   addRandomArcs(shapes, log, currentIterationNumber, 3); // roughly fine.
   addRandomCircles(shapes, log, currentIterationNumber, 5); // looks pretty horrible, but roughly fine.
   addThinOpaqueStrokeRoundedRectangles(shapes, log, currentIterationNumber, 10);
-}/**
+}// See https://stackoverflow.com/a/47593316
+class SeededRandom {
+    static #currentRandom = null;
+
+    static seedWithInteger(seed) {
+        // XOR the seed with a constant value
+        seed = seed ^ 0xDEADBEEF;
+
+        // Pad seed with Phi, Pi and E.
+        this.#currentRandom = this.#sfc32(0x9E3779B9, 0x243F6A88, 0xB7E15162, seed);
+
+        // Warm up the generator
+        for (let i = 0; i < 15; i++) {
+            this.#currentRandom();
+        }
+    }
+
+    static getRandom() {
+        if (!this.#currentRandom) {
+            throw new Error('SeededRandom must be initialized with seedWithInteger before use');
+        }
+        return this.#currentRandom();
+    }
+
+    // Small Fast Counter (SFC) 32-bit implementation
+    static #sfc32(a, b, c, d) {
+        return function() {
+            a |= 0; b |= 0; c |= 0; d |= 0;
+            let t = (a + b | 0) + d | 0;
+            d = d + 1 | 0;
+            a = b ^ b >>> 9;
+            b = c + (c << 3) | 0;
+            c = (c << 21 | c >>> 11);
+            c = c + t | 0;
+            return (t >>> 0) / 4294967296;
+        }
+    }
+}
+/**
  * Class for performing various checks on the rendered images
  */
 class RenderChecks {
@@ -6793,6 +6792,14 @@ class RenderTest {
   setupForBrowser(id, title, buildShapesFn, canvasCodeFn, testDescription) {
     this.flipState = true;
     
+    // Helper function to create centered labels
+    const createLabel = (text) => {
+      const label = document.createElement('div');
+      label.textContent = text;
+      label.className = 'canvas-label';
+      return label;
+    };
+
     // Create container with anchor
     this.container = document.createElement('div');
     this.container.className = 'test-container';
@@ -6849,6 +6856,30 @@ class RenderTest {
     this.displayWrapper = document.createElement('div');
     this.displayWrapper.className = 'canvas-wrapper';
     
+    // Create labels
+    this.swLabel = createLabel('Software Renderer');
+    this.canvasLabel = createLabel('HTML5 Canvas');
+
+    // Create label containers for the display canvas
+    this.displayLabelContainer = document.createElement('div');
+    this.displayLabelContainer.className = 'display-label-container';
+
+    // Label for alternating view
+    this.displayAltLabel = createLabel('Alternating View (SW)'); // Initial state
+    this.displayLabelContainer.appendChild(this.displayAltLabel);
+
+    // Container and labels for magnifier view
+    this.displayMagContainer = document.createElement('div');
+    this.displayMagContainer.className = 'magnifier-label-container';
+    this.displayMagContainer.style.display = 'none'; // Initially hidden
+
+    this.displayMagSwLabel = createLabel('Magnified SW');
+    this.displayMagCanvasLabel = createLabel('Magnified Canvas');
+    this.displayMagContainer.appendChild(this.displayMagSwLabel);
+    this.displayMagContainer.appendChild(this.displayMagCanvasLabel);
+
+    this.displayLabelContainer.appendChild(this.displayMagContainer);
+
     // Create hash containers
     this.swHashContainer = document.createElement('div');
     this.swHashContainer.className = 'hash-container';
@@ -6857,12 +6888,15 @@ class RenderTest {
     this.canvasHashContainer.className = 'hash-container';
     
     // Add canvases and hashes to their wrappers
+    this.swWrapper.appendChild(this.swLabel); // Add SW label
     this.swWrapper.appendChild(this.canvasOfSwRender);
     this.swWrapper.appendChild(this.swHashContainer);
     
+    this.canvasWrapper.appendChild(this.canvasLabel); // Add Canvas label
     this.canvasWrapper.appendChild(this.canvasOfCanvasRender);
     this.canvasWrapper.appendChild(this.canvasHashContainer);
     
+    this.displayWrapper.appendChild(this.displayLabelContainer); // Add display label container
     this.displayWrapper.appendChild(this.canvasOfComparison);
     
     // Add wrappers to container
@@ -6980,6 +7014,27 @@ class RenderTest {
       .canvas-wrapper {
         display: inline-block;
         vertical-align: top;
+        text-align: center; /* Center content */
+        margin-right: 10px; /* Add some space between wrappers */
+      }
+      .canvas-label {
+        font-size: 12px;
+        color: #555;
+        margin-bottom: 3px;
+        font-weight: bold;
+      }
+      .display-label-container {
+        height: 18px; /* Allocate space for the label */
+        margin-bottom: 3px;
+      }
+       .magnifier-label-container {
+        display: flex; /* Use flexbox for side-by-side labels */
+        justify-content: space-around; /* Distribute space */
+        width: 100%;
+      }
+      .magnifier-label-container .canvas-label {
+         flex-basis: 50%; /* Each label takes half the width */
+         text-align: center;
       }
       .hash-container {
         font-family: monospace;
@@ -7038,9 +7093,15 @@ class RenderTest {
     
     if (this.flipState) {
       this.canvasCtxOfComparison.drawImage(this.canvasOfSwRender, 0, 0);
+      this.displayAltLabel.textContent = 'Alternating View (SW)'; // Update label text
     } else {
       this.canvasCtxOfComparison.drawImage(this.canvasOfCanvasRender, 0, 0);
+      this.displayAltLabel.textContent = 'Alternating View (Canvas)'; // Update label text
     }
+
+    // Ensure correct label visibility for alternating view
+    this.displayAltLabel.style.display = 'block';
+    this.displayMagContainer.style.display = 'none';
   }
 
   showError(message) {
@@ -7402,13 +7463,13 @@ class RenderTest {
       
       // For the software-rendered side, use CrispSwCanvas
       SeededRandom.seedWithInteger(currentCount);
-      canvasCodeFn(this.crispSwCtx);
+      this.builderReturnValue = canvasCodeFn(this.crispSwCtx, currentCount);
       // Blit the result to the SW canvas
       this.crispSwCtx.blitToCanvas(this.canvasOfSwRender);
       
       // For the canvas side, use regular canvas
       SeededRandom.seedWithInteger(currentCount);
-      canvasCodeFn(this.canvasCtxOfCanvasRender);
+      canvasCodeFn(this.canvasCtxOfCanvasRender, currentCount);
       
       if (this.canvasCtxOfSwRender.getHashString) this.updateHashes();
     }
@@ -7681,6 +7742,10 @@ class RenderTest {
     const x = Math.floor(event.clientX - rect.left);
     const y = Math.floor(event.clientY - rect.top);
     
+    // Switch to magnifier labels
+    this.displayAltLabel.style.display = 'none';
+    this.displayMagContainer.style.display = 'flex'; // Use flex for the container
+
     // Clear display canvas
     this.canvasCtxOfComparison.setTransform(1, 0, 0, 1, 0, 0);
     this.canvasCtxOfComparison.clearRect(0, 0, this.canvasOfComparison.width, this.canvasOfComparison.height);    
@@ -7838,7 +7903,7 @@ class RenderTest {
   }
 
   handleMouseOut() {
-    // Restore normal display canvas view
+    // Restore normal display canvas view (and labels via updateFlipOutput)
     this.updateFlipOutput();
   }
 }class RenderTestBuilder {

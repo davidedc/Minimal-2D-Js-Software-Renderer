@@ -1027,9 +1027,8 @@ function getRotatedDimensionsIfTheCase(width, height, angle) {
     }
   }
 
-  // Helper function to draw a 1px line with orientation dispatch
+  // public function to draw a 1px line with orientation dispatch
   drawLine1px(x1, y1, x2, y2, r, g, b, a) {
-    debugger
     // first floor the values
     x1 = Math.floor(x1);
     y1 = Math.floor(y1);
