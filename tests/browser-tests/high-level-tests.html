@@ -46,16 +46,14 @@
   <script src="../../src/RenderTest.js"></script>
   <script src="../../src/RenderTestBuilder.js"></script>
 
-  <!-- New Crispness Test Structure -->
-  <script src="high-level-tests/high-level-tests-drawing.js"></script>
-  <script src="high-level-tests/high-level-tests-definitions.js"></script>
-  <script src="../high-level-tests-loading.js"></script>
+  <!-- Load Individual High-Level Test Files -->
+  <!-- Each file contains drawing logic, definition, and self-registers the test -->
+  <script src="high-level-tests/lines--M-size--no-fill--1px-opaque-stroke--crisp-pixel-pos--horizontal-orient--test.js"></script>
+  <!-- Add more <script> tags here for other test files -->
 
   <!-- Script to Load Tests and Init Page -->
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      loadCrispnessTests();
-
       // Create navigation after all sections are added
       RenderTest.createNavigation("High-Level Tests");
     });

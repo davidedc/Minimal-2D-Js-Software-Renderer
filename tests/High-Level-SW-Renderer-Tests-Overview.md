@@ -26,7 +26,7 @@ The testing system reuses several key components from the low-level tests but em
 2.  **`RenderTestBuilder` (`src/RenderTestBuilder.js`): Fluent Test Configuration**
     *   Provides the same builder pattern for configuring `RenderTest` instances.
     *   Key difference: Uses `.runCanvasCode(drawingFn, ...args)` instead of `.addShapes()`.
-        *   `runCanvasCode` specifies the function (from `high-level-tests-drawing.js`) that contains the actual Canvas API-like drawing calls.
+        *   `runCanvasCode` specifies the drawing function (typically defined within the same test file) that contains the actual Canvas API-like drawing calls.
         *   `RenderTest` will later call this `drawingFn` with the appropriate context (`CrispSwContext` or `CanvasRenderingContext2D`) and store its return value.
     *   Methods like `withId()`, `withTitle()`, `withDescription()`, and `with*Check()` work similarly. Checks that need external data (like `withExtremesCheck`) are configured the same way but rely on the `drawingFn`'s return value being captured by `RenderTest`.
     *   `build()`: Finalizes configuration, creates, and registers the `RenderTest` instance.
@@ -37,52 +37,49 @@ The testing system reuses several key components from the low-level tests but em
     *   Provides methods like `findExtremesWithTolerance()`, `checkExtremes()`, `checkCountOfUniqueColorsInLine()`, `compareWithThreshold()`, etc.
     *   When a check like `checkExtremes()` is executed, it retrieves the *expected* values from `test.builderReturnValue` (which originated from the `drawingFn`'s return value).
 
-4.  **Drawing Functions (`high-level-tests-drawing.js`): Defining Test Scenes via Canvas API**
-    *   This file contains functions that encapsulate the drawing logic for specific test scenes using Canvas API-like calls.
-    *   **Signature:** Functions follow the pattern `function draw_...(ctx, currentIterationNumber, ...args)`.
-        *   `ctx`: The rendering context provided by `RenderTest`. This will be a `CrispSwContext` for the software rendering pass and a `CanvasRenderingContext2D` for the native rendering pass. The function should use standard Canvas API methods available on both (or potentially check the context type if needed, though usually not required).
-        *   `currentIterationNumber`: Used for seeding `SeededRandom` (randomness generation should happen *within* the function using `SeededRandom.getRandom()`, as `RenderTest` seeds *before* each call).
-        *   `...args`: Any additional arguments passed via `runCanvasCode`.
-    *   **Return Value:** Crucially, these functions **return** an object containing any data calculated during drawing that is needed by subsequent checks (e.g., `return { leftX, rightX, topY, bottomY };` for `withExtremesCheck`).
-    *   **Nomenclature:** Functions follow a descriptive naming convention (e.g., `draw_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__horizontal_orient`).
+4.  **Test Files (`tests/browser-tests/high-level-tests/*--test.js`): Drawing and Definition**
+    *   Each test resides in its own file within the `tests/browser-tests/high-level-tests/` directory, named according to convention (e.g., `lines--M-size--no-fill--1px-opaque-stroke--crisp-pixel-pos--horizontal-orient--test.js`).
+    *   **Drawing Function:** Each file contains a drawing function (e.g., `draw_lines__...`) that encapsulates the drawing logic using Canvas API-like calls.
+        *   **Signature:** `function draw_...(ctx, currentIterationNumber, ...args)`.
+        *   `ctx` is the rendering context (`CrispSwContext` or `CanvasRenderingContext2D`).
+        *   `currentIterationNumber` is available if needed.
+        *   Uses `SeededRandom.getRandom()` internally for randomness.
+        *   **Returns** an object with data needed for checks (e.g., `{ leftX, rightX, topY, bottomY }`).
+    *   **Definition Function:** Each file also contains a definition function (e.g., `define_lines__...`) that uses `RenderTestBuilder` to configure the test, linking to the drawing function via `.runCanvasCode()`.
+    *   **Self-Registration:** The definition function is called at the end of the script, causing the test to be registered automatically when the file is loaded by the browser.
 
-5.  **Test Definitions (`high-level-tests-definitions.js`): Configuring Specific Tests**
-    *   This file contains functions that use `RenderTestBuilder` to define concrete test cases, following the Crispness Test nomenclature.
-    *   Each function typically:
-        *   Instantiates `RenderTestBuilder`.
-        *   Sets the ID, title, and description (following nomenclature).
-        *   Calls `.runCanvasCode()` linking to a specific drawing function from `high-level-tests-drawing.js`.
-        *   Calls `with*Check()` methods.
-        *   Calls `build()` to create and register the test.
+5.  **Test Loading (`tests/browser-tests/high-level-tests.html`)**
+    *   The main HTML file includes the core framework scripts (utils, `RenderTest`, `RenderTestBuilder`, `RenderChecks`, `CrispSwContext`, renderers, etc.).
+    *   It then includes each individual test file (`*--test.js`) via separate `<script>` tags.
+    *   There is no separate "loading" script; the act of loading the test file scripts registers the tests.
+    *   An event listener calls `RenderTest.createNavigation()` after the DOM is loaded.
 
-6.  **Test Loading (`tests/high-level-tests-loading.js`): Instantiating Tests**
-    *   A simple script that calls all the test definition functions (e.g., `define_lines__...()`) from `high-level-tests-definitions.js`. Executing these functions triggers the `RenderTestBuilder` and registers the tests.
-
-7.  **Rendering Contexts & Logic (`CrispSwContext`, `CanvasRenderingContext2D`, `src/renderers/`)**
+6.  **Rendering Contexts & Logic (`CrispSwContext`, `CanvasRenderingContext2D`, `src/renderers/`)**
     *   `CrispSwContext` (`src/crisp-sw-canvas/CrispSwContext.js`): Provides the Canvas API-like interface for the software renderer. It internally uses specific `SWRenderer*` classes (`src/renderers/sw-renderer/`) to draw to its framebuffer.
     *   `CanvasRenderingContext2D`: The browser's native implementation, used for the reference rendering.
-    *   `src/renderers/canvas-renderer/`: Contains helpers used by `RenderTest` to draw the reference image using the native context *if* the older `addShapes` mechanism were used (less relevant for high-level tests but potentially used by some checks or comparison visualization).
-    *   `src/shared-renderer.js`: *Not typically used* in the main rendering path for High-Level Tests, as drawing is delegated to the `drawingFn` passed to `runCanvasCode`.
+    *   `src/renderers/canvas-renderer/`: Contains helpers potentially used by checks or visualization, but not typically by the main `runCanvasCode` path.
+    *   `src/shared-renderer.js`: *Not typically used* in the main rendering path for High-Level Tests.
 
 **Execution Flow Summary (Browser - High-Level Tests):**
 
 1.  `high-level-tests.html` is loaded.
-2.  Various JS files (utils, CrispSwContext, renderers, test framework core, crispness drawing/definitions/loading) are loaded.
-3.  `high-level-tests-loading.js` executes, calling functions in `high-level-tests-definitions.js`.
-4.  Each call uses `RenderTestBuilder` -> sets ID/Title/Desc -> calls `.runCanvasCode(drawingFn)` -> adds checks -> calls `.build()`.
-5.  The `RenderTest` constructor:
-    *   Registers the test (`RenderTest.registry[id] = this`).
-    *   Creates the necessary DOM elements (canvases, buttons, logs) and appends them to the `<body>`.
-    *   Calls its own `render()` method for an initial display.
-6.  `render()` / `renderInBrowser(null, canvasCodeFn)`:
+2.  Core JS files (utils, CrispSwContext, renderers, test framework core) are loaded.
+3.  Individual test files (`tests/browser-tests/high-level-tests/*--test.js`) are loaded one by one.
+4.  As each test script loads:
+    *   It defines its `draw_...` and `define_...` functions.
+    *   It calls its `define_...` function.
+    *   The `define_...` function uses `RenderTestBuilder` -> sets ID/Title/Desc -> calls `.runCanvasCode(draw_...)` -> adds checks -> calls `.build()`.
+    *   The `RenderTest` constructor registers the test (`RenderTest.registry[id] = this`) and creates its DOM elements.
+    *   The `RenderTest` constructor calls its `render()` method for an initial display.
+5.  Initial `render()` / `renderInBrowser(null, canvasCodeFn)` execution for each test:
     *   Clears canvases.
     *   Seeds `SeededRandom`.
-    *   Calls `drawingFn(this.crispSwCtx, currentIterationNumber)` -> stores the return value in `this.builderReturnValue`.
-    *   Gets `ImageData` from `this.crispSwCtx` and uses `putImageData` to display on the SW canvas element.
-    *   Seeds `SeededRandom` again (ensuring identical random sequence).
-    *   Calls `drawingFn(this.canvasCtxOfCanvasRender, currentIterationNumber)`.
-    *   Updates the comparison canvas.
-    *   Calls the aggregated check function (`this.functionToRunAllChecks`).
-7.  Check function executes, calling methods on the `RenderChecks` instance. Checks like `checkExtremes` access `this.builderReturnValue` for expected values. Errors are reported via `test.showError()`.
-8.  The page displays all test instances. Users interact via buttons.
-9.  `RenderTest.createNavigation()` builds the top navigation.
+    *   Calls `drawingFn(this.crispSwCtx, ...)` -> stores return value.
+    *   Displays SW result via `putImageData`.
+    *   Seeds `SeededRandom` again.
+    *   Calls `drawingFn(this.canvasCtxOfCanvasRender, ...)`.
+    *   Updates comparison canvas.
+    *   Runs configured checks (accessing stored return value if needed).
+6.  After all scripts are loaded and the DOM is ready, `DOMContentLoaded` fires.
+7.  `RenderTest.createNavigation()` builds the top navigation using the populated `RenderTest.registry`.
+8.  The page displays all test instances. Users interact via buttons, triggering further `render()` calls.

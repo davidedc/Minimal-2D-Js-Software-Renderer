@@ -1,18 +1,21 @@
 ## How to Add a New High-Level Test
 
-Adding a new test to the "High-Level Tests" suite involves defining the drawing logic using Canvas API-like calls and configuring the test using `RenderTestBuilder`.
+Adding a new test to the "High-Level Tests" suite involves creating a self-contained test file that defines the drawing logic and configures the test using `RenderTestBuilder`.
 
 Follow these steps:
 
-1.  **Define Drawing Logic:**
-    *   Open `high-level-tests-drawing.js`.
-    *   Create a new JavaScript function. Follow the established naming convention, which typically describes the geometry and rendering parameters (e.g., `draw_rectangles__S_size__filled__semitransparent_fill__crisp_pixel_pos_and_size__no_rotation`).
-    *   **Signature:** The function must accept the rendering context and the current iteration number as its first two arguments: `function myDrawingFunction(ctx, currentIterationNumber /*, ...any extra args */)`.
-        *   `ctx`: Will be either a `CrispSwContext` (for the software renderer pass) or a `CanvasRenderingContext2D` (for the native canvas pass). Use standard Canvas API methods (e.g., `ctx.fillStyle = 'rgba(...)';`, `ctx.fillRect(x, y, w, h);`, `ctx.lineWidth = 1;`, `ctx.strokeStyle = '...';`, `ctx.strokeLine(x1, y1, x2, y2);`, `ctx.beginPath(); ctx.moveTo(); ctx.lineTo(); ctx.stroke();`, etc.).
-        *   `currentIterationNumber`: Use this number if the drawing logic needs to vary per iteration *independently* of the random seed (rare). For random variations, use `SeededRandom`.
-    *   **Randomness:** Use `SeededRandom.getRandom()` *inside* your function if you need reproducible randomness for geometry, colors, etc. **Do not** call `SeededRandom.seedWithInteger()` inside the function; `RenderTest` handles seeding *before* calling your function for both the SW and Canvas passes, ensuring the sequence of `getRandom()` calls produces the same results for both renderers within an iteration.
-    *   **Return Value for Checks:** If your test uses checks that require calculated values from the scene (e.g., `withExtremesCheck()` needs the bounding box), calculate these values within your drawing function and **return** them as an object. `RenderTest` will capture this object and make it available to the checks.
+1.  **Create Test File and Define Drawing Logic:**
+    *   Create a new file inside the `tests/browser-tests/high-level-tests/` directory.
+    *   Name the file according to the test parameters using `--` separators and ending with `--test.js` (e.g., `rectangles--S-size--filled--semitransparent-fill--crisp-pixel-pos-and-size--no-rotation--test.js`).
+    *   Inside this file, create a JavaScript function for the drawing logic. Follow the established naming convention (e.g., `draw_rectangles__S_size__...`).
+    *   **Signature:** The function must accept the rendering context and the current iteration number: `function myDrawingFunction(ctx, currentIterationNumber /*, ...any extra args */)`.
+        *   `ctx`: Will be either a `CrispSwContext` or a `CanvasRenderingContext2D`. Use Canvas API methods compatible with both (or check `typeof ctx.strokeLine === 'function'` etc. if needed to differentiate).
+        *   `currentIterationNumber`: Available if needed.
+    *   **Randomness:** Use `SeededRandom.getRandom()` *inside* the function for reproducible randomness. Do not call `SeededRandom.seedWithInteger()`; `RenderTest` handles seeding.
+    *   **Return Value for Checks:** If checks like `withExtremesCheck()` are used, calculate the required values (e.g., bounding box) and **return** them as an object.
         ```javascript
+        // Inside: tests/browser-tests/high-level-tests/my-shape--params--test.js
+
         function draw_my_shape(ctx, currentIterationNumber) {
           // ... setup, random values ...
           const x = 10, y = 20, width = 50, height = 30;
@@ -36,18 +39,14 @@ Follow these steps:
         }
         ```
 
-2.  **Define the Test Configuration:**
-    *   Open `high-level-tests-definitions.js`.
-    *   Create a new function to define your test. Use the corresponding nomenclature (e.g., `define_rectangles__S_size__filled__semitransparent_fill__crisp_pixel_pos_and_size__no_rotation`).
+2.  **Define Test Configuration (in the same file):**
+    *   In the *same test file* (`...--test.js`), create a function to define the test configuration using the corresponding nomenclature (e.g., `define_rectangles__S_size__...`).
     *   Inside this function, instantiate and configure `RenderTestBuilder`:
         ```javascript
-        function define_my_shape_test() {
-          // Ensure the drawing function is available
-          if (typeof draw_my_shape !== 'function') {
-            console.error('Drawing function draw_my_shape not found!');
-            return;
-          }
+        // Inside: tests/browser-tests/high-level-tests/my-shape--params--test.js
+        // (Continued from Step 1)
 
+        function define_my_shape_test() {
           return new RenderTestBuilder()
             // ID should match drawing/definition function names (using '--' separators)
             .withId('my-shape--params')
@@ -66,41 +65,47 @@ Follow these steps:
             .build();
         }
         ```
-    *   Choose appropriate checks from `RenderTestBuilder`. Remember that checks requiring expected geometry (like `withExtremesCheck`) will automatically use the object returned by your drawing function (specified via `runCanvasCode`).
-
-3.  **Register the Test:**
-    *   Open `tests/high-level-tests-loading.js`.
-    *   Inside the `loadCrispnessTests` function, add a call to the definition function you created in Step 2:
+    *   Choose appropriate checks. `withExtremesCheck` and similar checks automatically use the object returned by the drawing function.
+    *   **Crucially**, at the very end of the file, *call* the definition function to register the test when the script loads:
         ```javascript
-        function loadCrispnessTests() {
-            console.log('Loading High-Level Tests...');
+        // Inside: tests/browser-tests/high-level-tests/my-shape--params--test.js
+        // (End of file)
 
-            // ... existing test definition calls ...
-
-            // Add call for the new test
-            if (typeof define_my_shape_test === 'function') {
-                define_my_shape_test(); // Add this line
-            } else {
-                console.error('Definition function define_my_shape_test not found!');
-            }
-
-            console.log('High-Level Tests loading complete.');
-        }
+        // Define and register the test immediately when this script is loaded.
+        define_my_shape_test();
         ```
 
+3.  **Include the Test File in HTML:**
+    *   Open `tests/browser-tests/high-level-tests.html`.
+    *   Add a new `<script>` tag pointing to your test file, alongside the other test file includes:
+        ```html
+        <!-- Test Framework Core -->
+        <script src="../../src/RenderChecks.js"></script>
+        <script src="../../src/RenderTest.js"></script>
+        <script src="../../src/RenderTestBuilder.js"></script>
+
+        <!-- Load Individual High-Level Test Files -->
+        <script src="high-level-tests/lines--M-size--...--test.js"></script>
+        <!-- Add your new test file here -->
+        <script src="high-level-tests/my-shape--params--test.js"></script>
+        <!-- Add more <script> tags here for other test files -->
+
+        <!-- Script to Load Tests and Init Page -->
+        <script>
+          document.addEventListener('DOMContentLoaded', () => {
+            RenderTest.createNavigation("High-Level Tests");
+          });
+        </script>
+        ```
+    *   Registration happens automatically when the script file is loaded by the browser.
+
 4.  **Implement Renderer Logic (If Testing New Primitives):**
-    *   This step is **usually not required** when adding a *new test case* using existing Canvas API-like features.
-    *   You would only need this if you were adding a *new drawing capability* to the software renderer itself (e.g., adding `ctx.drawStar(...)` support).
-    *   If so, you would need to:
-        *   Add the method (e.g., `drawStar`) to `src/crisp-sw-canvas/CrispSwContext.js`.
-        *   Implement the underlying drawing logic in a new or existing `SWRenderer*` class in `src/renderers/sw-renderer/`.
-        *   Potentially implement corresponding native Canvas logic in `src/renderers/canvas-renderer/` if needed for direct comparison or visualization helpers.
+    *   This step is **usually not required** unless adding a *new drawing capability* to `CrispSwContext` itself (e.g., adding `ctx.drawStar(...)`).
+    *   If needed, modify `CrispSwContext.js` and the relevant `SWRenderer*` classes.
 
 5.  **Verify:**
-    *   Ensure you are running a local web server in the project's root directory (e.g., `python3 -m http.server` or `npx http-server`).
-    *   Open `http://localhost:PORT/tests/browser-tests/high-level-tests.html` in your browser.
-    *   Your new test should appear in the list and the top navigation.
-    *   Examine the initial rendering on both SW and Canvas displays.
-    *   Check the output in the log, checks, and error areas.
-    *   Run multiple iterations to test reproducibility and different random variations.
-    *   Use the mouse-over inspection on the SW and Canvas panels to check pixel values.
+    *   Ensure you are running a local web server.
+    *   Open `http://localhost:PORT/tests/browser-tests/high-level-tests.html`.
+    *   Your new test should appear in the list and navigation.
+    *   Check rendering, logs, checks, and errors.
+    *   Run multiple iterations and use mouse inspection.
