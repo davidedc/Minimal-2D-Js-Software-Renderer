@@ -65,7 +65,7 @@ Follow these steps:
             .build();
         }
         ```
-    *   Choose appropriate checks. `withExtremesCheck` and similar checks automatically use the object returned by the drawing function.
+    *   Choose appropriate checks. `withExtremesCheck` and similar checks automatically use the object returned by the *first call* to the drawing function (the one using the software renderer context), which is captured internally by the test runner.
     *   **Crucially**, at the very end of the file, *call* the definition function to register the test when the script loads:
         ```javascript
         // Inside: tests/browser-tests/high-level-tests/my-shape--params--test.js
