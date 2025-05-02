@@ -754,13 +754,13 @@ class RenderTest {
       
       // For the software-rendered side, use CrispSwCanvas
       SeededRandom.seedWithInteger(currentCount);
-      canvasCodeFn(this.crispSwCtx);
+      this.builderReturnValue = canvasCodeFn(this.crispSwCtx, currentCount);
       // Blit the result to the SW canvas
       this.crispSwCtx.blitToCanvas(this.canvasOfSwRender);
       
       // For the canvas side, use regular canvas
       SeededRandom.seedWithInteger(currentCount);
-      canvasCodeFn(this.canvasCtxOfCanvasRender);
+      canvasCodeFn(this.canvasCtxOfCanvasRender, currentCount);
       
       if (this.canvasCtxOfSwRender.getHashString) this.updateHashes();
     }

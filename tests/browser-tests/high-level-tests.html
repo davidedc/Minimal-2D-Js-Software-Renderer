@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>High-Level Tests - Software Canvas vs HTML5 Canvas</title>
+  <link rel="stylesheet" href="styles/main.css">
+</head>
+<body>
+  <!-- Core Libs and Polyfills -->
+  <script src="../../src/canvas-sw-polyfills.js"></script>
+  
+  <!-- Utilities -->
+  <script src="../../src/utils/canvas-extensions.js"></script>
+  <script src="../../src/utils/geometry.js"></script>
+  <script src="../../src/utils/PixelSet.js"></script>
+  <script src="../../src/utils/random-utils.js"></script>
+  <script src="../../src/utils/ScanlineSpans.js"></script>
+  <script src="../../src/scene-creation/SeededRandom.js"></script>
+  <script src="../../src/scene-creation/scene-creation-utils.js"></script>
+
+  <!-- Crisp SW Canvas Implementation (Needed for runCanvasCode) -->
+  <script src="../../src/crisp-sw-canvas/color-utils.js"></script>
+  <script src="../../src/crisp-sw-canvas/ContextState.js"></script>
+  <script src="../../src/crisp-sw-canvas/CrispSwCanvas.js"></script>
+  <script src="../../src/crisp-sw-canvas/CrispSwContext.js"></script>
+  <script src="../../src/crisp-sw-canvas/transform-utils.js"></script>
+  <script src="../../src/crisp-sw-canvas/TransformationMatrix.js"></script>
+
+  <!-- SW Renderer Implementation (Needed by CrispSwContext and RenderTest) -->
+  <script src="../../src/renderers/renderer-utils.js"></script>
+  <script src="../../src/renderers/sw-renderer/SWRendererPixel.js"></script>
+  <script src="../../src/renderers/sw-renderer/SWRendererArc.js"></script>
+  <script src="../../src/renderers/sw-renderer/SWRendererCircle.js"></script>
+  <script src="../../src/renderers/sw-renderer/SWRendererLine.js"></script>
+  <script src="../../src/renderers/sw-renderer/SWRendererRect.js"></script>
+  <script src="../../src/renderers/sw-renderer/SWRendererRoundedRect.js"></script>
+
+  <!-- Canvas Renderer Implementation (Needed by RenderTest for comparison) -->
+  <script src="../../src/renderers/canvas-renderer/canvas-arc.js"></script>
+  <script src="../../src/renderers/canvas-renderer/canvas-circle.js"></script>
+  <script src="../../src/renderers/canvas-renderer/canvas-line.js"></script>
+  <script src="../../src/renderers/canvas-renderer/canvas-rect.js"></script>
+  <script src="../../src/renderers/canvas-renderer/canvas-rounded-rect.js"></script>
+
+  <!-- Test Framework Core -->
+  <script src="../../src/RenderChecks.js"></script>
+  <script src="../../src/RenderTest.js"></script>
+  <script src="../../src/RenderTestBuilder.js"></script>
+
+  <!-- New Crispness Test Structure -->
+  <script src="high-level-tests/high-level-tests-drawing.js"></script>
+  <script src="high-level-tests/high-level-tests-definitions.js"></script>
+  <script src="../high-level-tests-loading.js"></script>
+
+  <!-- Script to Load Tests and Init Page -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      loadCrispnessTests();
+
+      // Create navigation after all sections are added
+      RenderTest.createNavigation("High-Level Tests");
+    });
+  </script>
+
+</body>
+</html> 
