@@ -752,14 +752,25 @@ class RenderTest {
       this.canvasCtxOfCanvasRender.clearRect(0, 0, this.canvasOfCanvasRender.width, this.canvasOfCanvasRender.height);
       this.crispSwCtx.clearRect(0, 0, this.canvasOfSwRender.width, this.canvasOfSwRender.height);
       
-      // For the software-rendered side, use CrispSwCanvas
+      // === Software Rendering Pass (use CrispSwCanvas) ===
       SeededRandom.seedWithInteger(currentCount);
-      this.builderReturnValue = canvasCodeFn(this.crispSwCtx, currentCount);
+      const swDrawResult = canvasCodeFn(this.crispSwCtx, currentCount);
       // Blit the result to the SW canvas
       this.crispSwCtx.blitToCanvas(this.canvasOfSwRender);
       
-      // For the canvas side, use regular canvas
+      // Store the check data part of the result (if any)
+      // Checks will access this.builderReturnValue
+      this.builderReturnValue = swDrawResult?.checkData === undefined ? swDrawResult : swDrawResult.checkData;
+      
+      // Handle logs, if returned
+      if (swDrawResult?.logs && Array.isArray(swDrawResult.logs)) {
+          this.logContainer.innerHTML = swDrawResult.logs.join('<br>\n');
+      }      
+      
+      // === Canvas Rendering Pass (use regular HTML5Canvas)===
       SeededRandom.seedWithInteger(currentCount);
+      
+      // result/logs ignored for this pass
       canvasCodeFn(this.canvasCtxOfCanvasRender, currentCount);
       
       if (this.canvasCtxOfSwRender.getHashString) this.updateHashes();

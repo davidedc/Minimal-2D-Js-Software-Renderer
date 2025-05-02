@@ -8,9 +8,10 @@
  *
  * @param {CanvasRenderingContext2D | CrispSwContext} ctx - The rendering context.
  * @param {number} currentIterationNumber - The current test iteration.
- * @returns {undefined} This function does not return check data.
+ * @returns {{ logs: string[] }} Log entries.
  */
 function draw_lines__multi_20__no_fill__1px_black_opaque_stroke__random_pos__random_orient(ctx, currentIterationNumber) {
+    let logs = [];
     // Assume SeededRandom is available globally and seeded externally by RenderTest.
     // Assume getRandomPoint is available globally (from scene-creation-utils.js).
     const count = 20;
@@ -39,10 +40,11 @@ function draw_lines__multi_20__no_fill__1px_black_opaque_stroke__random_pos__ran
             ctx.lineTo(end.x, end.y);
             ctx.stroke();
         }
+        logs.push(`&#x2500; 1px Black line from (${start.x.toFixed(1)}, ${start.y.toFixed(1)}) to (${end.x.toFixed(1)}, ${end.y.toFixed(1)}) color: ${ctx.strokeStyle} thickness: ${ctx.lineWidth}`);
     }
 
     // No return value needed as the original test had no checks requiring it.
-    return undefined;
+    return { logs: logs };
 }
 
 /**

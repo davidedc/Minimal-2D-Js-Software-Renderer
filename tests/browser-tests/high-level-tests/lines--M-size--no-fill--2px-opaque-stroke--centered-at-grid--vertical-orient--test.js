@@ -10,9 +10,10 @@
  *
  * @param {CanvasRenderingContext2D | CrispSwContext} ctx - The rendering context.
  * @param {number} currentIterationNumber - The current test iteration (unused here).
- * @returns {{topY: number, bottomY: number, leftX: number, rightX: number}} The expected pixel extremes.
+ * @returns {{ logs: string[], checkData: {topY: number, bottomY: number, leftX: number, rightX: number} }} Log entries and expected pixel extremes.
  */
 function draw_lines__M_size__no_fill__2px_opaque_stroke__centered_at_grid__vertical_orient(ctx, currentIterationNumber) {
+    let logs = [];
     // Assume SeededRandom is available globally and seeded externally by RenderTest.
     const renderTestWidth = ctx.canvas.width;
     const renderTestHeight = ctx.canvas.height;
@@ -51,16 +52,18 @@ function draw_lines__M_size__no_fill__2px_opaque_stroke__centered_at_grid__verti
       ctx.stroke();
     }
 
+    logs.push(`&#x2500; 2px Red line from (${centerX.toFixed(1)}, ${startY.toFixed(1)}) to (${centerX.toFixed(1)}, ${endY.toFixed(1)}) color: ${ctx.strokeStyle} thickness: ${ctx.lineWidth}`);
+
     // Calculate and return the expected extremes (inclusive pixel coordinates)
     // Matching the return value of the original add2PxVerticalLine
     const extremes = {
         leftX: leftPixelX,
         rightX: rightPixelX,
         topY: Math.min(startY, endY),
-        bottomY: Math.max(startY, endY) - 1 // Match original: bottomY - 1
+        bottomY: Math.max(startY, endY) - 1
     };
 
-    return extremes;
+    return { logs: logs, checkData: extremes };
 }
 
 /**
