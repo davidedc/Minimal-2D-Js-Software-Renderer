@@ -55,7 +55,7 @@ function saveToBMP(ctx, outputPath) {
 }
 
 // Save the rendered image
-const outputDir = './test-output';
+const outputDir = './test-simple-node-example';
 if (!fs.existsSync(outputDir)) {
   fs.mkdirSync(outputDir, { recursive: true });
 }
