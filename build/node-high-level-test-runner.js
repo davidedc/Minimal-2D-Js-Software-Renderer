@@ -1,3 +1,4 @@
+console.log('[High-Level Runner Build] Script execution started (inside JS).');
 /**
  * Polyfills for Node.js environment
  * 
@@ -131,7 +132,45 @@ function isNodeEnvironment() {
 if (isNodeEnvironment()) {
   // Make polyfills available globally in node, mimicking browser globals
   global.ImageData = ImageData;
-}// THIS IS NOT USED SO FAR BECAUSE WE FILL (ROTATED) RECTANGLES SO FAR, FOR WHICH WE
+}// See https://stackoverflow.com/a/47593316
+class SeededRandom {
+    static #currentRandom = null;
+
+    static seedWithInteger(seed) {
+        // XOR the seed with a constant value
+        seed = seed ^ 0xDEADBEEF;
+
+        // Pad seed with Phi, Pi and E.
+        this.#currentRandom = this.#sfc32(0x9E3779B9, 0x243F6A88, 0xB7E15162, seed);
+
+        // Warm up the generator
+        for (let i = 0; i < 15; i++) {
+            this.#currentRandom();
+        }
+    }
+
+    static getRandom() {
+        if (!this.#currentRandom) {
+            throw new Error('SeededRandom must be initialized with seedWithInteger before use');
+        }
+        return this.#currentRandom();
+    }
+
+    // Small Fast Counter (SFC) 32-bit implementation
+    static #sfc32(a, b, c, d) {
+        return function() {
+            a |= 0; b |= 0; c |= 0; d |= 0;
+            let t = (a + b | 0) + d | 0;
+            d = d + 1 | 0;
+            a = b ^ b >>> 9;
+            b = c + (c << 3) | 0;
+            c = (c << 21 | c >>> 11);
+            c = c + t | 0;
+            return (t >>> 0) / 4294967296;
+        }
+    }
+}
+// THIS IS NOT USED SO FAR BECAUSE WE FILL (ROTATED) RECTANGLES SO FAR, FOR WHICH WE
 // USE THE Edge Function Method (Half-Space Method), WHICH SHOULD BE FASTER.
 // --------------------------------------------------------------------------
 // Ray Casting algorithm (also known as the Even-Odd Rule algorithm) for
@@ -275,7 +314,8 @@ function checkBasicConditionsForCrispRendering(centerX, centerY, width, height, 
   if (!Number.isInteger(centerY) && centerY % 1 !== 0.5) {
     console.warn("Center Y must be an integer or *.5 for crisp rendering ");
   }
-}function getRandomPoint(decimalPlaces = null) {
+}
+function getRandomPoint(decimalPlaces = null) {
   const margin = 100;
   const x = margin + SeededRandom.getRandom() * (renderTestWidth - 2 * margin);
   const y = margin + SeededRandom.getRandom() * (renderTestHeight - 2 * margin);
@@ -382,7 +422,8 @@ function getRandomColor(minAlpha = 0, maxAlpha = 255, whichPartition = null, num
       b: channels[2],
       a: alpha
   };
-}class PixelSet {
+}
+class PixelSet {
   constructor(pixelRenderer) {
     this.pixels = new Map();
     this.pixelRenderer = pixelRenderer;
@@ -398,7 +439,8 @@ function getRandomColor(minAlpha = 0, maxAlpha = 255, whichPartition = null, num
       this.pixelRenderer.setPixel(pixel.x, pixel.y, pixel.r, pixel.g, pixel.b, pixel.a);
     }
   }
-}class ScanlineSpans {
+}
+class ScanlineSpans {
   constructor() {
     // Map y-coordinate to [min_x, max_x]
     this.spans = new Map();
@@ -438,6 +480,639 @@ function getRandomColor(minAlpha = 0, maxAlpha = 255, whichPartition = null, num
       }
     }
   }
+}
+
+class TransformationMatrix {
+    constructor() {
+        this.elements = new Float64Array([
+            1, 0, 0, // first column
+            0, 1, 0, // second column
+            0, 0, 1 // third column
+        ]);
+    }
+
+    clone() {
+        const clonedMatrix = new TransformationMatrix();
+        clonedMatrix.elements.set(this.elements);
+        return clonedMatrix;
+    }
+    
+    /**
+     * Resets the transformation matrix to the identity matrix
+     * @returns {TransformationMatrix} The identity matrix
+     */
+    reset() {
+        this.elements.set([
+            1, 0, 0, // first column
+            0, 1, 0, // second column
+            0, 0, 1 // third column
+        ]);
+        return this;
+    }
+
+    get(row, col) {
+        return this.elements[col * 3 + row];
+    }
+
+    set(row, col, value) {
+        this.elements[col * 3 + row] = value;
+    }
+
+    multiply(other) {
+        const result = new TransformationMatrix();
+        for (let col = 0; col < 3; col++) {
+            for (let row = 0; row < 3; row++) {
+                let sum = 0;
+                for (let i = 0; i < 3; i++) {
+                    sum += this.get(row, i) * other.get(i, col);
+                }
+                result.set(row, col, sum);
+            }
+        }
+        return result;
+    }
+
+    translate(x, y) {
+        const translationMatrix = new TransformationMatrix();
+        translationMatrix.elements.set([
+            1, 0, 0,
+            0, 1, 0,
+            x, y, 1
+        ]);
+        return this.multiply(translationMatrix);
+    }
+
+    scale(sx, sy) {
+        const scaleMatrix = new TransformationMatrix();
+        scaleMatrix.elements.set([
+            sx, 0, 0,
+            0, sy, 0,
+            0, 0, 1
+        ]);
+        return this.multiply(scaleMatrix);
+    }
+
+    rotate(angleInRadians) {
+        const rotationMatrix = new TransformationMatrix();
+        const cos = Math.cos(angleInRadians);
+        const sin = Math.sin(angleInRadians);
+        rotationMatrix.elements.set([
+            cos, sin, 0,
+            -sin, cos, 0,
+            0, 0, 1
+        ]);
+        return this.multiply(rotationMatrix);
+    }
+}
+// Helper function to get scaled line width
+function getScaledLineWidth(matrix, baseWidth) {
+    const scaleX = Math.sqrt(matrix[0] * matrix[0] + matrix[1] * matrix[1]);
+    const scaleY = Math.sqrt(matrix[3] * matrix[3] + matrix[4] * matrix[4]);
+    const scale = Math.max(Math.sqrt(scaleX * scaleY), 0.0001);
+    return baseWidth * scale;
+}
+// Helper function to transform point
+function transformPoint(x, y, matrix) {
+    const tx = matrix[0] * x + matrix[3] * y + matrix[6];
+    const ty = matrix[1] * x + matrix[4] * y + matrix[7];
+    return { tx, ty };
+}
+// Add this helper function to extract rotation angle from transformation matrix
+function getRotationAngle(matrix) {
+    // For a 2D transformation matrix [a d 0, b e 0, c f 1],
+    // the rotation angle can be extracted using atan2(-b, a)
+    // matrix[3] is b, matrix[0] is a in column-major order
+    return Math.atan2(-matrix[3], matrix[0]);
+}
+// Add this helper function to get scale factors from matrix
+function getScaleFactors(matrix) {
+    // For column-major [a d 0, b e 0, c f 1]
+    // First column (x-axis): [a, d, 0]
+    const scaleX = Math.sqrt(matrix[0] * matrix[0] + matrix[1] * matrix[1]);
+    // Second column (y-axis): [b, e, 0]
+    const scaleY = Math.sqrt(matrix[3] * matrix[3] + matrix[4] * matrix[4]);
+    return { scaleX, scaleY };
+}
+// Color parsing and normalization
+function parseColor(colorStr) {
+    if (!colorStr || typeof colorStr !== 'string') {
+        throw new Error("Invalid color format: must be a string");
+    }
+    
+    colorStr = colorStr.trim().replace(/\s+/g, '');
+
+    // Handle hex colors
+    if (colorStr.startsWith('#')) {
+        let r, g, b;
+        
+        if (colorStr.length === 4) {
+            // #RGB format
+            r = parseInt(colorStr[1] + colorStr[1], 16);
+            g = parseInt(colorStr[2] + colorStr[2], 16);
+            b = parseInt(colorStr[3] + colorStr[3], 16);
+            return normalizeColor(r, g, b, 1);
+        } else if (colorStr.length === 7) {
+            // #RRGGBB format
+            r = parseInt(colorStr.substring(1, 3), 16);
+            g = parseInt(colorStr.substring(3, 5), 16);
+            b = parseInt(colorStr.substring(5, 7), 16);
+            return normalizeColor(r, g, b, 1);
+        }
+    }
+
+    // Handle rgb/rgba formats
+    const rgbMatch = colorStr.match(/^rgb\((\d+),(\d+),(\d+)\)$/i);
+    const rgbaMatch = colorStr.match(/^rgba\((\d+),(\d+),(\d+),([0-9]*\.?[0-9]+)\)$/i);
+
+    if (rgbMatch) {
+        const [_, r, g, b] = rgbMatch;
+        if (r > 255 || g > 255 || b > 255) {
+            throw new Error("RGB values must be between 0-255");
+        }
+        return normalizeColor(+r, +g, +b, 1);
+    } else if (rgbaMatch) {
+        const [_, r, g, b, a] = rgbaMatch;
+        if (r > 255 || g > 255 || b > 255) {
+            throw new Error("RGB values must be between 0-255");
+        }
+        return normalizeColor(+r, +g, +b, +a);
+    }
+    
+    throw new Error(`Invalid color format: ${colorStr}`);
+}
+
+function normalizeColor(r, g, b, a) {
+    return {
+        r: Math.round(Math.max(0, Math.min(255, r))),
+        g: Math.round(Math.max(0, Math.min(255, g))),
+        b: Math.round(Math.max(0, Math.min(255, b))),
+        // the a must be now transformed to 0-255
+        a: Math.max(0, Math.min(255, a * 255))
+    };
+}
+
+function colorToString(colorOrR, g, b, a) {
+    // if a color object is passed, convert it to a string
+    // like `rgba(${color.r}, ${color.g}, ${color.b}, ${(color.a/255).toFixed(3)})`;
+    // otherwise, if the four r,g,b,a parameters are passed, convert them to a string
+    // like `rgba(${r}, ${g}, ${b}, ${(a/255).toFixed(3)})`;
+    // Note that 3 decimal places should be enough, because the alpha is still 8 bits anyways
+    // and 1/255 is the smallest increment for the alpha channel and that is 0.003921....
+    // the .replace(/\.?0+$/, '') removes any trailing zeros so that we don't have things like "1.000"
+    if (typeof colorOrR === 'object') {
+        return `rgba(${colorOrR.r}, ${colorOrR.g}, ${colorOrR.b}, ${(colorOrR.a/255).toFixed(3).replace(/\.?0+$/, '')})`;
+    } else {
+        return `rgba(${colorOrR}, ${g}, ${b}, ${(a/255).toFixed(3).replace(/\.?0+$/, '')})`;
+    }
+}/**
+ * Represents the state of a CrispSwContext at a point in time.
+ * Used for save() and restore() operations.
+ */
+class ContextState {
+    constructor(canvasWidth, canvasHeight, lineWidth, transform, strokeColor, fillColor, globalAlpha, clippingMask) {
+        this.canvasWidth = canvasWidth;
+        this.canvasHeight = canvasHeight;
+        this.lineWidth = lineWidth || 1;
+        this.transform = transform || new TransformationMatrix();
+        this.strokeColor = strokeColor || { r: 0, g: 0, b: 0, a: 1 };
+        this.fillColor = fillColor || { r: 0, g: 0, b: 0, a: 1 };
+        this.globalAlpha = globalAlpha || 1.0;
+        this.clippingMask = clippingMask || new Uint8Array(Math.ceil(canvasWidth * canvasHeight / 8)).fill(255);
+    }
+
+    clone() {
+        const clippingMaskCopy = new Uint8Array(this.clippingMask);
+        return new ContextState(
+            this.canvasWidth, this.canvasHeight,
+            this.lineWidth,
+            this.transform.clone(),
+            { ...this.strokeColor }, { ...this.fillColor },
+            this.globalAlpha,
+            clippingMaskCopy
+        );
+
+    }
+}
+// Main CrispSwCanvas class
+class CrispSwCanvas {
+    static version = '1.0.2';
+
+    constructor(width, height) {
+        // Support both (width, height) and (canvas) constructor styles
+        if (typeof width === 'object') {
+            const canvas = width;
+            this.width = canvas.width;
+            this.height = canvas.height;
+            this.title = canvas.title || '';
+        } else {
+            this.width = width;
+            this.height = height;
+            this.title = '';
+        }
+        
+        // Create the context immediately and store it privately
+        this._context = new CrispSwContext(this);
+    }
+
+    getContext(contextType) {
+        if (contextType !== "2d") {
+            throw new Error("Only '2d' context is supported");
+        }
+        return this._context;
+    }
+}
+// Check for Node.js environment and load polyfills if needed
+const isNode = typeof window === 'undefined' && typeof process !== 'undefined';
+
+/**
+ * Software-based Canvas 2D rendering context
+ * This provides a subset of the CanvasRenderingContext2D API that runs
+ * entirely in JavaScript without requiring the HTML5 Canvas API.
+ */
+class CrispSwContext {
+    constructor(canvas) {
+        // Store reference to the canvas element
+        this.canvas = canvas;
+        
+        // Ensure canvas has all required properties
+        if (!canvas.title) {
+            canvas.title = '';
+        }
+        
+        // Create additional compatibility properties for RenderChecks
+        // Different parts of the code base might access these properties in different ways
+        this.displayCanvas = {
+            width: canvas.width,
+            height: canvas.height,
+            title: canvas.title
+        };
+        
+        // Add title directly to context for maximum compatibility
+        // Some code might expect ctx.title instead of ctx.canvas.title
+        this.title = canvas.title;
+        
+        // Initialize the context state
+        this.stateStack = [new ContextState(canvas.width, canvas.height)];
+        
+        // Create the frameBuffer and two views for it
+        this.frameBufferUint8ClampedView = new Uint8ClampedArray(canvas.width * canvas.height * 4).fill(0);
+        // this view show optimise for when we deal with pixel values all together rather than r,g,b,a separately
+        this.frameBufferUint32View = new Uint32Array(this.frameBufferUint8ClampedView.buffer);
+        
+        this.tempClippingMask = new Uint8Array(Math.ceil(canvas.width * canvas.height / 8)).fill(0);
+        
+        // Initialize renderers
+        this.pixelRenderer = new SWRendererPixel(this.frameBufferUint8ClampedView, this.frameBufferUint32View, canvas.width, canvas.height, this);
+        this.lineRenderer = new SWRendererLine(this.pixelRenderer);
+        this.rectRenderer = new SWRendererRect(this.frameBufferUint8ClampedView, this.frameBufferUint32View, canvas.width, canvas.height, this.lineRenderer, this.pixelRenderer);
+        //this.roundedRectRenderer = new SWRendererRoundedRect(this.frameBufferUint8ClampedView, canvas.width, canvas.height, this.lineRenderer, this.pixelRenderer);
+        this.circleRenderer = new SWRendererCircle(this.pixelRenderer);
+        //this.arcRenderer = new SWRendererArc(this.pixelRenderer);
+    }
+
+    get currentState() {
+        return this.stateStack[this.stateStack.length - 1];
+    }
+
+    save() {
+        this.stateStack.push(this.currentState.clone());
+    }
+
+    restore() {
+        if (this.stateStack.length <= 1) {
+            throw new Error("Cannot restore() - stack is empty");
+        }
+        this.stateStack.pop();
+    }
+
+    // Transform methods
+    scale(x, y) {
+        this.currentState.transform = this.currentState.transform.scale(x, y);
+    }
+
+    rotate(angle) {
+        this.currentState.transform = this.currentState.transform.rotate(angle);
+    }
+
+    translate(x, y) {
+        this.currentState.transform = this.currentState.transform.translate(x, y);
+    }
+    
+    /**
+     * Resets the current transformation matrix to the identity matrix
+     */
+    resetTransform() {
+        this.currentState.transform.reset();
+    }
+
+    // Style setters
+    set fillStyle(style) {
+        this.currentState.fillColor = parseColor(style);
+    }
+
+    set strokeStyle(style) {
+        this.currentState.strokeColor = parseColor(style);
+    }
+
+    set lineWidth(width) {
+        this.currentState.lineWidth = width;
+    }
+
+    // Add globalAlpha property
+    set globalAlpha(value) {
+        this.currentState.globalAlpha = Math.max(0, Math.min(1, value)); // Clamp between 0 and 1
+    }
+
+    get globalAlpha() {
+        return this.currentState.globalAlpha;
+    }
+
+    // Drawing methods
+    beginPath() {
+        this.tempClippingMask.fill(0);
+    }
+
+    fill() {
+        throw new Error("fill() is not supported - use fillRect() instead");
+    }
+
+    stroke() {
+        throw new Error("stroke() is not supported - use strokeRect() instead");
+    }
+    
+    strokeLine(x1, y1, x2, y2) {
+        const state = this.currentState;
+        const scaledLineWidth = getScaledLineWidth(state.transform.elements, state.lineWidth);
+        
+        // Transform points according to current transformation matrix
+        const start = transformPoint(x1, y1, state.transform.elements);
+        const end = transformPoint(x2, y2, state.transform.elements);
+        
+        this.lineRenderer.drawLine({
+            start: { x: start.tx, y: start.ty },
+            end: { x: end.tx, y: end.ty },
+            thickness: scaledLineWidth,
+            color: state.strokeColor
+        });
+    }
+
+    clearRect(x, y, width, height) {
+        const state = this.currentState;
+        const center = transformPoint(x + width / 2, y + height / 2, state.transform.elements);
+        const rotation = getRotationAngle(state.transform.elements);
+        this.rectRenderer.clearRect({
+            center: { x: center.tx, y: center.ty },
+            width: width,
+            height: height,
+            rotation: rotation
+        });
+    }
+
+    // as the CrispSwCanvas does not support paths and fill() annd stroke() are not supported,
+    // rect() is used for clipping only.
+    rect(x, y, width, height) {
+        const state = this.currentState;
+        const center = transformPoint(x + width / 2, y + height / 2, state.transform.elements);
+        const rotation = getRotationAngle(state.transform.elements);
+        const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
+
+        this.rectRenderer.drawRect({
+            center: { x: center.tx, y: center.ty },
+            width: width * scaleX,
+            height: height * scaleY,
+            rotation: rotation,
+            clippingOnly: true
+        });
+    }
+
+    // The clip() function
+    // * takes the clippingMask and ANDs it with the tempClippingMask
+    // * clears the tempClippingMask to all zeroes
+    clip() {
+        // to a logical and of the current clippingMask and the tempClippingMask
+        // a little bit of bitwise magic like this:
+        // this.currentState.clippingMask = this.currentState.clippingMask && this.tempClippingMask;
+        // but we need to do it for each byte
+        for (let i = 0; i < this.currentState.clippingMask.length; i++) {
+            this.currentState.clippingMask[i] = this.currentState.clippingMask[i] & this.tempClippingMask[i];
+        }
+        // clip() does not close the path, so since we might add more rects to the paths, we cannot clear the tempClippingMask
+        // can't do this: this.tempClippingMask.fill(0);
+    }
+
+
+    fillRect(x, y, width, height) {
+        const state = this.currentState;
+        const center = transformPoint(x + width / 2, y + height / 2, state.transform.elements);
+        const rotation = getRotationAngle(state.transform.elements);
+        const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
+
+        this.rectRenderer.drawRect({
+            center: { x: center.tx, y: center.ty },
+            width: width * scaleX,
+            height: height * scaleY,
+            rotation: rotation,
+            clippingOnly: false,
+            strokeWidth: 0,
+            strokeColor: { r: 0, g: 0, b: 0, a: 0 },
+            fillColor: state.fillColor
+        });
+    }
+
+    strokeRect(x, y, width, height) {
+        const state = this.currentState;
+        const scaledLineWidth = getScaledLineWidth(state.transform.elements, state.lineWidth);
+
+        const center = transformPoint(x + width / 2, y + height / 2, state.transform.elements);
+        const rotation = getRotationAngle(state.transform.elements);
+        const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
+
+        this.rectRenderer.drawRect({
+            center: { x: center.tx, y: center.ty },
+            width: width * scaleX,
+            height: height * scaleY,
+            rotation: rotation,
+            clippingOnly: false,
+            strokeWidth: scaledLineWidth,
+            strokeColor: state.strokeColor,
+            fillColor: { r: 0, g: 0, b: 0, a: 0 }
+        });
+    }
+
+    blitToCanvas(canvas) {
+        if (isNode) return;
+
+        const imageData = new ImageData(this.frameBufferUint8ClampedView, this.canvas.width, this.canvas.height);
+        const ctx = canvas.getContext('2d');
+        ctx.putImageData(imageData, 0, 0);
+    }
+    
+    /**
+     * Fill a circle with the specified color
+     * @param {number} centerX - X coordinate of the circle center
+     * @param {number} centerY - Y coordinate of the circle center
+     * @param {number} radius - Radius of the circle
+     * @param {number} fillR - Red component of fill color (0-255)
+     * @param {number} fillG - Green component of fill color (0-255)
+     * @param {number} fillB - Blue component of fill color (0-255)
+     * @param {number} fillA - Alpha component of fill color (0-255)
+     */
+    fillCircle(centerX, centerY, radius, fillR, fillG, fillB, fillA) {
+        const state = this.currentState;
+        
+        // Transform center point according to current transformation matrix
+        const center = transformPoint(centerX, centerY, state.transform.elements);
+        
+        // Apply scale factor to radius
+        const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
+        const scaledRadius = radius * Math.max(scaleX, scaleY);
+        
+        // Create shape object for the circle
+        const circleShape = {
+            center: { x: center.tx, y: center.ty },
+            radius: scaledRadius,
+            strokeWidth: 0,
+            strokeColor: { r: 0, g: 0, b: 0, a: 0 }, // No stroke
+            fillColor: { r: fillR, g: fillG, b: fillB, a: fillA }
+        };
+        
+        // Call the circle renderer with our shape
+        this.circleRenderer.drawCircle(circleShape);
+    }
+    
+    /**
+     * Stroke a circle with the specified color and width
+     * @param {number} centerX - X coordinate of the circle center
+     * @param {number} centerY - Y coordinate of the circle center
+     * @param {number} radius - Radius of the circle
+     * @param {number} strokeWidth - Width of the stroke
+     * @param {number} strokeR - Red component of stroke color (0-255)
+     * @param {number} strokeG - Green component of stroke color (0-255)
+     * @param {number} strokeB - Blue component of stroke color (0-255)
+     * @param {number} strokeA - Alpha component of stroke color (0-255)
+     */
+    strokeCircle(centerX, centerY, radius, strokeWidth, strokeR, strokeG, strokeB, strokeA) {
+        const state = this.currentState;
+        
+        // Transform center point according to current transformation matrix
+        const center = transformPoint(centerX, centerY, state.transform.elements);
+        
+        // Apply scale factor to radius and stroke width
+        const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
+        const scaledRadius = radius * Math.max(scaleX, scaleY);
+        const scaledStrokeWidth = getScaledLineWidth(state.transform.elements, strokeWidth);
+        
+        // Create shape object for the circle
+        const circleShape = {
+            center: { x: center.tx, y: center.ty },
+            radius: scaledRadius,
+            strokeWidth: scaledStrokeWidth,
+            strokeColor: { r: strokeR, g: strokeG, b: strokeB, a: strokeA },
+            fillColor: { r: 0, g: 0, b: 0, a: 0 } // No fill
+        };
+        
+        // Call the circle renderer with our shape
+        this.circleRenderer.drawCircle(circleShape);
+    }
+    
+    /**
+     * Fill and stroke a circle with specified colors and stroke width
+     * @param {number} centerX - X coordinate of the circle center
+     * @param {number} centerY - Y coordinate of the circle center
+     * @param {number} radius - Radius of the circle
+     * @param {number} fillR - Red component of fill color (0-255)
+     * @param {number} fillG - Green component of fill color (0-255)
+     * @param {number} fillB - Blue component of fill color (0-255)
+     * @param {number} fillA - Alpha component of fill color (0-255)
+     * @param {number} strokeWidth - Width of the stroke
+     * @param {number} strokeR - Red component of stroke color (0-255)
+     * @param {number} strokeG - Green component of stroke color (0-255)
+     * @param {number} strokeB - Blue component of stroke color (0-255)
+     * @param {number} strokeA - Alpha component of stroke color (0-255)
+     */
+    fillAndStrokeCircle(
+        centerX, centerY, radius,
+        fillR, fillG, fillB, fillA,
+        strokeWidth,
+        strokeR, strokeG, strokeB, strokeA
+    ) {
+        const state = this.currentState;
+        
+        // Transform center point according to current transformation matrix
+        const center = transformPoint(centerX, centerY, state.transform.elements);
+        
+        // Apply scale factor to radius and stroke width
+        const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
+        const scaledRadius = radius * Math.max(scaleX, scaleY);
+        const scaledStrokeWidth = getScaledLineWidth(state.transform.elements, strokeWidth);
+        
+        // Create shape object for the circle
+        const circleShape = {
+            center: { x: center.tx, y: center.ty },
+            radius: scaledRadius,
+            strokeWidth: scaledStrokeWidth,
+            strokeColor: { r: strokeR, g: strokeG, b: strokeB, a: strokeA },
+            fillColor: { r: fillR, g: fillG, b: fillB, a: fillA }
+        };
+        
+        // Call the circle renderer with our shape
+        this.circleRenderer.drawCircle(circleShape);
+    }
+
+    /**
+     * Returns an ImageData object representing the pixel data for the specified rectangle.
+     * Compatible with HTML5 Canvas getImageData method.
+     * @param {number} sx - The x-coordinate of the top-left corner of the rectangle from which the data will be extracted
+     * @param {number} sy - The y-coordinate of the top-left corner of the rectangle from which the data will be extracted
+     * @param {number} sw - The width of the rectangle from which the data will be extracted
+     * @param {number} sh - The height of the rectangle from which the data will be extracted
+     * @returns {ImageData} An ImageData object containing the image data for the specified rectangle
+     */
+    getImageData(sx, sy, sw, sh) {
+        const canvasWidth = this.canvas.width;
+        const canvasHeight = this.canvas.height;
+        
+        // Ensure parameters are within bounds
+        sx = Math.max(0, Math.min(Math.floor(sx), canvasWidth));
+        sy = Math.max(0, Math.min(Math.floor(sy), canvasHeight));
+        sw = Math.max(0, Math.min(Math.floor(sw), canvasWidth - sx));
+        sh = Math.max(0, Math.min(Math.floor(sh), canvasHeight - sy));
+        
+        // Create a new buffer for the extracted data
+        const extractedData = new Uint8ClampedArray(sw * sh * 4);
+        
+        // If the requested area is the entire canvas, we can just return a copy of the frameBufferUint8ClampedView
+        if (sx === 0 && sy === 0 && sw === canvasWidth && sh === canvasHeight) {
+            extractedData.set(this.frameBufferUint8ClampedView);
+        } else {
+            // Copy pixel data from the frameBufferUint8ClampedView to the new buffer
+            for (let y = 0; y < sh; y++) {
+                for (let x = 0; x < sw; x++) {
+                    const srcIdx = ((sy + y) * canvasWidth + (sx + x)) * 4;
+                    const destIdx = (y * sw + x) * 4;
+                    
+                    extractedData[destIdx] = this.frameBufferUint8ClampedView[srcIdx];         // R
+                    extractedData[destIdx + 1] = this.frameBufferUint8ClampedView[srcIdx + 1]; // G
+                    extractedData[destIdx + 2] = this.frameBufferUint8ClampedView[srcIdx + 2]; // B
+                    extractedData[destIdx + 3] = this.frameBufferUint8ClampedView[srcIdx + 3]; // A
+                }
+            }
+        }
+        
+        // Return a new ImageData object with canvas info for RenderChecks compatibility
+        const imageData = new ImageData(extractedData, sw, sh);
+        
+        // Add extra properties that some check routines might expect
+        if (typeof imageData.canvasTitle === 'undefined') {
+            Object.defineProperty(imageData, 'canvasTitle', {
+                get: () => this.canvas.title || this.title || '',
+                configurable: true
+            });
+        }
+        
+        return imageData;
+    }
+    
 }
 /**
  * Shared rendering functions that work in both browser and Node.js environments
@@ -4566,1280 +5241,7 @@ class SWRendererPixel {
       });
     }
   }
-}function getRandomArc() {
-  const center = getRandomPoint(1);
-  const radius = 15 + SeededRandom.getRandom() * 50;
-  const startAngle = SeededRandom.getRandom() * 360;
-  const endAngle = startAngle + SeededRandom.getRandom() * 270 + 90;
-  const strokeWidth = SeededRandom.getRandom() * 10 + 1;
-  const strokeColor = getRandomColor(200, 255);
-  const fillColor = getRandomColor(100, 200);
-  
-  return {
-      type: 'arc',
-      center,
-      radius,
-      startAngle,
-      endAngle,
-      strokeWidth,
-      strokeColor,
-      fillColor
-  };
-}
-
-function addNinetyDegreeArcs(shapes, log, currentIterationNumber) {
-  // Not strictly needed as there is nothing random here
-  SeededRandom.seedWithInteger(currentIterationNumber);
-  
-  const strokeSizes = [1, 2, 3, 4];
-  const radii = [20, 40, 60];
-  let xOffset = 150;
-
-  for (const strokeWidth of strokeSizes) {
-    let yOffset = 150;
-    for (const radius of radii) {
-      shapes.push({
-        type: 'arc',
-        center: { x: xOffset, y: yOffset },
-        radius,
-        startAngle: 0,
-        endAngle: 90,
-        strokeWidth,
-        strokeColor: { r: 200, g: 100, b: 100, a: 255 },
-        fillColor: { r: 0, g: 0, b: 0, a: 0 }
-      });
-      log.innerHTML += `&#x25DC; 90&deg; arc at (${xOffset}, ${yOffset}) radius: ${radius} strokeWidth: ${strokeWidth}<br>`;
-      yOffset += radius * 2 + 20;
-    }
-    xOffset += 120;
-  }
-}
-
-function addRandomArcs(shapes, log, currentIterationNumber, count = 3) {
-  SeededRandom.seedWithInteger(currentIterationNumber);
-  for (let i = 0; i < count; i++) {
-    const arc = getRandomArc();
-    shapes.push(arc);
-    log.innerHTML += `&#x25DC; Arc at (${arc.center.x}, ${arc.center.y}) radius: ${arc.radius} angles: ${arc.startAngle}&deg; to ${arc.endAngle}&deg; strokeWidth: ${arc.strokeWidth} strokeColor: ${colorToString(arc.strokeColor)} fillColor: ${colorToString(arc.fillColor)}<br>`;
-  }
-}
-function getRandomCircle() {
-  return {
-      ...getRandomArc(),
-      type: 'circle',
-      startAngle: 0,
-      endAngle: 360
-  };
-}
-
-/**
- * Helper function for creating circle test cases that share core parameters
- * @param {Array} shapes - Array to add shapes to
- * @param {HTMLElement} log - Log element to add descriptions
- * @param {number} currentIterationNumber - Current iteration number for seeding
- * @param {number} count - Number of circles to create
- * @param {string} description - Description prefix for logging
- * @returns {Object|null} Extremes coordinates for the circle (if count is 1) or null (if count > 1)
- */
-function createRandomCircleTest(shapes, log, currentIterationNumber, count, description) {
-  SeededRandom.seedWithInteger(currentIterationNumber);
-  let extremes = null;
-  
-  for (let i = 0; i < count; i++) {
-    const circle = getRandomCircle();
-    shapes.push(circle);
-    log.innerHTML += `&#x20DD; ${description} circle at (${circle.center.x}, ${circle.center.y}) radius: ${circle.radius} strokeWidth: ${circle.strokeWidth} strokeColor: ${colorToString(circle.strokeColor)} fillColor: ${colorToString(circle.fillColor)}<br>`;
-    
-    // Calculate extremes, but only for the single circle case
-    if (count === 1) {
-      const effectiveRadius = circle.radius + circle.strokeWidth / 2;
-      extremes = {
-        leftX: Math.floor(circle.center.x - effectiveRadius),
-        rightX: Math.ceil(circle.center.x - effectiveRadius + effectiveRadius * 2 - 1),
-        topY: Math.floor(circle.center.y - effectiveRadius),
-        bottomY: Math.ceil(circle.center.y - effectiveRadius + effectiveRadius * 2 - 1)
-      };
-    }
-  }
-  
-  return extremes;
-}
-
-function addRandomCircles(shapes, log, currentIterationNumber, count = 5) {
-  createRandomCircleTest(shapes, log, currentIterationNumber, count, "Random");
-}
-
-function addOneRandomCircle(shapes, log, currentIterationNumber) {
-  return createRandomCircleTest(shapes, log, currentIterationNumber, 1, "Single random");
-}
-
-/**
- * Utility function to calculate circle parameters with proper positioning and dimensions
- * @param {Object} options - Configuration options for circle creation
- * @param {number} options.minRadius - Minimum radius for the circle
- * @param {number} options.maxRadius - Maximum radius for the circle
- * @param {boolean} options.hasStroke - Whether the circle has a stroke
- * @param {number} options.minStrokeWidth - Minimum stroke width (if hasStroke is true)
- * @param {number} options.maxStrokeWidth - Maximum stroke width (if hasStroke is true)
- * @param {boolean} options.randomPosition - Whether to use random positioning
- * @param {number} options.marginX - Horizontal margin from canvas edges
- * @param {number} options.marginY - Vertical margin from canvas edges
- * @returns {Object} Calculated circle parameters
- */
-function calculateCircleParameters(options) {
-  const {
-    minRadius = 8,
-    maxRadius = 225,
-    hasStroke = true,
-    minStrokeWidth = 1,
-    maxStrokeWidth = 30,
-    randomPosition = false,
-    marginX = 10,
-    marginY = 10
-  } = options;
-
-  // Randomly choose between grid-centered and pixel-centered
-  const atPixel = SeededRandom.getRandom() < 0.5;
-  
-  // Get initial center point
-  let {centerX, centerY} = atPixel
-    ? placeCloseToCenterAtPixel(renderTestWidth, renderTestHeight)
-    : placeCloseToCenterAtGrid(renderTestWidth, renderTestHeight);
-  
-  // Calculate base diameter
-  const diameter = Math.floor(minRadius * 2 + SeededRandom.getRandom() * (maxRadius * 2 - minRadius * 2));
-  const baseRadius = diameter / 2;
-  
-  // Calculate stroke width
-  const maxAllowedStrokeWidth = Math.floor(baseRadius / 1);
-  const strokeWidth = hasStroke 
-    ? (minStrokeWidth + Math.floor(SeededRandom.getRandom() * Math.min(maxStrokeWidth - minStrokeWidth + 1, maxAllowedStrokeWidth)))
-    : 0;
-  
-  // Handle random positioning if requested
-  if (randomPosition) {
-    const totalRadius = baseRadius + (strokeWidth / 2);
-    
-    // Calculate safe bounds
-    const minX = Math.ceil(totalRadius + marginX);
-    const maxX = Math.floor(renderTestWidth - totalRadius - marginX);
-    const minY = Math.ceil(totalRadius + marginY);
-    const maxY = Math.floor(renderTestHeight - totalRadius - marginY);
-    
-    // Adjust diameter if circle is too large
-    let adjustedDiameter = diameter;
-    if (maxX <= minX || maxY <= minY) {
-      // Circle is too large, reduce diameter to 1/4 of canvas size
-      adjustedDiameter = Math.min(
-        Math.floor(renderTestWidth / 4),
-        Math.floor(renderTestHeight / 4)
-      );
-      
-      // Recalculate bounds with reduced diameter
-      const newTotalRadius = (adjustedDiameter / 2) + (strokeWidth / 2);
-      const newMinX = Math.ceil(newTotalRadius + marginX);
-      const newMaxX = Math.floor(renderTestWidth - newTotalRadius - marginX);
-      const newMinY = Math.ceil(newTotalRadius + marginY);
-      const newMaxY = Math.floor(renderTestHeight - newTotalRadius - marginY);
-      
-      // Generate random position within new safe bounds
-      centerX = newMinX + Math.floor(SeededRandom.getRandom() * (newMaxX - newMinX + 1));
-      centerY = newMinY + Math.floor(SeededRandom.getRandom() * (newMaxY - newMinY + 1));
-    } else {
-      // Generate random position within original safe bounds
-      centerX = minX + Math.floor(SeededRandom.getRandom() * (maxX - minX + 1));
-      centerY = minY + Math.floor(SeededRandom.getRandom() * (maxY - minY + 1));
-    }
-  }
-  
-  // Adjust dimensions for crisp rendering
-  const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(
-    diameter, diameter, strokeWidth, { x: centerX, y: centerY }
-  );
-  const adjustedDiameter = adjustedDimensions.width;
-  const radius = adjustedDiameter / 2;
-  
-  return {
-    centerX,
-    centerY,
-    radius,
-    strokeWidth,
-    adjustedDiameter,
-    atPixel
-  };
-}
-
-function createTestCircle(currentIterationNumber, hasStroke = true, randomPosition = false) {
-  SeededRandom.seedWithInteger(currentIterationNumber);
-  checkCanvasHasEvenDimensions();
-  
-  const params = calculateCircleParameters({
-    minRadius: 10,
-    maxRadius: 225,
-    hasStroke,
-    minStrokeWidth: 1,
-    maxStrokeWidth: 30,
-    randomPosition,
-    marginX: 10,
-    marginY: 10
-  });
-  
-  const { centerX, centerY, radius, strokeWidth, adjustedDiameter, atPixel } = params;
-  
-  const circle = {
-    type: 'circle',
-    center: { x: centerX, y: centerY },
-    radius,
-    strokeWidth,
-    strokeColor: hasStroke ? getRandomColor(150, 230) : { r: 0, g: 0, b: 0, a: 0 },
-    fillColor: getRandomColor(100, 200),
-    startAngle: 0,
-    endAngle: 360
-  };
-  
-  // Calculate extremes for the circle
-  const effectiveRadius = hasStroke ? (radius + strokeWidth / 2) : radius;
-  
-  const extremes = {
-    leftX: Math.floor(circle.center.x - effectiveRadius),
-    rightX: Math.floor(circle.center.x - effectiveRadius) + effectiveRadius * 2 - 1,
-    topY: Math.floor(circle.center.y - effectiveRadius),
-    bottomY: Math.floor(circle.center.y - effectiveRadius) + effectiveRadius * 2 - 1
-  };
-  
-  return {
-    circle,
-    extremes,
-    centerX,
-    centerY,
-    radius,
-    strokeWidth,
-    adjustedDiameter,
-    atPixel
-  };
-}
-
-function addSingleRandomCircle(shapes, log, currentIterationNumber) {
-  const result = createTestCircle(currentIterationNumber, true, false);
-  const { circle, extremes, centerX, centerY, radius, strokeWidth, adjustedDiameter, atPixel } = result;
-  
-  // Add the circle to shapes
-  shapes.push(circle);
-  
-  // Log the circle details
-  log.innerHTML += `&#x20DD; Single random circle at (${centerX}, ${centerY}) radius: ${radius} ` + 
-                  `diameter: ${adjustedDiameter} strokeWidth: ${strokeWidth} ` +
-                  `centered at: ${atPixel ? 'pixel' : 'grid'} ` + 
-                  `strokeColor: ${colorToString(circle.strokeColor)} ` + 
-                  `fillColor: ${colorToString(circle.fillColor)}<br>`;
-  
-  return extremes;
-}
-
-function addSingleNoStrokeCircle(shapes, log, currentIterationNumber) {
-  const result = createTestCircle(currentIterationNumber, false, false);
-  const { circle, extremes, centerX, centerY, radius, adjustedDiameter, atPixel } = result;
-  
-  // Add the circle to shapes
-  shapes.push(circle);
-  
-  // Log the circle details
-  log.innerHTML += `&#x20DD; Single circle with no stroke at (${centerX}, ${centerY}) radius: ${radius} ` + 
-                  `diameter: ${adjustedDiameter} ` +
-                  `centered at: ${atPixel ? 'pixel' : 'grid'} ` + 
-                  `fillColor: ${colorToString(circle.fillColor)}<br>`;
-  
-  return extremes;
-}
-
-function addRandomPositionCircle(shapes, log, currentIterationNumber) {
-  const result = createTestCircle(currentIterationNumber, true, true);
-  const { circle, extremes, centerX, centerY, radius, strokeWidth, adjustedDiameter, atPixel } = result;
-  
-  // Add the circle to shapes
-  shapes.push(circle);
-  
-  // Log the circle details
-  log.innerHTML += `&#x20DD; Random position circle at (${centerX}, ${centerY}) radius: ${radius} ` + 
-                  `diameter: ${adjustedDiameter} strokeWidth: ${strokeWidth} ` +
-                  `centered at: ${atPixel ? 'pixel' : 'grid'} ` + 
-                  `strokeColor: ${colorToString(circle.strokeColor)} ` + 
-                  `fillColor: ${colorToString(circle.fillColor)}<br>`;
-  
-  return extremes;
-}
-
-function addRandomPositionNoStrokeCircle(shapes, log, currentIterationNumber) {
-  const result = createTestCircle(currentIterationNumber, false, true);
-  const { circle, extremes, centerX, centerY, radius, adjustedDiameter, atPixel } = result;
-  
-  // Add the circle to shapes
-  shapes.push(circle);
-  
-  // Log the circle details
-  log.innerHTML += `&#x20DD; Random position circle with no stroke at (${centerX}, ${centerY}) radius: ${radius} ` + 
-                  `diameter: ${adjustedDiameter} ` +
-                  `centered at: ${atPixel ? 'pixel' : 'grid'} ` + 
-                  `fillColor: ${colorToString(circle.fillColor)}<br>`;
-  
-  return extremes;
-}
-
-/**
- * Helper function to generate multiple circles with simple random placement
- * @param {Array} shapes - Array to add shapes to
- * @param {HTMLElement} log - Log element to add descriptions
- * @param {number} count - Number of circles to create
- * @param {boolean} includeStrokes - Whether to include strokes on circles
- * @param {string} description - Description to log
- * @returns {void}
- */
-function generateMultiplePreciseCircles(shapes, log, currentIterationNumber, count, includeStrokes, description) {
-  SeededRandom.seedWithInteger(currentIterationNumber);
-  checkCanvasHasEvenDimensions();
-  
-  log.innerHTML += `${description} (${count} circles)<br>`;
-  
-  for (let i = 0; i < count; i++) {
-    const params = calculateCircleParameters({
-      minRadius: 8,
-      maxRadius: 42,
-      hasStroke: includeStrokes,
-      minStrokeWidth: 1,
-      maxStrokeWidth: 4,
-      randomPosition: true,
-      marginX: 60,
-      marginY: 60
-    });
-    
-    const { centerX, centerY, radius, strokeWidth, atPixel } = params;
-    
-    // Create the circle with distinct colors (using partitioning to ensure variety)
-    const circle = {
-      type: 'circle',
-      center: { x: centerX, y: centerY },
-      radius,
-      strokeWidth,
-      // If not including strokes, use transparent stroke color
-      strokeColor: includeStrokes ? 
-                  getRandomColor(200, 255, i, count) : 
-                  { r: 0, g: 0, b: 0, a: 0 },
-      // Use more opaque fills if no stroke to make them more visible
-      fillColor: getRandomColor(includeStrokes ? 150 : 200, 
-                              includeStrokes ? 200 : 255, 
-                              count - i - 1, count),
-      startAngle: 0,
-      endAngle: 360
-    };
-    
-    // Add the circle to shapes
-    shapes.push(circle);
-    
-    // Log only the first few circles to avoid cluttering the log
-    if (i < 3) {
-      log.innerHTML += `&#x20DD; Circle ${i} at (${centerX}, ${centerY}) radius: ${radius} ` + 
-                      (includeStrokes ? `strokeWidth: ${strokeWidth} ` : `no stroke `) +
-                      `center type: ${atPixel ? 'pixel' : 'grid'} ` +
-                      (includeStrokes ? `strokeColor: ${colorToString(circle.strokeColor)} ` : ``) +
-                      `fillColor: ${colorToString(circle.fillColor)}<br>`;
-    }
-  }
-  
-  // Log message if we truncated the output
-  if (count > 3) {
-    log.innerHTML += `... and ${count - 3} more circles<br>`;
-  }
-}
-
-/**
- * Add multiple precise random circles with strokes
- */
-function addMultiplePreciseRandomCircles(shapes, log, currentIterationNumber, count = 10) {
-  generateMultiplePreciseCircles(
-    shapes, 
-    log, 
-    currentIterationNumber, 
-    count, 
-    true, 
-    "Adding multiple precise random circles with strokes"
-  );
-}
-
-/**
- * Add multiple precise random circles without strokes (fill only)
- */
-function addMultiplePreciseNoStrokeCircles(shapes, log, currentIterationNumber, count = 10) {
-  generateMultiplePreciseCircles(
-    shapes, 
-    log, 
-    currentIterationNumber, 
-    count, 
-    false, 
-    "Adding multiple precise random circles without strokes (fill only)"
-  );
-}
-
-// ----------------------------------------------------------------------
-// Single 1px Stroked Circle centered at grid
-function add1PxStrokeCenteredCircleAtGrid(shapes, log, currentIterationNumber) {
-  SeededRandom.seedWithInteger(currentIterationNumber);
-  // Ensure canvas dimensions are even for proper grid alignment
-  checkCanvasHasEvenDimensions();
-
-  const { centerX, centerY } = placeCloseToCenterAtGrid(renderTestWidth, renderTestHeight);
-
-  // Generate a random diameter (similar range as the rectangle dimensions)
-  let diameter = Math.floor(20 + SeededRandom.getRandom() * 130);
-  // Adjust the diameter for crisp stroke rendering (both width and height are the same)
-  const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(diameter, diameter, 1, { x: centerX, y: centerY });
-  const adjustedDiameter = adjustedDimensions.width; // (equals height)
-  const radius = adjustedDiameter / 2;
-
-  // Create the circle shape with a 1px stroke (red stroke, transparent fill)
-  shapes.push({
-    type: 'circle',
-    center: { x: centerX, y: centerY },
-    radius,
-    strokeWidth: 1,
-    strokeColor: { r: 255, g: 0, b: 0, a: 255 },
-    fillColor: { r: 0, g: 0, b: 0, a: 0 },
-    startAngle: 0,
-    endAngle: 360
-  });
-
-  log.innerHTML += `&#x20DD; 1px stroke centered circle at: (${centerX}, ${centerY}) diameter: ${adjustedDiameter} radius: ${radius}`;
-  
-  const leftX = centerX - radius - 0.5;
-  const rightX = centerX + radius - 0.5;
-  const topY = centerY - radius - 0.5;
-  const bottomY = centerY + radius - 0.5;
-
-  return { leftX, rightX, topY, bottomY };
-}
-
-// ----------------------------------------------------------------------
-// Single 1px Stroked Circle centered at pixel
-function add1PxStrokeCenteredCircleAtPixel(shapes, log, currentIterationNumber) {
-  SeededRandom.seedWithInteger(currentIterationNumber);
-  // Ensure canvas dimensions are even for proper pixel alignment
-  checkCanvasHasEvenDimensions();
-
-  // Replace direct calculation with new function
-  const { centerX, centerY } = placeCloseToCenterAtPixel(renderTestWidth, renderTestHeight);
-
-  // Generate a random diameter (similar range as the rectangle dimensions)
-  let diameter = Math.floor(20 + SeededRandom.getRandom() * 130);
-  // Adjust the diameter for crisp stroke rendering (both width and height are the same)
-  const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(diameter, diameter, 1, { x: centerX, y: centerY });
-  const adjustedDiameter = adjustedDimensions.width; // (width equals height)
-  const radius = adjustedDiameter / 2;
-
-  // Create the circle shape with a 1px stroke (red stroke, transparent fill)
-  shapes.push({
-    type: 'circle',
-    center: { x: centerX, y: centerY },
-    radius,
-    strokeWidth: 1,
-    strokeColor: { r: 255, g: 0, b: 0, a: 255 },
-    fillColor: { r: 0, g: 0, b: 0, a: 0 },
-    startAngle: 0,
-    endAngle: 360
-  });
-
-  log.innerHTML += `&#x20DD; 1px stroke centered circle at: (${centerX}, ${centerY}) diameter: ${adjustedDiameter} radius: ${radius}`;
-
-  const leftX = centerX - radius - 0.5;
-  const rightX = centerX + radius - 0.5;
-  const topY = centerY - radius - 0.5;
-  const bottomY = centerY + radius - 0.5;
-
-  return { leftX, rightX, topY, bottomY };
-}
-function addBlackLines(shapes, log, currentIterationNumber, lineWidth, count) {
-  SeededRandom.seedWithInteger(currentIterationNumber);
-  for (let i = 0; i < count; i++) {
-    const start = getRandomPoint(1);
-    const end = getRandomPoint(1);
-    shapes.push({
-      type: 'line',
-      start,
-      end,
-      thickness: lineWidth,
-      color: { r: 0, g: 0, b: 0, a: 255 }
-    });
-    log.innerHTML += `&#x2500; Black line from (${start.x}, ${start.y}) to (${end.x}, ${end.y}) thickness: ${lineWidth}<br>`;
-  }
-}
-
-function addRandomLines(shapes, log, currentIterationNumber, count = 15) {
-  SeededRandom.seedWithInteger(currentIterationNumber);
-  for (let i = 0; i < count; i++) {
-    const start = getRandomPoint(1);
-    const end = getRandomPoint(1);
-    const thickness = Math.floor(SeededRandom.getRandom() * 10) + 1;
-    const color = getRandomColor(150, 255);
-    shapes.push({
-      type: 'line',
-      start,
-      end,
-      thickness,
-      color
-    });
-    log.innerHTML += `&#x2500; Random line from (${start.x}, ${start.y}) to (${end.x}, ${end.y}) thickness: ${thickness} color: ${colorToString(color)}<br>`;
-  }
-}
-
-function add2PxVerticalLine(centerX, centerY, height, shapes, log) {
-  const topY = Math.floor(centerY - height/2);
-  const bottomY = topY + height;
-
-  let startY = topY;
-  let endY = bottomY;
-
-  if (SeededRandom.getRandom() < 0.5) {
-    startY = bottomY;
-    endY = topY;
-  }
-  
-  const leftX = Math.floor(centerX - 1);
-  const rightX = leftX + 1;
-  
-  shapes.push({
-    type: 'line',
-    start: { x: centerX, y: startY },
-    end: { x: centerX, y: endY },
-    thickness: 2,
-    color: { r: 255, g: 0, b: 0, a: 255 }
-  });
-
-  log.innerHTML += `&#x2500; 2px vertical line from (${centerX}, ${startY}) to (${centerX}, ${endY}) height: ${height}<br>`;
-
-  return { leftX, rightX, topY, bottomY: bottomY - 1};
-}
-
-function add2PxVerticalLineCenteredAtGrid(shapes, log, currentIterationNumber) {
-  checkCanvasHasEvenDimensions();
-  SeededRandom.seedWithInteger(currentIterationNumber);
-  const lineHeight = Math.floor(20 + SeededRandom.getRandom() * 130);
-  const { centerX, centerY } = placeCloseToCenterAtGrid(renderTestWidth, renderTestHeight);
-  
-  const result = add2PxVerticalLine(centerX, centerY, lineHeight, shapes, log);
-  
-  log.innerHTML += (`2px vertical line from (${centerX}, ${result.topY}) to (${centerX}, ${result.bottomY}) of height ${lineHeight}`);
-  
-  return result;
-}
-
-function add1PxVerticalLine(centerX, centerY, height, shapes, log) {
-  const topY = Math.floor(centerY - height/2);
-  const bottomY = topY + height;
-
-  let startY = topY;
-  let endY = bottomY;
-
-  if (SeededRandom.getRandom() < 0.5) {
-    startY = bottomY;
-    endY = topY;
-  }
-  
-  const pixelX = Math.floor(centerX);
-  
-  shapes.push({
-    type: 'line',
-    start: { x: centerX, y: startY },
-    end: { x: centerX, y: endY },
-    thickness: 1,
-    color: { r: 255, g: 0, b: 0, a: 255 }
-  });
-
-  log.innerHTML += `&#x2500; 1px vertical line from (${centerX}, ${startY}) to (${centerX}, ${endY}) height: ${height}<br>`;
-
-  return { leftX: pixelX, rightX: pixelX, topY, bottomY: bottomY - 1};
-}
-
-function add1PxVerticalLineCenteredAtPixel(shapes, log, currentIterationNumber) {
-  checkCanvasHasEvenDimensions();
-  SeededRandom.seedWithInteger(currentIterationNumber);
-  const lineHeight = Math.floor(20 + SeededRandom.getRandom() * 130);
-  const centerX = Math.floor(renderTestWidth / 2) + 0.5;
-  const centerY = Math.floor(renderTestHeight / 2);
-  
-  return add1PxVerticalLine(centerX, centerY, lineHeight, shapes, log);
-}
-
-function add1PxHorizontalLine(centerX, centerY, width, shapes, log) {
-  const leftX = Math.floor(centerX - width/2);
-  const rightX = leftX + width;
-
-  let startX = leftX;
-  let endX = rightX;
-
-  if (SeededRandom.getRandom() < 0.5) {
-    startX = rightX;
-    endX = leftX;
-  }
-  
-  const pixelY = Math.floor(centerY);
-  
-  shapes.push({
-    type: 'line',
-    start: { x: startX, y: centerY },
-    end: { x: endX, y: centerY },
-    thickness: 1,
-    color: { r: 255, g: 0, b: 0, a: 255 }
-  });
-
-  log.innerHTML += `&#x2500; 1px horizontal line from (${startX}, ${centerY}) to (${endX}, ${centerY}) width: ${width}<br>`;
-
-  return { topY: pixelY, bottomY: pixelY, leftX, rightX: rightX - 1};
-}
-
-function add1PxHorizontalLineCenteredAtPixel(shapes, log, currentIterationNumber) {
-  checkCanvasHasEvenDimensions();
-  SeededRandom.seedWithInteger(currentIterationNumber);
-  const lineWidth = Math.floor(20 + SeededRandom.getRandom() * 130);
-  const centerX = Math.floor(renderTestWidth / 2);
-  const centerY = Math.floor(renderTestHeight / 2) + 0.5;
-  
-  return add1PxHorizontalLine(centerX, centerY, lineWidth, shapes, log);
-}
-
-function add2PxHorizontalLine(centerX, centerY, width, shapes, log) {
-  const topY = Math.floor(centerY - 1);
-  const bottomY = topY + 1;
-
-  const leftX = Math.floor(centerX - width/2);
-  const rightX = leftX + width;
-
-  let startX = leftX;
-  let endX = rightX;
-
-  if (SeededRandom.getRandom() < 0.5) {
-    startX = rightX;
-    endX = leftX;
-  }
-  
-  shapes.push({
-    type: 'line',
-    start: { x: startX, y: centerY },
-    end: { x: endX, y: centerY },
-    thickness: 2,
-    color: { r: 255, g: 0, b: 0, a: 255 }
-  });
-
-  log.innerHTML += `&#x2500; 2px horizontal line from (${startX}, ${centerY}) to (${endX}, ${centerY}) width: ${width}<br>`;
-
-  return { topY, bottomY, leftX, rightX: rightX - 1};
-}
-
-function add2PxHorizontalLineCenteredAtGrid(shapes, log, currentIterationNumber) {
-  checkCanvasHasEvenDimensions();
-  SeededRandom.seedWithInteger(currentIterationNumber);
-  const lineWidth = Math.floor(20 + SeededRandom.getRandom() * 130);
-  const { centerX, centerY } = placeCloseToCenterAtGrid(renderTestWidth, renderTestHeight);
-  
-  return add2PxHorizontalLine(centerX, centerY, lineWidth, shapes, log);
-}
-function addAxisAlignedRectangles(shapes, log, currentIterationNumber, count = 5) {
-  SeededRandom.seedWithInteger(currentIterationNumber);
-  for (let i = 0; i < count; i++) {
-    var { center, adjustedDimensions, strokeWidth } = placeRoundedRectWithFillAndStrokeBothCrisp(10);
-    
-    const xOffset = Math.floor(SeededRandom.getRandom() * 100) - 50;
-    const yOffset = Math.floor(SeededRandom.getRandom() * 100) - 50;
-    
-    center = {
-      x: center.x + xOffset,
-      y: center.y + yOffset
-    };
-    
-    const strokeColor = getRandomColor(200, 255);
-    const fillColor = getRandomColor(100, 200);
-
-    shapes.push({
-      type: 'rect',
-      center: center,
-      width: adjustedDimensions.width,
-      height: adjustedDimensions.height,
-      rotation: 0,
-      strokeWidth,
-      strokeColor,
-      fillColor
-    });
-
-    log.innerHTML += `&#x25A1; Axis-aligned rect at (${center.x}, ${center.y}) width: ${adjustedDimensions.width} height: ${adjustedDimensions.height} strokeWidth: ${strokeWidth} strokeColor: ${colorToString(strokeColor)} fillColor: ${colorToString(fillColor)}<br>`;
-  }
-}
-
-function addRotatedRectangles(shapes, log, currentIterationNumber, count = 5) {
-  SeededRandom.seedWithInteger(currentIterationNumber);
-  for (let i = 0; i < count; i++) {
-    const center = getRandomPoint(1);
-    const width = 30 + SeededRandom.getRandom() * 100;
-    const height = 30 + SeededRandom.getRandom() * 100;
-    const rotation = SeededRandom.getRandom() * Math.PI * 2;
-    const strokeWidth = SeededRandom.getRandom() * 10 + 1;
-    const strokeColor = getRandomColor(200, 255);
-    const fillColor = getRandomColor(100, 200);
-
-    shapes.push({
-      type: 'rect',
-      center,
-      width,
-      height,
-      rotation,
-      strokeWidth,
-      strokeColor,
-      fillColor
-    });
-
-    log.innerHTML += `&#x25A1; Rotated rect at (${center.x}, ${center.y}) width: ${width.toFixed(1)} height: ${height.toFixed(1)} rotation: ${(rotation * 180 / Math.PI).toFixed(1)}&deg; strokeWidth: ${strokeWidth.toFixed(1)} strokeColor: ${colorToString(strokeColor)} fillColor: ${colorToString(fillColor)}<br>`;
-  }
-}
-
-function add1PxStrokeCenteredRectAtGrid(shapes, log, currentIterationNumber) {
-  checkCanvasHasEvenDimensions();
-  SeededRandom.seedWithInteger(currentIterationNumber);
-  const { centerX, centerY } = placeCloseToCenterAtGrid(renderTestWidth, renderTestHeight);
-
-  let rectWidth = Math.floor(20 + SeededRandom.getRandom() * 130);
-  let rectHeight = Math.floor(20 + SeededRandom.getRandom() * 130);
-
-  const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(rectWidth, rectHeight, 1, {x:centerX, y:centerY});
-
-  return add1PxStrokeCenteredRect(centerX, centerY, adjustedDimensions.width, adjustedDimensions.height, shapes, log);
-}
-
-function add1PxStrokeCenteredRectAtPixel(shapes, log, currentIterationNumber) {
-  checkCanvasHasEvenDimensions();
-  SeededRandom.seedWithInteger(currentIterationNumber);
-  const { centerX, centerY } = placeCloseToCenterAtGrid(renderTestWidth, renderTestHeight);
-
-  let rectWidth = Math.floor(20 + SeededRandom.getRandom() * 130);
-  let rectHeight = Math.floor(20 + SeededRandom.getRandom() * 130);
-  
-  const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(rectWidth, rectHeight, 1, {x:centerX, y:centerY});
-
-  return add1PxStrokeCenteredRect(centerX, centerY, adjustedDimensions.width, adjustedDimensions.height, shapes, log);
-}
-
-function add1PxStrokeCenteredRect(centerX, centerY, rectWidth, rectHeight, shapes, log) {
-  const leftX = Math.floor(centerX - rectWidth/2);
-  const rightX = leftX + rectWidth;
-  const topY = Math.floor(centerY - rectHeight/2);
-  const bottomY = topY + rectHeight;
-  
-  shapes.push({
-    type: 'rect',
-    center: { x: centerX, y: centerY },
-    width: rectWidth,
-    height: rectHeight,
-    rotation: 0,
-    strokeWidth: 1,
-    strokeColor: { r: 255, g: 0, b: 0, a: 255 },
-    fillColor: { r: 0, g: 0, b: 0, a: 0 }
-  });
-  
-  log.innerHTML += `&#x25A1; 1px stroke centered rect at (${centerX}, ${centerY}) width: ${rectWidth} height: ${rectHeight}<br>`;
-  
-  return { leftX, rightX, topY, bottomY };
-}
-function addAxisAlignedRoundedRectangles(shapes, log, currentIterationNumber, count = 10) {
-  SeededRandom.seedWithInteger(currentIterationNumber);
-  for (let i = 0; i < count; i++) {
-    // Use placeRoundedRectWithFillAndStrokeBothCrisp to get a properly positioned rectangle
-    var { center, adjustedDimensions, strokeWidth } = placeRoundedRectWithFillAndStrokeBothCrisp(10);
-    
-    // Move the center randomly by an integer amount in both x and y
-    const xOffset = Math.floor(SeededRandom.getRandom() * 100) - 50; // Random integer between -50 and 49
-    const yOffset = Math.floor(SeededRandom.getRandom() * 100) - 50; // Random integer between -50 and 49
-    
-    center = {
-      x: center.x + xOffset,
-      y: center.y + yOffset
-    };
-    
-    const radius = Math.round(SeededRandom.getRandom() * Math.min(adjustedDimensions.width, adjustedDimensions.height) * 0.2);
-    const strokeColor = getRandomColor(200, 255);
-    const fillColor = getRandomColor(100, 200);
-
-    shapes.push({
-      type: 'roundedRect',
-      center: center,
-      width: adjustedDimensions.width,
-      height: adjustedDimensions.height,
-      radius,
-      rotation: 0,
-      strokeWidth,
-      strokeColor,
-      fillColor
-    });
-
-    log.innerHTML += `&#x25A2; Axis-aligned rounded rect at: (${center.x}, ${center.y}) width: ${adjustedDimensions.width} height: ${adjustedDimensions.height} radius: ${radius} strokeWidth: ${strokeWidth} strokeColor: ${colorToString(strokeColor)} fillColor: ${colorToString(fillColor)}<br>`;
-  }
-}
-
-function addThinOpaqueStrokeRoundedRectangles(shapes, log, currentIterationNumber, count = 10) {
-  SeededRandom.seedWithInteger(currentIterationNumber);
-  for (let i = 0; i < count; i++) {
-    const width = Math.round(50 + SeededRandom.getRandom() * 100);
-    const height = Math.round(50 + SeededRandom.getRandom() * 100);
-    
-    // the starting initialisation of center is a random point at a grid crossing
-    const center = roundPoint(getRandomPoint(1));
-
-    const adjustedCenter = adjustCenterForCrispStrokeRendering(center.x, center.y, width, height, 1);
-
-    shapes.push({
-      type: 'roundedRect',
-      center: adjustedCenter,
-      width,
-      height,
-      radius: Math.round(SeededRandom.getRandom() * Math.min(width, height) * 0.2),
-      rotation: 0,
-      strokeWidth: 1,
-      strokeColor: getRandomColor(255, 255),
-      fillColor: getRandomColor(100, 200)
-    });
-
-    log.innerHTML += `&#x25A2; Thin opaque stroke rounded rect at: (${adjustedCenter.x}, ${adjustedCenter.y}) width: ${width} height: ${height} radius: ${Math.round(SeededRandom.getRandom() * Math.min(width, height) * 0.2)}<br>`;
-  }
-}
-
-function addLargeTransparentRoundedRectangles(shapes, log, currentIterationNumber, count = 10) {
-  SeededRandom.seedWithInteger(currentIterationNumber);
-  for (let i = 0; i < count; i++) {
-    // Use placeRoundedRectWithFillAndStrokeBothCrisp to get a properly positioned rectangle
-    var { center, adjustedDimensions, strokeWidth } = placeRoundedRectWithFillAndStrokeBothCrisp(40);
-    
-    // Move the center randomly by an integer amount in both x and y
-    const xOffset = Math.floor(SeededRandom.getRandom() * 100) - 50; // Random integer between -50 and 49
-    const yOffset = Math.floor(SeededRandom.getRandom() * 100) - 50; // Random integer between -50 and 49
-    
-    center = {
-      x: center.x + xOffset,
-      y: center.y + yOffset
-    };
-    
-    const strokeColor = { r: 0, g: 0, b: 0, a: 50 };
-    const fillColor = getRandomColor(100, 200);
-
-    shapes.push({
-      type: 'roundedRect',
-      center: center,
-      width: adjustedDimensions.width,
-      height: adjustedDimensions.height,
-      radius: 40,
-      rotation: 0,
-      strokeWidth,
-      strokeColor,
-      fillColor
-    });
-
-    log.innerHTML += `&#x25A2; Large transparent rounded rect at: (${center.x}, ${center.y}) width: ${adjustedDimensions.width} height: ${adjustedDimensions.height} radius: 40 strokeWidth: ${strokeWidth} strokeColor: ${colorToString(strokeColor)} fillColor: ${colorToString(fillColor)}<br>`;
-  }
-}
-
-function addNoStrokeRoundedRectangles(shapes, log, currentIterationNumber, count = 10) {
-  SeededRandom.seedWithInteger(currentIterationNumber);
-  for (let i = 0; i < count; i++) {
-    const center = roundPoint(getRandomPoint(1));
-    shapes.push({
-      type: 'roundedRect',
-      center,
-      width: 200,
-      height: 200,
-      radius: 40,
-      rotation: 0,
-      strokeWidth: 0,
-      strokeColor: { r: 0, g: 0, b: 0, a: 0 },
-      fillColor: getRandomColor(100, 200)
-    });
-
-    log.innerHTML += `&#x25A2; No-stroke rounded rect at: (${center.x}, ${center.y}) width: 200 height: 200 radius: 40<br>`;
-  }
-}
-
-function addRotatedRoundedRectangles(shapes, log, currentIterationNumber, count = 3) {
-  SeededRandom.seedWithInteger(currentIterationNumber);
-  for (let i = 0; i < count; i++) {
-    const width = 50 + SeededRandom.getRandom() * 100;
-    const height = 50 + SeededRandom.getRandom() * 100;
-    const center = getRandomPoint(1);
-    const radius = Math.min(width, height) * 0.2;
-    const rotation = SeededRandom.getRandom() * Math.PI * 2;
-    const strokeWidth = SeededRandom.getRandom() * 10 + 1;
-
-    shapes.push({
-      type: 'roundedRect',
-      center,
-      width,
-      height,
-      radius,
-      rotation,
-      strokeWidth,
-      strokeColor: getRandomColor(200, 255),
-      fillColor: getRandomColor(100, 200)
-    });
-
-    log.innerHTML += `&#x25A2; Rotated rounded rect at: (${center.x}, ${center.y}) width: ${width.toFixed(1)} height: ${height.toFixed(1)} radius: ${radius.toFixed(1)} rotation: ${(rotation * 180 / Math.PI).toFixed(1)}&deg; strokeWidth: ${strokeWidth.toFixed(1)}<br>`;
-  }
-}
-
-function addCenteredRoundedRectOpaqueStrokesRandomStrokeWidth(shapes, log, currentIterationNumber) {
-  checkCanvasHasEvenDimensions();
-  SeededRandom.seedWithInteger(currentIterationNumber);
-
-  const maxWidth = renderTestWidth * 0.6;
-  const maxHeight = renderTestHeight * 0.6;
-
-  const strokeWidth = Math.round(SeededRandom.getRandom() * 10 + 1);
-
-  // center is an even number divided by 2, so it's an integer,
-  // so the center is at a grid crossing.
-  const center = { x: renderTestWidth/2, y: renderTestHeight/2 };
-
-  
-  let rectWidth = Math.round(50 + SeededRandom.getRandom() * maxWidth);
-  let rectHeight = Math.round(50 + SeededRandom.getRandom() * maxHeight);
-
-  const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(rectWidth, rectHeight, strokeWidth, center);
-  const radius = Math.round(SeededRandom.getRandom() * Math.min(rectWidth, rectHeight) * 0.2);
-  const strokeColor = getRandomColor(255, 255, 0, 2);
-  const fillColor = getRandomColor(100, 200, 1, 2);
-  
-  shapes.push({
-    type: 'roundedRect',
-    center,
-    width: adjustedDimensions.width,
-    height: adjustedDimensions.height,
-    radius,
-    rotation: 0,
-    strokeWidth,
-    strokeColor,
-    fillColor
-  });
-
-  log.innerHTML += `&#x25A2; Centered rounded rect with opaque stroke at: (${center.x}, ${center.y}) width: ${adjustedDimensions.width} height: ${adjustedDimensions.height} radius: ${radius} strokeWidth: ${strokeWidth} strokeColor: ${colorToString(strokeColor)} fillColor: ${colorToString(fillColor)}`;
-}
-
-// TODO to work out exactly when the main features of the rounded rect
-// are identical in the sw renderer and the canvas renderer. 
-function addCenteredRoundedRectTransparentStrokesRandomStrokeWidth(shapes, log, currentIterationNumber) {
-  checkCanvasHasEvenDimensions();
-  SeededRandom.seedWithInteger(currentIterationNumber);
-
-  var { center, adjustedDimensions, strokeWidth } = placeRoundedRectWithFillAndStrokeBothCrisp(40);
-
-  const strokeColor = getRandomColor(50, 150);
-  const fillColor = getRandomColor(50, 150);
-  const radius = Math.round(SeededRandom.getRandom() * Math.min(adjustedDimensions.width , adjustedDimensions.height) * 0.2);
-  
-  shapes.push({
-    type: 'roundedRect',
-    center,
-    width: adjustedDimensions.width,
-    height: adjustedDimensions.height,
-    radius,
-    rotation: 0,
-    strokeWidth,
-    strokeColor,
-    fillColor
-  });
-
-  log.innerHTML += `&#x25A2; Centered rounded rect with transparent stroke at: (${center.x}, ${center.y}) width: ${adjustedDimensions.width} height: ${adjustedDimensions.height} radius: ${radius} strokeWidth: ${strokeWidth} strokeColor: ${colorToString(strokeColor)} fillColor: ${colorToString(fillColor)}`;
-}
-
-
-// The case of fill PLUS a semi-transparent stroke is actually slightly trickier because
-// both the stroke and fill are entirely visible, so they have to be
-// BOTH drawn crisply, and using one path only for both. This means that
-//  1) the fill needs to have its edges on the grid (hence width and height need to be adjusted depending on whether the center is at a grid crossing or not)
-//  2) the stroke has to be of even width,
-function placeRoundedRectWithFillAndStrokeBothCrisp(maxStrokeWidth = 40) {
-  const maxWidth = renderTestWidth * 0.6;
-  const maxHeight = renderTestHeight * 0.6;
-
-  let strokeWidth = Math.round(SeededRandom.getRandom() * maxStrokeWidth + 1);
-
-  // the only way to make both the fill and the stroke crisp with the same path
-  // is if the fill path runs all around grid lines, and the stroke falls half on one side
-  // of the path and the other half on the other side. I.e. the strokeWidth must be even.
-  strokeWidth = strokeWidth % 2 === 0 ? strokeWidth : strokeWidth + 1;
-
-  // center is an even number divided by 2, so it's an integer,
-  // so the center is at a grid crossing.
-  let center = { x: renderTestWidth / 2, y: renderTestHeight / 2 };
-
-  // 50% of the times, move the center by half pixel so we also test the case where the
-  // center is not at a grid crossing.
-  if (SeededRandom.getRandom() < 0.5) {
-    center = { x: center.x + 0.5, y: center.y + 0.5 };
-  }
-
-  // get a random starting dimension, we'll adjust it soon after
-  let rectWidth = Math.round(50 + SeededRandom.getRandom() * maxWidth);
-  let rectHeight = Math.round(50 + SeededRandom.getRandom() * maxHeight);
-
-  const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(rectWidth, rectHeight, strokeWidth, center);
-  return { center, adjustedDimensions, strokeWidth };
-}
-
-function add1PxStrokeCenteredRoundedRectAtGrid(shapes, log, currentIterationNumber) {
-  checkCanvasHasEvenDimensions();
-  SeededRandom.seedWithInteger(currentIterationNumber);
-
-  const { centerX, centerY } = placeCloseToCenterAtGrid(renderTestWidth, renderTestHeight);
-
-  let rectWidth = Math.floor(20 + SeededRandom.getRandom() * 130);
-  let rectHeight = Math.floor(20 + SeededRandom.getRandom() * 130);
-
-  const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(rectWidth, rectHeight, 1, {x:centerX, y:centerY});
-
-  return add1PxStrokeCenteredRoundedRect(centerX, centerY, adjustedDimensions.width, adjustedDimensions.height, shapes, log);
-}
-
-function add1PxStrokeCenteredRoundedRectAtPixel(shapes, log, currentIterationNumber) {
-  checkCanvasHasEvenDimensions();
-  SeededRandom.seedWithInteger(currentIterationNumber);
-
-  const { centerX, centerY } = placeCloseToCenterAtPixel(renderTestWidth, renderTestHeight);
-
-  let rectWidth = Math.floor(20 + SeededRandom.getRandom() * 130);
-  let rectHeight = Math.floor(20 + SeededRandom.getRandom() * 130);
-  
-  const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(rectWidth, rectHeight, 1, {x:centerX, y:centerY});
-
-  return add1PxStrokeCenteredRoundedRect(centerX, centerY, adjustedDimensions.width, adjustedDimensions.height, shapes, log);
-}
-
-function add1PxStrokeCenteredRoundedRect(centerX, centerY, rectWidth, rectHeight, shapes, log) {
-  const leftX = Math.floor(centerX - rectWidth/2);
-  const rightX = leftX + rectWidth;
-  const topY = Math.floor(centerY - rectHeight/2);
-  const bottomY = topY + rectHeight;
-  
-  shapes.push({
-    type: 'roundedRect',
-    center: { x: centerX, y: centerY },
-    width: rectWidth,
-    height: rectHeight,
-    radius: Math.round(SeededRandom.getRandom() * Math.min(rectWidth, rectHeight) * 0.2),
-    rotation: 0,
-    strokeWidth: 1,
-    strokeColor: { r: 255, g: 0, b: 0, a: 255 },
-    fillColor: { r: 0, g: 0, b: 0, a: 0 }
-  });
-
-  log.innerHTML += `&#x25A2; 1px stroke centered rounded rect at: (${centerX}, ${centerY}) width: ${rectWidth} height: ${rectHeight} radius: ${Math.round(SeededRandom.getRandom() * Math.min(rectWidth, rectHeight) * 0.2)}`;
-  
-  return { leftX, rightX, topY, bottomY };
-}
-function roundPoint({x, y}) {
-  return {
-    x: Math.round(x),
-    y: Math.round(y)
-  };
-}
-
-/**
- * Adjusts width and height to ensure crisp rendering based on stroke width and center position
- * @param {number} width - Original width
- * @param {number} height - Original height
- * @param {number} strokeWidth - Width of the stroke
- * @param {Object} center - Center coordinates {x, y}
- * @returns {Object} Adjusted width and height
- */
-function adjustDimensionsForCrispStrokeRendering(width, height, strokeWidth, center) {
-
-  // Dimensions should be integers, because non-integer dimensions
-  // always produce a non-crisp (i.e. non-grid-aligned) stroke/fill.
-  let adjustedWidth = Math.floor(width);
-  let adjustedHeight = Math.floor(height);
-
-  // FIXING THE WIDTH /////////////////////////////////
-
-  // For center's x coordinate at grid points (integer coordinates)
-  if (Number.isInteger(center.x)) {
-    // For odd strokeWidth, width should be odd
-    if (strokeWidth % 2 !== 0) {
-      if (adjustedWidth % 2 === 0) adjustedWidth++;
-    }
-    // For even strokeWidth, width should be even
-    else {
-      if (adjustedWidth % 2 !== 0) adjustedWidth++;
-    }
-  }
-  // For center's x coordinate at pixels (i.e. *.5 coordinates)
-  else if (center.x % 1 === 0.5) {
-    // For odd strokeWidth, width should be even
-    if (strokeWidth % 2 !== 0) {
-      if (adjustedWidth % 2 !== 0) adjustedWidth++;
-    }
-    // For even strokeWidth, width should be odd
-    else {
-      if (adjustedWidth % 2 === 0) adjustedWidth++;
-    }
-  }
-
-  // FIXING THE HEIGHT /////////////////////////////////
-
-  // For center's y coordinate at grid points (integer coordinates)
-  if (Number.isInteger(center.y)) {
-    // For odd strokeWidth, height should be odd
-    if (strokeWidth % 2 !== 0) {
-      if (adjustedHeight % 2 === 0) adjustedHeight++;
-    }
-    // For even strokeWidth, height should be even
-    else {
-      if (adjustedHeight % 2 !== 0) adjustedHeight++;
-    }
-  }
-  // For center's y coordinate at pixels (i.e. *.5 coordinates)
-  else if (center.y % 1 === 0.5) {
-    // For odd strokeWidth, height should be even
-    if (strokeWidth % 2 !== 0) {
-      if (adjustedHeight % 2 !== 0) adjustedHeight++;
-    }
-    // For even strokeWidth, height should be odd
-    else {
-      if (adjustedHeight % 2 === 0) adjustedHeight++;
-    }
-  }
-
-  return {
-    width: adjustedWidth,
-    height: adjustedHeight
-  };
-}
-
-/**
- * Adjusts center coordinates to ensure crisp rendering based on stroke width and dimensions
- * @param {number} centerX - Original center X coordinate
- * @param {number} centerY - Original center Y coordinate
- * @param {number} width - Shape width
- * @param {number} height - Shape height
- * @param {number} strokeWidth - Width of the stroke
- * @returns {Object} Adjusted center coordinates
- */
-function adjustCenterForCrispStrokeRendering(centerX, centerY, width, height, strokeWidth) {
-  
-  let adjustedX = centerX;
-  let adjustedY = centerY;
-
-  // For odd strokeWidth
-  //   if width/height are even, then the center x/y should be in the middle of the pixel i.e. *.5
-  //   if width/height are odd, then the center x/y should be at the grid point i.e. integer
-
-  // For even strokeWidth
-  //   if width/height are even, then the center x/y should be at the grid point i.e. integer
-  //   if width/height are odd, then the center x/y should be in the middle of the pixel i.e. *.5
-
-  if (strokeWidth % 2 !== 0) {
-    if (width % 2 === 0) {
-      adjustedX = Math.floor(centerX) + 0.5;
-    } else {
-      adjustedX = Math.round(centerX);
-    }
-
-    if (height % 2 === 0) {
-      adjustedY = Math.floor(centerY) + 0.5;
-    } else {
-      adjustedY = Math.round(centerY);
-    }
-  }
-  else {
-    if (width % 2 === 0) {
-      adjustedX = Math.round(centerX);
-    } else {
-      adjustedX = Math.floor(centerX) + 0.5;
-    }
-
-    if (height % 2 === 0) {
-      adjustedY = Math.round(centerY);
-    } else {
-      adjustedY = Math.floor(centerY) + 0.5;
-    }
-  }
-
-
-
-  return {
-    x: adjustedX,
-    y: adjustedY
-  };
-}
-
-function placeCloseToCenterAtPixel(width, height) {
-  return {
-    centerX: Math.floor(width / 2) + 0.5,
-    centerY: Math.floor(height / 2) + 0.5
-  };
-}
-
-function placeCloseToCenterAtGrid(width, height) {
-  return {
-    centerX: Math.floor(width / 2),
-    centerY: Math.floor(height / 2)
-  };
-}function checkCanvasHasEvenDimensions() {
-  if (renderTestWidth % 2 !== 0 || renderTestHeight % 2 !== 0) {
-    console.error('Width and height should be even numbers for this test');
-  }
-}
-
-// adds many shapes.
-function buildScene(shapes, log, currentIterationNumber) {
-  addRandomLines(shapes, log, currentIterationNumber, 15);
-  addAxisAlignedRectangles(shapes, log, currentIterationNumber, 5);
-  addRotatedRectangles(shapes, log, currentIterationNumber, 5);
-  addAxisAlignedRoundedRectangles(shapes, log, currentIterationNumber, 10);
-  addLargeTransparentRoundedRectangles(shapes, log, currentIterationNumber, 10);
-  addNoStrokeRoundedRectangles(shapes, log, currentIterationNumber, 10); // fine because there is no stroke, the fills positions are handled by getRectangularFillGeometry, which always forces the corner to be at a grid, and the width and height are integers so everything is OK.
-  // addRotatedRoundedRectangles(shapes, log, 3); // TODO completely broken, "drawArcSWHelper" function is missing.
-  addNinetyDegreeArcs(shapes, log, currentIterationNumber); // roughly fine.
-  addRandomArcs(shapes, log, currentIterationNumber, 3); // roughly fine.
-  addRandomCircles(shapes, log, currentIterationNumber, 5); // looks pretty horrible, but roughly fine.
-  addThinOpaqueStrokeRoundedRectangles(shapes, log, currentIterationNumber, 10);
-}// See https://stackoverflow.com/a/47593316
-class SeededRandom {
-    static #currentRandom = null;
-
-    static seedWithInteger(seed) {
-        // XOR the seed with a constant value
-        seed = seed ^ 0xDEADBEEF;
-
-        // Pad seed with Phi, Pi and E.
-        this.#currentRandom = this.#sfc32(0x9E3779B9, 0x243F6A88, 0xB7E15162, seed);
-
-        // Warm up the generator
-        for (let i = 0; i < 15; i++) {
-            this.#currentRandom();
-        }
-    }
-
-    static getRandom() {
-        if (!this.#currentRandom) {
-            throw new Error('SeededRandom must be initialized with seedWithInteger before use');
-        }
-        return this.#currentRandom();
-    }
-
-    // Small Fast Counter (SFC) 32-bit implementation
-    static #sfc32(a, b, c, d) {
-        return function() {
-            a |= 0; b |= 0; c |= 0; d |= 0;
-            let t = (a + b | 0) + d | 0;
-            d = d + 1 | 0;
-            a = b ^ b >>> 9;
-            b = c + (c << 3) | 0;
-            c = (c << 21 | c >>> 11);
-            c = c + t | 0;
-            return (t >>> 0) / 4294967296;
-        }
-    }
-}
-/**
+}/**
  * Class for performing various checks on the rendered images
  */
 class RenderChecks {
@@ -8184,452 +7586,463 @@ class RenderTest {
       results.join('\n') : // Plain text for Node
       results.join('<br>'); // HTML for browser
   }
-}function addBlackLinesTest(lineWidth) {
-  return new RenderTestBuilder()
-    .withId('thin-black-lines-' + lineWidth)
-    .withTitle(`${lineWidth}px Black Lines`)
-    .withDescription(`Tests rendering of multiple black lines of line width ${lineWidth}`)
-    .addShapes(addBlackLines, lineWidth, 20)
-    .build();
-}
+}/**
+ * @fileoverview Test definition for rendering a medium-sized, vertical, 1px thick,
+ * opaque stroke line positioned precisely between pixels horizontally.
+ */
 
-function addEverythingTogetherTest() {
-  return new RenderTestBuilder()
-    .withId('all-shapes')
-    .withTitle('All Shape Types Combined')
-    .withDescription('Combines all shape types into a single scene to test overall rendering consistency')
-    .addShapes(buildScene)
-    .build();
-}
-
-function addThinRoundedRectsTest() {
-  return new RenderTestBuilder()
-    .withId('thin-rounded-rects')
-    .withTitle('10 thin-opaque-stroke rounded rectangles (line width 1px)')
-    .withDescription('Tests rendering of 10 rounded rectangles with thin stroke widths (line width 1px)')
-    .addShapes(addThinOpaqueStrokeRoundedRectangles, 10)
-    .build();
-}
-
-function addCenteredRoundedRectMixedOpaqueStrokeWidthsTest() {
-  return new RenderTestBuilder()
-    .withId('centered-rounded-rect')
-    .withTitle('Single Centered Rounded Rectangle of different stroke widths - opaque stroke - centered at grid')
-    .withDescription('A single rounded rectangle with different stroke widths and colors, centered at a grid crossing')
-    .addShapes(addCenteredRoundedRectOpaqueStrokesRandomStrokeWidth)
-    .withColorCheckMiddleRow({ expectedUniqueColors: 2 })
-    .withColorCheckMiddleColumn({ expectedUniqueColors: 2 })
-    .withSpecklesCheckOnSwCanvas()
-    .build();
-}
-
-function addCenteredRoundedRectMixedTransparentStrokeWidthsTest() {
-  return new RenderTestBuilder()
-    .withId('centered-rounded-rect-transparent')
-    .withTitle('Single Centered Rounded Rectangle - semi-transparent stroke and fill')
-    .withDescription('A single rounded rectangle with different stroke widths and semi-transparent colors, centered at a grid crossing')
-    .addShapes(addCenteredRoundedRectTransparentStrokesRandomStrokeWidth)
-    .withColorCheckMiddleRow({ expectedUniqueColors: 3 })
-    .withColorCheckMiddleColumn({ expectedUniqueColors: 3 })
-    .withSpecklesCheckOnSwCanvas()
-    .build();
-}
-
-function add1PxStrokedRoundedRectCenteredAtGridTest() {
-  return new RenderTestBuilder()
-    .withId('centered-1px-rounded-rect')
-    .withTitle('Single 1px Stroked Rounded Rectangle centered at grid')
-    .withDescription('Tests crisp rendering of a 1px stroked rounded rectangle where the center is at a crossing in the grid')
-    .addShapes(add1PxStrokeCenteredRoundedRectAtGrid)
-    .withExtremesCheck()
-    .build();
-}
-
-function add1PxStrokedRoundedRectCenteredAtPixelTest() {
-  return new RenderTestBuilder()
-    .withId('centered-1px-rounded-rect')
-    .withTitle('Single 1px Stroked Rounded Rectangle centered at pixel')
-    .withDescription('Tests crisp rendering of a 1px stroked rounded rectangle where the center is in the middle of a pixel')
-    .addShapes(add1PxStrokeCenteredRoundedRectAtPixel)
-    .withExtremesCheck()
-    .build();
-}
-
-function add2PxVerticalLineCenteredAtGridTest() {
-  return new RenderTestBuilder()
-    .withId('centered-2px-vertical-line')
-    .withTitle('Single 2px Vertical Line centered at grid')
-    .withDescription('Tests crisp rendering of a 2px vertical line')
-    .addShapes(add2PxVerticalLineCenteredAtGrid)
-    .withColorCheckMiddleRow({ expectedUniqueColors: 1 })
-    .withColorCheckMiddleColumn({ expectedUniqueColors: 1 })
-    .withExtremesCheck()
-    .build();
-}
-
-function add1PxVerticalLineCenteredAtPixelTest() {
-  return new RenderTestBuilder()
-    .withId('centered-1px-vertical-line')
-    .withTitle('Single 1px Vertical Line centered at pixel')
-    .withDescription('Tests crisp rendering of a 1px vertical line centered at pixel')
-    .addShapes(add1PxVerticalLineCenteredAtPixel)
-    .withColorCheckMiddleRow({ expectedUniqueColors: 1 })
-    .withColorCheckMiddleColumn({ expectedUniqueColors: 1 })
-    .withExtremesCheck()
-    .build();
-}
-
-function add1PxHorizontalLineCenteredAtPixelTest() {
-  return new RenderTestBuilder()
-    .withId('centered-1px-horizontal-line')
-    .withTitle('Single 1px Horizontal Line centered at pixel')
-    .withDescription('Tests crisp rendering of a 1px horizontal line centered at pixel')
-    .addShapes(add1PxHorizontalLineCenteredAtPixel)
-    .withColorCheckMiddleRow({ expectedUniqueColors: 1 })
-    .withColorCheckMiddleColumn({ expectedUniqueColors: 1 })
-    .withExtremesCheck()
-    .build();
-}
-
-function add2PxHorizontalLineCenteredAtGridTest() {
-  return new RenderTestBuilder()
-    .withId('centered-2px-horizontal-line')
-    .withTitle('Single 2px Horizontal Line centered at grid')
-    .withDescription('Tests crisp rendering of a 2px horizontal line centered at grid')
-    .addShapes(add2PxHorizontalLineCenteredAtGrid)
-    .withColorCheckMiddleRow({ expectedUniqueColors: 1 })
-    .withColorCheckMiddleColumn({ expectedUniqueColors: 1 })
-    .withExtremesCheck()
-    .build();
-}
-
-function add1PxStrokedRectCenteredAtGridTest() {
-  return new RenderTestBuilder()
-    .withId('centered-1px-rect')
-    .withTitle('Single 1px Stroked Rectangle centered at grid')
-    .withDescription('Tests crisp rendering of a 1px stroked rectangle where the center is at a crossing in the grid')
-    .addShapes(add1PxStrokeCenteredRectAtGrid)
-    .withExtremesCheck()
-    .build();
-}
-
-function add1PxStrokedRectCenteredAtPixelTest() {
-  return new RenderTestBuilder()
-    .withId('centered-1px-rect')
-    .withTitle('Single 1px Stroked Rectangle centered at pixel')
-    .withDescription('Tests crisp rendering of a 1px stroked rectangle where the center is in the middle of a pixel')
-    .addShapes(add1PxStrokeCenteredRectAtPixel)
-    .withExtremesCheck()
-    .build();
-}
-
-// ----------------------------------------------------------------------
-// Single 1px Stroked Circle centered at grid
-function add1PxStrokedCircleCenteredAtGridTest() {
-  return new RenderTestBuilder()
-    .withId('centered-1px-circle')
-    .withTitle('Single 1px Stroked Circle centered at grid')
-    .withDescription('Tests crisp rendering of a 1px stroked circle where the center is at a crossing in the grid')
-    .addShapes(add1PxStrokeCenteredCircleAtGrid)
-    // Adding a tolerance because for some strange reason, at least in Safari, the canvas render overflows
-    // the drawing of the stroke ever so slightly (completely invisible to the human eye, but it is there).
-    .withExtremesCheck(0.03)
-    //.withNoGapsInStrokeEdgesCheck() // Check that the stroke has no gaps // NOT NEEDED BECAUSE THE withContinuousStrokeCheck IS MORE STRICT
-    .withUniqueColorsCheck(1) // Check that there's exactly one unique color
-    .withContinuousStrokeCheck({ verticalScan: true, horizontalScan: true }) // Check that the stroke has no holes in both directions
-    .build();
-}
-
-// ----------------------------------------------------------------------
-// Single 1px Stroked Circle centered at pixel
-function add1PxStrokedCircleCenteredAtPixelTest() {
-  return new RenderTestBuilder()
-    .withId('centered-1px-circle-pixel')
-    .withTitle('Single 1px Stroked Circle centered at pixel')
-    .withDescription('Tests crisp rendering of a 1px stroked circle where the center is in the middle of a pixel')
-    .addShapes(add1PxStrokeCenteredCircleAtPixel)
-    // Adding a tolerance because for some strange reason, at least in Safari, the canvas render overflows
-    // the drawing of the stroke ever so slightly (completely invisible to the human eye, but it is there).
-    .withExtremesCheck(0.03)
-    //.withNoGapsInStrokeEdgesCheck() // Check that the stroke has no gaps // NOT NEEDED BECAUSE THE withContinuousStrokeCheck IS MORE STRICT
-    .withUniqueColorsCheck(1) // Check that there's exactly one unique color
-    .withContinuousStrokeCheck({ verticalScan: true, horizontalScan: true }) // Check that the stroke has no holes in both directions
-    .build();
-}
-
-function addSingleAxisAlignedRectangleTest() {
-  return new RenderTestBuilder()
-    .withId('single-axis-aligned-rectangle')
-    .withTitle('Single Axis-Aligned Rectangle')
-    .withDescription('Tests rendering of a single axis-aligned rectangle with random stroke width and semi-transparent colors')
-    .addShapes(addAxisAlignedRectangles, 1)  // Using just 1 rectangle
-    .withExtremesCheck()
-    .compareWithThreshold(3, 1)  // Compare with RGB and alpha thresholds of 1
-    .build();
-}
-
-function addAxisAlignedRectanglesTest() {
-  return new RenderTestBuilder()
-    .withId('axis-aligned-rectangles')
-    .withTitle('Axis-Aligned Rectangles')
-    .withDescription('Tests rendering of multiple axis-aligned rectangles with random positions, sizes, and colors')
-    .addShapes(addAxisAlignedRectangles, 10)  // Using 10 rectangles instead of the default 5
-    .withExtremesCheck()
-    .build();
-}
-
-function addRotatedRectanglesTest() {
-  return new RenderTestBuilder()
-    .withId('rotated-rectangles')
-    .withTitle('Rotated Rectangles')
-    .withDescription('Tests rendering of multiple rotated rectangles with random positions, sizes, angles, and colors')
-    .addShapes(addRotatedRectangles, 5)  // Using default count of 5 rectangles
-    .build();
-}
-
-function addRandomLinesTest() {
-  return new RenderTestBuilder()
-    .withId('random-lines')
-    .withTitle('Random Lines')
-    .withDescription('Tests rendering of multiple lines with random positions, thickness, and colors')
-    .addShapes(addRandomLines, 15)  // Using 15 lines
-    .build();
-}
-
-function addAxisAlignedRoundedRectanglesTest() {
-  return new RenderTestBuilder()
-    .withId('axis-aligned-rounded-rectangles')
-    .withTitle('Axis-Aligned Rounded Rectangles')
-    .withDescription('Tests rendering of multiple axis-aligned rounded rectangles with random positions, sizes, and corner radii')
-    .addShapes(addAxisAlignedRoundedRectangles, 8)  // Using 8 rounded rectangles
-    .build();
-}
-
-function addLargeTransparentRoundedRectanglesTest() {
-  return new RenderTestBuilder()
-    .withId('large-transparent-rounded-rectangles')
-    .withTitle('Large Transparent Rounded Rectangles')
-    .withDescription('Tests rendering of large rounded rectangles with transparent strokes and random colors')
-    .addShapes(addLargeTransparentRoundedRectangles, 6)  // Using 6 large transparent rounded rectangles
-    .build();
-}
-
-function addNoStrokeRoundedRectanglesTest() {
-  return new RenderTestBuilder()
-    .withId('no-stroke-rounded-rectangles')
-    .withTitle('Rounded Rectangles Without Stroke')
-    .withDescription('Tests rendering of rounded rectangles with no stroke, only fill')
-    .addShapes(addNoStrokeRoundedRectangles, 8)  // Using 8 rectangles with no stroke
-    .build();
-}
-
-function addNinetyDegreeArcsTest() {
-  return new RenderTestBuilder()
-    .withId('ninety-degree-arcs')
-    .withTitle('90\u00B0 Arcs')
-    .withDescription('Tests rendering of 90\u00B0 arcs with various radii and stroke widths')
-    .addShapes(addNinetyDegreeArcs)
-    .build();
-}
-
-function addRandomArcsTest() {
-  return new RenderTestBuilder()
-    .withId('random-arcs')
-    .withTitle('Random Arcs')
-    .withDescription('Tests rendering of arcs with random positions, angles, and colors')
-    .addShapes(addRandomArcs, 5)  // Using 5 random arcs
-    .build();
-}
-
-function addRandomCirclesTest() {
-  return new RenderTestBuilder()
-    .withId('random-circles')
-    .withTitle('Random Circles')
-    .withDescription('Tests rendering of circles with random positions, sizes, and colors')
-    .addShapes(addRandomCircles, 8)  // Using 8 random circles
-    .build();
-}
-
-function addOneRandomCircleTest() {
-  return new RenderTestBuilder()
-    .withId('one-random-circle')
-    .withTitle('One Random Circle')
-    .withDescription('Tests rendering of a single circle with random position, size, and colors')
-    .addShapes(addOneRandomCircle)  // Using the new function for a single random circle
-    // we don't check the extremes because they are almost always going to differ
-    // since the circle is at random coordinates and with random radius and stroke width,
-    // this means that it will be drawn in some random position with aliasing in the canvas,
-    // and crisply in some approximated "snapped" position by the sw renderer, so
-    // of course they are not going to match, nor their extremes.
-    //.withExtremesCheck(0.03)
-    .withNoGapsInStrokeEdgesCheck()  // Check that the stroke has no gaps
-    .withUniqueColorsCheck(3)  // Check for fill, stroke, and blended edge colors
-    .withSpecklesCheckOnSwCanvas()
-    .build();
-}
-
-function addSingleRandomCircleTest() {
-  return new RenderTestBuilder()
-    .withId('single-random-circle')
-    .withTitle('Single Random Circle')
-    .withDescription('Tests rendering of a single random circle with proper pixel alignment for crisp stroke rendering')
-    .addShapes(addSingleRandomCircle)  // Using the updated function that returns extremes
-    .withExtremesCheck(0.03)  // Same tolerance as the 1px circle tests
-    .withNoGapsInStrokeEdgesCheck() // Check that the stroke has no gaps
-    .withUniqueColorsCheck(3)  // Check that there are exactly three unique colors (fill, stroke, and blended edge)
-    .withSpecklesCheckOnSwCanvas()
-    .build();
-}
-
-function addSingleNoStrokeCircleTest() {
-  return new RenderTestBuilder()
-    .withId('single-no-stroke-circle')
-    .withTitle('Single Circle Without Stroke')
-    .withDescription('Tests rendering of a single circle with no stroke, only fill, to validate fill accuracy')
-    .addShapes(addSingleNoStrokeCircle)  // Using the no-stroke version
-    .withExtremesCheck(0.03)  // Same tolerance as the circle tests
-    .withNoGapsInFillEdgesCheck()  // Check that the fill has no gaps
-    .withUniqueColorsCheck(1)  // Check that there's exactly one unique color
-    .withSpecklesCheckOnSwCanvas()
-    .build();
-}
-
-function addRandomPositionCircleTest() {
-  return new RenderTestBuilder()
-    .withId('random-position-circle')
-    .withTitle('Randomly Positioned Circle With Stroke')
-    .withDescription('Tests rendering of a single circle at a random position with proper pixel alignment and crisp stroke rendering')
-    .addShapes(addRandomPositionCircle)  // Using the random position version
-    .withExtremesCheck(0.03)  // Same tolerance as the circle tests
-    .withNoGapsInStrokeEdgesCheck()  // Check that the stroke has no gaps
-    .withUniqueColorsCheck(3)  // Check that there are exactly three unique colors (fill, stroke, and blended edge)
-    .withSpecklesCheckOnSwCanvas()
-    .build();
-}
-
-function addRandomPositionNoStrokeCircleTest() {
-  return new RenderTestBuilder()
-    .withId('random-position-no-stroke-circle')
-    .withTitle('Randomly Positioned Circle Without Stroke')
-    .withDescription('Tests rendering of a single circle at a random position with no stroke, only fill, to validate fill accuracy at any location')
-    .addShapes(addRandomPositionNoStrokeCircle)  // Using the random position no-stroke version
-    .withExtremesCheck(0.03)  // Same tolerance as the circle tests
-    .withNoGapsInFillEdgesCheck()  // Check that the fill has no gaps
-    .withUniqueColorsCheck(1)  // Check that there's exactly one unique color
-    .withSpecklesCheckOnSwCanvas()
-    .build();
-}
-
-function addMultiplePreciseRandomCirclesTest() {
-  return new RenderTestBuilder()
-    .withId('multiple-precise-random-circles')
-    .withTitle('Multiple Precise Random Circles')
-    .withDescription('Tests rendering of multiple circles with precise pixel alignment, varied strokes and fills')
-    .addShapes(addMultiplePreciseRandomCircles, 12)  // Create 12 circles
-    .build();
-}
-
-function addMultiplePreciseNoStrokeCirclesTest() {
-  return new RenderTestBuilder()
-    .withId('multiple-precise-no-stroke-circles')
-    .withTitle('Multiple Precise Fill-Only Circles')
-    .withDescription('Tests rendering of multiple circles with no strokes, only fills, to validate the fill algorithm')
-    .addShapes(addMultiplePreciseNoStrokeCircles, 12)  // Create 12 circles
-    .build();
-}function loadLowLevelRenderTests() {
-  add1PxHorizontalLineCenteredAtPixelTest();
-  add1PxVerticalLineCenteredAtPixelTest();
-  add2PxHorizontalLineCenteredAtGridTest();
-  add2PxVerticalLineCenteredAtGridTest();
-
-  addBlackLinesTest(1);  // 1px lines
-  addBlackLinesTest(2);  // 2px lines
-  addBlackLinesTest(3);  // 3px lines
-  addBlackLinesTest(5);  // 5px lines
-  addBlackLinesTest(10); // 10px lines
-  addRandomLinesTest();  // Random lines with various colors and thicknesses
-
-  add1PxStrokedRectCenteredAtGridTest();
-  add1PxStrokedRectCenteredAtPixelTest();
-
-  // TODO to be renamed to show that the stroke can be thick
-  // and that the stroke and fill are semi-transparent
-  addSingleAxisAlignedRectangleTest();
-  addAxisAlignedRectanglesTest();
-  addRotatedRectanglesTest();
-
-  add1PxStrokedRoundedRectCenteredAtGridTest();
-  add1PxStrokedRoundedRectCenteredAtPixelTest();
-  addCenteredRoundedRectMixedOpaqueStrokeWidthsTest();
-  addCenteredRoundedRectMixedTransparentStrokeWidthsTest();
-  addThinRoundedRectsTest();
-  addAxisAlignedRoundedRectanglesTest();
-  addLargeTransparentRoundedRectanglesTest();
-  addNoStrokeRoundedRectanglesTest();
-
-  add1PxStrokedCircleCenteredAtGridTest();
-  add1PxStrokedCircleCenteredAtPixelTest();
-  addSingleRandomCircleTest(); 
-  addSingleNoStrokeCircleTest(); // Test case for circles with no stroke
-  addRandomPositionCircleTest(); // Test case for randomly positioned circle with stroke
-  addRandomPositionNoStrokeCircleTest(); // Test case for randomly positioned circle without stroke
-  addMultiplePreciseRandomCirclesTest(); // Multiple precise pixel-aligned circles with strokes
-  addMultiplePreciseNoStrokeCirclesTest(); // Multiple precise pixel-aligned circles without strokes
-  addOneRandomCircleTest(); // Single circle using the simplified random circle generation
-  addRandomCirclesTest(); // Multiple circles using the simplified random circle generation
-  
-  addNinetyDegreeArcsTest();
-  addRandomArcsTest();
-  
-  addEverythingTogetherTest();
-}
 /**
- * Node.js Test Runner for Minimal-2D-Js-Software-Renderer
- * ======================================================
+ * Draws a single, 1px thick, fully opaque vertical line centered horizontally
+ * between pixels, with variable height and potentially swapped start/end points.
+ *
+ * @param {CanvasRenderingContext2D | CrispSwContext} ctx - The rendering context.
+ * @param {number} currentIterationNumber - The current test iteration (unused here but required by signature).
+ * @returns {{ logs: string[], checkData: {topY: number, bottomY: number, leftX: number, rightX: number} }} Log entries and expected pixel extremes.
+ */
+function draw_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__vertical_orient(ctx, currentIterationNumber) {
+    let logs = [];
+    // Assume SeededRandom is available globally and seeded externally by RenderTest.
+    const renderTestWidth = ctx.canvas.width;
+    const renderTestHeight = ctx.canvas.height;
+
+    // Logic similar to add1PxVerticalLineCenteredAtPixel
+    const lineHeight = Math.floor(20 + SeededRandom.getRandom() * 130);
+    const centerX = Math.floor(renderTestWidth / 2) + 0.5; // Key: centered *between* pixels horizontally
+    const centerY = Math.floor(renderTestHeight / 2);
+
+    // Logic similar to add1PxVerticalLine
+    const topY = Math.floor(centerY - lineHeight / 2);
+    const bottomY = topY + lineHeight; // Canvas lines go up to, but don't include, the end coordinate pixel row for vertical lines.
+    const pixelX = Math.floor(centerX); // The single pixel column involved
+
+    let startY = topY;
+    let endY = bottomY;
+    // Randomly swap start/end points
+    if (SeededRandom.getRandom() < 0.5) {
+        [startY, endY] = [endY, startY];
+    }
+
+    // Set drawing properties
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = 'rgb(255, 0, 0)'; // Blue, matching original vertical line test
+    ctx.fillStyle = 'rgba(0, 0, 0, 0)';
+
+    // Draw the line using the canvas-like API, checking for strokeLine method
+    if (typeof ctx.strokeLine === 'function') {
+      ctx.strokeLine(centerX, startY, centerX, endY);
+    } else {
+      ctx.beginPath();
+      ctx.moveTo(centerX, startY);
+      ctx.lineTo(centerX, endY);
+      ctx.stroke();
+    }
+
+    logs.push(`&#x2500; 1px Red line from (${centerX.toFixed(1)}, ${startY.toFixed(1)}) to (${centerX.toFixed(1)}, ${endY.toFixed(1)}) color: ${ctx.strokeStyle} thickness: ${ctx.lineWidth}`);
+
+    // Calculate and return the expected extremes (inclusive pixel coordinates)
+    const extremes = {
+        leftX: pixelX,
+        rightX: pixelX,
+        topY: Math.min(startY, endY),
+        bottomY: Math.max(startY, endY) - 1
+    };
+
+    return { logs: logs, checkData: extremes };
+}
+
+/**
+ * Defines and registers the test case using RenderTestBuilder.
+ */
+function define_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__vertical_orient() {
+  if (typeof RenderTestBuilder !== 'function' || typeof draw_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__vertical_orient !== 'function') {
+    console.error('Missing RenderTestBuilder or drawing function for vertical line test');
+    return;
+  }
+
+  return new RenderTestBuilder()
+    .withId('lines--M-size--no-fill--1px-opaque-stroke--crisp-pixel-pos--vertical-orient')
+    .withTitle('Lines: M-Size No-Fill 1px-Opaque-Stroke Crisp-Pixel-Pos Vertical')
+    .withDescription('Tests crisp rendering of a vertical 1px line centered between pixels using canvas code.')
+    .runCanvasCode(draw_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__vertical_orient)
+    // --- Checks from original add1PxVerticalLineCenteredAtPixelTest --- 
+    .withColorCheckMiddleRow({ expectedUniqueColors: 1 })
+    .withColorCheckMiddleColumn({ expectedUniqueColors: 1 })
+    .withExtremesCheck() // Uses return value from draw_ function
+    // --- End checks ---
+    .build(); 
+}
+
+// Define and register the test immediately when this script is loaded.
+define_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__vertical_orient(); /**
+ * @fileoverview Test definition for rendering a medium-sized, horizontal, 1px thick,
+ * opaque stroke line positioned precisely between pixels.
+ */
+
+/**
+ * Draws a single, 1px thick, fully opaque horizontal line centered vertically
+ * between pixels, with variable width and potentially swapped start/end points.
+ *
+ * @param {CanvasRenderingContext2D | CrispSwContext} ctx - The rendering context.
+ * @param {number} currentIterationNumber - The current test iteration (unused here but required by signature).
+ * @returns {{ logs: string[], checkData: {topY: number, bottomY: number, leftX: number, rightX: number} }} Log entries and expected pixel extremes.
+ */
+function draw_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__horizontal_orient(ctx, currentIterationNumber) {
+    let logs = [];
+    // Assume SeededRandom is available globally and seeded externally by RenderTest.
+    // Assume renderTestWidth/Height are available from the context canvas.
+    const renderTestWidth = ctx.canvas.width;
+    const renderTestHeight = ctx.canvas.height;
+
+    // Logic from original add1PxHorizontalLineCenteredAtPixel
+    const lineWidth = Math.floor(20 + SeededRandom.getRandom() * 130);
+    const centerX = Math.floor(renderTestWidth / 2);
+    const centerY = Math.floor(renderTestHeight / 2) + 0.5; // Key: centered *between* pixels
+
+    // Logic from original add1PxHorizontalLine
+    const leftX = Math.floor(centerX - lineWidth / 2);
+    const rightX = leftX + lineWidth; // Canvas lines go up to, but don't include, the end coordinate pixel column for horizontal lines.
+    const pixelY = Math.floor(centerY); // The single pixel row involved
+
+    let startX = leftX;
+    let endX = rightX;
+    // Randomly swap start/end points
+    if (SeededRandom.getRandom() < 0.5) {
+        [startX, endX] = [endX, startX]; // Use destructuring assignment for swap
+    }
+
+    // Set drawing properties
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = 'rgb(255, 0, 0)';
+    ctx.fillStyle = 'rgba(0, 0, 0, 0)'; // Use transparent fill to be safe
+
+    // Draw the line using the canvas-like API, checking for strokeLine method
+    ctx.strokeLine(startX, centerY, endX, centerY);
+    logs.push(`&#x2500; 1px Red line from (${startX.toFixed(1)}, ${centerY.toFixed(1)}) to (${endX.toFixed(1)}, ${centerY.toFixed(1)}) color: ${ctx.strokeStyle} thickness: ${ctx.lineWidth}`);
+
+    // Calculate and return the expected extremes (inclusive pixel coordinates)
+    const extremes = {
+        topY: pixelY,
+        bottomY: pixelY,
+        leftX: Math.min(startX, endX), // Use actual min/max after potential swap
+        rightX: Math.max(startX, endX) - 1 // -1 because lineTo's end is exclusive pixel coord
+    };
+
+    return { logs: logs, checkData: extremes };
+}
+
+/**
+ * Defines and registers the test case using RenderTestBuilder.
+ */
+function define_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__horizontal_orient() {
+    return new RenderTestBuilder()
+      .withId('lines--M-size--no-fill--1px-opaque-stroke--crisp-pixel-pos--horizontal-orient')
+      .withTitle('Lines: M-Size No-Fill 1px-Opaque-Stroke Crisp-Pixel-Pos Horizontal')
+      .withDescription('Tests crisp rendering of a horizontal 1px line centered between pixels using canvas code.')
+      .runCanvasCode(draw_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__horizontal_orient) // Use the new drawing function
+      .withColorCheckMiddleRow({ expectedUniqueColors: 1 }) // Same check as original
+      .withColorCheckMiddleColumn({ expectedUniqueColors: 1 }) // Same check as original
+      .withExtremesCheck() // Same check as original, uses return value from runCanvasCode
+      .build(); // Creates and registers the RenderTest instance
+}
+
+// Define and register the test immediately when this script is loaded.
+define_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__horizontal_orient(); /**
+ * @fileoverview Test definition for rendering a medium-sized, horizontal, 2px thick,
+ * opaque stroke line centered at a grid intersection.
+ */
+
+/**
+ * Draws a single, 2px thick, fully opaque horizontal line centered vertically
+ * at a grid line (integer y-coordinate), with variable width and potentially
+ * swapped start/end points.
+ *
+ * @param {CanvasRenderingContext2D | CrispSwContext} ctx - The rendering context.
+ * @param {number} currentIterationNumber - The current test iteration (unused here).
+ * @returns {{ logs: string[], checkData: {topY: number, bottomY: number, leftX: number, rightX: number} }} Log entries and expected pixel extremes.
+ */
+function draw_lines__M_size__no_fill__2px_opaque_stroke__centered_at_grid__horizontal_orient(ctx, currentIterationNumber) {
+    let logs = [];
+    // Assume SeededRandom is available globally and seeded externally by RenderTest.
+    const renderTestWidth = ctx.canvas.width;
+    const renderTestHeight = ctx.canvas.height;
+
+    // Logic from add2PxHorizontalLineCenteredAtGrid
+    const lineWidth = Math.floor(20 + SeededRandom.getRandom() * 130);
+    // Center at grid crossing (integer coordinates)
+    const centerX = Math.floor(renderTestWidth / 2);
+    const centerY = Math.floor(renderTestHeight / 2);
+
+    // Logic from add2PxHorizontalLine
+    const leftX = Math.floor(centerX - lineWidth / 2);
+    const rightX = leftX + lineWidth; // Canvas lines go up to, but don't include, the end coordinate pixel column.
+    const topPixelY = centerY - 1; // The top row of pixels for a 2px line centered at integer Y
+    const bottomPixelY = centerY; // The bottom row of pixels
+
+    let startX = leftX;
+    let endX = rightX;
+    // Randomly swap start/end points
+    if (SeededRandom.getRandom() < 0.5) {
+        [startX, endX] = [endX, startX];
+    }
+
+    // Set drawing properties
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = 'rgb(255, 0, 0)'; // Red, matching original
+    ctx.fillStyle = 'rgba(0, 0, 0, 0)';
+
+    // Draw the line using the canvas-like API
+    if (typeof ctx.strokeLine === 'function') {
+      ctx.strokeLine(startX, centerY, endX, centerY);
+    } else {
+      ctx.beginPath();
+      ctx.moveTo(startX, centerY);
+      ctx.lineTo(endX, centerY);
+      ctx.stroke();
+    }
+
+    logs.push(`&#x2500; 2px Red line from (${startX.toFixed(1)}, ${centerY.toFixed(1)}) to (${endX.toFixed(1)}, ${centerY.toFixed(1)}) color: ${ctx.strokeStyle} thickness: ${ctx.lineWidth}`);
+
+    // Calculate and return the expected extremes (inclusive pixel coordinates)
+    // Matching the return value of the original add2PxHorizontalLine
+    const extremes = {
+        topY: topPixelY,
+        bottomY: bottomPixelY,
+        leftX: Math.min(startX, endX),
+        rightX: Math.max(startX, endX) - 1
+    };
+
+    return { logs: logs, checkData: extremes };
+}
+
+/**
+ * Defines and registers the test case using RenderTestBuilder.
+ */
+function define_lines__M_size__no_fill__2px_opaque_stroke__centered_at_grid__horizontal_orient() {
+  if (typeof RenderTestBuilder !== 'function' || typeof draw_lines__M_size__no_fill__2px_opaque_stroke__centered_at_grid__horizontal_orient !== 'function') {
+    console.error('Missing RenderTestBuilder or drawing function for 2px horizontal line test');
+    return;
+  }
+
+  return new RenderTestBuilder()
+    .withId('lines--M-size--no-fill--2px-opaque-stroke--centered-at-grid--horizontal-orient')
+    .withTitle('Lines: M-Size No-Fill 2px-Opaque-Stroke Centered-At-Grid Horizontal')
+    .withDescription('Tests crisp rendering of a horizontal 2px line centered at grid crossing using canvas code.')
+    .runCanvasCode(draw_lines__M_size__no_fill__2px_opaque_stroke__centered_at_grid__horizontal_orient)
+    // --- Checks from original add2PxHorizontalLineCenteredAtGridTest --- 
+    .withColorCheckMiddleRow({ expectedUniqueColors: 1 })
+    .withColorCheckMiddleColumn({ expectedUniqueColors: 1 })
+    .withExtremesCheck() // Uses return value from draw_ function
+    // --- End checks ---
+    .build(); 
+}
+
+// Define and register the test immediately when this script is loaded.
+define_lines__M_size__no_fill__2px_opaque_stroke__centered_at_grid__horizontal_orient(); /**
+ * @fileoverview Test definition for rendering a medium-sized, vertical, 2px thick,
+ * opaque stroke line centered at a grid intersection.
+ */
+
+/**
+ * Draws a single, 2px thick, fully opaque vertical line centered horizontally
+ * at a grid line (integer x-coordinate), with variable height and potentially
+ * swapped start/end points.
+ *
+ * @param {CanvasRenderingContext2D | CrispSwContext} ctx - The rendering context.
+ * @param {number} currentIterationNumber - The current test iteration (unused here).
+ * @returns {{ logs: string[], checkData: {topY: number, bottomY: number, leftX: number, rightX: number} }} Log entries and expected pixel extremes.
+ */
+function draw_lines__M_size__no_fill__2px_opaque_stroke__centered_at_grid__vertical_orient(ctx, currentIterationNumber) {
+    let logs = [];
+    // Assume SeededRandom is available globally and seeded externally by RenderTest.
+    const renderTestWidth = ctx.canvas.width;
+    const renderTestHeight = ctx.canvas.height;
+
+    // Logic from add2PxVerticalLineCenteredAtGrid
+    const lineHeight = Math.floor(20 + SeededRandom.getRandom() * 130);
+    // Center at grid crossing (integer coordinates)
+    const centerX = Math.floor(renderTestWidth / 2);
+    const centerY = Math.floor(renderTestHeight / 2);
+
+    // Logic from add2PxVerticalLine
+    const topY = Math.floor(centerY - lineHeight / 2);
+    const bottomY = topY + lineHeight; // Canvas lines go up to, but don't include, the end coordinate pixel row.
+    const leftPixelX = centerX - 1;  // Left pixel column for 2px line centered at integer X
+    const rightPixelX = centerX; // Right pixel column
+
+    let startY = topY;
+    let endY = bottomY;
+    // Randomly swap start/end points
+    if (SeededRandom.getRandom() < 0.5) {
+        [startY, endY] = [endY, startY];
+    }
+
+    // Set drawing properties
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = 'rgb(255, 0, 0)'; // Red, matching original
+    ctx.fillStyle = 'rgba(0, 0, 0, 0)';
+
+    // Draw the line using the canvas-like API
+    if (typeof ctx.strokeLine === 'function') {
+      ctx.strokeLine(centerX, startY, centerX, endY);
+    } else {
+      ctx.beginPath();
+      ctx.moveTo(centerX, startY);
+      ctx.lineTo(centerX, endY);
+      ctx.stroke();
+    }
+
+    logs.push(`&#x2500; 2px Red line from (${centerX.toFixed(1)}, ${startY.toFixed(1)}) to (${centerX.toFixed(1)}, ${endY.toFixed(1)}) color: ${ctx.strokeStyle} thickness: ${ctx.lineWidth}`);
+
+    // Calculate and return the expected extremes (inclusive pixel coordinates)
+    // Matching the return value of the original add2PxVerticalLine
+    const extremes = {
+        leftX: leftPixelX,
+        rightX: rightPixelX,
+        topY: Math.min(startY, endY),
+        bottomY: Math.max(startY, endY) - 1
+    };
+
+    return { logs: logs, checkData: extremes };
+}
+
+/**
+ * Defines and registers the test case using RenderTestBuilder.
+ */
+function define_lines__M_size__no_fill__2px_opaque_stroke__centered_at_grid__vertical_orient() {
+  if (typeof RenderTestBuilder !== 'function' || typeof draw_lines__M_size__no_fill__2px_opaque_stroke__centered_at_grid__vertical_orient !== 'function') {
+    console.error('Missing RenderTestBuilder or drawing function for 2px vertical line test');
+    return;
+  }
+
+  return new RenderTestBuilder()
+    .withId('lines--M-size--no-fill--2px-opaque-stroke--centered-at-grid--vertical-orient')
+    .withTitle('Lines: M-Size No-Fill 2px-Opaque-Stroke Centered-At-Grid Vertical')
+    .withDescription('Tests crisp rendering of a vertical 2px line centered at grid crossing using canvas code.')
+    .runCanvasCode(draw_lines__M_size__no_fill__2px_opaque_stroke__centered_at_grid__vertical_orient)
+    // --- Checks from original add2PxVerticalLineCenteredAtGridTest --- 
+    .withColorCheckMiddleRow({ expectedUniqueColors: 1 })
+    .withColorCheckMiddleColumn({ expectedUniqueColors: 1 })
+    .withExtremesCheck() // Uses return value from draw_ function
+    // --- End checks ---
+    .build(); 
+}
+
+// Define and register the test immediately when this script is loaded.
+define_lines__M_size__no_fill__2px_opaque_stroke__centered_at_grid__vertical_orient(); /**
+ * @fileoverview Test definition for rendering multiple (20) 1px thick, black, opaque
+ * lines with random start/end points.
+ */
+
+/**
+ * Draws 20 1px thick, black, opaque lines with random start/end points.
+ *
+ * @param {CanvasRenderingContext2D | CrispSwContext} ctx - The rendering context.
+ * @param {number} currentIterationNumber - The current test iteration.
+ * @returns {{ logs: string[] }} Log entries.
+ */
+function draw_lines__multi_20__no_fill__1px_black_opaque_stroke__random_pos__random_orient(ctx, currentIterationNumber) {
+    let logs = [];
+    // Assume SeededRandom is available globally and seeded externally by RenderTest.
+    // Assume getRandomPoint is available globally (from scene-creation-utils.js).
+    const count = 20;
+
+    // Set fixed drawing properties
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = 'rgb(0, 0, 0)'; // Black
+    ctx.fillStyle = 'rgba(0, 0, 0, 0)'; // No fill
+
+    for (let i = 0; i < count; i++) {
+        const start = getRandomPoint(1); // Assuming getRandomPoint(1) gets coords within bounds
+        const end = getRandomPoint(1);
+
+        // Draw the line using the canvas-like API
+        if (typeof ctx.strokeLine === 'function') {
+            ctx.strokeLine(start.x, start.y, end.x, end.y);
+        } else {
+            ctx.beginPath();
+            ctx.moveTo(start.x, start.y);
+            ctx.lineTo(end.x, end.y);
+            ctx.stroke();
+        }
+        logs.push(`&#x2500; 1px Black line from (${start.x.toFixed(1)}, ${start.y.toFixed(1)}) to (${end.x.toFixed(1)}, ${end.y.toFixed(1)}) color: ${ctx.strokeStyle} thickness: ${ctx.lineWidth}`);
+    }
+
+    // No return value needed as the original test had no checks requiring it.
+    return { logs: logs };
+}
+
+/**
+ * Defines and registers the test case using RenderTestBuilder.
+ */
+function define_lines__multi_20__no_fill__1px_black_opaque_stroke__random_pos__random_orient() {
+  if (typeof RenderTestBuilder !== 'function' || typeof draw_lines__multi_20__no_fill__1px_black_opaque_stroke__random_pos__random_orient !== 'function') {
+    console.error('Missing RenderTestBuilder or drawing function for 1px black lines test');
+    return;
+  }
+  // Ensure utility function is available
+  if (typeof getRandomPoint !== 'function') {
+    console.error('Missing utility function getRandomPoint');
+    return;
+  }
+
+  return new RenderTestBuilder()
+    .withId('lines--multi-20--no-fill--1px-black-opaque-stroke--random-pos--random-orient')
+    .withTitle('Lines: Multi-20 No-Fill 1px-Black-Opaque-Stroke Random-Pos Random-Orient')
+    .withDescription('Tests rendering of 20 black lines (1px width) with random positions/orientations using canvas code.')
+    .runCanvasCode(draw_lines__multi_20__no_fill__1px_black_opaque_stroke__random_pos__random_orient)
+    // No specific checks were applied in the original test definition
+    .build(); 
+}
+
+// Define and register the test immediately when this script is loaded.
+define_lines__multi_20__no_fill__1px_black_opaque_stroke__random_pos__random_orient(); /**
+ * Node.js Test Runner for Minimal-2D-Js-Software-Renderer - High Level Tests
+ * ==========================================================================
  * 
- * This script runs software renderer tests in Node.js without a browser.
- * It uses tests defined in add-tests.js to run tests via command line.
+ * This script runs high-level software renderer tests in Node.js without a browser.
+ * It uses tests defined in individual test files within tests/browser-tests/high-level-tests/
+ * to run tests via command line.
  */
 
 const fs = require('fs');
 const path = require('path');
 
-// Create Node.js specific version of RenderTest
+// Node.js specific version of RenderTest should already be loaded via concatenation
 
 const { exit } = require('process');
 
 function printHelp() {
     console.log(`
-  Node.js Test Runner for Minimal-2D-Js-Software-Renderer
-  ======================================================
+  Node.js High-Level Test Runner for Minimal-2D-Js-Software-Renderer
+  ===================================================================
   
-  Usage: node node-test-runner.js [options]
+  Usage: node node-high-level-test-runner.js [options]
   
   Options:
     -i, --id <id>         Test ID to run
-    -i, --iteration <num>   Specific iteration number to run
+    -I, --iteration <num> Specific iteration number to run (uppercase I to avoid clash with id's -i)
     -c, --count <num>     Number of iterations to run
     -r, --range <s-e>     Range of iterations to run (e.g., 1-10)
     -p, --progress        Show progress indicator
     -l, --list            List all available tests
-    -o, --output <dir>    Directory to save output images (default: ./test-output)
+    -o, --output <dir>    Directory to save output images (default: ./test-output-high-level)
     -t, --test            Run one iteration for all tests in the registry
     -v, --verbose         Show detailed test output
     -h, --help            Display this help information
   
   Examples:
-    node node-test-runner.js --list
-    node node-test-runner.js --id=thin-black-lines-2 --iteration=5
-    node node-test-runner.js --test --output=./test-output
-    node node-test-runner.js --id=random-circles --count=100 --progress
-    node node-test-runner.js --id=all-shapes --range=1-5 --output=./results
+    node node-high-level-test-runner.js --list
+    node node-high-level-test-runner.js --id=lines--M-size--no-fill--1px-opaque-stroke--crisp-pixel-pos--horizontal-orient --iteration=5
+    node node-high-level-test-runner.js --test --output=./test-output-high-level
+    node node-high-level-test-runner.js --id=rectangles--L-size--filled--1px-opaque-stroke--smooth-pixel-pos-and-size--no-rotation --count=100 --progress
+    node node-high-level-test-runner.js --id=circles--M-size--filled--no-stroke--smooth-pixel-pos--smooth-radius --range=1-5 --output=./results-high-level
   `);
   }
   
   // Simple argument parser
   function parseArgs(args) {
     const options = {
-      output: './test-output' // Default output directory
+      output: './test-output-high-level' // Default output directory
     };
     
     for (let i = 2; i < args.length; i++) {
@@ -8645,8 +8058,8 @@ function printHelp() {
         options.test = true;
       } else if (arg.startsWith('--id=')) {
         options.id = arg.substring(5);
-      } else if (arg.startsWith('--iteration=')) {
-        options.iteration = parseInt(arg.substring(10));
+      } else if (arg.startsWith('--iteration=')) { // Keep matching long form
+        options.iteration = parseInt(arg.substring(12));
       } else if (arg.startsWith('--count=')) {
         options.count = parseInt(arg.substring(8));
       } else if (arg.startsWith('--range=')) {
@@ -8655,7 +8068,7 @@ function printHelp() {
         options.output = arg.substring(9);
       } else if (arg === '--id' || arg === '-i') {
         if (i + 1 < args.length) options.id = args[++i];
-      } else if (arg === '--iteration' || arg === '-i') {
+      } else if (arg === '--iteration' || arg === '-I') { // Match short form -I
         if (i + 1 < args.length) options.iteration = parseInt(args[++i]);
       } else if (arg === '--count' || arg === '-c') {
         if (i + 1 < args.length) options.count = parseInt(args[++i]);
@@ -8672,11 +8085,16 @@ function printHelp() {
     return options;
   }
   
+  console.log("[High-Level Runner Base] Script top level reached.");
+
   // Parse command line arguments
+  console.log("[High-Level Runner Base] Parsing arguments...");
   const options = parseArgs(process.argv);
-  
+  console.log("[High-Level Runner Base] Arguments parsed:", options);
+
   // Display help if no arguments provided
   if (process.argv.length <= 2) {
+    console.log("[High-Level Runner Base] No arguments, printing help and exiting.");
     printHelp();
     process.exit(0);
   }
@@ -8684,20 +8102,26 @@ function printHelp() {
   // Export image data for tests
   function saveOutputImage(test, iterationNum, outputDir) {
     try {
-      console.log(`Saving image for test ${test.id}, iteration ${iterationNum} to ${outputDir}`);
+      // Create output directory if it doesn't exist (specific path for this test)
+      const testOutputDir = path.join(outputDir, test.id);
+       if (!fs.existsSync(testOutputDir)) {
+         fs.mkdirSync(testOutputDir, { recursive: true });
+       }
+
+      console.log(`Saving image for test ${test.id}, iteration ${iterationNum} to ${testOutputDir}`);
       
-      // Use the built-in exportBMP method
-      const filePath = test.exportBMP(outputDir, iterationNum);
+      // Use the built-in exportBMP method, passing the specific directory
+      const filePath = test.exportBMP(testOutputDir, iterationNum);
       
       if (filePath) {
         console.log(`  Saved BMP to ${filePath}`);
         return filePath;
       } else {
-        console.error(`  Failed to save output image`);
+        console.error(`  Failed to save output image for test ${test.id}, iteration ${iterationNum}`);
         return null;
       }
     } catch (err) {
-      console.error(`  Failed to save output image: ${err.message}`);
+      console.error(`  Failed to save output image for test ${test.id}, iteration ${iterationNum}: ${err.message}`);
       console.error(err.stack);
       return null;
     }
@@ -8706,9 +8130,10 @@ function printHelp() {
   // Save test results as text
   function saveTestResults(testId, iterationNum, test, outputDir) {
     try {
-      // Create output directory if it doesn't exist
-      if (!fs.existsSync(outputDir)) {
-        fs.mkdirSync(outputDir, { recursive: true });
+      // Create output directory if it doesn't exist (specific path for this test)
+      const testOutputDir = path.join(outputDir, test.id);
+      if (!fs.existsSync(testOutputDir)) {
+        fs.mkdirSync(testOutputDir, { recursive: true });
       }
       
       // Create result text
@@ -8726,47 +8151,95 @@ function printHelp() {
       
       // Add checks results if available
       if (test.functionToRunAllChecks) {
-        resultText += '\nChecks:\n';
-        resultText += test.functionToRunAllChecks(test) || "No checks performed";
+         // We need to manually execute the check function in Node.js environment
+         // It expects the test instance as context.
+         let checksLog = "";
+         let checkErrorCountBefore = test.errorCount;
+         try {
+             // Simulate the browser log container (might need refinement if checks use DOM heavily)
+             let nodeLogContainer = { innerHTML: "" }; 
+             let checkResults = test.functionToRunAllChecks(test, nodeLogContainer); // Pass the test instance
+             checksLog = nodeLogContainer.innerHTML; // Capture logs if any check uses it
+              // Some checks might return strings or directly call test.showError()
+             if (typeof checkResults === 'string' && checkResults) {
+                 checksLog += (checksLog ? '\n' : '') + checkResults;
+             } else if (test.errorCount > checkErrorCountBefore) {
+                 // Errors were added directly via test.showError() during checks
+                 checksLog += (checksLog ? '\n' : '') + `Checks resulted in ${test.errorCount - checkErrorCountBefore} new error(s).`;
+             } else if (!checksLog) {
+                 checksLog = "Checks completed (no specific log output, see errors above if any).";
+             }
+         } catch (checkErr) {
+             checksLog += `\nError during check execution: ${checkErr.message}`;
+             console.error(`Error executing checks for ${testId}:`, checkErr);
+         }
+         resultText += '\nChecks Log:\n';
+         resultText += checksLog;
+      } else {
+         resultText += '\nChecks: No checks configured for this test.\n';
       }
       
       // Save to file
-      const logFilename = `${testId}-iteration${iterationNum}-results.txt`;
-      const logFilePath = path.join(outputDir, logFilename);
+      const logFilename = `iteration${iterationNum}-results.txt`; // Simplified name within test folder
+      const logFilePath = path.join(testOutputDir, logFilename);
       fs.writeFileSync(logFilePath, resultText);
       
       console.log(`  Saved results to ${logFilePath}`);
       return logFilePath;
     } catch (err) {
-      console.error(`  Failed to save test results: ${err.message}`);
+      console.error(`  Failed to save test results for ${testId}, iteration ${iterationNum}: ${err.message}`);
       return null;
     }
   }
   
   // Main execution function
   function main() {
+    console.log("[High-Level Runner Base] main() function started.");
+    
+    // Ensure RenderTest registry exists (it should be populated by concatenated test files)
+    const registrySize = Object.keys(RenderTest.registry).length;
+    console.log(`[High-Level Runner Base] Found ${registrySize} tests registered.`);
+    if (registrySize === 0) {
+        console.warn("Warning: No tests found in the registry. Ensure test files were correctly concatenated and executed.");
+        // Don't exit immediately, maybe --list was intended
+    }
+
+
     // Handle --list option to show all tests
     if (options.list) {
-      console.log('Available tests:');
-      Object.keys(RenderTest.registry).sort().forEach(id => {
-        const test = RenderTest.registry[id];
-        console.log(`  ${id} - ${test.title}`);
-      });
+      console.log("[High-Level Runner Base] Executing --list command.");
+      console.log('Available high-level tests:');
+      if (registrySize > 0) {
+         Object.keys(RenderTest.registry).sort().forEach(id => {
+           const test = RenderTest.registry[id];
+           console.log(`  ${id} - ${test.title}`);
+         });
+      } else {
+          console.log("  (No tests registered)");
+      }
       process.exit(0);
     }
   
     // Handle --test option to run one iteration for all registered tests
     if (options.test) {
-      console.log('Running one iteration for all registered tests...');
+      console.log("[High-Level Runner Base] Executing --test command.");
+      console.log('Running one iteration for all registered high-level tests...');
       
       const testIds = Object.keys(RenderTest.registry).sort();
-      console.log(`Found ${testIds.length} registered tests.`);
       
-      // Create output directory if needed
+      if (testIds.length === 0) {
+          console.error("Error: No tests found to run with --test option.");
+          process.exit(1);
+      }
+      
+      // Create base output directory if needed
       if (options.output) {
         if (!fs.existsSync(options.output)) {
           fs.mkdirSync(options.output, { recursive: true });
+          console.log(`Created output directory: ${options.output}`);
         }
+      } else {
+          console.log("No output directory specified. Results and images will not be saved.");
       }
       
       let totalTests = testIds.length;
@@ -8783,54 +8256,65 @@ function printHelp() {
         
         if (showProgress) {
           const percent = Math.floor((index / totalTests) * 100);
-          process.stdout.write(`\rProgress: ${percent}% [${index}/${totalTests}] - Running ${testId}`);
+          process.stdout.write(`Progress: ${percent}% [${index}/${totalTests}] - Running ${testId}`);
         } else {
-          console.log(`Running test ${index+1}/${totalTests}: ${testId} - ${test.title}`);
+          console.log(`
+Running test ${index+1}/${totalTests}: ${testId} - ${test.title}`);
         }
         
         // Set verbosity on the test
         test.verbose = options.verbose;
         
         try {
-          const success = test.render(test.buildShapesFn, test.canvasCodeFn, iterationNum);
+           // High-level tests primarily use canvasCodeFn
+          const success = test.render(null, test.canvasCodeFn, iterationNum); 
           
-          if (success) {
+          if (success && test.errorCount === 0) {
             passedTests++;
             if (options.verbose) {
-              console.log(`\n${testId} passed`);
+              console.log(`
+${testId} passed (Iteration ${iterationNum})`);
             }
           } else {
             failedTests++;
-            console.log(`\n${testId} failed with ${test.errorCount} error(s)`);
+            // Ensure error count is accurate if render returned true but checks failed
+            const finalErrorCount = test.errorCount > 0 ? test.errorCount : (!success ? 1 : 0); 
+            console.log(`
+${testId} failed with ${finalErrorCount} error(s) (Iteration ${iterationNum})`);
+             if (options.verbose && test.errors && test.errors.length > 0) {
+                 test.errors.forEach((e, i) => console.log(`  Error ${i+1}: ${e}`));
+             }
           }
           
-          // Save output regardless of success/failure
+          // Save output regardless of success/failure if output dir is set
           if (options.output) {
-            // Create test-specific subdirectory
-            const testOutputDir = path.join(options.output, testId);
-            if (!fs.existsSync(testOutputDir)) {
-              fs.mkdirSync(testOutputDir, { recursive: true });
-            }
-            
-            const imagePath = saveOutputImage(test, iterationNum, testOutputDir);
-            const resultPath = saveTestResults(testId, iterationNum, test, testOutputDir);
+            const imagePath = saveOutputImage(test, iterationNum, options.output);
+            const resultPath = saveTestResults(testId, iterationNum, test, options.output);
           }
         } catch (err) {
           failedTests++;
-          console.error(`\nError running test ${testId}: ${err.message}`);
+          console.error(`
+Critical error running test ${testId} (Iteration ${iterationNum}): ${err.message}`);
           if (options.verbose) {
             console.error(err.stack);
           }
+           // Attempt to save results even on critical error if possible
+           if (options.output && test) {
+               test.showError(`Critical execution error: ${err.message}`); // Add error to test object
+               console.error(err.stack);
+               saveTestResults(testId, iterationNum, test, options.output);
+           }
         }
+        console.log(`[High-Level Runner Base] --test loop: Finished test ${testId}`);
       });
       
       if (showProgress) {
-        process.stdout.write('\rProgress: 100% [Complete]                    \n');
+        process.stdout.write('\rProgress: 100% [Complete]                                                              \n');
       }
       
       // Print summary
-      console.log(`\nTest execution complete`);
-      console.log(`Total tests: ${totalTests}`);
+      console.log(`\nHigh-Level Test execution complete`);
+      console.log(`Total tests run: ${totalTests}`);
       console.log(`Passed: ${passedTests}`);
       console.log(`Failed: ${failedTests}`);
       
@@ -8863,8 +8347,8 @@ function printHelp() {
       iterationNumbers = Array.from({length: parseInt(options.count)}, (_, i) => i + 1);
     } else if (options.range) {
       const [start, end] = options.range.split('-').map(Number);
-      if (isNaN(start) || isNaN(end) || start > end) {
-        console.error('Error: Range must be in format "start-end" with start <= end.');
+      if (isNaN(start) || isNaN(end) || start <= 0 || start > end) { // Iterations are 1-based
+        console.error('Error: Range must be in format "start-end" with 1 <= start <= end.');
         process.exit(1);
       }
       iterationNumbers = Array.from({length: end - start + 1}, (_, i) => i + start);
@@ -8874,52 +8358,92 @@ function printHelp() {
     }
   
     // Run the test(s)
-    console.log(`Running test: ${test.title}`);
-    console.log(`Iterations: ${iterationNumbers.length > 1 ? `${iterationNumbers.length} iterations` : `iteration #${iterationNumbers[0]}`}`);
+    console.log(`Running high-level test: ${test.title} (ID: ${testId})`);
+    if (iterationNumbers.length === 1) {
+        console.log(`Running iteration: #${iterationNumbers[0]}`);
+    } else {
+        console.log(`Running iterations: ${iterationNumbers[0]} to ${iterationNumbers[iterationNumbers.length - 1]} (${iterationNumbers.length} total)`);
+    }
   
     // Show progress if requested
     const showProgress = options.progress && iterationNumbers.length > 1;
     let failedIterations = 0;
     let passedIterations = 0;
   
+    // Create base output directory if needed
+    if (options.output) {
+       if (!fs.existsSync(options.output)) {
+           fs.mkdirSync(options.output, { recursive: true });
+           console.log(`Created output directory: ${options.output}`);
+       }
+    } else {
+        console.log("No output directory specified. Results and images will not be saved.");
+    }
+
     // Run the iterations
     iterationNumbers.forEach((iterationNum, index) => {
+
       if (showProgress) {
-        const percent = Math.floor((index / iterationNumbers.length) * 100);
-        process.stdout.write(`\rProgress: ${percent}% [${index}/${iterationNumbers.length}]`);
+        const percent = Math.floor(((index + 1) / iterationNumbers.length) * 100);
+        process.stdout.write(`Progress: ${percent}% [${index + 1}/${iterationNumbers.length}]`);
+      } else if (iterationNumbers.length > 1) {
+          console.log(`--- Iteration #${iterationNum} ---`);
       }
   
-      const success = test.render(test.buildShapesFn, test.canvasCodeFn, iterationNum);
-      
-      if (success) {
-        passedIterations++;
-        if (options.verbose) {
-          console.log(`\nIteration #${iterationNum} passed`);
-        }
-        
-        // Save output for successful tests as well
-        if (options.output) {
-          const imagePath = saveOutputImage(test, iterationNum, options.output);
-          const resultPath = saveTestResults(testId, iterationNum, test, options.output);
-        }
-      } else {
-        failedIterations++;
-        console.log(`\nIteration #${iterationNum} failed`);
-        
-        // Save output for failed tests
-        if (options.output) {
-          const imagePath = saveOutputImage(test, iterationNum, options.output);
-          const resultPath = saveTestResults(testId, iterationNum, test, options.output);
-        }
+      try {
+          // High-level tests primarily use canvasCodeFn
+          const success = test.render(null, test.canvasCodeFn, iterationNum);
+          
+          if (success && test.errorCount === 0) {
+            passedIterations++;
+            if (options.verbose) {
+              console.log(`
+Iteration #${iterationNum} passed`);
+            }
+            
+            // Save output for successful tests as well
+            if (options.output) {
+              const imagePath = saveOutputImage(test, iterationNum, options.output);
+              const resultPath = saveTestResults(testId, iterationNum, test, options.output);
+            }
+          } else {
+            failedIterations++;
+            const finalErrorCount = test.errorCount > 0 ? test.errorCount : (!success ? 1 : 0);
+            console.log(`
+Iteration #${iterationNum} failed with ${finalErrorCount} error(s)`);
+             if (options.verbose && test.errors && test.errors.length > 0) {
+                 test.errors.forEach((e, i) => console.log(`  Error ${i+1}: ${e}`));
+             }
+            
+            // Save output for failed tests
+            if (options.output) {
+              const imagePath = saveOutputImage(test, iterationNum, options.output);
+              const resultPath = saveTestResults(testId, iterationNum, test, options.output);
+            }
+          }
+      } catch (err) {
+          failedIterations++;
+          console.error(`
+Critical error running test ${testId} (Iteration ${iterationNum}): ${err.message}`);
+           if (options.verbose) {
+               console.error(err.stack);
+           }
+            // Attempt to save results even on critical error if possible
+            if (options.output && test) {
+                test.showError(`Critical execution error: ${err.message}`); // Add error to test object
+                console.error(err.stack);
+                saveTestResults(testId, iterationNum, test, options.output);
+            }
       }
     });
   
     if (showProgress) {
-      process.stdout.write('\rProgress: 100% [Complete]                    \n');
+      process.stdout.write('\rProgress: 100% [Complete]                                                              \n');
     }
   
     // Print summary
-    console.log(`\nTest execution complete`);
+    console.log(`\nTest execution complete for ${testId}`);
+    console.log(`Total Iterations: ${iterationNumbers.length}`);
     console.log(`Passed: ${passedIterations}`);
     console.log(`Failed: ${failedIterations}`);
     
@@ -8927,20 +8451,14 @@ function printHelp() {
     process.exit(failedIterations > 0 ? 1 : 0);
   }
 
-  function initializeTestRegistry() {
-    console.log("Initializing test registry with core tests...");
-    loadLowLevelRenderTests();
-  }
-  
-  // Call initialization function
-  try {
-    // Make sure the registry property is correctly set
-    
-    // Initialize with our core tests
-    initializeTestRegistry();
-    console.log(`Registered ${Object.keys(RenderTest.registry).length} tests.`);
-  } catch (err) {
-    console.error("Error registering tests:", err);
-  }
-  
+// No explicit initialization needed here. 
+// Test registration happens when the concatenated test files are executed by Node.js
+// just before this script's content runs.
+// The main() function checks if the registry was populated.
+
+// Append main() call in build script 
+//console.log("[High-Level Runner Base] Finished single test run mode.");
+console.log('[High-Level Runner Build] About to call main()...');
+
 main();
+console.log('[High-Level Runner Build] main() should have been called.');
