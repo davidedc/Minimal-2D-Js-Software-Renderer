@@ -664,7 +664,7 @@ class RenderTest {
       
       // Use CrispSwCanvas for the software-rendered output
       SeededRandom.seedWithInteger(currentCount);
-      canvasCodeFn(this.crispSwCtx);
+      canvasCodeFn(this.crispSwCtx, currentCount);
     }
     
     // Run checks if available
