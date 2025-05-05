@@ -35,7 +35,7 @@ echo "[Build Script] Adding Core Utilities..."
 # add src/secene-creation/SeededRandom.js. This one normally gets
 # added for the scene creation utils, but actually it's useful also
 # beyond them.
-# TODO: put them in a different folder as it's not just for scene creation
+# TODO: put this in a different folder as it's not just for scene creation
 cat "$PROJECT_ROOT/src/scene-creation/SeededRandom.js" >> "$OUTPUT_FILE"
 echo "  Added: src/scene-creation/SeededRandom.js"
 
