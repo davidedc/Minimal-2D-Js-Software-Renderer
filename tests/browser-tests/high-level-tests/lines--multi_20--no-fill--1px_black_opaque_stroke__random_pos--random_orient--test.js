@@ -21,12 +21,6 @@ function draw_lines__multi_20__no_fill__1px_black_opaque_stroke__random_pos__ran
     ctx.strokeStyle = 'rgb(0, 0, 0)'; // Black
     ctx.fillStyle = 'rgba(0, 0, 0, 0)'; // No fill
 
-    // Need to re-seed here because the original function did it INSIDE the buildShapesFn,
-    // BEFORE the loop. RenderTest seeds BEFORE calling the canvasCodeFn, so the sequence
-    // of getRandom() calls must match the original loop.
-    // This deviates slightly from the ideal pattern but is necessary for compatibility.
-    SeededRandom.seedWithInteger(currentIterationNumber);
-
     for (let i = 0; i < count; i++) {
         const start = getRandomPoint(1); // Assuming getRandomPoint(1) gets coords within bounds
         const end = getRandomPoint(1);
