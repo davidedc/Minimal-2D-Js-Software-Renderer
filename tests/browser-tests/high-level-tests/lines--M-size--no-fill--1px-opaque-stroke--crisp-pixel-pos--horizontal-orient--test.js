@@ -133,4 +133,6 @@ function define_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__hori
 }
 
 // Define and register the test immediately when this script is loaded.
-define_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__horizontal_orient(); 
+if (typeof RenderTestBuilder === 'function') {
+  define_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__horizontal_orient();
+} 

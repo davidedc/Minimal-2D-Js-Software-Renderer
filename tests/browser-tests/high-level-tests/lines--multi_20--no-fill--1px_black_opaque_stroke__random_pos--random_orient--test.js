@@ -58,9 +58,20 @@ function draw_lines__multi_20__no_fill__1px_black_opaque_stroke__random_pos__ran
     ctx.fillStyle = 'rgba(0, 0, 0, 0)'; // No fill
 
     for (let i = 0; i < numIterations; i++) {
-        // getRandomPoint is expected to use SeededRandom for reproducibility of base characteristics.
-        const start = getRandomPoint(1); // Assuming getRandomPoint(1) gets coords within bounds
-        const end = getRandomPoint(1);
+        // getRandomPoint uses SeededRandom for reproducibility of base characteristics.
+        const start = isTrueMultiInstance ? 
+            {
+                x: Math.random() * currentCanvasWidth,
+                y: Math.random() * currentCanvasHeight
+            } :
+            getRandomPoint(3, currentCanvasWidth, currentCanvasHeight);
+            
+        const end = isTrueMultiInstance ?
+            {
+                x: Math.random() * currentCanvasWidth,
+                y: Math.random() * currentCanvasHeight
+            } :
+            getRandomPoint(4, currentCanvasWidth, currentCanvasHeight);
 
         // Draw the line using the canvas-like API
         if (typeof ctx.strokeLine === 'function') {
@@ -108,4 +119,6 @@ function define_lines__multi_20__no_fill__1px_black_opaque_stroke__random_pos__r
 }
 
 // Define and register the test immediately when this script is loaded.
-define_lines__multi_20__no_fill__1px_black_opaque_stroke__random_pos__random_orient(); 
+if (typeof RenderTestBuilder === 'function') {
+  define_lines__multi_20__no_fill__1px_black_opaque_stroke__random_pos__random_orient();
+} 
