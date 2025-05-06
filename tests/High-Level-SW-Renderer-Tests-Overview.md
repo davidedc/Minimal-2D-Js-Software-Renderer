@@ -12,21 +12,21 @@ The testing system reuses several key components from the low-level tests but em
 
 1.  **`RenderTest` (`src/RenderTest.js`): The Test Runner UI & Orchestrator**
     *   Largely the same role as in the low-level tests. Each instance represents a single test case on the HTML page.
-    *   **UI Management:** Creates and manages HTML elements (SW Canvas, HTML5 Canvas, Comparison Canvas, labels, buttons, log, checks, errors).
+    *   **UI Management:** Creates and manages HTML elements (SW Canvas, HTML5 Canvas, Comparison Canvas, labels, buttons, log, checks, errors). The comparison canvas alternates between showing the SW and native Canvas output, and also provides a side-by-side magnified pixel view on mouse hover.
     *   **Rendering Orchestration:** Coordinates the rendering process differently:
         *   Instead of taking a `buildShapesFn`, it takes a `canvasCodeFn` (via `RenderTestBuilder.runCanvasCode`).
         *   It calls the `canvasCodeFn` *twice* per iteration:
             *   Once with a `CrispSwContext` instance (the software renderer).
             *   Once with a standard `CanvasRenderingContext2D` instance (the native reference).
-        *   **Important:** It captures the **return value** from the *first* call (the one with `CrispSwContext`) and stores it in `this.builderReturnValue`. This allows checks to verify geometry or other properties calculated during the drawing process.
-        *   It updates the on-screen canvases using the rendering results (transferring SW renderer data via `ImageData`).
+        *   **Important:** It captures the **return value** from the *first* call (the one with `CrispSwContext`) and stores it in `this.builderReturnValue`. If the returned object has a `checkData` property, that property's value is stored; otherwise, the entire return object is stored. This allows checks to verify geometry or other properties calculated during the drawing process.
+        *   It updates the on-screen canvases using the rendering results (transferring SW renderer data via `crispSwCtx.blitToCanvas`, which uses `ImageData` internally).
     *   **Check Execution:** If configured, runs checks (`RenderChecks`) on the rendered outputs *after* both canvases have been drawn. Checks like `withExtremesCheck` now use the stored `this.builderReturnValue`.
     *   **State Management & Registration:** Handles iterations, comparison view, error tracking, and registration in `RenderTest.registry`.
 
 2.  **`RenderTestBuilder` (`src/RenderTestBuilder.js`): Fluent Test Configuration**
     *   Provides the same builder pattern for configuring `RenderTest` instances.
-    *   Key difference: Uses `.runCanvasCode(drawingFn, ...args)` instead of `.addShapes()`.
-        *   `runCanvasCode` specifies the drawing function (typically defined within the same test file) that contains the actual Canvas API-like drawing calls.
+    *   Key difference: Uses `.runCanvasCode(drawingFn)` instead of `.addShapes()`.
+        *   `runCanvasCode` specifies the drawing function (typically defined within the same test file) that contains the actual Canvas API-like drawing calls. Any additional arguments needed by the drawing function are typically handled via closures when defining it.
         *   `RenderTest` will later call this `drawingFn` with the appropriate context (`CrispSwContext` or `CanvasRenderingContext2D`) and store its return value.
     *   Methods like `withId()`, `withTitle()`, `withDescription()`, and `with*Check()` work similarly. Checks that need external data (like `withExtremesCheck`) are configured the same way but rely on the `drawingFn`'s return value being captured by `RenderTest`.
     *   `build()`: Finalizes configuration, creates, and registers the `RenderTest` instance.
@@ -44,7 +44,7 @@ The testing system reuses several key components from the low-level tests but em
         *   `ctx` is the rendering context (`CrispSwContext` or `CanvasRenderingContext2D`).
         *   `currentIterationNumber` is available if needed.
         *   Uses `SeededRandom.getRandom()` internally for randomness.
-        *   **Returns** an object with data needed for checks (e.g., `{ leftX, rightX, topY, bottomY }`).
+        *   **Returns** an object with data needed for checks (e.g., `{ leftX, rightX, topY, bottomY }`). Optionally, this object can have a `checkData` property, and the test runner will specifically use the value of `checkData` for the checks if it exists.
     *   **Definition Function:** Each file also contains a definition function (e.g., `define_lines__...`) that uses `RenderTestBuilder` to configure the test, linking to the drawing function via `.runCanvasCode()`.
     *   **Self-Registration:** The definition function is called at the end of the script, causing the test to be registered automatically when the file is loaded by the browser.
 
@@ -74,8 +74,8 @@ The testing system reuses several key components from the low-level tests but em
 5.  Initial `render()` / `renderInBrowser(null, canvasCodeFn)` execution for each test:
     *   Clears canvases.
     *   Seeds `SeededRandom`.
-    *   Calls `drawingFn(this.crispSwCtx, ...)` -> stores return value.
-    *   Displays SW result via `putImageData`.
+    *   Calls `drawingFn(this.crispSwCtx, ...)` -> stores return value (or its `checkData` property).
+    *   Displays SW result via `crispSwCtx.blitToCanvas`.
     *   Seeds `SeededRandom` again.
     *   Calls `drawingFn(this.canvasCtxOfCanvasRender, ...)`.
     *   Updates comparison canvas.

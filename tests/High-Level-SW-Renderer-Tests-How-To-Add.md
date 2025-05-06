@@ -12,7 +12,7 @@ Follow these steps:
         *   `ctx`: Will be either a `CrispSwContext` or a `CanvasRenderingContext2D`. Use Canvas API methods compatible with both (or check `typeof ctx.strokeLine === 'function'` etc. if needed to differentiate).
         *   `currentIterationNumber`: Available if needed.
     *   **Randomness:** Use `SeededRandom.getRandom()` *inside* the function for reproducible randomness. Do not call `SeededRandom.seedWithInteger()`; `RenderTest` handles seeding.
-    *   **Return Value for Checks:** If checks like `withExtremesCheck()` are used, calculate the required values (e.g., bounding box) and **return** them as an object.
+    *   **Return Value for Checks:** If checks like `withExtremesCheck()` are used, calculate the required values (e.g., bounding box) and **return** them as an object. Note: If the returned object has a property named `checkData`, the test runner (`RenderTest`) will use the *value* of `checkData` as the input for checks; otherwise, it will use the entire returned object.
         ```javascript
         // Inside: tests/browser-tests/high-level-tests/my-shape--params--test.js
 
@@ -57,6 +57,7 @@ Follow these steps:
             // Link to the drawing function from Step 1
             .runCanvasCode(draw_my_shape /*, any extra args for drawing fn */)
             // Add checks. withExtremesCheck uses the return value from draw_my_shape
+            // (specifically, the value stored in test.builderReturnValue, potentially from a checkData property)
             .withExtremesCheck()
             // Add other relevant checks
             .withColorCheckMiddleRow({ expectedUniqueColors: 2 }) // Example
@@ -65,7 +66,7 @@ Follow these steps:
             .build();
         }
         ```
-    *   Choose appropriate checks. `withExtremesCheck` and similar checks automatically use the object returned by the *first call* to the drawing function (the one using the software renderer context), which is captured internally by the test runner.
+    *   Choose appropriate checks. `withExtremesCheck` and similar checks automatically use the object returned by the *first call* to the drawing function (the one using the software renderer context), which is captured internally by the test runner (potentially extracting a `checkData` property as described above).
     *   **Crucially**, at the very end of the file, *call* the definition function to register the test when the script loads:
         ```javascript
         // Inside: tests/browser-tests/high-level-tests/my-shape--params--test.js
