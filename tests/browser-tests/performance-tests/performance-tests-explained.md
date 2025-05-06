@@ -4,28 +4,31 @@ This document provides a detailed explanation of how the performance test suite 
 
 ## Overview
 
-The test suite determines the maximum number of shapes (lines, rectangles, circles) each rendering engine (Software Canvas vs. HTML5 Canvas) can draw within a calculated frame budget (derived from the display's refresh rate). It achieves this using a "ramp-up" methodology, incrementally increasing the number of shapes drawn per frame until the rendering time consistently exceeds the budget.
+The test suite determines the maximum number of shapes (lines, rectangles, circles, or any other primitives drawn by the tests) each rendering engine (Software Canvas vs. HTML5 Canvas) can draw within a calculated frame budget. This budget is derived from the display's refresh rate. The suite uses a "ramp-up" methodology, incrementally increasing the number of shapes (or "instances" as per the drawing function) drawn per frame until the rendering time consistently exceeds the budget.
 
-## Key Files
+## Key Files & Concepts
 
-*   `performance-tests.html`: The main HTML file that sets up the page structure, includes necessary scripts, and defines basic styles and element IDs.
-*   `performance-tests/performance-ui.js`: Handles dynamic UI generation (test lists, buttons), user interactions (running tests, toggling options), and overall test flow orchestration.
-*   `performance-tests/performance-utils.js`: Contains core testing logic, including refresh rate detection, the ramp-up testing functions for both canvases, results calculation/display, and chart generation.
-*   `performance-tests/test-definitions.js`: Defines the available tests, linking test IDs to display names and the specific drawing functions.
-*   `performance-tests/*--test.js`: Individual test files, each containing the `drawFunction` for a specific shape type, style, and configuration (e.g., `circles--M-size--opaque-fill--no-NA-stroke--random-pos--random-orient--test.js`). These files are loaded directly by `performance-tests.html`.
-*   `../../src/scene-creation/SeededRandom.js`: A utility for generating pseudo-random numbers based on a seed, ensuring that the positions and orientations of shapes are consistent across different test runs and between the two canvases for a fair comparison.
+*   `performance-tests.html`: The main HTML file. It sets up the page structure, includes necessary library and utility scripts, initializes a global `window.PERFORMANCE_TESTS_REGISTRY = []` array, loads individual test scripts from the `tests/browser-tests/high-level-tests/` directory, and finally loads the UI script.
+*   `tests/browser-tests/high-level-tests/*--test.js`: These are the individual test script files, originally designed for high-level visual regression testing. For use in the performance suite, they have been augmented with a self-registration mechanism (see below).
+    *   **Self-Registration**: Each test script checks for the existence of `window.PERFORMANCE_TESTS_REGISTRY`. If present, the script pushes an object detailing its performance test metadata (ID, drawing function reference, display name, description, category) into this registry.
+    *   **Drawing Function Signature**: The core drawing functions within these files (e.g., `draw_some_shape_test(...)`) are expected to accept parameters like `(context, iterationNumber, instanceCount)`. The performance suite utilizes the `instanceCount` to control the number of items drawn.
+*   `performance-tests/performance-ui.js`: Handles dynamic UI generation (test lists, buttons based on the content of `window.PERFORMANCE_TESTS_REGISTRY`), user interactions (running tests, toggling options), and overall test flow orchestration.
+*   `performance-tests/performance-utils.js`: Contains core testing logic, including refresh rate detection, the ramp-up testing functions (`runSoftwareCanvasRampTest`, `runHTML5CanvasRampTest`) for both canvases, results calculation/display, and chart generation.
+*   `../../src/scene-creation/SeededRandom.js`: A utility for generating pseudo-random numbers. While high-level tests might use it for their primary drawing logic, the performance ramp-up itself also uses it to ensure consistent conditions for each step of a given test type if not overridden by the test's internal logic.
 
 ## Workflow Breakdown
 
-1.  **Initialization (`performance-ui.js::initializeUI`)**:
-    *   The page loads `performance-tests.html`.
-    *   `performance-ui.js` takes over the UI setup.
-    *   Canvases are initially hidden.
-    *   `generateTestButtons` reads the `TESTS` object from `test-definitions.js` and dynamically creates the UI:
-        *   Sections for Lines, Rectangles, and Circles.
-        *   Within each section, a list of test items is generated, each with a checkbox, a label (`displayName` from `test-definitions.js`), and an individual "Run" button.
-        *   "Check/Uncheck All" buttons are added for each section and globally.
-    *   Event listeners are attached to all buttons and controls.
+1.  **Initialization & Test Discovery**:
+    *   `performance-tests.html` loads.
+    *   It initializes `window.PERFORMANCE_TESTS_REGISTRY = [];`.
+    *   It then loads various scripts from `tests/browser-tests/high-level-tests/`. As each of these scripts executes, its self-registration block (if present and correctly configured) adds its test definition to `window.PERFORMANCE_TESTS_REGISTRY`.
+    *   Finally, `performance-ui.js` is loaded and `initializeUI()` is called.
+    *   **UI Generation (`performance-ui.js::generateTestButtons`)**: This function now reads directly from `window.PERFORMANCE_TESTS_REGISTRY`.
+        *   It iterates through the registered tests.
+        *   Based on the `category` property of each test object (e.g., 'lines', 'rectangles', 'circles'), it creates sections in the UI.
+        *   Within each section, a list of test items is generated, each with a checkbox, a label (from the test object's `displayName`), and an individual "Run" button.
+        *   Global and per-section "Check/Uncheck All" buttons are also created.
+    *   Event listeners are attached.
     *   **Refresh Rate Detection (`performance-utils.js::detectRefreshRate`)**:
         *   Before tests can run, the display's refresh rate is measured using `requestAnimationFrame` over ~20 frames.
         *   An average frame time is calculated, outliers are removed, and the raw FPS is determined.
@@ -75,10 +78,10 @@ The test suite determines the maximum number of shapes (lines, rectangles, circl
 4.  **Ramp-Up Execution (`performance-utils.js`)**:
     *   `runSoftwareCanvasRampTest` / `runHTML5CanvasRampTest`: These functions implement the core ramp-up logic for each canvas type. They are very similar.
     *   **Loop**: The process runs within a `requestAnimationFrame` loop (`testNextShapeCount`).
-    *   **Seeding**: `SeededRandom.seedWithInteger(currentPhaseStep)` ensures the same sequence of shapes is drawn at each step.
+    *   **Seeding**: `SeededRandom.seedWithInteger(currentPhaseStep)` is used by the ramp-up logic, though the individual high-level test draw functions might have their own internal seeding or randomization for shape variations if they draw multiple distinct items per "instance".
     *   **Drawing**:
         *   The canvas is cleared (`clearRect`).
-        *   The appropriate `drawFunction` (from `test-definitions.js` via the `testType` parameter) is called with the `currentShapeCount`.
+        *   The appropriate `drawFunction` (referenced in the test object from `window.PERFORMANCE_TESTS_REGISTRY`) is called. The call signature is now adapted: `testType.drawFunction(context, 0, currentShapeCount)`. Here, `currentShapeCount` (from the ramp-up logic) is passed as the `instances` argument to the high-level test's drawing function. A dummy value like `0` is passed for the `iterationNumber` argument, as it's not typically used by the performance aspect of these functions.
         *   For Software Canvas, `swCtx.blitToCanvas()` is called *if* `includeBlitting` is checked.
     *   **Timing**: `performance.now()` is used to measure the time taken for drawing (and potentially blitting).
     *   **Logging**: Results (`SW Canvas with X shapes: Y ms`) are logged based on the `quietMode` setting.
@@ -104,5 +107,7 @@ The test suite determines the maximum number of shapes (lines, rectangles, circl
 *   The `requestAnimationFrame` loops in `performance-utils.js` check this flag on each iteration and exit early if set.
 *   Any active `animationFrameId` is cancelled.
 *   State is reset, and an "aborted" message is shown.
+
+This refactored workflow leverages the drawing capabilities of the `high-level-tests` directly, promoting code reuse and simplifying the process of adding new scenarios to the performance suite by focusing on a self-registration mechanism within the test files themselves.
 
 This detailed workflow allows for flexible and reasonably accurate performance comparisons between the two rendering methods under various configurable conditions. 

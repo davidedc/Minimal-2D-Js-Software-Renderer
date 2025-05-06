@@ -1,178 +1,112 @@
-# Adding New Performance Tests
+# Adding High-Level Tests to the Performance Suite
 
-This guide outlines how to add new performance tests to the testing framework. The process has been fully automated - you only need to implement your test functions and register them.
+This guide outlines how to make test files from the `tests/browser-tests/high-level-tests/` directory usable within the Performance Test suite (`performance-tests.html`). The performance suite now uses a self-registration mechanism, where each test script declares itself to the performance testing environment.
 
-## Test Architecture
+## Overview of the New System
 
-The performance testing framework uses a direct object reference approach, where each test is defined as 
-an object with function references and metadata. This eliminates string-based indirection and provides
-a more maintainable structure.
+The performance testing framework (`performance-tests.html`) no longer uses a central `test-definitions.js` file. Instead:
 
-## Naming Convention
+1.  `performance-tests.html` initializes a global array: `window.PERFORMANCE_TESTS_REGISTRY = [];`.
+2.  It then loads selected test scripts from the `tests/browser-tests/high-level-tests/` directory.
+3.  Each of these loaded test scripts is responsible for checking if `window.PERFORMANCE_TESTS_REGISTRY` exists.
+4.  If it does, the script pushes an object containing its performance test metadata into this registry.
+5.  The `performance-ui.js` script then reads from this registry to dynamically build the test list in the UI.
 
-Tests follow a standardized naming pattern that clearly indicates shape type, size, fill properties (opacity), stroke properties (size and opacity), positioning, and orientation:
+## How to Make a High-Level Test Usable for Performance Testing
 
-### File Naming
-Files should follow the pattern: `[shape]--[size]-size--[opacityFill]-fill--[sizeStroke]-[opacityStroke]-stroke--[positioning]-pos--[orientation]-orient--test.js`
+To include a test from `tests/browser-tests/high-level-tests/` (e.g., `my-cool-test.js`) in the performance suite, you need to ensure it performs self-registration.
 
-Major sections are separated by double dashes (`--`), while components within sections use single dashes (`-`).
+**Step 1: Ensure your High-Level Test's Drawing Function Signature**
 
-Examples:
-- `circles--M-size--opaque-fill--L-opaque-stroke--random-pos--random-orient--test.js` (medium sized circles with opaque fill, large opaque stroke, random positioning and orientation)
-- `circles--M-size--semi-fill--L-opaque-stroke--crisp-pos--horizontal-orient--test.js` (medium sized circles with semi-transparent fill, large opaque stroke, crisp positioning, horizontal orientation)
-- `circles--XL-size--no-fill--L-opaque-stroke--random-pos--45deg-orient--test.js` (extra large sized circles with no fill, large opaque stroke, random positioning, 45-degree orientation)
-- `rectangles--M-size--opaque-fill--M-semi-stroke--crisp-pos--vertical-orient--test.js` (medium sized rectangles with opaque fill, medium semi-transparent stroke, crisp positioning, vertical orientation)
-- `lines--M-size--no-fill--L-opaque-stroke--random-pos--square-orient--test.js` (medium sized lines with large opaque stroke, no fill, random positioning, square orientation)
-- `lines--L-size--no-fill--1px-opaque-stroke--crisp-pos--horizontal-orient--test.js` (large sized lines with exactly 1-pixel opaque stroke, crisp positioning, horizontal orientation)
+The performance testing framework expects the drawing function (e.g., `draw_my_cool_test`) within your high-level test file to accept three arguments:
 
-### Size Indicators
-Size is indicated using these standardized labels:
-- `no`: Not applicable or no fill/stroke
-- `XS`: Extra small
-- `S`: Small
-- `M`: Medium
-- `L`: Large
-- `XL`: Extra large
-- `npx`: Explicit pixel size (e.g., `1px`, `2px`, `3px`, etc.) for stroke sizes
+1.  `ctx`: The rendering context (either `CanvasRenderingContext2D` or `CrispSwContext`).
+2.  `currentIterationNumber`: For the performance test's ramp-up logic, this argument is not critically used by the high-level drawing functions themselves when they are in "multi-instance" mode. The performance framework will typically pass `0` or a similar constant value for this.
+3.  `instances`: This is the crucial parameter for performance testing. It corresponds to the `currentShapeCount` in the performance ramp-up logic. Your drawing function should be structured to draw this many instances of its shape(s) when this parameter is a positive number. Many existing high-level tests already support an `instances` parameter for drawing multiple items.
 
-### Opacity Indicators
-Opacity is indicated using these standardized labels:
-- `opaque`: Fully opaque (alpha = 1.0)
-- `semi`: Semi-transparent (alpha < 1.0)
+**Step 2: Add the Self-Registration Block to Your Test Script**
 
-### Positioning Indicators
-Positioning is indicated using these standardized labels:
-- `random`: Random positioning (geometry expressed in any float values)
-- `crisp`: Crisp positioning (geometry aligned to the pixel grid for sharp edges - this is largely how UI-type shapes are positioned)
-
-### Orientation Indicators
-Orientation is indicated using these standardized labels:
-- `random`: Random orientation
-- `horizontal`: Horizontal orientation
-- `vertical`: Vertical orientation
-- `square`: Square orientation (either horizontal or vertical)
-- `45deg`: 45-degree orientation
-
-### Function Naming
-Functions should follow the pattern: `draw_[shape]__[size]_size__[opacityFill]_fill__[sizeStroke]_[opacityStroke]_stroke__[positioning]_pos__[orientation]_orient`
-
-Function names use underscores, with double underscores matching the double dashes in file names.
-
-Examples:
-- `draw_circles__M_size__opaque_fill__L_opaque_stroke__random_pos__random_orient`
-- `draw_circles__XL_size__no_fill__L_opaque_stroke__crisp_pos__horizontal_orient`
-- `draw_rectangles__M_size__opaque_fill__M_semi_stroke__random_pos__vertical_orient`
-- `draw_lines__M_size__no_fill__L_opaque_stroke__crisp_pos__45deg_orient`
-- `draw_lines__L_size__no_fill__1px_opaque_stroke__crisp_pos__horizontal_orient`
-
-## Step 1: Create a Test File
-
-Create a file following the naming pattern above:
-
-Example for small sized circles with semi-transparent fill and large opaque stroke, crisp positioning and horizontal orientation:
-`circles--S-size--semi-fill--L-opaque-stroke--crisp-pos--horizontal-orient--test.js`
-
-## Step 2: Implement Draw Function
-
-Like so:
+At the end of your `high-level-tests/your-test-file-name.js`, add the following JavaScript block. This block should be *after* your main drawing function (e.g., `draw_your_test_name`) has been defined.
 
 ```javascript
-// Circles with small size, semi-transparent fill and large opaque stroke, crisp positioning and horizontal orientation
-function draw_circles__S_size__semi_fill__L_opaque_stroke__crisp_pos__horizontal_orient(ctx, count) {
-  for (let i = 0; i < count; i++) {
-    // Implementation with crisp positioning and horizontal orientation
-  }
+// ... (your existing draw_your_test_name function and other test logic) ...
+
+// Conditional registration for RenderTestBuilder (if your test also supports the other test framework)
+if (typeof RenderTestBuilder === 'function' && typeof define_your_test_name === 'function') {
+  define_your_test_name(); // Or however your test registers with RenderTestBuilder
 }
 
-```
+// --- Performance Test Self-Registration Block ---
+// Check if the performance test registry exists (i.e., loaded by performance-tests.html)
+// and if the main drawing function is defined.
+if (typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
+    typeof draw_your_test_name === 'function') { // Replace draw_your_test_name with your actual drawing function
 
-## Step 3: Register the Test in test-definitions.js
+    window.PERFORMANCE_TESTS_REGISTRY.push({
+        // id: Typically derived from the filename, ensuring uniqueness.
+        // e.g., 'lines--M-size--no-fill--1px_opaque_stroke--crisp_pixel_pos--vertical_orient'
+        id: 'your-test-file-name-without-suffix', 
 
-Add your test to the TESTS object in `test-definitions.js`:
+        // drawFunction: A direct reference to your test's main drawing function.
+        drawFunction: draw_your_test_name, // Replace with your actual drawing function reference
 
-```javascript
-CIRCLES__S_SIZE__SEMI_FILL__L_OPAQUE_STROKE__CRISP_POS__HORIZONTAL_ORIENT: {
-  id: 'circles--S-size--semi-fill--L-opaque-stroke--crisp-pos--horizontal-orient',
-  drawFunction: draw_circles__S_size__semi_fill__L_opaque_stroke__crisp_pos__horizontal_orient,
-  displayName: 'Circles (S size, semi fill, L opaque stroke, crisp pos, horizontal orient)',
-  description: 'Tests drawing circles with small size, semi-transparent fill, large opaque stroke, crisp positioning and horizontal orientation.'
+        // displayName: A concise, human-readable name for the UI button in the performance tests.
+        // e.g., 'Perf: Lines M 1px Crisp Vertical'
+        displayName: 'Perf: Your Test Display Name', 
+
+        // description: A brief description for the performance test context.
+        // e.g., 'Performance test for vertical 1px lines, crisp pixel positioning.'
+        description: 'Performance: Brief description of your test.',
+
+        // category: Helps group tests in the UI. Use 'lines', 'rectangles', 'circles', or a new category.
+        category: 'lines' // Or 'rectangles', 'circles', etc.
+    });
 }
+// --- End of Performance Test Self-Registration Block ---
 ```
 
-The properties should include:
-- `id`: A unique identifier for the test (matching the file name without the -test.js suffix)
-- `drawFunction`: Reference to the implementation
-- `displayName`: Human-readable name that appears on the button
-- `description`: Longer description of what the test evaluates
+**Key fields for the registration object:**
 
-That's it! The framework will automatically:
-- Include your test in the test collection
-- Generate a button for your test in the UI
-- Add event listeners for the button
-- Run your test when the button is clicked or when "All Tests" is selected
+*   `id`: A unique string identifier. Conventionally, this matches the filename without the `--test.js` suffix (e.g., `lines--M-size--no-fill--1px_opaque_stroke--crisp_pixel_pos--vertical_orient`).
+*   `drawFunction`: A direct reference to your test's main drawing function (e.g., `draw_lines__M_size__no_fill__1px_opaque_stroke--crisp_pixel_pos--vertical_orient`).
+*   `displayName`: A short, descriptive name that will appear in the performance test UI. It's good practice to prefix with "Perf:" or "HL:" (High-Level) to distinguish them if necessary.
+*   `description`: A slightly longer description for clarity.
+*   `category`: A string like `"lines"`, `"rectangles"`, or `"circles"`. This is used by `performance-ui.js` to group tests into the correct sections in the UI. If you add tests for a new shape type, you might need to add a corresponding section in `performance-tests.html` and update `performance-ui.js` to handle this new category.
 
-## Step 4: Update Script References
+**Step 3: Include Your Test Script in `performance-tests.html`**
 
-Ensure your test file is included in the HTML, **before** the test-definitions.js file:
+Open `tests/browser-tests/performance-tests.html` and add a `<script>` tag to load your high-level test file. Ensure it's placed *after* the `window.PERFORMANCE_TESTS_REGISTRY = [];` initialization and *before* `performance-ui.js` is loaded.
 
 ```html
-<!-- Load test implementation files first -->
-<script src="performance-tests/lines--no-fill--L-opaque-stroke--random-pos--random-orient--test.js"></script>
-<script src="performance-tests/rectangles--M-opaque-fill--M-opaque-stroke--random-pos--random-orient--test.js"></script>
-<script src="performance-tests/circles--M-opaque-fill--M-opaque-stroke--random-pos--random-orient--test.js"></script>
-<script src="performance-tests/circles--S-semi-fill--L-opaque-stroke--crisp-pos--horizontal-orient--test.js"></script> <!-- Your new test -->
+  <!-- ... other library scripts ... -->
+  <script src="../../src/scene-creation/SeededRandom.js"></script>
+  <script src="performance-tests/performance-utils.js"></script>
+  
+  <script>
+    window.PERFORMANCE_TESTS_REGISTRY = []; // Initialize the global registry
+  </script>
 
-<!-- Then load the test definitions that reference those implementations -->
-<script src="performance-tests/test-definitions.js"></script>
-<script src="performance-tests/performance-ui.js"></script>
+  <!-- Load test scripts -->
+  <!-- Lines tests -->
+  <script src="high-level-tests/lines--M-size--no-fill--1px_opaque_stroke--crisp_pixel_pos--vertical_orient--test.js"></script>
+  <!-- ... other existing high-level tests ... -->
+  <script src="high-level-tests/your-test-file-name.js"></script> <!-- Add your new test script here -->
+  
+  <!-- Rectangle tests -->
+  <!-- (Add high-level rectangle tests here if available) -->
+  
+  <!-- Circle tests -->
+  <!-- (Add high-level circle tests here if available) -->
+  
+  <!-- Test definitions and UI -->
+  <script src="performance-tests/performance-ui.js"></script>
+  <!-- ... -->
 ```
 
-The correct loading order is critical:
-1. All test implementation files must be loaded first
-2. Then the test-definitions.js file, which references the implementations
-3. Finally the UI code that uses the test definitions
+That's it! Your high-level test, now equipped with the self-registration block, will be automatically picked up by the performance testing page, and its UI elements will be generated. The performance suite will then call its `drawFunction(ctx, 0, shapeCount)` during the ramp-up tests.
 
-## Code Guidelines for Different Test Types
+## Naming Conventions and Code Guidelines
 
-### Standardized Parameters
+While the strict file naming and function naming conventions from the old system are no longer enforced by a central definition file, it's still good practice to maintain clear and descriptive names for your test files and drawing functions within the `high-level-tests` directory. The `id` you provide in the registration block should be unique.
 
-When implementing drawing functions, follow these guidelines for consistent results:
-
-- **Lines**: 
-  - Use line lengths based on the size indicator:
-    - XS: 5-20px
-    - S: 15-40px
-    - M: 30-100px
-    - L: 80-200px
-    - XL: 150-400px
-  - Use variable line widths based on the stroke size indicator
-  - Use opacity based on the stroke opacity indicator
-  - Generate endpoints based on the specified size range
-
-- **Rectangles**:
-  - Use sizes based on the size indicator: 
-    - XS: 5-15px
-    - S: 10-30px
-    - M: 20-120px
-    - L: 100-300px
-    - XL: 200-500px
-  - Use stroke widths based on the stroke size indicator:
-    - XS: 1px
-    - S: 1-2px
-    - M: 2-5px
-    - L: 5-10px
-    - XL: 10-20px
-  - Use opacity based on the fill and stroke opacity indicators:
-    - opaque: alpha = 1.0
-    - semi: alpha = 0.2-0.8 (randomly chosen)
-    - no: no fill/stroke applied
-
-- **Circles**:
-  - Use radii based on the size indicator:
-    - XS: 2-8px
-    - S: 5-15px
-    - M: 10-50px
-    - L: 40-100px
-    - XL: 80-200px
-  - Use stroke widths based on the stroke size indicator (same as rectangles)
-  - Use opacity based on the fill and stroke opacity indicators (same as rectangles)
+The old "Code Guidelines for Different Test Types" (regarding specific sizes for XS, S, M, L, XL, etc.) are now less relevant to the *performance testing framework itself*, as it uses whatever drawing logic is provided by the high-level test. However, these guidelines might still be useful for ensuring consistency within the high-level tests themselves if they aim to test specific size/style variations. The performance test will simply measure how many of *whatever the high-level test draws* can be rendered.
