@@ -135,4 +135,16 @@ function define_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__hori
 // Define and register the test immediately when this script is loaded.
 if (typeof RenderTestBuilder === 'function') {
   define_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__horizontal_orient();
+}
+
+// Performance test registration
+if (typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
+    typeof draw_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__horizontal_orient === 'function') {
+    window.PERFORMANCE_TESTS_REGISTRY.push({
+        id: 'lines--M-size--no-fill--1px-opaque-stroke--crisp-pixel-pos--horizontal-orient',
+        drawFunction: draw_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__horizontal_orient,
+        displayName: 'Perf: Lines M 1px Crisp Horizontal',
+        description: 'Performance test for horizontal 1px lines, crisp pixel positioning.',
+        category: 'lines'
+    });
 } 

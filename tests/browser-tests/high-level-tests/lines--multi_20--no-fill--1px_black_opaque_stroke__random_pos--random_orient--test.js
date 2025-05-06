@@ -121,4 +121,16 @@ function define_lines__multi_20__no_fill__1px_black_opaque_stroke__random_pos__r
 // Define and register the test immediately when this script is loaded.
 if (typeof RenderTestBuilder === 'function') {
   define_lines__multi_20__no_fill__1px_black_opaque_stroke__random_pos__random_orient();
+}
+
+// Performance test registration
+if (typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
+    typeof draw_lines__multi_20__no_fill__1px_black_opaque_stroke__random_pos__random_orient === 'function') {
+    window.PERFORMANCE_TESTS_REGISTRY.push({
+        id: 'lines--multi_20--no_fill__1px_black_opaque_stroke__random_pos--random_orient',
+        drawFunction: draw_lines__multi_20__no_fill__1px_black_opaque_stroke__random_pos__random_orient,
+        displayName: 'Perf: Lines Multi-20 1px Random',
+        description: 'Performance test for Multi-20 lines, 1px black, random.',
+        category: 'lines'
+    });
 } 

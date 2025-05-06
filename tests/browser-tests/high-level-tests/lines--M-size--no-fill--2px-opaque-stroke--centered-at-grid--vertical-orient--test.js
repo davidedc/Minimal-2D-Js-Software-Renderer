@@ -149,4 +149,16 @@ function define_lines__M_size__no_fill__2px_opaque_stroke__centered_at_grid__ver
 // Define and register the test immediately when this script is loaded.
 if (typeof RenderTestBuilder === 'function') {
   define_lines__M_size__no_fill__2px_opaque_stroke__centered_at_grid__vertical_orient();
+}
+
+// Performance test registration
+if (typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
+    typeof draw_lines__M_size__no_fill__2px_opaque_stroke__centered_at_grid__vertical_orient === 'function') {
+    window.PERFORMANCE_TESTS_REGISTRY.push({
+        id: 'lines--M-size--no-fill--2px-opaque-stroke--centered-at-grid--vertical-orient',
+        drawFunction: draw_lines__M_size__no_fill__2px_opaque_stroke__centered_at_grid__vertical_orient,
+        displayName: 'Perf: Lines M 2px Grid Vertical',
+        description: 'Performance test for vertical 2px lines, grid centered.',
+        category: 'lines'
+    });
 } 

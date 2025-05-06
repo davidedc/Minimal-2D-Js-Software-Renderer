@@ -156,4 +156,18 @@ function define_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__vert
 // Define and register the test immediately when this script is loaded.
 if (typeof RenderTestBuilder === 'function') {
   define_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__vertical_orient();
+}
+
+// Performance test registration
+if (typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
+    typeof draw_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__vertical_orient === 'function') {
+    
+    const perfTestData = {
+        id: 'lines--M-size--no-fill--1px_opaque_stroke--crisp_pixel_pos--vertical_orient',
+        drawFunction: draw_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__vertical_orient,
+        displayName: 'Perf: Lines M 1px Crisp Vertical',
+        description: 'Performance test for vertical 1px lines, crisp pixel positioning.',
+        category: 'lines'
+    };
+    window.PERFORMANCE_TESTS_REGISTRY.push(perfTestData);
 } 
