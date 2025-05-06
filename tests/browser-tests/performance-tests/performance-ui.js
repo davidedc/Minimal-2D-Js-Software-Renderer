@@ -17,25 +17,25 @@ function generateTestButtons() {
   rectangleTestsContainer.innerHTML = '';
   circleTestsContainer.innerHTML = '';
   
-  // Create test list containers
-  const linesList = createTestList('Lines Tests');
-  const rectanglesList = createTestList('Rectangle Tests');
-  const circlesList = createTestList('Circle Tests');
+  // Create test list containers if there are tests for them
+  const linesList = window.PERFORMANCE_TESTS_REGISTRY.some(t => t.category === 'lines') ? createTestList('Lines Tests') : null;
+  const rectanglesList = window.PERFORMANCE_TESTS_REGISTRY.some(t => t.category === 'rectangles') ? createTestList('Rectangle Tests') : null;
+  const circlesList = window.PERFORMANCE_TESTS_REGISTRY.some(t => t.category === 'circles') ? createTestList('Circle Tests') : null;
   
-  lineTestsContainer.appendChild(linesList);
-  rectangleTestsContainer.appendChild(rectanglesList);
-  circleTestsContainer.appendChild(circlesList);
+  if (linesList) lineTestsContainer.appendChild(linesList);
+  if (rectanglesList) rectangleTestsContainer.appendChild(rectanglesList);
+  if (circlesList) circleTestsContainer.appendChild(circlesList);
   
   // Add test entries to the appropriate list
-  Object.values(TESTS).forEach(test => {
+  window.PERFORMANCE_TESTS_REGISTRY.forEach(test => {
     let listContainer;
     
-    // Determine which container to add the test to based on test id
-    if (test.id.startsWith('lines')) {
+    // Determine which container to add the test to based on test category
+    if (test.category === 'lines' && linesList) {
       listContainer = linesList;
-    } else if (test.id.startsWith('rectangles')) {
+    } else if (test.category === 'rectangles' && rectanglesList) {
       listContainer = rectanglesList;
-    } else if (test.id.startsWith('circles')) {
+    } else if (test.category === 'circles' && circlesList) {
       listContainer = circlesList;
     }
     
@@ -139,9 +139,13 @@ function createTestEntry(test, container) {
   testItem.appendChild(checkbox);
   testItem.appendChild(label);
   testItem.appendChild(runButton);
-  
-  // Add test item to container
-  container.appendChild(testItem);
+
+  // The 'container' IS the actualListElement we want to append to, based on previous logs.
+  if (container) { // Check if container is not null
+      container.appendChild(testItem);
+  } else {
+      console.error('[UI] In createTestEntry, container is null or undefined. Cannot append testItem for:', test ? test.id : 'N/A');
+  }
   
   return testItem;
 }
@@ -248,7 +252,7 @@ function runCheckedTests() {
 
 // Run all tests regardless of checkbox state
 function runAllTests() {
-  const testsToRun = TestRunner.getAllAsArray();
+  const testsToRun = window.PERFORMANCE_TESTS_REGISTRY.slice(); // Get a copy of all tests from the registry
   runTestSeries(testsToRun, "Running all tests...");
 }
 
@@ -326,7 +330,7 @@ function runTestSeries(testsToRun, statusMessage) {
 
 // Find test by ID
 function findTestById(testId) {
-  return Object.values(TESTS).find(test => test.id === testId);
+  return window.PERFORMANCE_TESTS_REGISTRY.find(test => test.id === testId);
 }
 
 function abortTests() {

@@ -382,8 +382,10 @@
     const btnRunChecked = document.getElementById('btn-run-checked');
     const btnRunAll = document.getElementById('btn-run-all');
     const btnAbort = document.getElementById('btn-abort');
+
+    window.PERFORMANCE_TESTS_REGISTRY = []; // Initialize the global registry
   </script>
-  
+
   <!-- Load test scripts -->
   <!-- Lines tests -->
   <script src="high-level-tests/lines--M-size--no-fill--1px_opaque_stroke--crisp_pixel_pos--vertical_orient--test.js"></script>
@@ -399,7 +401,6 @@
   <!-- (No circle tests in high-level-tests folder provided, will be empty for now) -->
   
   <!-- Test definitions and UI -->
-  <script src="performance-tests/test-definitions.js"></script>
   <script src="performance-tests/performance-ui.js"></script>
 </body>
 </html>
