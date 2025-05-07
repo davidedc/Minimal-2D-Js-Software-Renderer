@@ -8,8 +8,8 @@ The test suite determines the maximum number of shapes (lines, rectangles, circl
 
 ## Key Files & Concepts
 
-*   `performance-tests.html`: The main HTML file. It sets up the page structure, includes necessary library and utility scripts, initializes a global `window.PERFORMANCE_TESTS_REGISTRY = []` array, loads individual test scripts from the `tests/browser-tests/high-level-tests/` directory, and finally loads the UI script.
-*   `tests/browser-tests/high-level-tests/*--test.js`: These are the individual test script files, originally designed for high-level visual regression testing. For use in the performance suite, they have been augmented with a self-registration mechanism (see below).
+*   `performance-tests.html`: The main HTML file. It sets up the page structure, includes necessary library and utility scripts, initializes a global `window.PERFORMANCE_TESTS_REGISTRY = []` array, loads individual test scripts from the `tests/browser-tests/test-cases/` directory, and finally loads the UI script.
+*   `tests/browser-tests/test-cases/*--test.js`: These are the individual test script files, originally designed for high-level visual regression testing. For use in the performance suite, they have been augmented with a self-registration mechanism (see below).
     *   **Self-Registration**: Each test script checks for the existence of `window.PERFORMANCE_TESTS_REGISTRY`. If present, the script pushes an object detailing its performance test metadata (ID, drawing function reference, display name, description, category) into this registry.
     *   **Drawing Function Signature**: The core drawing functions within these files (e.g., `draw_some_shape_test(...)`) are expected to accept parameters like `(context, iterationNumber, instanceCount)`. The performance suite utilizes the `instanceCount` to control the number of items drawn.
 *   `performance-tests/performance-ui.js`: Handles dynamic UI generation (test lists, buttons based on the content of `window.PERFORMANCE_TESTS_REGISTRY`), user interactions (running tests, toggling options), and overall test flow orchestration.
@@ -21,7 +21,7 @@ The test suite determines the maximum number of shapes (lines, rectangles, circl
 1.  **Initialization & Test Discovery**:
     *   `performance-tests.html` loads.
     *   It initializes `window.PERFORMANCE_TESTS_REGISTRY = [];`.
-    *   It then loads various scripts from `tests/browser-tests/high-level-tests/`. As each of these scripts executes, its self-registration block (if present and correctly configured) adds its test definition to `window.PERFORMANCE_TESTS_REGISTRY`.
+    *   It then loads various scripts from `tests/browser-tests/test-cases/`. As each of these scripts executes, its self-registration block (if present and correctly configured) adds its test definition to `window.PERFORMANCE_TESTS_REGISTRY`.
     *   Finally, `performance-ui.js` is loaded and `initializeUI()` is called.
     *   **UI Generation (`performance-ui.js::generateTestButtons`)**: This function now reads directly from `window.PERFORMANCE_TESTS_REGISTRY`.
         *   It iterates through the registered tests.

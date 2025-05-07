@@ -159,7 +159,7 @@ if (typeof RenderTestBuilder === 'function') {
 }
 
 // Performance test registration
-if (typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
+if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
     typeof draw_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__vertical_orient === 'function') {
     
     const perfTestData = {

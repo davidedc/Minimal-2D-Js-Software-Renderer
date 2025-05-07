@@ -1,4 +1,4 @@
-# Adding New Performance Tests
+# Adding tests to legacy performance tests setup
 
 This guide outlines how to add new performance tests to the testing framework. The process has been fully automated - you only need to implement your test functions and register them.
 

@@ -37,8 +37,8 @@ The testing system reuses several key components from the low-level tests but em
     *   Provides methods like `findExtremesWithTolerance()`, `checkExtremes()`, `checkCountOfUniqueColorsInLine()`, `compareWithThreshold()`, etc.
     *   When a check like `checkExtremes()` is executed, it retrieves the *expected* values from `test.builderReturnValue` (which originated from the `drawingFn`'s return value).
 
-4.  **Test Files (`tests/browser-tests/high-level-tests/*--test.js`): Drawing and Definition**
-    *   Each test resides in its own file within the `tests/browser-tests/high-level-tests/` directory, named according to convention (e.g., `lines--M-size--no-fill--1px-opaque-stroke--crisp-pixel-pos--horizontal-orient--test.js`).
+4.  **Test Files (`tests/browser-tests/test-cases/*--test.js`): Drawing and Definition**
+    *   Each test resides in its own file within the `tests/browser-tests/test-cases/` directory, named according to convention (e.g., `lines--M-size--no-fill--1px-opaque-stroke--crisp-pixel-pos--horizontal-orient--test.js`).
     *   **Drawing Function:** Each file contains a drawing function (e.g., `draw_lines__...`) that encapsulates the drawing logic using Canvas API-like calls.
         *   **Signature:** `function draw_...(ctx, currentIterationNumber, ...args)`.
         *   `ctx` is the rendering context (`CrispSwContext` or `CanvasRenderingContext2D`).
@@ -64,7 +64,7 @@ The testing system reuses several key components from the low-level tests but em
 
 1.  `high-level-tests.html` is loaded.
 2.  Core JS files (utils, CrispSwContext, renderers, test framework core) are loaded.
-3.  Individual test files (`tests/browser-tests/high-level-tests/*--test.js`) are loaded one by one.
+3.  Individual test files (`tests/browser-tests/test-cases/*--test.js`) are loaded one by one.
 4.  As each test script loads:
     *   It defines its `draw_...` and `define_...` functions.
     *   It calls its `define_...` function.

@@ -108,13 +108,13 @@ echo "  Added: src/RenderTestBuilder.js"
 echo "[Build Script] Finished Test Framework Core."
 
 # 7. Individual High-Level Test Files (Define tests)
-TEST_FILES_DIR="$PROJECT_ROOT/tests/browser-tests/high-level-tests"
+TEST_FILES_DIR="$PROJECT_ROOT/tests/browser-tests/test-cases"
 echo "[Build Script] Adding High-Level Test Files from: $TEST_FILES_DIR"
 for file in "$TEST_FILES_DIR/"*--test.js; do
   if [ -f "$file" ]; then # Check if it's a file
-    echo "    Concatenating: tests/browser-tests/high-level-tests/$(basename "$file")" # Log before cat
+    echo "    Concatenating: tests/browser-tests/test-cases/$(basename "$file")" # Log before cat
     cat "$file" >> "$OUTPUT_FILE"
-    echo "    Added: tests/browser-tests/high-level-tests/$(basename "$file")"
+    echo "    Added: tests/browser-tests/test-cases/$(basename "$file")"
   fi
 done
 echo "[Build Script] Finished High-Level Test Files."

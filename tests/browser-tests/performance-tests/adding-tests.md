@@ -1,20 +1,20 @@
 # Adding High-Level Tests to the Performance Suite
 
-This guide outlines how to make test files from the `tests/browser-tests/high-level-tests/` directory usable within the Performance Test suite (`performance-tests.html`). The performance suite now uses a self-registration mechanism, where each test script declares itself to the performance testing environment.
+This guide outlines how to make test files from the `tests/browser-tests/test-cases/` directory usable within the Performance Test suite (`performance-tests.html`). The performance suite now uses a self-registration mechanism, where each test script declares itself to the performance testing environment.
 
 ## Overview of the New System
 
 The performance testing framework (`performance-tests.html`) no longer uses a central `test-definitions.js` file. Instead:
 
 1.  `performance-tests.html` initializes a global array: `window.PERFORMANCE_TESTS_REGISTRY = [];`.
-2.  It then loads selected test scripts from the `tests/browser-tests/high-level-tests/` directory.
+2.  It then loads selected test scripts from the `tests/browser-tests/test-cases/` directory.
 3.  Each of these loaded test scripts is responsible for checking if `window.PERFORMANCE_TESTS_REGISTRY` exists.
 4.  If it does, the script pushes an object containing its performance test metadata into this registry.
 5.  The `performance-ui.js` script then reads from this registry to dynamically build the test list in the UI.
 
 ## How to Make a High-Level Test Usable for Performance Testing
 
-To include a test from `tests/browser-tests/high-level-tests/` (e.g., `my-cool-test.js`) in the performance suite, you need to ensure it performs self-registration.
+To include a test from `tests/browser-tests/test-cases/` (e.g., `my-cool-test.js`) in the performance suite, you need to ensure it performs self-registration.
 
 **Step 1: Ensure your High-Level Test's Drawing Function Signature**
 
@@ -26,7 +26,7 @@ The performance testing framework expects the drawing function (e.g., `draw_my_c
 
 **Step 2: Add the Self-Registration Block to Your Test Script**
 
-At the end of your `high-level-tests/your-test-file-name.js`, add the following JavaScript block. This block should be *after* your main drawing function (e.g., `draw_your_test_name`) has been defined.
+At the end of your `test-cases/your-test-file-name.js`, add the following JavaScript block. This block should be *after* your main drawing function (e.g., `draw_your_test_name`) has been defined.
 
 ```javascript
 // ... (your existing draw_your_test_name function and other test logic) ...
@@ -39,7 +39,7 @@ if (typeof RenderTestBuilder === 'function' && typeof define_your_test_name === 
 // --- Performance Test Self-Registration Block ---
 // Check if the performance test registry exists (i.e., loaded by performance-tests.html)
 // and if the main drawing function is defined.
-if (typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
+if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
     typeof draw_your_test_name === 'function') { // Replace draw_your_test_name with your actual drawing function
 
     window.PERFORMANCE_TESTS_REGISTRY.push({
@@ -88,9 +88,9 @@ Open `tests/browser-tests/performance-tests.html` and add a `<script>` tag to lo
 
   <!-- Load test scripts -->
   <!-- Lines tests -->
-  <script src="high-level-tests/lines--M-size--no-fill--1px_opaque_stroke--crisp_pixel_pos--vertical_orient--test.js"></script>
+  <script src="test-cases/lines--M-size--no-fill--1px_opaque_stroke--crisp_pixel_pos--vertical_orient--test.js"></script>
   <!-- ... other existing high-level tests ... -->
-  <script src="high-level-tests/your-test-file-name.js"></script> <!-- Add your new test script here -->
+  <script src="test-cases/your-test-file-name.js"></script> <!-- Add your new test script here -->
   
   <!-- Rectangle tests -->
   <!-- (Add high-level rectangle tests here if available) -->

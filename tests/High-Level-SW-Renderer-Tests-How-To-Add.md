@@ -5,7 +5,7 @@ Adding a new test to the "High-Level Tests" suite involves creating a self-conta
 Follow these steps:
 
 1.  **Create Test File and Define Drawing Logic:**
-    *   Create a new file inside the `tests/browser-tests/high-level-tests/` directory.
+    *   Create a new file inside the `tests/browser-tests/test-cases/` directory.
     *   Name the file according to the test parameters using `--` separators and ending with `--test.js` (e.g., `rectangles--S-size--filled--semitransparent-fill--crisp-pixel-pos-and-size--no-rotation--test.js`).
     *   Inside this file, create a JavaScript function for the drawing logic. Follow the established naming convention (e.g., `draw_rectangles__S_size__...`).
     *   **Signature:** The function must accept the rendering context and the current iteration number: `function myDrawingFunction(ctx, currentIterationNumber /*, ...any extra args */)`.
@@ -14,7 +14,7 @@ Follow these steps:
     *   **Randomness:** Use `SeededRandom.getRandom()` *inside* the function for reproducible randomness. Do not call `SeededRandom.seedWithInteger()`; `RenderTest` handles seeding.
     *   **Return Value for Checks:** If checks like `withExtremesCheck()` are used, calculate the required values (e.g., bounding box) and **return** them as an object. Note: If the returned object has a property named `checkData`, the test runner (`RenderTest`) will use the *value* of `checkData` as the input for checks; otherwise, it will use the entire returned object.
         ```javascript
-        // Inside: tests/browser-tests/high-level-tests/my-shape--params--test.js
+        // Inside: tests/browser-tests/test-cases/my-shape--params--test.js
 
         function draw_my_shape(ctx, currentIterationNumber) {
           // ... setup, random values ...
@@ -43,7 +43,7 @@ Follow these steps:
     *   In the *same test file* (`...--test.js`), create a function to define the test configuration using the corresponding nomenclature (e.g., `define_rectangles__S_size__...`).
     *   Inside this function, instantiate and configure `RenderTestBuilder`:
         ```javascript
-        // Inside: tests/browser-tests/high-level-tests/my-shape--params--test.js
+        // Inside: tests/browser-tests/test-cases/my-shape--params--test.js
         // (Continued from Step 1)
 
         function define_my_shape_test() {
@@ -69,7 +69,7 @@ Follow these steps:
     *   Choose appropriate checks. `withExtremesCheck` and similar checks automatically use the object returned by the *first call* to the drawing function (the one using the software renderer context), which is captured internally by the test runner (potentially extracting a `checkData` property as described above).
     *   **Crucially**, at the very end of the file, *call* the definition function to register the test when the script loads:
         ```javascript
-        // Inside: tests/browser-tests/high-level-tests/my-shape--params--test.js
+        // Inside: tests/browser-tests/test-cases/my-shape--params--test.js
         // (End of file)
 
         // Define and register the test immediately when this script is loaded.
@@ -86,9 +86,9 @@ Follow these steps:
         <script src="../../src/RenderTestBuilder.js"></script>
 
         <!-- Load Individual High-Level Test Files -->
-        <script src="high-level-tests/lines--M-size--...--test.js"></script>
+        <script src="test-cases/lines--M-size--...--test.js"></script>
         <!-- Add your new test file here -->
-        <script src="high-level-tests/my-shape--params--test.js"></script>
+        <script src="test-cases/my-shape--params--test.js"></script>
         <!-- Add more <script> tags here for other test files -->
 
         <!-- Script to Load Tests and Init Page -->

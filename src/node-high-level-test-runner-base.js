@@ -3,7 +3,7 @@
  * ==========================================================================
  * 
  * This script runs high-level software renderer tests in Node.js without a browser.
- * It uses tests defined in individual test files within tests/browser-tests/high-level-tests/
+ * It uses tests defined in individual test files within tests/browser-tests/test-cases/
  * to run tests via command line.
  */
 
