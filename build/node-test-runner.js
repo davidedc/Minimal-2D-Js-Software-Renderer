@@ -275,10 +275,12 @@ function checkBasicConditionsForCrispRendering(centerX, centerY, width, height, 
   if (!Number.isInteger(centerY) && centerY % 1 !== 0.5) {
     console.warn("Center Y must be an integer or *.5 for crisp rendering ");
   }
-}function getRandomPoint(decimalPlaces = null) {
+}function getRandomPoint(decimalPlaces = null, canvasWidth = null, canvasHeight = null) {
   const margin = 100;
-  const x = margin + SeededRandom.getRandom() * (renderTestWidth - 2 * margin);
-  const y = margin + SeededRandom.getRandom() * (renderTestHeight - 2 * margin);
+  const width = canvasWidth || renderTestWidth;
+  const height = canvasHeight || renderTestHeight;
+  const x = margin + SeededRandom.getRandom() * (width - 2 * margin);
+  const y = margin + SeededRandom.getRandom() * (height - 2 * margin);
   
   if (decimalPlaces === null) {
     return { x, y };
