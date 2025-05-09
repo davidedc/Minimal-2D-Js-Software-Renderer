@@ -240,6 +240,26 @@ This is the core of the conversion. You'll translate the logic from the old `sha
 *   **Return Value for Checks**:
     *   If the original `shapeCreationFunction` returned an object (e.g., for `withExtremesCheck`), your new `draw_` function **must** return an object with a `checkData` property containing a similar structure for the single-instance mode.
     *   Example: `return { logs: ["..."], checkData: { leftX, rightX, topY, bottomY } };`
+    *   **Calculating `checkData` for `withExtremesCheck`**: The exact values for `leftX`, `rightX`, `topY`, `bottomY` in `checkData` can be nuanced, especially for stroked shapes, and depend on how the `withExtremesCheck` utility interprets these bounds in conjunction with the rendering context (software vs. canvas, integer vs. sub-pixel coordinates).
+        *   **General Principle**: `withExtremesCheck` typically expects the inclusive integer pixel coordinates that define the bounding box of the rendered primitive's relevant feature (e.g., the stroke itself).
+        *   **1px Strokes and Pixel Alignment**:
+            *   If a 1px stroke is geometrically centered on an **integer coordinate** (e.g., line at `x=10`), the stroke visually covers `[x - 0.5, x + 0.5)`. The `withExtremesCheck` might then expect bounds related to this (e.g., `x-0.5` for left, `x+0.5` for right if it works with subpixels, or `Math.floor(x-0.5)` and `Math.floor(x+0.5)` if it expects integer pixels).
+            *   If a 1px stroke is geometrically centered on a **`.5` coordinate** (e.g., line at `x=10.5`), the stroke visually covers the integer pixel `10` (i.e., the range `[10, 11)`). The `withExtremesCheck` will likely expect `Math.floor(10.5) = 10` for that boundary.
+        *   **Example for a rectangle stroked with 1px, where `x, y` (top-left of stroke geometry) and `x+width, y+height` (representing the coordinates of the center of the far strokes) are all `*.5` coordinates (e.g., after `adjustDimensionsForCrispStrokeRendering` for a 1px stroke on an integer grid center):**
+            ```javascript
+            // In draw_... function:
+            // x, y are the top-left *.5 coordinates for the stroke rectangle's geometry.
+            // finalRectWidth, finalRectHeight are the dimensions.
+            const checkData = {
+                leftX: Math.floor(x),                       // e.g., if x is 227.5, this is 227
+                rightX: Math.floor(x + finalRectWidth),     // e.g., if x + width is 372.5, this is 372
+                topY: Math.floor(y),                        // e.g., if y is 270.5, this is 270
+                bottomY: Math.floor(y + finalRectHeight)  // e.g., if y + height is 329.5, this is 329
+            };
+            return { logs, checkData };
+            ```
+        *   **Debugging Strategy**: The most reliable way to determine the correct `checkData` is often iterative. If `withExtremesCheck` fails, it will output the "expected" (from your `checkData`) vs. "found" (what the renderer/check actually detected) values. The "found" values usually indicate what your `checkData` should aim to produce. Analyze these discrepancies to understand the coordinate system and pixel interpretation of `withExtremesCheck` for the specific scenario.
+        *   Consult existing converted tests that use `withExtremesCheck` for similar shapes and positioning as a reference.
     *   Conversely, if the original shape creation function did *not* return data for checks (e.g., `addBlackLines`), and the `RenderTestBuilder` definition for the low-level test did *not* include checks requiring this data (like `withExtremesCheck`), then the new `draw_...` function typically should not return `checkData`. It might return `null` or an object with only `logs` if logging is desired.
     *   This return value (with or without `checkData`) should generally only be for the single-instance case (i.e., `instances` parameter is not set or is <= 0). For multi-instance performance runs, returning `null` is common.
 *   **Handling `instances` for Performance**:
@@ -265,7 +285,7 @@ This is the core of the conversion. You'll translate the logic from the old `sha
 
 At the end of your new test file, call the `define_..._test()` function to register it:
 ```javascript
-if (typeof RenderTestBuilder === 'function') { // Ensure RenderTestBuilder is loaded
+if (typeof RenderTestBuilder === 'function') {
     define_your_description_test();
 }
 ```
