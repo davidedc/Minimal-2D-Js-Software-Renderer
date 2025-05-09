@@ -132,6 +132,153 @@ function isNodeEnvironment() {
 if (isNodeEnvironment()) {
   // Make polyfills available globally in node, mimicking browser globals
   global.ImageData = ImageData;
+}function roundPoint({x, y}) {
+  return {
+    x: Math.round(x),
+    y: Math.round(y)
+  };
+}
+
+/**
+ * Adjusts width and height to ensure crisp rendering based on stroke width and center position
+ * @param {number} width - Original width
+ * @param {number} height - Original height
+ * @param {number} strokeWidth - Width of the stroke
+ * @param {Object} center - Center coordinates {x, y}
+ * @returns {Object} Adjusted width and height
+ */
+function adjustDimensionsForCrispStrokeRendering(width, height, strokeWidth, center) {
+
+  // Dimensions should be integers, because non-integer dimensions
+  // always produce a non-crisp (i.e. non-grid-aligned) stroke/fill.
+  let adjustedWidth = Math.floor(width);
+  let adjustedHeight = Math.floor(height);
+
+  // FIXING THE WIDTH /////////////////////////////////
+
+  // For center's x coordinate at grid points (integer coordinates)
+  if (Number.isInteger(center.x)) {
+    // For odd strokeWidth, width should be odd
+    if (strokeWidth % 2 !== 0) {
+      if (adjustedWidth % 2 === 0) adjustedWidth++;
+    }
+    // For even strokeWidth, width should be even
+    else {
+      if (adjustedWidth % 2 !== 0) adjustedWidth++;
+    }
+  }
+  // For center's x coordinate at pixels (i.e. *.5 coordinates)
+  else if (center.x % 1 === 0.5) {
+    // For odd strokeWidth, width should be even
+    if (strokeWidth % 2 !== 0) {
+      if (adjustedWidth % 2 !== 0) adjustedWidth++;
+    }
+    // For even strokeWidth, width should be odd
+    else {
+      if (adjustedWidth % 2 === 0) adjustedWidth++;
+    }
+  }
+
+  // FIXING THE HEIGHT /////////////////////////////////
+
+  // For center's y coordinate at grid points (integer coordinates)
+  if (Number.isInteger(center.y)) {
+    // For odd strokeWidth, height should be odd
+    if (strokeWidth % 2 !== 0) {
+      if (adjustedHeight % 2 === 0) adjustedHeight++;
+    }
+    // For even strokeWidth, height should be even
+    else {
+      if (adjustedHeight % 2 !== 0) adjustedHeight++;
+    }
+  }
+  // For center's y coordinate at pixels (i.e. *.5 coordinates)
+  else if (center.y % 1 === 0.5) {
+    // For odd strokeWidth, height should be even
+    if (strokeWidth % 2 !== 0) {
+      if (adjustedHeight % 2 !== 0) adjustedHeight++;
+    }
+    // For even strokeWidth, height should be odd
+    else {
+      if (adjustedHeight % 2 === 0) adjustedHeight++;
+    }
+  }
+
+  return {
+    width: adjustedWidth,
+    height: adjustedHeight
+  };
+}
+
+/**
+ * Adjusts center coordinates to ensure crisp rendering based on stroke width and dimensions
+ * @param {number} centerX - Original center X coordinate
+ * @param {number} centerY - Original center Y coordinate
+ * @param {number} width - Shape width
+ * @param {number} height - Shape height
+ * @param {number} strokeWidth - Width of the stroke
+ * @returns {Object} Adjusted center coordinates
+ */
+function adjustCenterForCrispStrokeRendering(centerX, centerY, width, height, strokeWidth) {
+  
+  let adjustedX = centerX;
+  let adjustedY = centerY;
+
+  // For odd strokeWidth
+  //   if width/height are even, then the center x/y should be in the middle of the pixel i.e. *.5
+  //   if width/height are odd, then the center x/y should be at the grid point i.e. integer
+
+  // For even strokeWidth
+  //   if width/height are even, then the center x/y should be at the grid point i.e. integer
+  //   if width/height are odd, then the center x/y should be in the middle of the pixel i.e. *.5
+
+  if (strokeWidth % 2 !== 0) {
+    if (width % 2 === 0) {
+      adjustedX = Math.floor(centerX) + 0.5;
+    } else {
+      adjustedX = Math.round(centerX);
+    }
+
+    if (height % 2 === 0) {
+      adjustedY = Math.floor(centerY) + 0.5;
+    } else {
+      adjustedY = Math.round(centerY);
+    }
+  }
+  else {
+    if (width % 2 === 0) {
+      adjustedX = Math.round(centerX);
+    } else {
+      adjustedX = Math.floor(centerX) + 0.5;
+    }
+
+    if (height % 2 === 0) {
+      adjustedY = Math.round(centerY);
+    } else {
+      adjustedY = Math.floor(centerY) + 0.5;
+    }
+  }
+
+
+
+  return {
+    x: adjustedX,
+    y: adjustedY
+  };
+}
+
+function placeCloseToCenterAtPixel(width, height) {
+  return {
+    centerX: Math.floor(width / 2) + 0.5,
+    centerY: Math.floor(height / 2) + 0.5
+  };
+}
+
+function placeCloseToCenterAtGrid(width, height) {
+  return {
+    centerX: Math.floor(width / 2),
+    centerY: Math.floor(height / 2)
+  };
 }// See https://stackoverflow.com/a/47593316
 class SeededRandom {
     static #currentRandom = null;
@@ -8236,6 +8383,246 @@ if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !=
         category: 'lines'
     });
 } /**
+ * @fileoverview
+ * Test definition for rendering multiple (typically 15 for visual regression,
+ * 'instances' count for performance) lines with random thickness, color (including alpha),
+ * positions, and orientations.
+ *
+ * Guiding Principles for this draw function:
+ * - General:
+ *   - The function is designed to draw a variable number of lines with varied properties.
+ *   - `RenderTest` handles initial seeding of `SeededRandom.getRandom()`.
+ * - `initialCount` Parameter:
+ *   - Defines the number of lines for a standard visual test run.
+ *   - Passed to `runCanvasCode` by the `define_..._test` function.
+ * - `instances` Parameter (for Performance Testing):
+ *   - If provided (not null and > 0), signifies a performance test run.
+ *   - The function will then draw 'instances' number of lines instead of 'initialCount'.
+ *   - Logging is skipped, and `null` is returned in this mode.
+ * - Return Value:
+ *   - Returns an object with a `logs` array for single/initialCount runs.
+ *   - Returns `null` if `instances` is set (performance mode) or if no logs are generated.
+ *   - No `checkData` is returned as this test primarily focuses on rendering capability
+ *     and visual variety, rather than precise checks.
+ */
+
+/**
+ * Draws multiple lines with random properties (position, thickness, color).
+ * The number of lines drawn depends on whether 'instances' (for performance mode)
+ * or 'initialCount' (for visual regression mode) is active.
+ *
+ * @param {CanvasRenderingContext2D | CrispSwContext} ctx - The rendering context.
+ * @param {number} currentIterationNumber - The current test iteration.
+ * @param {number} initialCount - The number of lines to draw for a standard (non-performance) run.
+ * @param {?number} instances - Optional. If provided and > 0, this many lines are drawn for performance testing.
+ * @returns {?{ logs: string[] }} An object with logs, or null (especially in performance mode).
+ */
+function draw_lines__multi_15__no_fill__random_stroke__random_pos__random_orient(ctx, currentIterationNumber, initialCount = 15, instances = null) {
+    const isPerformanceRun = instances !== null && instances > 0;
+    const lineCount = isPerformanceRun ? instances : initialCount;
+
+    let logs = isPerformanceRun ? null : [];
+
+    const canvasWidth = ctx.canvas.width;
+    const canvasHeight = ctx.canvas.height;
+
+    // Helper to get a random point within canvas boundaries
+    const getRandomPoint = () => ({
+        x: SeededRandom.getRandom() * canvasWidth,
+        y: SeededRandom.getRandom() * canvasHeight
+    });
+
+    // Helper to get a random color string (rgba)
+    // Original used minAlpha = 150, maxAlpha = 255
+    const getRandomColorString = () => {
+        const r = Math.floor(SeededRandom.getRandom() * 256);
+        const g = Math.floor(SeededRandom.getRandom() * 256);
+        const b = Math.floor(SeededRandom.getRandom() * 256);
+        const a = Math.floor(SeededRandom.getRandom() * (255 - 150 + 1)) + 150; // Alpha between 150 and 255
+        return `rgba(${r},${g},${b},${a / 255})`; // Alpha for CSS is 0-1
+    };
+
+    for (let i = 0; i < lineCount; i++) {
+        const start = getRandomPoint();
+        const end = getRandomPoint();
+        const thickness = Math.floor(SeededRandom.getRandom() * 10) + 1; // Thickness 1 to 10
+        const colorStr = getRandomColorString();
+
+        ctx.lineWidth = thickness;
+        ctx.strokeStyle = colorStr;
+        // ctx.fillStyle is not relevant for lines unless they have caps that might be filled differently, which is not the case here.
+
+        // --- Single Drawing Block ---
+        ctx.strokeLine(start.x, start.y, end.x, end.y);
+        // --- End Single Drawing Block ---
+
+        if (!isPerformanceRun) {
+            logs.push(`&#x2500; Random Line from (${start.x.toFixed(1)}, ${start.y.toFixed(1)}) to (${end.x.toFixed(1)}, ${end.y.toFixed(1)}) thickness: ${thickness}, color: ${colorStr}`);
+        }
+    }
+
+    if (!isPerformanceRun && logs.length === 0 && lineCount > 0) {
+        logs.push('Attempted to draw random lines, but none were generated in the loop.');
+    } else if (!isPerformanceRun && lineCount === 0) {
+        logs.push('No random lines drawn (lineCount was 0).');
+    }
+    
+    return logs && logs.length > 0 ? { logs } : null;
+}
+
+/**
+ * Defines and registers the test case for rendering multiple random lines using RenderTestBuilder.
+ */
+function define_lines__multi_15__no_fill__random_stroke__random_pos__random_orient_test() {
+    const defaultLineCount = 15; // Default number of lines for visual regression test
+
+    return new RenderTestBuilder()
+        .withId('lines--multi_15--no-fill--random-stroke__random_pos--random_orient')
+        .withTitle('Lines: Multi-15 No-Fill Random-Stroke Random-Pos Random-Orient')
+        .withDescription('Tests rendering of ' + defaultLineCount + ' lines with random positions, thickness, and colors.')
+        .runCanvasCode(draw_lines__multi_15__no_fill__random_stroke__random_pos__random_orient, defaultLineCount)
+        // No specific checks from original low-level test.
+        // Visual inspection and performance are the main goals.
+        .build(); // Creates and registers the RenderTest instance
+}
+
+// Define and register the visual regression test immediately when this script is loaded.
+if (typeof RenderTestBuilder === 'function') {
+    define_lines__multi_15__no_fill__random_stroke__random_pos__random_orient_test();
+}
+
+// Register for performance testing
+if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
+    typeof draw_lines__multi_15__no_fill__random_stroke__random_pos__random_orient === 'function') {
+    window.PERFORMANCE_TESTS_REGISTRY.push({
+        id: 'lines--multi_15--no-fill--random-stroke__random_pos--random_orient',
+        drawFunction: draw_lines__multi_15__no_fill__random_stroke__random_pos__random_orient,
+        displayName: 'Perf: Lines Multi Random Props',
+        description: 'Performance test for rendering multiple (default ' + 15 + ', or N from harness) lines with random properties.',
+        category: 'lines'
+    });
+} /**
+ * @fileoverview
+ * Test definition for rendering multiple (typically 20 for visual regression,
+ * 'instances' count for performance) 10px thick, black, opaque stroke lines
+ * at random positions and with random orientations.
+ *
+ * Guiding Principles for this draw function:
+ * - General:
+ *   - The function is designed to draw a variable number of lines.
+ *   - `currentIterationNumber` is used to seed `SeededRandom` if drawing the 'initialCount'
+ *     of lines (e.g., for visual regression tests where reproducibility of the scene is key).
+ *     However, for the core logic of getting random points for lines, this function
+ *     directly uses `SeededRandom.getRandom()` as per standard practice, assuming
+ *     `RenderTest` handles initial seeding.
+ * - `initialCount` Parameter:
+ *   - This parameter defines the number of lines to draw for a standard visual test run.
+ *   - It's passed to `runCanvasCode` by the `define_..._test` function.
+ * - `instances` Parameter (for Performance Testing):
+ *   - If `instances` is provided (not null and > 0), it signifies a performance test run.
+ *   - The function will then draw 'instances' number of lines instead of 'initialCount'.
+ *   - In this mode, logging is skipped, and `null` is returned.
+ *   - `SeededRandom` is still used for coordinates to maintain the nature of the test,
+ *     but the sheer number of operations is the focus.
+ * - Return Value:
+ *   - Returns an object with a `logs` array for single/initialCount runs.
+ *   - Returns `null` if `instances` is set (performance mode) or if no logs are generated.
+ *   - No `checkData` is returned as this test primarily focuses on rendering multiple
+ *     lines without specific positional or color checks beyond visual comparison and
+ *     performance measurement.
+ */
+
+/**
+ * Draws multiple 10px thick, black, opaque lines at random positions.
+ * The number of lines drawn depends on whether 'instances' (for performance mode)
+ * or 'initialCount' (for visual regression mode) is active.
+ *
+ * @param {CanvasRenderingContext2D | CrispSwContext} ctx - The rendering context.
+ * @param {number} currentIterationNumber - The current test iteration (used by RenderTest for seeding).
+ * @param {number} initialCount - The number of lines to draw for a standard (non-performance) run.
+ * @param {?number} instances - Optional. If provided and > 0, this many lines are drawn for performance testing.
+ * @returns {?{ logs: string[] }} An object with logs, or null (especially in performance mode).
+ */
+function draw_lines__multi_20__no_fill__10px_black_opaque_stroke__random_pos__random_orient(ctx, currentIterationNumber, initialCount = 20, instances = null) {
+    const isPerformanceRun = instances !== null && instances > 0;
+    const lineCount = isPerformanceRun ? instances : initialCount;
+
+    let logs = isPerformanceRun ? null : [];
+
+    // Set constant drawing properties
+    ctx.lineWidth = 10;
+    ctx.strokeStyle = 'rgb(0,0,0)'; // Opaque black in RGB format
+    ctx.fillStyle = 'rgba(0,0,0,0)'; // No fill for lines
+
+    const canvasWidth = ctx.canvas.width;
+    const canvasHeight = ctx.canvas.height;
+
+    // Helper to get a random point within canvas boundaries (integer for simplicity here)
+    // SeededRandom.getRandom() is expected to be seeded by RenderTest per iteration.
+    const getRandomPoint = () => ({
+        x: Math.floor(SeededRandom.getRandom() * canvasWidth),
+        y: Math.floor(SeededRandom.getRandom() * canvasHeight)
+    });
+
+    for (let i = 0; i < lineCount; i++) {
+        const start = getRandomPoint();
+        const end = getRandomPoint();
+
+        // --- Single Drawing Block ---
+        // Using strokeLine as it's common in these tests.
+        // Assumes it's available/polyfilled on ctx.
+        ctx.strokeLine(start.x, start.y, end.x, end.y);
+        // --- End Single Drawing Block ---
+
+        if (!isPerformanceRun) {
+            logs.push(`&#x2500; 10px Black line from (${start.x}, ${start.y}) to (${end.x}, ${end.y})`);
+        }
+    }
+
+    if (!isPerformanceRun && logs.length === 0) {
+        // Ensure logs array is not empty if it wasn't a perf run but no lines were drawn (e.g. initialCount = 0)
+        logs.push('No 10px black lines drawn.');
+    }
+    
+    return logs && logs.length > 0 ? { logs } : null;
+}
+
+/**
+ * Defines and registers the test case for rendering multiple 10px black lines using RenderTestBuilder.
+ */
+function define_lines__multi_20__no_fill__10px_black_opaque_stroke__random_pos__random_orient_test() {
+    const defaultLineCount = 20; // Default number of lines for visual regression test
+
+    return new RenderTestBuilder()
+        .withId('lines--multi_20--no-fill--10px_black_opaque_stroke__random_pos--random_orient')
+        .withTitle('Lines: Multi-20 No-Fill 10px-Black-Opaque-Stroke Random-Pos Random-Orient')
+        .withDescription('Tests rendering of ' + defaultLineCount + ' randomly positioned and oriented 10px thick black lines.')
+        // Pass the draw function and the default number of lines for the visual regression mode.
+        // The 'instances' parameter in the draw function will be handled by the performance runner.
+        .runCanvasCode(draw_lines__multi_20__no_fill__10px_black_opaque_stroke__random_pos__random_orient, defaultLineCount)
+        // No specific checks like withExtremesCheck or color checks are typically applied to "multi-random" tests
+        // as the focus is on rendering capability and performance. Visual inspection handles correctness.
+        .build(); // Creates and registers the RenderTest instance
+}
+
+// Define and register the visual regression test immediately when this script is loaded.
+if (typeof RenderTestBuilder === 'function') {
+    define_lines__multi_20__no_fill__10px_black_opaque_stroke__random_pos__random_orient_test();
+}
+
+// Register for performance testing
+if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
+    typeof draw_lines__multi_20__no_fill__10px_black_opaque_stroke__random_pos__random_orient === 'function') {
+    window.PERFORMANCE_TESTS_REGISTRY.push({
+        id: 'lines--multi_20--no-fill--10px_black_opaque_stroke__random_pos--random_orient',
+        drawFunction: draw_lines__multi_20__no_fill__10px_black_opaque_stroke__random_pos__random_orient,
+        // The 'initialCount' for the drawFunction will be its default (20),
+        // the performance harness will pass 'instances'.
+        displayName: 'Perf: Lines Multi 10px Black Random',
+        description: 'Performance test for rendering multiple (default 20, or N from harness) 10px black lines at random positions.',
+        category: 'lines'
+    });
+} /**
  * @fileoverview Test definition for rendering multiple (20 by default) 1px thick, black, opaque
  * lines with random start/end points. Supports a parameter to vary the number of instances.
  *
@@ -8611,6 +8998,265 @@ if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !=
         displayName: 'Perf: Lines Multi 3px Black Random',
         description: 'Performance test for rendering multiple (default 20, or N from harness) 3px black lines at random positions.',
         category: 'lines'
+    });
+} /**
+ * @fileoverview
+ * Test definition for rendering multiple (typically 20 for visual regression,
+ * 'instances' count for performance) 5px thick, black, opaque stroke lines
+ * at random positions and with random orientations.
+ *
+ * Guiding Principles for this draw function:
+ * - General:
+ *   - The function is designed to draw a variable number of lines.
+ *   - `currentIterationNumber` is used to seed `SeededRandom` if drawing the 'initialCount'
+ *     of lines (e.g., for visual regression tests where reproducibility of the scene is key).
+ *     However, for the core logic of getting random points for lines, this function
+ *     directly uses `SeededRandom.getRandom()` as per standard practice, assuming
+ *     `RenderTest` handles initial seeding.
+ * - `initialCount` Parameter:
+ *   - This parameter defines the number of lines to draw for a standard visual test run.
+ *   - It's passed to `runCanvasCode` by the `define_..._test` function.
+ * - `instances` Parameter (for Performance Testing):
+ *   - If `instances` is provided (not null and > 0), it signifies a performance test run.
+ *   - The function will then draw 'instances' number of lines instead of 'initialCount'.
+ *   - In this mode, logging is skipped, and `null` is returned.
+ *   - `SeededRandom` is still used for coordinates to maintain the nature of the test,
+ *     but the sheer number of operations is the focus.
+ * - Return Value:
+ *   - Returns an object with a `logs` array for single/initialCount runs.
+ *   - Returns `null` if `instances` is set (performance mode) or if no logs are generated.
+ *   - No `checkData` is returned as this test primarily focuses on rendering multiple
+ *     lines without specific positional or color checks beyond visual comparison and
+ *     performance measurement.
+ */
+
+/**
+ * Draws multiple 5px thick, black, opaque lines at random positions.
+ * The number of lines drawn depends on whether 'instances' (for performance mode)
+ * or 'initialCount' (for visual regression mode) is active.
+ *
+ * @param {CanvasRenderingContext2D | CrispSwContext} ctx - The rendering context.
+ * @param {number} currentIterationNumber - The current test iteration (used by RenderTest for seeding).
+ * @param {number} initialCount - The number of lines to draw for a standard (non-performance) run.
+ * @param {?number} instances - Optional. If provided and > 0, this many lines are drawn for performance testing.
+ * @returns {?{ logs: string[] }} An object with logs, or null (especially in performance mode).
+ */
+function draw_lines__multi_20__no_fill__5px_black_opaque_stroke__random_pos__random_orient(ctx, currentIterationNumber, initialCount = 20, instances = null) {
+    const isPerformanceRun = instances !== null && instances > 0;
+    const lineCount = isPerformanceRun ? instances : initialCount;
+
+    let logs = isPerformanceRun ? null : [];
+
+    // Set constant drawing properties
+    ctx.lineWidth = 5;
+    ctx.strokeStyle = 'rgb(0,0,0)'; // Opaque black in RGB format
+    ctx.fillStyle = 'rgba(0,0,0,0)'; // No fill for lines
+
+    const canvasWidth = ctx.canvas.width;
+    const canvasHeight = ctx.canvas.height;
+
+    // Helper to get a random point within canvas boundaries (integer for simplicity here)
+    // SeededRandom.getRandom() is expected to be seeded by RenderTest per iteration.
+    const getRandomPoint = () => ({
+        x: Math.floor(SeededRandom.getRandom() * canvasWidth),
+        y: Math.floor(SeededRandom.getRandom() * canvasHeight)
+    });
+
+    for (let i = 0; i < lineCount; i++) {
+        const start = getRandomPoint();
+        const end = getRandomPoint();
+
+        // --- Single Drawing Block ---
+        // Using strokeLine as it's common in these tests.
+        // Assumes it's available/polyfilled on ctx.
+        ctx.strokeLine(start.x, start.y, end.x, end.y);
+        // --- End Single Drawing Block ---
+
+        if (!isPerformanceRun) {
+            logs.push(`&#x2500; 5px Black line from (${start.x}, ${start.y}) to (${end.x}, ${end.y})`);
+        }
+    }
+
+    if (!isPerformanceRun && logs.length === 0) {
+        // Ensure logs array is not empty if it wasn't a perf run but no lines were drawn (e.g. initialCount = 0)
+        logs.push('No 5px black lines drawn.');
+    }
+    
+    return logs && logs.length > 0 ? { logs } : null;
+}
+
+/**
+ * Defines and registers the test case for rendering multiple 5px black lines using RenderTestBuilder.
+ */
+function define_lines__multi_20__no_fill__5px_black_opaque_stroke__random_pos__random_orient_test() {
+    const defaultLineCount = 20; // Default number of lines for visual regression test
+
+    return new RenderTestBuilder()
+        .withId('lines--multi_20--no-fill--5px_black_opaque_stroke__random_pos--random_orient')
+        .withTitle('Lines: Multi-20 No-Fill 5px-Black-Opaque-Stroke Random-Pos Random-Orient')
+        .withDescription('Tests rendering of ' + defaultLineCount + ' randomly positioned and oriented 5px thick black lines.')
+        // Pass the draw function and the default number of lines for the visual regression mode.
+        // The 'instances' parameter in the draw function will be handled by the performance runner.
+        .runCanvasCode(draw_lines__multi_20__no_fill__5px_black_opaque_stroke__random_pos__random_orient, defaultLineCount)
+        // No specific checks like withExtremesCheck or color checks are typically applied to "multi-random" tests
+        // as the focus is on rendering capability and performance. Visual inspection handles correctness.
+        .build(); // Creates and registers the RenderTest instance
+}
+
+// Define and register the visual regression test immediately when this script is loaded.
+if (typeof RenderTestBuilder === 'function') {
+    define_lines__multi_20__no_fill__5px_black_opaque_stroke__random_pos__random_orient_test();
+}
+
+// Register for performance testing
+if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
+    typeof draw_lines__multi_20__no_fill__5px_black_opaque_stroke__random_pos__random_orient === 'function') {
+    window.PERFORMANCE_TESTS_REGISTRY.push({
+        id: 'lines--multi_20--no-fill--5px_black_opaque_stroke__random_pos--random_orient',
+        drawFunction: draw_lines__multi_20__no_fill__5px_black_opaque_stroke__random_pos__random_orient,
+        // The 'initialCount' for the drawFunction will be its default (20),
+        // the performance harness will pass 'instances'.
+        displayName: 'Perf: Lines Multi 5px Black Random',
+        description: 'Performance test for rendering multiple (default 20, or N from harness) 5px black lines at random positions.',
+        category: 'lines'
+    });
+} /**
+ * @fileoverview
+ * Test definition for rendering a single, small-to-medium sized, 1px thick, red, opaque stroked rectangle
+ * with no fill, centered at a grid crossing, and with no rotation.
+ *
+ * Guiding Principles for this draw function:
+ * - Reproducibility: Uses SeededRandom for all random elements.
+ * - Crispness: Adapts logic for centering and dimension adjustment for crisp 1px stroke.
+ * - Checks: Returns extremes data for `withExtremesCheck`.
+ * - Pre-conditions: Checks for even canvas dimensions.
+ */
+
+/**
+ * Draws a single 1px red-stroked rectangle, centered at a grid crossing.
+ *
+ * @param {CanvasRenderingContext2D | CrispSwContext} ctx - The rendering context.
+ * @param {number} currentIterationNumber - The current test iteration (used by RenderTest for seeding).
+ * @param {?number} instances - Optional. If > 0, draws multiple instances for performance (not primary use here).
+ * @returns {?{ logs: string[], checkData: {leftX: number, rightX: number, topY: number, bottomY: number} }} 
+ *          Log entries and expected pixel extremes, or null if in multi-instance mode.
+ */
+function draw_rectangles__S_size__no_fill__1px_red_opaque_stroke__centered_at_grid__no_rotation(ctx, currentIterationNumber, instances = null) {
+    const canvasWidth = ctx.canvas.width;
+    const canvasHeight = ctx.canvas.height;
+
+    if (canvasWidth % 2 !== 0 || canvasHeight % 2 !== 0) {
+        throw new Error("Canvas width and height must be even for this test (required by centering logic).");
+    }
+
+    const isPerformanceRun = instances !== null && instances > 0;
+    const numIterations = 1; // Focus on one precise rectangle
+    const numRectsToDraw = isPerformanceRun ? instances : 1;
+
+    let logs = isPerformanceRun ? null : [];
+    let checkData = null; // Only to be populated for the single, non-performance run instance
+
+    // --- Base calculations for the archetype rectangle (using SeededRandom for reproducibility) ---
+    // Logic adapted from placeCloseToCenterAtGrid
+    const cXBase = Math.floor(canvasWidth / 2);
+    const cYBase = Math.floor(canvasHeight / 2);
+    const baseCenterX = (cXBase % 2 === 0) ? cXBase : cXBase + 1;
+    const baseCenterY = (cYBase % 2 === 0) ? cYBase : cYBase + 1;
+
+    // Base Rectangle Dimensions (random but seeded)
+    let initialRectWidth = Math.floor(20 + SeededRandom.getRandom() * 130);
+    let initialRectHeight = Math.floor(20 + SeededRandom.getRandom() * 130);
+
+    // Use adjustDimensionsForCrispStrokeRendering for the archetype
+    const { width: archetypeRectWidth, height: archetypeRectHeight } = adjustDimensionsForCrispStrokeRendering(
+        initialRectWidth, 
+        initialRectHeight, 
+        1, // strokeWidth
+        { x: baseCenterX, y: baseCenterY } // center coordinates
+    );
+
+    // Calculate top-left for the archetype rectangle (relative to its center)
+    const archetypeX = baseCenterX - archetypeRectWidth / 2;
+    const archetypeY = baseCenterY - archetypeRectHeight / 2;
+    // --- End base calculations ---
+
+    // Set drawing properties once (they are constant for all instances)
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = 'rgb(255,0,0)'; // Red, Opaque
+    ctx.fillStyle = 'rgba(0,0,0,0)';   // Transparent fill
+
+    for (let i = 0; i < numRectsToDraw; i++) {
+        let currentX = archetypeX;
+        let currentY = archetypeY;
+        let currentCenterX = baseCenterX; // For logging, if needed for this instance
+        let currentCenterY = baseCenterY;
+
+        if (isPerformanceRun && i > 0) { // Apply random offsets for subsequent instances in perf mode
+            // Max offset should keep the shape mostly within canvas. Simplified for this example.
+            const maxOffsetX = canvasWidth - archetypeRectWidth - 10; // 10px buffer
+            const minOffsetX = 10;
+            const maxOffsetY = canvasHeight - archetypeRectHeight - 10;
+            const minOffsetY = 10;
+
+            // Use Math.random() for offsets in perf mode for speed, reproducibility of offsets isn't paramount here.
+            const offsetX = Math.floor(Math.random() * (maxOffsetX - minOffsetX + 1)) + minOffsetX - archetypeX;
+            const offsetY = Math.floor(Math.random() * (maxOffsetY - minOffsetY + 1)) + minOffsetY - archetypeY;
+            
+            currentX += offsetX; 
+            currentY += offsetY;
+            currentCenterX += offsetX; // Keep track of the effective center for this instance if logging was active
+            currentCenterY += offsetY;
+        } else if (!isPerformanceRun) {
+            // This is the single instance for visual regression and checkData calculation
+            // Log and set checkData only for this one instance.
+            logs.push(`&#x25A1; 1px Red Stroked Rectangle at (${currentX.toFixed(1)}, ${currentY.toFixed(1)}), size ${archetypeRectWidth}x${archetypeRectHeight}, centered at (${currentCenterX.toFixed(1)}, ${currentCenterY.toFixed(1)})`);
+            
+            checkData = {
+                leftX: Math.floor(currentX),                       
+                rightX: Math.floor(currentX + archetypeRectWidth),     
+                topY: Math.floor(currentY),                        
+                bottomY: Math.floor(currentY + archetypeRectHeight)
+            };
+        }
+
+        // --- Single Drawing Block ---
+        ctx.strokeRect(currentX, currentY, archetypeRectWidth, archetypeRectHeight);
+        // --- End Single Drawing Block ---
+    }
+
+    if (isPerformanceRun) return null;
+    // For non-performance run, checkData and logs for the single drawn instance are returned
+    return { logs, checkData };
+}
+
+/**
+ * Defines and registers the test case.
+ */
+function define_rectangles__S_size__no_fill__1px_red_opaque_stroke__centered_at_grid__no_rotation_test() {
+    return new RenderTestBuilder()
+        .withId('rectangles--S-size--no-fill--1px_red_opaque_stroke--centered_at_grid--no-rotation')
+        .withTitle('Rectangles: S-Size No-Fill 1px-Red-Opaque-Stroke Centered-At-Grid No-Rotation')
+        .withDescription('Tests a single 1px red stroked rectangle, centered on grid lines, with even dimensions.')
+        .runCanvasCode(draw_rectangles__S_size__no_fill__1px_red_opaque_stroke__centered_at_grid__no_rotation)
+        .withExtremesCheck() // Uses the checkData returned by the draw function
+        // Original low-level test did not have a .compareWithThreshold(), implying visual check or other specific checks.
+        .build();
+}
+
+// Define and register the visual regression test.
+if (typeof RenderTestBuilder === 'function') {
+    define_rectangles__S_size__no_fill__1px_red_opaque_stroke__centered_at_grid__no_rotation_test();
+}
+
+// Register for performance testing.
+if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
+    typeof draw_rectangles__S_size__no_fill__1px_red_opaque_stroke__centered_at_grid__no_rotation === 'function') {
+    window.PERFORMANCE_TESTS_REGISTRY.push({
+        id: 'rectangles--S-size--no-fill--1px_red_opaque_stroke--centered_at_grid--no-rotation',
+        drawFunction: draw_rectangles__S_size__no_fill__1px_red_opaque_stroke__centered_at_grid__no_rotation,
+        displayName: 'Perf: Rect S 1px Red Centered Grid',
+        description: 'Performance of a single 1px red stroked rectangle, centered on grid.',
+        category: 'rectangles' // Or 'rects' to match scene-creation file names
     });
 } /**
  * Node.js Test Runner for Minimal-2D-Js-Software-Renderer - High Level Tests

@@ -32,6 +32,12 @@ echo "  Added: src/crisp-sw-canvas/node-polyfills.js"
 # 2. Core Utilities (Including geometry.js for TransformationMatrix)
 echo "[Build Script] Adding Core Utilities..."
 
+# add src/scene-creation/scene-creation-utils.js
+# TODO: put this in a different folder as it's not just for scene creation, it's also
+# used by the high-level tests to position rects so they draw crisply.
+cat "$PROJECT_ROOT/src/scene-creation/scene-creation-utils.js" >> "$OUTPUT_FILE"
+echo "  Added: src/scene-creation/scene-creation-utils.js"
+
 # add src/secene-creation/SeededRandom.js. This one normally gets
 # added for the scene creation utils, but actually it's useful also
 # beyond them.
