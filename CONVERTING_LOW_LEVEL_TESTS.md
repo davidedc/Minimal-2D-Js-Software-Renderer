@@ -265,7 +265,72 @@ This is the core of the conversion. You'll translate the logic from the old `sha
 *   **Handling `instances` for Performance**:
     *   The `instances` parameter is passed by the performance testing harness. Its JSDoc in your `draw_` function must clearly explain how it's used.
     *   **Interpretation can vary**:
-        *   **For tests drawing a single, well-defined primitive (or a fixed small set of them)**: `instances` typically acts as an outer loop multiplier. The `draw_` function repeats its core drawing logic `instances` times. These repetitions might involve slight variations (e.g., different positions using `Math.random()` for offsets, while the base primitive's characteristics remain driven by `SeededRandom` for reproducibility). In this mode, `checkData` is usually not returned (function returns `null`).
+        *   **For tests drawing a single, well-defined primitive (or a fixed small set of them)**: `instances` typically acts as an outer loop multiplier. The `draw_` function should:
+            1.  **Calculate Archetype Properties**: Once, before the loop, calculate the core properties of the "archetype" primitive using `SeededRandom` (e.g., its dimensions, specific anchor points if it's a complex unique shape, initial positioning for the visual regression case). This ensures the fundamental nature of the shape being tested is reproducible.
+            2.  **Loop `instances` Times**: Iterate from `0` to `(isPerformanceRun ? instances : 1) - 1`.
+            3.  **Determine Instance Position (for performance mode)**: Inside the loop for performance runs, calculate the top-left drawing coordinates (`currentX`, `currentY`) for each instance. To ensure instances are spread across the entire canvas for a meaningful performance test:
+                *   These coordinates should typically be generated as absolute random positions within the canvas boundaries (e.g., `currentX = Math.floor(Math.random() * (canvasWidth - archetype.width))`).
+                *   Avoid merely applying small random offsets to a single, fixed base position (like the centered position used for the visual regression test's archetype), as this can lead to clustering.
+                *   If the specific visual characteristics of the archetype depend on its top-left coordinates having a particular sub-pixel alignment (e.g., being `X.5, Y.5` to ensure crispness with even dimensions), then adjust the randomly generated integer position accordingly (e.g., `currentX = Math.floor(Math.random() * (canvasWidth - archetype.width)) + 0.5;`).
+            4.  **Draw the Primitive**: Draw the primitive using its archetypal properties but at the newly determined (potentially offset) position.
+            5.  **Conditional Logic for Visual vs. Perf.**: 
+                *   If it's *not* a performance run (i.e., you are drawing the single instance for visual regression), then perform any necessary logging and calculate/store `checkData` based on this single, canonical (often un-offsetted or specifically placed) instance.
+                *   If it *is* a performance run, typically skip logging and `checkData` for efficiency for all instances, or at least for instances after the first if the first one also serves as a quick visual check.
+            The function should generally return `null` if `isPerformanceRun` is true. The `checkData` is primarily relevant for the single-instance visual regression run.
+
+            **Conceptual Structure:**
+            ```javascript
+            function draw_single_precise_shape(ctx, currentIterationNumber, instances = null) {
+                const isPerformanceRun = instances !== null && instances > 0;
+                const numToDraw = isPerformanceRun ? instances : 1;
+                let logs = null;         // Initialize to null, populate only for non-perf run
+                let checkData = null;    // Initialize to null, populate only for non-perf run
+
+                // 1. Calculate archetype properties (using SeededRandom)
+                // These define the shape's characteristics for all instances.
+                const archetypeRandomValue = SeededRandom.getRandom(); // Example
+                const archetype = {
+                    width: 50 + archetypeRandomValue * 100, // Seeded random dimension
+                    height: 30 + archetypeRandomValue * 50,
+                    lineWidth: 1,
+                    strokeStyle: 'rgb(255,0,0)',
+                    // Base coordinates for the visual regression instance (e.g., centered)
+                    baseVisualX: ctx.canvas.width / 2 - (50 + archetypeRandomValue * 100) / 2,
+                    baseVisualY: ctx.canvas.height / 2 - (30 + archetypeRandomValue * 50) / 2
+                };
+                
+                ctx.lineWidth = archetype.lineWidth;
+                ctx.strokeStyle = archetype.strokeStyle;
+
+                for (let i = 0; i < numToDraw; i++) {
+                    let currentX, currentY;
+
+                    if (isPerformanceRun) {
+                        // 3. Apply per-instance variations for performance runs
+                        // Use Math.random() for offsets for speed; these don't need to be seeded per iteration typically.
+                        currentX = Math.floor(Math.random() * (ctx.canvas.width - archetype.width));
+                        currentY = Math.floor(Math.random() * (ctx.canvas.height - archetype.height));
+                    } else {
+                        // For the single visual regression instance, use the calculated base position
+                        currentX = archetype.baseVisualX;
+                        currentY = archetype.baseVisualY;
+                    }
+
+                    // 4. Draw the varied primitive
+                    ctx.strokeRect(currentX, currentY, archetype.width, archetype.height);
+
+                    // 5. Conditional logic for the single visual regression instance
+                    if (!isPerformanceRun) {
+                        logs = [`Drew archetype at ${currentX.toFixed(1)},${currentY.toFixed(1)}`];
+                        checkData = { /* ... calculate based on currentX, currentY, archetype.width, archetype.height ... */ };
+                        // Since numToDraw is 1 for non-perf, loop effectively runs once.
+                    }
+                }
+
+                if (isPerformanceRun) return null;
+                return { logs, checkData }; // Return logs and checkData only for the visual test run
+            }
+            ```
         *   **For tests designed to draw a variable number of primitives (e.g., "N random lines")**: `instances` might be used as *the value for N itself* when in performance mode, overriding a default count that is used for the visual regression mode (single-instance run). For example, if the visual test draws 20 lines, and `instances` is 1000, the performance run draws 1000 lines.
     *   In multi-instance mode (when `instances > 0`), specific logging and `checkData` return are usually skipped (the function typically returns `null`).
     *   The primary `SeededRandom.getRandom()` should still be used for the *base* properties of the shape(s) to ensure the core primitive or pattern is reproducible, while simple `Math.random()` can be used for per-instance variations (like position offsets in the first case) if strict reproducibility of each individual offset isn't critical for the performance scenario.
