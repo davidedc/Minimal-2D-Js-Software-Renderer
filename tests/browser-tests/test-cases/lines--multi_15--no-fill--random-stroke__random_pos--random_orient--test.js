@@ -49,13 +49,18 @@ function draw_lines__multi_15__no_fill__random_stroke__random_pos__random_orient
     });
 
     // Helper to get a random color string (rgba)
-    // Original used minAlpha = 150, maxAlpha = 255
+    // Original used getRandomColor(150, 255) where alpha is generated first.
     const getRandomColorString = () => {
+        // Match order of SeededRandom.getRandom() calls in global getRandomColor: Alpha, then R, G, B
+        const minAlphaForThisTest = 150;
+        const maxAlphaForThisTest = 255;
+        const a_byte = Math.floor(minAlphaForThisTest + SeededRandom.getRandom() * (maxAlphaForThisTest - minAlphaForThisTest + 1));
+        
         const r = Math.floor(SeededRandom.getRandom() * 256);
         const g = Math.floor(SeededRandom.getRandom() * 256);
         const b = Math.floor(SeededRandom.getRandom() * 256);
-        const a = Math.floor(SeededRandom.getRandom() * (255 - 150 + 1)) + 150; // Alpha between 150 and 255
-        return `rgba(${r},${g},${b},${a / 255})`; // Alpha for CSS is 0-1
+        
+        return `rgba(${r},${g},${b},${(a_byte / 255).toFixed(3)})`;
     };
 
     for (let i = 0; i < lineCount; i++) {
