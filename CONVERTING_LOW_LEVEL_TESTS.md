@@ -6,6 +6,17 @@ This guide details the process of converting existing "low-level" rendering test
 
 The goal is to consolidate testing efforts and leverage a more flexible and direct way of defining drawing logic using the Canvas API.
 
+## Preamble: Understanding the Low-Level Test
+
+Before starting the conversion, it's crucial to thoroughly understand the original low-level test.
+
+*   **Behavior vs. Description**: Sometimes, a low-level test's descriptive name or comments might not perfectly align with what its underlying `shapeCreationFunction` *actually does* (e.g., an "Axis-Aligned Rectangle" test might internally use utilities that generate parameters suitable for a rounded rectangle, or apply unexpected default stroke widths).
+    *   **Action**: Always examine the `shapeCreationFunction` (and any helper utilities it calls from `src/scene-creation/`) to understand the true data generation logic and the actual parameters being used for drawing.
+    *   **Decision Point**: If a discrepancy is found, decide whether to:
+        1.  **Prioritize Original Behavior**: Replicate the original (potentially quirky) data generation and behavior for strict test-to-test parity. The JSDoc for your new high-level test should note if it inherits such quirks.
+        2.  **Prioritize Description/Intent**: Implement the high-level test according to the clearer name or descriptive intent, effectively "fixing" or clarifying an old inconsistency. This makes the new test cleaner but means it might not be a 1:1 data replication of the old one.
+    *   Clearly document your chosen approach in the JSDoc of your new `draw_...` function.
+
 ## Overview of the Conversion Process
 
 The conversion involves translating the shape-generation logic from the old system (which often involved populating a `Scene` object with shape definitions) into a new JavaScript file that directly uses Canvas API calls within a dedicated drawing function.
@@ -172,6 +183,7 @@ This is the core of the conversion. You'll translate the logic from the old `sha
     *   Any custom static arguments passed via `RenderTestBuilder.runCanvasCode()` (see Section 3) should appear in the signature before the optional `instances = null` parameter.
 *   **Randomness**:
     *   Use `SeededRandom.getRandom()` directly for any randomized values (dimensions, positions, colors if applicable).
+    *   **CRITICAL**: The *exact order* of all calls to `SeededRandom.getRandom()` in your new `draw_...` function must precisely mirror the order in which they occurred in the original `shapeCreationFunction` (and any helpers it called that used `SeededRandom`). Any deviation in sequence will lead to different random values and a mismatch with the original test's output. If debugging complex sequences, consider temporarily adding logs in both the old and new code to print values from `SeededRandom.getRandom()` to trace the sequence.
     *   **Do not** call `SeededRandom.seedWithInteger(currentIterationNumber)` inside your `draw_` function; `RenderTest` (the test runner) handles seeding globally before calling your function.
 *   **Canvas Dimensions**:
     *   Replace globals like `renderTestWidth` and `renderTestHeight` with `ctx.canvas.width` and `ctx.canvas.height`.
@@ -179,13 +191,17 @@ This is the core of the conversion. You'll translate the logic from the old `sha
     *   Replicate the calculations for coordinates, sizes, colors, etc., from the old function.
     *   **Pre-condition Checks**: Identify and migrate any necessary pre-condition checks from the original shape creation logic (e.g., `checkCanvasHasEvenDimensions()` or an equivalent inline check like `if (ctx.canvas.width % 2 !== 0) ...`) into the new `draw_...` function to ensure test validity.
     *   If the old function called helper utilities (e.g., from `scene-creation-utils.js` or other `scene-creation` files):
-        *   Their logic often needs to be **adapted and inlined** into your `draw_...` function. This adaptation includes replacing global variable access (like `renderTestWidth`) with context-specific values (`ctx.canvas.width`), ensuring `SeededRandom.getRandom()` is used correctly for reproducibility, and fitting the logic into the direct canvas drawing model.
-        *   Alternatively, if a utility is simple and widely used, ensure it's globally available via `high-level-tests.html`'s script includes. Copying small, specific utilities is also an option.
+        *   Their logic often needs to be **carefully adapted and potentially inlined** into your `draw_...` function. This adaptation is crucial and includes:
+            *   Replacing any global variable access (like `renderTestWidth`, `renderTestHeight`) with context-specific values (e.g., `ctx.canvas.width`, `ctx.canvas.height`).
+            *   Ensuring that all calls to `SeededRandom.getRandom()` from the inlined/adapted logic are integrated into the *correct overall sequence* relative to other `SeededRandom` calls in your main `draw_...` function.
+            *   Adjusting the helper's logic to directly use `ctx` for drawing or to return parameters compatible with direct canvas calls, rather than populating an intermediate `shapes` array or relying on a separate rendering engine.
+        *   Alternatively, if a utility is simple, widely used, and already loaded by the test HTML pages (like `getRandomColor` from `random-utils.js`), you can call it directly if its output is suitable or can be easily adapted (see Color Conversion below).
 *   **Drawing Commands (Mapping `type` to `ctx` calls)**:
     *   The old `shapes.push({ type: '...', ... })` needs to be converted to `ctx` operations.
     *   **Color Conversion**: Shape properties like `strokeColor: { r, g, b, a }` or `fillColor` must be converted to CSS color strings for `ctx.strokeStyle` or `ctx.fillStyle`.
         *   Example: `'rgba(${r},${g},${b},${a/255})'` or use a utility like `colorToString()` if available and appropriate.
         *   If the color is static and known (e.g., always red), you can use direct CSS color strings. For broadest compatibility, especially with `CrispSwContext` which might have a stricter parser, prefer explicit formats like `ctx.strokeStyle = 'rgb(255,0,0)';` or `ctx.fillStyle = 'rgba(0,0,0,0.5)';` even for common color names.
+        *   Alternatively, if the original test used a globally available utility function (e.g., `getRandomColor(minAlpha, maxAlpha)`) from an included script (like `random-utils.js`) to generate color *objects*, and you have a way to convert this object to a CSS string, prefer using that original utility to ensure fidelity. You might need a small helper function in your test file or a shared utility to convert the object (e.g., `{r,g,b,a}` where `a` is 0-255) to an `rgba(...)` CSS string if one isn't globally available (e.g., `return \`rgba(\${obj.r},\${obj.g},\${obj.b},\${(obj.a/255).toFixed(3)})\`;`). Remember that the order of calls to `getRandomColor` must match the original test if multiple colors are generated.
     *   **`line`**:
         *   Properties: `start`, `end`, `thickness`, `color`.
         *   A common and preferred method if `ctx.strokeLine(x1, y1, x2, y2)` is available (polyfilled for both `CrispSwContext` and `CanvasRenderingContext2D`):
@@ -255,6 +271,20 @@ This is the core of the conversion. You'll translate the logic from the old `sha
                 rightX: Math.floor(x + finalRectWidth),     // e.g., if x + width is 372.5, this is 372
                 topY: Math.floor(y),                        // e.g., if y is 270.5, this is 270
                 bottomY: Math.floor(y + finalRectHeight)  // e.g., if y + height is 329.5, this is 329
+            };
+            return { logs, checkData };
+            ```
+        *   **Example for a rectangle with a thicker stroke (e.g., `sw` pixels) where `x,y` are integer top-left coordinates:**
+            ```javascript
+            // In draw_... function:
+            // x, y are integer top-left coordinates of the rectangle's geometry.
+            // rectWidth, rectHeight are its dimensions.
+            // sw is the strokeWidth.
+            const checkData = {
+                leftX: x - sw / 2,
+                rightX: x + rectWidth + sw / 2 - 1, // Note the -1 for inclusive pixel boundary
+                topY: y - sw / 2,
+                bottomY: y + rectHeight + sw / 2 - 1  // Note the -1 for inclusive pixel boundary
             };
             return { logs, checkData };
             ```
