@@ -7736,6 +7736,155 @@ class RenderTest {
       results.join('<br>'); // HTML for browser
   }
 }/**
+ * @fileoverview Test definition for rendering a medium-sized, horizontal, 1px thick,
+ * opaque stroke line positioned precisely between pixels.
+ *
+ * Guiding Principles for the draw_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__horizontal_orient function:
+ * - General:
+ *   - Canvas width and height must be even; an error is thrown otherwise.
+ *   - Drawing logic is consolidated into a single loop to handle both single and multiple instances,
+ *     reducing code duplication.
+ * - Multiple Instances (when 'instances' parameter > 0):
+ *   - No logging is performed, and the function returns `null`.
+ *   - Positional offsets for each instance are applied directly to the primitive's coordinates
+ *     (e.g., line endpoints) rather than using canvas transformations (like `ctx.translate()`).
+ *   - The random offsets for these multiple instances are generated using `Math.random()` for simplicity
+ *     and potential performance benefits, as the exact reproducibility of these specific offsets
+ *     is not considered critical for this mode. The base primitive's characteristics remain
+ *     reproducible via `SeededRandom` for the single instance case or base calculations.
+ *   - Offsets are integers and aim to keep the primitive visible within the canvas.
+ * - Single Instance (when 'instances' is null or <= 0):
+ *   - Original behavior is maintained: logs are collected, and checkData is returned.
+ *   - `SeededRandom` is used for all random elements to ensure test reproducibility.
+ */
+
+/**
+ * Draws a single, 1px thick, fully opaque horizontal line centered vertically
+ * between pixels, with variable width and potentially swapped start/end points.
+ *
+ * @param {CanvasRenderingContext2D | CrispSwContext} ctx - The rendering context.
+ * @param {number} currentIterationNumber - The current test iteration (unused here but required by signature).
+ * @param {?number} instances - Number of instances to draw (optional). If > 0, draw multiple instances.
+ * @returns {?{ logs: string[], checkData: {topY: number, bottomY: number, leftX: number, rightX: number} }} Log entries and expected pixel extremes, or null if drawing multiple instances.
+ */
+function draw_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__horizontal_orient(ctx, currentIterationNumber, instances = null) {
+    const currentCanvasWidth = ctx.canvas.width;
+    const currentCanvasHeight = ctx.canvas.height;
+
+    if (currentCanvasWidth % 2 !== 0 || currentCanvasHeight % 2 !== 0) {
+        throw new Error("Canvas width and height must be even for this test.");
+    }
+
+    const isMultiInstance = instances !== null && instances > 0;
+
+    const effectiveWidth = currentCanvasWidth;
+    const effectiveHeight = currentCanvasHeight;
+
+    // Common calculations for base line (using SeededRandom for reproducibility)
+    const baseLineWidth = Math.floor(20 + SeededRandom.getRandom() * 130);
+    const baseCenterX = Math.floor(effectiveWidth / 2);
+    const baseCenterY = Math.floor(effectiveHeight / 2) + 0.5; // Key: centered *between* pixels vertically
+    const baseLeftX = Math.floor(baseCenterX - baseLineWidth / 2);
+    const baseRightX = baseLeftX + baseLineWidth;
+    const basePixelY = Math.floor(baseCenterY); // The single pixel row involved
+
+    // Set drawing properties once
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = 'rgb(255, 0, 0)';
+    ctx.fillStyle = 'rgba(0, 0, 0, 0)';
+
+    const numIterations = isMultiInstance ? instances : 1;
+    let logs = isMultiInstance ? null : [];
+
+    let currentStartX, currentEndX, currentCenterY; // For drawing, declared outside loop for single instance checkData access
+
+    for (let i = 0; i < numIterations; i++) {
+        let startX = baseLeftX; // Loop-local for clarity of base points per iteration
+        let endX = baseRightX;
+        
+        // Randomly swap start/end points using SeededRandom for base primitive
+        if (SeededRandom.getRandom() < 0.5) {
+            [startX, endX] = [endX, startX];
+        }
+
+        // Initialize/Assign final draw coordinates for this iteration
+        currentStartX = startX;
+        currentEndX = endX;
+        currentCenterY = baseCenterY; // centerY is fixed for a horizontal line
+
+        if (isMultiInstance) {
+            // For multiple instances, use Math.random() for offsets.
+            // Reproducibility of these specific offsets is not critical.
+            const maxOffsetX = effectiveWidth - Math.max(currentStartX, currentEndX);
+            const minOffsetX = -Math.min(currentStartX, currentEndX);
+            const maxOffsetY = effectiveHeight - 1 - currentCenterY; // -1 because line is on pixel Y
+            const minOffsetY = -Math.floor(currentCenterY);
+
+            const offsetX = Math.floor(Math.random() * (maxOffsetX - minOffsetX + 1)) + minOffsetX;
+            const offsetY = Math.floor(Math.random() * (maxOffsetY - minOffsetY + 1)) + minOffsetY;
+
+            // Apply offsets to the drawing coordinates
+            currentStartX += offsetX;
+            currentEndX += offsetX;
+            currentCenterY += offsetY;
+        }
+
+        // --- Single Drawing Block ---
+        // Original code used ctx.strokeLine directly. Let's assume it's available or polyfilled.
+        ctx.strokeLine(currentStartX, currentCenterY, currentEndX, currentCenterY);
+        // --- End Single Drawing Block ---
+
+        if (!isMultiInstance) {
+            logs.push(`&#x2500; 1px Red line from (${currentStartX.toFixed(1)}, ${currentCenterY.toFixed(1)}) to (${currentEndX.toFixed(1)}, ${currentCenterY.toFixed(1)}) color: ${ctx.strokeStyle} thickness: ${ctx.lineWidth}`);
+        }
+    }
+
+    if (!isMultiInstance) {
+        // For single instance, extremes are based on the un-offsetted line from the single iteration.
+        // currentStartX, currentEndX, and basePixelY (derived from baseCenterY) are used.
+        const extremes = {
+            topY: basePixelY,
+            bottomY: basePixelY,
+            leftX: Math.min(currentStartX, currentEndX), // Values from the single loop iteration
+            rightX: Math.max(currentStartX, currentEndX) - 1
+        };
+        return { logs: logs, checkData: extremes };
+    } else {
+        return null;
+    }
+}
+
+/**
+ * Defines and registers the test case using RenderTestBuilder.
+ */
+function define_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__horizontal_orient() {
+    return new RenderTestBuilder()
+      .withId('lines--M-size--no-fill--1px-opaque-stroke--crisp-pixel-pos--horizontal-orient')
+      .withTitle('Lines: M-Size No-Fill 1px-Opaque-Stroke Crisp-Pixel-Pos Horizontal')
+      .withDescription('Tests crisp rendering of a horizontal 1px line centered between pixels using canvas code.')
+      .runCanvasCode(draw_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__horizontal_orient) // Use the new drawing function
+      .withColorCheckMiddleRow({ expectedUniqueColors: 1 }) // Same check as original
+      .withColorCheckMiddleColumn({ expectedUniqueColors: 1 }) // Same check as original
+      .withExtremesCheck() // Same check as original, uses return value from runCanvasCode
+      .build(); // Creates and registers the RenderTest instance
+}
+
+// Define and register the test immediately when this script is loaded.
+if (typeof RenderTestBuilder === 'function') {
+  define_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__horizontal_orient();
+}
+
+// Performance test registration
+if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
+    typeof draw_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__horizontal_orient === 'function') {
+    window.PERFORMANCE_TESTS_REGISTRY.push({
+        id: 'lines--M-size--no-fill--1px-opaque-stroke--crisp-pixel-pos--horizontal-orient',
+        drawFunction: draw_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__horizontal_orient,
+        displayName: 'Perf: Lines M 1px Crisp Horizontal',
+        description: 'Performance test for horizontal 1px lines, crisp pixel positioning.',
+        category: 'lines'
+    });
+} /**
  * @fileoverview Test definition for rendering a medium-sized, vertical, 1px thick,
  * opaque stroke line positioned precisely between pixels horizontally.
  *
@@ -7907,155 +8056,6 @@ if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !=
         category: 'lines'
     };
     window.PERFORMANCE_TESTS_REGISTRY.push(perfTestData);
-} /**
- * @fileoverview Test definition for rendering a medium-sized, horizontal, 1px thick,
- * opaque stroke line positioned precisely between pixels.
- *
- * Guiding Principles for the draw_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__horizontal_orient function:
- * - General:
- *   - Canvas width and height must be even; an error is thrown otherwise.
- *   - Drawing logic is consolidated into a single loop to handle both single and multiple instances,
- *     reducing code duplication.
- * - Multiple Instances (when 'instances' parameter > 0):
- *   - No logging is performed, and the function returns `null`.
- *   - Positional offsets for each instance are applied directly to the primitive's coordinates
- *     (e.g., line endpoints) rather than using canvas transformations (like `ctx.translate()`).
- *   - The random offsets for these multiple instances are generated using `Math.random()` for simplicity
- *     and potential performance benefits, as the exact reproducibility of these specific offsets
- *     is not considered critical for this mode. The base primitive's characteristics remain
- *     reproducible via `SeededRandom` for the single instance case or base calculations.
- *   - Offsets are integers and aim to keep the primitive visible within the canvas.
- * - Single Instance (when 'instances' is null or <= 0):
- *   - Original behavior is maintained: logs are collected, and checkData is returned.
- *   - `SeededRandom` is used for all random elements to ensure test reproducibility.
- */
-
-/**
- * Draws a single, 1px thick, fully opaque horizontal line centered vertically
- * between pixels, with variable width and potentially swapped start/end points.
- *
- * @param {CanvasRenderingContext2D | CrispSwContext} ctx - The rendering context.
- * @param {number} currentIterationNumber - The current test iteration (unused here but required by signature).
- * @param {?number} instances - Number of instances to draw (optional). If > 0, draw multiple instances.
- * @returns {?{ logs: string[], checkData: {topY: number, bottomY: number, leftX: number, rightX: number} }} Log entries and expected pixel extremes, or null if drawing multiple instances.
- */
-function draw_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__horizontal_orient(ctx, currentIterationNumber, instances = null) {
-    const currentCanvasWidth = ctx.canvas.width;
-    const currentCanvasHeight = ctx.canvas.height;
-
-    if (currentCanvasWidth % 2 !== 0 || currentCanvasHeight % 2 !== 0) {
-        throw new Error("Canvas width and height must be even for this test.");
-    }
-
-    const isMultiInstance = instances !== null && instances > 0;
-
-    const effectiveWidth = currentCanvasWidth;
-    const effectiveHeight = currentCanvasHeight;
-
-    // Common calculations for base line (using SeededRandom for reproducibility)
-    const baseLineWidth = Math.floor(20 + SeededRandom.getRandom() * 130);
-    const baseCenterX = Math.floor(effectiveWidth / 2);
-    const baseCenterY = Math.floor(effectiveHeight / 2) + 0.5; // Key: centered *between* pixels vertically
-    const baseLeftX = Math.floor(baseCenterX - baseLineWidth / 2);
-    const baseRightX = baseLeftX + baseLineWidth;
-    const basePixelY = Math.floor(baseCenterY); // The single pixel row involved
-
-    // Set drawing properties once
-    ctx.lineWidth = 1;
-    ctx.strokeStyle = 'rgb(255, 0, 0)';
-    ctx.fillStyle = 'rgba(0, 0, 0, 0)';
-
-    const numIterations = isMultiInstance ? instances : 1;
-    let logs = isMultiInstance ? null : [];
-
-    let currentStartX, currentEndX, currentCenterY; // For drawing, declared outside loop for single instance checkData access
-
-    for (let i = 0; i < numIterations; i++) {
-        let startX = baseLeftX; // Loop-local for clarity of base points per iteration
-        let endX = baseRightX;
-        
-        // Randomly swap start/end points using SeededRandom for base primitive
-        if (SeededRandom.getRandom() < 0.5) {
-            [startX, endX] = [endX, startX];
-        }
-
-        // Initialize/Assign final draw coordinates for this iteration
-        currentStartX = startX;
-        currentEndX = endX;
-        currentCenterY = baseCenterY; // centerY is fixed for a horizontal line
-
-        if (isMultiInstance) {
-            // For multiple instances, use Math.random() for offsets.
-            // Reproducibility of these specific offsets is not critical.
-            const maxOffsetX = effectiveWidth - Math.max(currentStartX, currentEndX);
-            const minOffsetX = -Math.min(currentStartX, currentEndX);
-            const maxOffsetY = effectiveHeight - 1 - currentCenterY; // -1 because line is on pixel Y
-            const minOffsetY = -Math.floor(currentCenterY);
-
-            const offsetX = Math.floor(Math.random() * (maxOffsetX - minOffsetX + 1)) + minOffsetX;
-            const offsetY = Math.floor(Math.random() * (maxOffsetY - minOffsetY + 1)) + minOffsetY;
-
-            // Apply offsets to the drawing coordinates
-            currentStartX += offsetX;
-            currentEndX += offsetX;
-            currentCenterY += offsetY;
-        }
-
-        // --- Single Drawing Block ---
-        // Original code used ctx.strokeLine directly. Let's assume it's available or polyfilled.
-        ctx.strokeLine(currentStartX, currentCenterY, currentEndX, currentCenterY);
-        // --- End Single Drawing Block ---
-
-        if (!isMultiInstance) {
-            logs.push(`&#x2500; 1px Red line from (${currentStartX.toFixed(1)}, ${currentCenterY.toFixed(1)}) to (${currentEndX.toFixed(1)}, ${currentCenterY.toFixed(1)}) color: ${ctx.strokeStyle} thickness: ${ctx.lineWidth}`);
-        }
-    }
-
-    if (!isMultiInstance) {
-        // For single instance, extremes are based on the un-offsetted line from the single iteration.
-        // currentStartX, currentEndX, and basePixelY (derived from baseCenterY) are used.
-        const extremes = {
-            topY: basePixelY,
-            bottomY: basePixelY,
-            leftX: Math.min(currentStartX, currentEndX), // Values from the single loop iteration
-            rightX: Math.max(currentStartX, currentEndX) - 1
-        };
-        return { logs: logs, checkData: extremes };
-    } else {
-        return null;
-    }
-}
-
-/**
- * Defines and registers the test case using RenderTestBuilder.
- */
-function define_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__horizontal_orient() {
-    return new RenderTestBuilder()
-      .withId('lines--M-size--no-fill--1px-opaque-stroke--crisp-pixel-pos--horizontal-orient')
-      .withTitle('Lines: M-Size No-Fill 1px-Opaque-Stroke Crisp-Pixel-Pos Horizontal')
-      .withDescription('Tests crisp rendering of a horizontal 1px line centered between pixels using canvas code.')
-      .runCanvasCode(draw_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__horizontal_orient) // Use the new drawing function
-      .withColorCheckMiddleRow({ expectedUniqueColors: 1 }) // Same check as original
-      .withColorCheckMiddleColumn({ expectedUniqueColors: 1 }) // Same check as original
-      .withExtremesCheck() // Same check as original, uses return value from runCanvasCode
-      .build(); // Creates and registers the RenderTest instance
-}
-
-// Define and register the test immediately when this script is loaded.
-if (typeof RenderTestBuilder === 'function') {
-  define_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__horizontal_orient();
-}
-
-// Performance test registration
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__horizontal_orient === 'function') {
-    window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'lines--M-size--no-fill--1px-opaque-stroke--crisp-pixel-pos--horizontal-orient',
-        drawFunction: draw_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__horizontal_orient,
-        displayName: 'Perf: Lines M 1px Crisp Horizontal',
-        description: 'Performance test for horizontal 1px lines, crisp pixel positioning.',
-        category: 'lines'
-    });
 } /**
  * @fileoverview Test definition for rendering a medium-sized, horizontal, 2px thick,
  * opaque stroke line centered at a grid intersection.
@@ -8433,13 +8433,18 @@ function draw_lines__multi_15__no_fill__random_stroke__random_pos__random_orient
     });
 
     // Helper to get a random color string (rgba)
-    // Original used minAlpha = 150, maxAlpha = 255
+    // Original used getRandomColor(150, 255) where alpha is generated first.
     const getRandomColorString = () => {
+        // Match order of SeededRandom.getRandom() calls in global getRandomColor: Alpha, then R, G, B
+        const minAlphaForThisTest = 150;
+        const maxAlphaForThisTest = 255;
+        const a_byte = Math.floor(minAlphaForThisTest + SeededRandom.getRandom() * (maxAlphaForThisTest - minAlphaForThisTest + 1));
+        
         const r = Math.floor(SeededRandom.getRandom() * 256);
         const g = Math.floor(SeededRandom.getRandom() * 256);
         const b = Math.floor(SeededRandom.getRandom() * 256);
-        const a = Math.floor(SeededRandom.getRandom() * (255 - 150 + 1)) + 150; // Alpha between 150 and 255
-        return `rgba(${r},${g},${b},${a / 255})`; // Alpha for CSS is 0-1
+        
+        return `rgba(${r},${g},${b},${(a_byte / 255).toFixed(3)})`;
     };
 
     for (let i = 0; i < lineCount; i++) {
@@ -9158,79 +9163,86 @@ function draw_rectangles__M_size__semitransparent_fill__random_semitransparent_s
     let logs = isPerformanceRun ? null : [];
     let checkData = null; 
 
-    // --- Archetype Properties (determined by SeededRandom, adapting original logic) ---
-    // Adapted from addAxisAlignedRectangles and placeRoundedRectWithFillAndStrokeBothCrisp
-    
-    const maxStrokeWidth = 10; 
-    let archetypeStrokeWidth = Math.round(SeededRandom.getRandom() * maxStrokeWidth + 1);
-    archetypeStrokeWidth = archetypeStrokeWidth % 2 === 0 ? archetypeStrokeWidth : archetypeStrokeWidth + 1;
-
-    let archetypeBaseCenter = { x: canvasWidth / 2, y: canvasHeight / 2 };
-    if (SeededRandom.getRandom() < 0.5) {
-        archetypeBaseCenter = { x: archetypeBaseCenter.x + 0.5, y: archetypeBaseCenter.y + 0.5 };
-    }
-
-    const maxWidth = canvasWidth * 0.6;
-    const maxHeight = canvasHeight * 0.6;
-    let initialRectWidth = Math.round(50 + SeededRandom.getRandom() * maxWidth);
-    let initialRectHeight = Math.round(50 + SeededRandom.getRandom() * maxHeight);
-
-    const { 
-        width: archetypeRectWidth, 
-        height: archetypeRectHeight 
-    } = adjustDimensionsForCrispStrokeRendering(initialRectWidth, initialRectHeight, archetypeStrokeWidth, archetypeBaseCenter);
-
-    let finalArchetypeCenter = { ...archetypeBaseCenter }; 
-    const xOffset = Math.floor(SeededRandom.getRandom() * 100) - 50;
-    const yOffset = Math.floor(SeededRandom.getRandom() * 100) - 50;
-    finalArchetypeCenter.x += xOffset;
-    finalArchetypeCenter.y += yOffset;
-
-    // Use getRandomColor directly as per original low-level test - ORDER MATTERS!
-    const strokeObj = getRandomColor(200, 255); // Stroke color generated FIRST in original
-    const fillObj = getRandomColor(100, 200);   // Fill color generated SECOND in original
-
-    const archetypeFillColor = _testHelper_colorObjectToRgbaCss(fillObj);
-    const archetypeStrokeColor = _testHelper_colorObjectToRgbaCss(strokeObj);
-
-    // --- End Archetype Properties ---
 
     for (let i = 0; i < numToDraw; i++) {
-        let currentX, currentY;
-        let centerForLog = { ...finalArchetypeCenter };
+        // --- Generate ALL properties for EACH rectangle instance using SeededRandom ---
+        const maxStrokeWidthRand = 10; // Max stroke width for randomization, as per original logic source
+        let currentStrokeWidth = Math.round(SeededRandom.getRandom() * maxStrokeWidthRand + 1);
+        currentStrokeWidth = currentStrokeWidth % 2 === 0 ? currentStrokeWidth : currentStrokeWidth + 1;
 
-        if (isPerformanceRun) {
-            currentX = Math.floor(Math.random() * (canvasWidth - archetypeRectWidth));
-            currentY = Math.floor(Math.random() * (canvasHeight - archetypeRectHeight));
-            centerForLog.x = currentX + archetypeRectWidth / 2;
-            centerForLog.y = currentY + archetypeRectHeight / 2;
-        } else {
-            currentX = finalArchetypeCenter.x - archetypeRectWidth / 2;
-            currentY = finalArchetypeCenter.y - archetypeRectHeight / 2;
+        let currentCenter = { x: canvasWidth / 2, y: canvasHeight / 2 };
+        if (SeededRandom.getRandom() < 0.5) { // Randomize if center is on grid or pixel center
+            currentCenter = { x: currentCenter.x + 0.5, y: currentCenter.y + 0.5 };
         }
 
-        ctx.fillStyle = archetypeFillColor;
-        ctx.fillRect(currentX, currentY, archetypeRectWidth, archetypeRectHeight);
+        // M-size: 20-120px, as per performance test guidelines
+        const minDimM = 20;
+        const maxDimM = 120;
+        let currentInitialRectWidth = Math.floor(minDimM + SeededRandom.getRandom() * (maxDimM - minDimM + 1));
+        let currentInitialRectHeight = Math.floor(minDimM + SeededRandom.getRandom() * (maxDimM - minDimM + 1));
 
-        ctx.strokeStyle = archetypeStrokeColor;
-        ctx.lineWidth = archetypeStrokeWidth;
-        ctx.strokeRect(currentX, currentY, archetypeRectWidth, archetypeRectHeight);
+        const { 
+            width: currentDrawWidth, 
+            height: currentDrawHeight 
+        } = adjustDimensionsForCrispStrokeRendering(currentInitialRectWidth, currentInitialRectHeight, currentStrokeWidth, currentCenter);
 
-        if (!isPerformanceRun) {
-            logs.push(`Drew Axis-Aligned Rectangle at (${currentX.toFixed(1)},${currentY.toFixed(1)}), size ${archetypeRectWidth}x${archetypeRectHeight}, stroke: ${archetypeStrokeWidth}px, center: (${centerForLog.x.toFixed(1)}, ${centerForLog.y.toFixed(1)}), fill: ${archetypeFillColor}, stroke: ${archetypeStrokeColor}`);
+        // Apply random offsets to this instance's calculated center
+        const xOffset = Math.floor(SeededRandom.getRandom() * 100) - 50;
+        const yOffset = Math.floor(SeededRandom.getRandom() * 100) - 50;
+        currentCenter.x += xOffset;
+        currentCenter.y += yOffset;
+
+        const fillObj = getRandomColor(100, 200);
+        const strokeObj = getRandomColor(200, 255);
+        const currentFillColor = _testHelper_colorObjectToRgbaCss(fillObj);
+        const currentStrokeColor = _testHelper_colorObjectToRgbaCss(strokeObj);
+        // --- End property generation for this instance ---
+
+        let finalDrawX = currentCenter.x - currentDrawWidth / 2;
+        let finalDrawY = currentCenter.y - currentDrawHeight / 2;
+        let centerForLog = { ...currentCenter };
+
+        if (isPerformanceRun) {
+            // Apply an additional large random offset for spread, using Math.random()
+            // This offset is applied to the already SeededRandom-derived position of the rect's center
+            finalDrawX = Math.floor(Math.random() * (canvasWidth - currentDrawWidth));
+            finalDrawY = Math.floor(Math.random() * (canvasHeight - currentDrawHeight));
+            // Update centerForLog if it were to be used in perf logs (not typical)
+            centerForLog.x = finalDrawX + currentDrawWidth / 2;
+            centerForLog.y = finalDrawY + currentDrawHeight / 2;
+        }
+
+        ctx.fillStyle = currentFillColor;
+        ctx.fillRect(finalDrawX, finalDrawY, currentDrawWidth, currentDrawHeight);
+
+        ctx.strokeStyle = currentStrokeColor;
+        ctx.lineWidth = currentStrokeWidth;
+        ctx.strokeRect(finalDrawX, finalDrawY, currentDrawWidth, currentDrawHeight);
+
+        if (!isPerformanceRun) { // This will only be true for the first (and only) iteration when not in perf mode
+            logs.push(`Drew Axis-Aligned Rectangle at (${finalDrawX.toFixed(1)},${finalDrawY.toFixed(1)}), size ${currentDrawWidth}x${currentDrawHeight}, stroke: ${currentStrokeWidth}px, center: (${centerForLog.x.toFixed(1)}, ${centerForLog.y.toFixed(1)}), fill: ${currentFillColor}, stroke: ${currentStrokeColor}`);
             
-            const sw = archetypeStrokeWidth;
+            const sw = currentStrokeWidth; 
             checkData = {
-                leftX: currentX - sw / 2,
-                rightX: currentX + archetypeRectWidth + sw / 2 - 1, 
-                topY: currentY - sw / 2,
-                bottomY: currentY + archetypeRectHeight + sw / 2 - 1  
+                leftX: finalDrawX - sw / 2,
+                rightX: finalDrawX + currentDrawWidth + sw / 2 - 1, 
+                topY: finalDrawY - sw / 2,
+                bottomY: finalDrawY + currentDrawHeight + sw / 2 - 1  
             };
+            // For non-performance mode, we only want one rectangle as per original test intent
+            break; 
         }
     }
 
-    if (isPerformanceRun) return null;
-    return { logs, checkData }; 
+    if (isPerformanceRun && numToDraw > 0 && logs && logs.length > 0) {
+      // Clear logs if it was a performance run with actual drawing, as per-instance logs are too verbose.
+      // This condition is a bit defensive; logs should ideally be null from the start for perf runs.
+      logs = null;
+    }
+
+    // If it wasn't a performance run, logs and checkData for the single drawn instance are returned.
+    // If it was a performance run, logs would be null.
+    return (logs || checkData) ? { logs, checkData } : null; 
 }
 
 /**
@@ -9256,7 +9268,7 @@ if (typeof RenderTestBuilder === 'function') {
 if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
     typeof draw_rectangles__M_size__semitransparent_fill__random_semitransparent_stroke__random_pos__no_rotation === 'function') {
     window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'rectangles--M-size--semitransparent_fill--random_semitransparent_stroke__random_pos--no-rotation',
+        id: 'rectangles--M-size--semitransparent_fill--random_semitransparent_stroke--random_pos--no-rotation',
         drawFunction: draw_rectangles__M_size__semitransparent_fill__random_semitransparent_stroke__random_pos__no_rotation,
         displayName: 'Perf: Rect M Axis-Aligned (Original Logic)',
         description: 'Performance of rendering axis-aligned rectangles, mimicking original low-level logic for parameter generation.',
@@ -9524,6 +9536,244 @@ if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !=
         displayName: 'Perf: Rect S 1px Red Centered Pixel',
         description: 'Performance of a single 1px red stroked rectangle, centered at pixel.',
         category: 'rectangles' 
+    });
+} /**
+ * @fileoverview Test definition for multiple axis-aligned rectangles with random parameters,
+ * matching the new descriptive naming convention.
+ */
+
+/**
+ * Adjusts width and height to ensure crisp rendering based on stroke width and center position.
+ * Adapted from src/scene-creation/scene-creation-utils.js
+ * @param {number} width - Original width.
+ * @param {number} height - Original height.
+ * @param {number} strokeWidth - Width of the stroke.
+ * @param {{x: number, y: number}} center - Center coordinates {x, y}.
+ * @returns {{width: number, height: number}} Adjusted width and height.
+ */
+function _adjustDimensionsForCrispStrokeRendering(width, height, strokeWidth, center) {
+    let adjustedWidth = Math.floor(width);
+    let adjustedHeight = Math.floor(height);
+
+    // FIXING THE WIDTH
+    if (Number.isInteger(center.x)) { // Center x is on grid
+        if (strokeWidth % 2 !== 0) { // Odd stroke
+            if (adjustedWidth % 2 === 0) adjustedWidth++; // Width must be odd
+        } else { // Even stroke
+            if (adjustedWidth % 2 !== 0) adjustedWidth++; // Width must be even
+        }
+    } else if (center.x % 1 === 0.5) { // Center x is on pixel center
+        if (strokeWidth % 2 !== 0) { // Odd stroke
+            if (adjustedWidth % 2 !== 0) adjustedWidth++; // Width must be even
+        } else { // Even stroke
+            if (adjustedWidth % 2 === 0) adjustedWidth++; // Width must be odd
+        }
+    }
+
+    // FIXING THE HEIGHT
+    if (Number.isInteger(center.y)) { // Center y is on grid
+        if (strokeWidth % 2 !== 0) { // Odd stroke
+            if (adjustedHeight % 2 === 0) adjustedHeight++; // Height must be odd
+        } else { // Even stroke
+            if (adjustedHeight % 2 !== 0) adjustedHeight++; // Height must be even
+        }
+    } else if (center.y % 1 === 0.5) { // Center y is on pixel center
+        if (strokeWidth % 2 !== 0) { // Odd stroke
+            if (adjustedHeight % 2 !== 0) adjustedHeight++; // Height must be even
+        } else { // Even stroke
+            if (adjustedHeight % 2 === 0) adjustedHeight++; // Height must be odd
+        }
+    }
+    return { width: adjustedWidth, height: adjustedHeight };
+}
+
+/**
+ * Calculates parameters for a rectangle aiming for crisp fill and stroke.
+ * Adapted from placeRoundedRectWithFillAndStrokeBothCrisp in src/scene-creation/scene-creation-rounded-rects.js
+ * (Note: The "rounded" part of the original name is a misnomer for this specific usage,
+ * as the original addAxisAlignedRectangles test pushes a non-rounded 'rect' type).
+ * @param {number} canvasWidth The width of the canvas.
+ * @param {number} canvasHeight The height of the canvas.
+ * @param {number} maxStrokeWidth Maximum stroke width to generate.
+ * @returns {{center: {x: number, y: number}, adjustedDimensions: {width: number, height: number}, strokeWidth: number}}
+ */
+function _placeRectWithFillAndStrokeBothCrisp(canvasWidth, canvasHeight, maxStrokeWidth = 10) {
+    const maxAllowedContentWidth = canvasWidth * 0.6;
+    const maxAllowedContentHeight = canvasHeight * 0.6;
+
+    // Order of SeededRandom calls must be preserved:
+    // 1. strokeWidth base
+    let strokeWidth = Math.round(SeededRandom.getRandom() * maxStrokeWidth + 1);
+    // Ensure strokeWidth is even for this placement strategy
+    strokeWidth = strokeWidth % 2 === 0 ? strokeWidth : strokeWidth + 1;
+
+    let initialCenter = { x: canvasWidth / 2, y: canvasHeight / 2 };
+
+    // 2. Center offset
+    if (SeededRandom.getRandom() < 0.5) {
+        initialCenter = { x: initialCenter.x + 0.5, y: initialCenter.y + 0.5 };
+    }
+
+    // 3. rectWidth base
+    let rectWidth = Math.round(50 + SeededRandom.getRandom() * maxAllowedContentWidth);
+    // 4. rectHeight base
+    let rectHeight = Math.round(50 + SeededRandom.getRandom() * maxAllowedContentHeight);
+
+    const adjustedDimensions = _adjustDimensionsForCrispStrokeRendering(rectWidth, rectHeight, strokeWidth, initialCenter);
+    return { center: initialCenter, adjustedDimensions, strokeWidth };
+}
+
+/**
+ * Converts a color object to an rgba string.
+ * @param {{r: number, g: number, b: number, a: number}} colorObj Color object.
+ * @returns {string} CSS rgba string.
+ */
+function _colorObjectToString(colorObj) {
+    if (!colorObj) return 'rgba(0,0,0,0)';
+    const alpha = (typeof colorObj.a === 'number') ? (colorObj.a / 255).toFixed(3) : 1;
+    return `rgba(${colorObj.r},${colorObj.g},${colorObj.b},${alpha})`;
+}
+
+/**
+ * Draws multiple axis-aligned rectangles with random parameters.
+ *
+ * @param {CanvasRenderingContext2D | CrispSwContext} ctx The rendering context.
+ * @param {number} currentIterationNumber The current test iteration (for seeding via RenderTest).
+ * @param {?number} instances Optional: Number of instances to draw. Passed by the performance
+ *                  testing harness. For this test, it dictates the number of rectangles drawn.
+ *                  For visual regression (instances is null/0), 10 rectangles are drawn.
+ * @returns {?{logs: string[], checkData: object}} Logs and data for checks for single-instance
+ *                  mode, or null for performance mode.
+ */
+function draw_rectangles_axalign_multi_varsize_randfill_randstroke_randpos_no_rotation(ctx, currentIterationNumber, instances = null) {
+    const isPerformanceRun = instances !== null && instances > 0;
+    const numToDraw = isPerformanceRun ? instances : 10; // Original test draws 10
+
+    const logs = [];
+    let overallMinLeftX = Infinity;
+    let overallMaxRightX = -Infinity;
+    let overallMinTopY = Infinity;
+    let overallMaxBottomY = -Infinity;
+
+    const canvasWidth = ctx.canvas.width;
+    const canvasHeight = ctx.canvas.height;
+
+    for (let i = 0; i < numToDraw; i++) {
+        // Preserve SeededRandom sequence from original test functions:
+        // Calls 1-4 happen inside _placeRectWithFillAndStrokeBothCrisp
+        const placement = _placeRectWithFillAndStrokeBothCrisp(canvasWidth, canvasHeight, 10); // maxStrokeWidth=10 as in original
+        let rectCenter = placement.center;
+        const rectWidth = placement.adjustedDimensions.width;
+        const rectHeight = placement.adjustedDimensions.height;
+        const strokeWidth = placement.strokeWidth;
+
+        // Call 5: xOffset
+        const xOffset = Math.floor(SeededRandom.getRandom() * 100) - 50;
+        // Call 6: yOffset
+        const yOffset = Math.floor(SeededRandom.getRandom() * 100) - 50;
+
+        let finalDrawCenterX = rectCenter.x + xOffset;
+        let finalDrawCenterY = rectCenter.y + yOffset;
+
+        // Call 7: strokeColor (getRandomColor uses SeededRandom internally)
+        const strokeColorObj = getRandomColor(200, 255); // Opaque stroke
+        // Call 8: fillColor (getRandomColor uses SeededRandom internally)
+        const fillColorObj = getRandomColor(100, 200);   // Semi-transparent fill possible
+
+        const strokeColorStr = _colorObjectToString(strokeColorObj);
+        const fillColorStr = _colorObjectToString(fillColorObj);
+
+        let geomX = finalDrawCenterX - rectWidth / 2;
+        let geomY = finalDrawCenterY - rectHeight / 2;
+
+        if (isPerformanceRun) {
+            // For performance, spread shapes widely using Math.random (does not affect SeededRandom sequence)
+            // Ensure shape stays somewhat within bounds if its original placement + offset was near edge
+            const safeMargin = Math.max(strokeWidth, 10); // A small margin
+            geomX = Math.random() * Math.max(0, canvasWidth - rectWidth - safeMargin * 2) + safeMargin;
+            geomY = Math.random() * Math.max(0, canvasHeight - rectHeight - safeMargin * 2) + safeMargin;
+        } else {
+             // Ensure the shape is mostly on canvas for visual test, clipping if necessary
+             // This is a simple clamp to avoid errors if random offsets push it too far.
+            geomX = Math.max(0 - rectWidth/2, Math.min(geomX, canvasWidth - rectWidth/2));
+            geomY = Math.max(0 - rectHeight/2, Math.min(geomY, canvasHeight - rectHeight/2));
+        }
+
+
+        ctx.fillStyle = fillColorStr;
+        ctx.fillRect(geomX, geomY, rectWidth, rectHeight);
+
+        if (strokeWidth > 0) {
+            ctx.strokeStyle = strokeColorStr;
+            ctx.lineWidth = strokeWidth;
+            ctx.strokeRect(geomX, geomY, rectWidth, rectHeight);
+        }
+
+        if (!isPerformanceRun) {
+            logs.push(`Rect ${i+1}: center=(${finalDrawCenterX.toFixed(1)},${finalDrawCenterY.toFixed(1)}), w=${rectWidth}, h=${rectHeight}, sw=${strokeWidth}`);
+            
+            // Calculate extremes based on geometry and stroke width
+            // These are the geometric boundaries of the stroked area
+            const currentRectOuterLeft = geomX - strokeWidth / 2;
+            const currentRectOuterRight = geomX + rectWidth + strokeWidth / 2; // one pixel past the end
+            const currentRectOuterTop = geomY - strokeWidth / 2;
+            const currentRectOuterBottom = geomY + rectHeight + strokeWidth / 2; // one pixel past the end
+
+            overallMinLeftX = Math.min(overallMinLeftX, currentRectOuterLeft);
+            overallMaxRightX = Math.max(overallMaxRightX, currentRectOuterRight);
+            overallMinTopY = Math.min(overallMinTopY, currentRectOuterTop);
+            overallMaxBottomY = Math.max(overallMaxBottomY, currentRectOuterBottom);
+        }
+    }
+
+    if (isPerformanceRun) {
+        return null;
+    } else {
+        // For withExtremesCheck, expected values are inclusive pixel coordinates.
+        // The right/bottom boundary from calculation is typically exclusive, so subtract 1 if it's an integer,
+        // or floor if it's subpixel. The guide's examples use Math.floor for subpixel-derived boundaries.
+        // And `rightX: x + rectWidth + sw / 2 - 1` (inclusive boundary)
+        const checkData = {
+            leftX: Math.floor(overallMinLeftX),
+            rightX: Math.floor(overallMaxRightX -1), // Adjust to inclusive pixel
+            topY: Math.floor(overallMinTopY),
+            bottomY: Math.floor(overallMaxBottomY -1)  // Adjust to inclusive pixel
+        };
+        if (numToDraw === 0) { // Should not happen with numToDraw=10 default but good for safety
+             return {logs, checkData: {leftX:0, rightX:0, topY:0, bottomY:0}};
+        }
+        return { logs, checkData };
+    }
+}
+
+/**
+ * Defines and registers the test case with the new descriptive ID.
+ */
+function define_rectangles_axalign_multi_varsize_randfill_randstroke_randpos_no_rotation_test() {
+    return new RenderTestBuilder()
+        .withId('rectangles--axalign--multi--varsize--randfill--randstroke--randpos--no-rotation')
+        .withTitle('Rectangles: Axis-aligned, Multiple, Variable Size, Random Fill & Stroke, Random Position, No Rotation')
+        .withDescription('Tests rendering of multiple axis-aligned rectangles with random sizes, fills (variable alpha), strokes (opaque, even width), and positions. No rotation.')
+        .runCanvasCode(draw_rectangles_axalign_multi_varsize_randfill_randstroke_randpos_no_rotation)
+        .withExtremesCheck()
+        .compareWithThreshold(3,1) // Matching the single axis-aligned rect test threshold
+        .build();
+}
+
+// Define and register the visual regression test immediately.
+if (typeof RenderTestBuilder === 'function') {
+    define_rectangles_axalign_multi_varsize_randfill_randstroke_randpos_no_rotation_test();
+}
+
+// Register for performance testing.
+if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
+    typeof draw_rectangles_axalign_multi_varsize_randfill_randstroke_randpos_no_rotation === 'function') {
+    window.PERFORMANCE_TESTS_REGISTRY.push({
+        id: 'rectangles--axalign--multi--varsize--randfill--randstroke--randpos--no-rotation',
+        drawFunction: draw_rectangles_axalign_multi_varsize_randfill_randstroke_randpos_no_rotation,
+        displayName: 'Perf: Rects AxAlign Multi Random',
+        description: 'Performance test for multiple axis-aligned rectangles with various random parameters.',
+        category: 'rectangles'
     });
 } /**
  * Node.js Test Runner for Minimal-2D-Js-Software-Renderer - High Level Tests
