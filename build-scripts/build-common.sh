@@ -110,9 +110,10 @@ function concatenate_files() {
 # Function to check if terser is installed (for browser build)
 function check_terser() {
     if ! command -v terser &> /dev/null && [ "$1" != "--no-minify" ]; then
-        echo "Terser is not installed. To install it, run:"
+        echo "Error: Terser is not installed. To install it, run:"
         echo "npm install terser -g"
-        echo ""
+        echo "or"
+        echo "pnpm install -g terser"
         echo "Alternatively, run this script with --no-minify to skip minification"
         return 1
     fi
