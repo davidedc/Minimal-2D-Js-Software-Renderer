@@ -36,79 +36,86 @@ function draw_rectangles__M_size__semitransparent_fill__random_semitransparent_s
     let logs = isPerformanceRun ? null : [];
     let checkData = null; 
 
-    // --- Archetype Properties (determined by SeededRandom, adapting original logic) ---
-    // Adapted from addAxisAlignedRectangles and placeRoundedRectWithFillAndStrokeBothCrisp
-    
-    const maxStrokeWidth = 10; 
-    let archetypeStrokeWidth = Math.round(SeededRandom.getRandom() * maxStrokeWidth + 1);
-    archetypeStrokeWidth = archetypeStrokeWidth % 2 === 0 ? archetypeStrokeWidth : archetypeStrokeWidth + 1;
-
-    let archetypeBaseCenter = { x: canvasWidth / 2, y: canvasHeight / 2 };
-    if (SeededRandom.getRandom() < 0.5) {
-        archetypeBaseCenter = { x: archetypeBaseCenter.x + 0.5, y: archetypeBaseCenter.y + 0.5 };
-    }
-
-    const maxWidth = canvasWidth * 0.6;
-    const maxHeight = canvasHeight * 0.6;
-    let initialRectWidth = Math.round(50 + SeededRandom.getRandom() * maxWidth);
-    let initialRectHeight = Math.round(50 + SeededRandom.getRandom() * maxHeight);
-
-    const { 
-        width: archetypeRectWidth, 
-        height: archetypeRectHeight 
-    } = adjustDimensionsForCrispStrokeRendering(initialRectWidth, initialRectHeight, archetypeStrokeWidth, archetypeBaseCenter);
-
-    let finalArchetypeCenter = { ...archetypeBaseCenter }; 
-    const xOffset = Math.floor(SeededRandom.getRandom() * 100) - 50;
-    const yOffset = Math.floor(SeededRandom.getRandom() * 100) - 50;
-    finalArchetypeCenter.x += xOffset;
-    finalArchetypeCenter.y += yOffset;
-
-    // Use getRandomColor directly as per original low-level test - ORDER MATTERS!
-    const strokeObj = getRandomColor(200, 255); // Stroke color generated FIRST in original
-    const fillObj = getRandomColor(100, 200);   // Fill color generated SECOND in original
-
-    const archetypeFillColor = _testHelper_colorObjectToRgbaCss(fillObj);
-    const archetypeStrokeColor = _testHelper_colorObjectToRgbaCss(strokeObj);
-
-    // --- End Archetype Properties ---
 
     for (let i = 0; i < numToDraw; i++) {
-        let currentX, currentY;
-        let centerForLog = { ...finalArchetypeCenter };
+        // --- Generate ALL properties for EACH rectangle instance using SeededRandom ---
+        const maxStrokeWidthRand = 10; // Max stroke width for randomization, as per original logic source
+        let currentStrokeWidth = Math.round(SeededRandom.getRandom() * maxStrokeWidthRand + 1);
+        currentStrokeWidth = currentStrokeWidth % 2 === 0 ? currentStrokeWidth : currentStrokeWidth + 1;
 
-        if (isPerformanceRun) {
-            currentX = Math.floor(Math.random() * (canvasWidth - archetypeRectWidth));
-            currentY = Math.floor(Math.random() * (canvasHeight - archetypeRectHeight));
-            centerForLog.x = currentX + archetypeRectWidth / 2;
-            centerForLog.y = currentY + archetypeRectHeight / 2;
-        } else {
-            currentX = finalArchetypeCenter.x - archetypeRectWidth / 2;
-            currentY = finalArchetypeCenter.y - archetypeRectHeight / 2;
+        let currentCenter = { x: canvasWidth / 2, y: canvasHeight / 2 };
+        if (SeededRandom.getRandom() < 0.5) { // Randomize if center is on grid or pixel center
+            currentCenter = { x: currentCenter.x + 0.5, y: currentCenter.y + 0.5 };
         }
 
-        ctx.fillStyle = archetypeFillColor;
-        ctx.fillRect(currentX, currentY, archetypeRectWidth, archetypeRectHeight);
+        // M-size: 20-120px, as per performance test guidelines
+        const minDimM = 20;
+        const maxDimM = 120;
+        let currentInitialRectWidth = Math.floor(minDimM + SeededRandom.getRandom() * (maxDimM - minDimM + 1));
+        let currentInitialRectHeight = Math.floor(minDimM + SeededRandom.getRandom() * (maxDimM - minDimM + 1));
 
-        ctx.strokeStyle = archetypeStrokeColor;
-        ctx.lineWidth = archetypeStrokeWidth;
-        ctx.strokeRect(currentX, currentY, archetypeRectWidth, archetypeRectHeight);
+        const { 
+            width: currentDrawWidth, 
+            height: currentDrawHeight 
+        } = adjustDimensionsForCrispStrokeRendering(currentInitialRectWidth, currentInitialRectHeight, currentStrokeWidth, currentCenter);
 
-        if (!isPerformanceRun) {
-            logs.push(`Drew Axis-Aligned Rectangle at (${currentX.toFixed(1)},${currentY.toFixed(1)}), size ${archetypeRectWidth}x${archetypeRectHeight}, stroke: ${archetypeStrokeWidth}px, center: (${centerForLog.x.toFixed(1)}, ${centerForLog.y.toFixed(1)}), fill: ${archetypeFillColor}, stroke: ${archetypeStrokeColor}`);
+        // Apply random offsets to this instance's calculated center
+        const xOffset = Math.floor(SeededRandom.getRandom() * 100) - 50;
+        const yOffset = Math.floor(SeededRandom.getRandom() * 100) - 50;
+        currentCenter.x += xOffset;
+        currentCenter.y += yOffset;
+
+        const fillObj = getRandomColor(100, 200);
+        const strokeObj = getRandomColor(200, 255);
+        const currentFillColor = _testHelper_colorObjectToRgbaCss(fillObj);
+        const currentStrokeColor = _testHelper_colorObjectToRgbaCss(strokeObj);
+        // --- End property generation for this instance ---
+
+        let finalDrawX = currentCenter.x - currentDrawWidth / 2;
+        let finalDrawY = currentCenter.y - currentDrawHeight / 2;
+        let centerForLog = { ...currentCenter };
+
+        if (isPerformanceRun) {
+            // Apply an additional large random offset for spread, using Math.random()
+            // This offset is applied to the already SeededRandom-derived position of the rect's center
+            finalDrawX = Math.floor(Math.random() * (canvasWidth - currentDrawWidth));
+            finalDrawY = Math.floor(Math.random() * (canvasHeight - currentDrawHeight));
+            // Update centerForLog if it were to be used in perf logs (not typical)
+            centerForLog.x = finalDrawX + currentDrawWidth / 2;
+            centerForLog.y = finalDrawY + currentDrawHeight / 2;
+        }
+
+        ctx.fillStyle = currentFillColor;
+        ctx.fillRect(finalDrawX, finalDrawY, currentDrawWidth, currentDrawHeight);
+
+        ctx.strokeStyle = currentStrokeColor;
+        ctx.lineWidth = currentStrokeWidth;
+        ctx.strokeRect(finalDrawX, finalDrawY, currentDrawWidth, currentDrawHeight);
+
+        if (!isPerformanceRun) { // This will only be true for the first (and only) iteration when not in perf mode
+            logs.push(`Drew Axis-Aligned Rectangle at (${finalDrawX.toFixed(1)},${finalDrawY.toFixed(1)}), size ${currentDrawWidth}x${currentDrawHeight}, stroke: ${currentStrokeWidth}px, center: (${centerForLog.x.toFixed(1)}, ${centerForLog.y.toFixed(1)}), fill: ${currentFillColor}, stroke: ${currentStrokeColor}`);
             
-            const sw = archetypeStrokeWidth;
+            const sw = currentStrokeWidth; 
             checkData = {
-                leftX: currentX - sw / 2,
-                rightX: currentX + archetypeRectWidth + sw / 2 - 1, 
-                topY: currentY - sw / 2,
-                bottomY: currentY + archetypeRectHeight + sw / 2 - 1  
+                leftX: finalDrawX - sw / 2,
+                rightX: finalDrawX + currentDrawWidth + sw / 2 - 1, 
+                topY: finalDrawY - sw / 2,
+                bottomY: finalDrawY + currentDrawHeight + sw / 2 - 1  
             };
+            // For non-performance mode, we only want one rectangle as per original test intent
+            break; 
         }
     }
 
-    if (isPerformanceRun) return null;
-    return { logs, checkData }; 
+    if (isPerformanceRun && numToDraw > 0 && logs && logs.length > 0) {
+      // Clear logs if it was a performance run with actual drawing, as per-instance logs are too verbose.
+      // This condition is a bit defensive; logs should ideally be null from the start for perf runs.
+      logs = null;
+    }
+
+    // If it wasn't a performance run, logs and checkData for the single drawn instance are returned.
+    // If it was a performance run, logs would be null.
+    return (logs || checkData) ? { logs, checkData } : null; 
 }
 
 /**
@@ -134,7 +141,7 @@ if (typeof RenderTestBuilder === 'function') {
 if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
     typeof draw_rectangles__M_size__semitransparent_fill__random_semitransparent_stroke__random_pos__no_rotation === 'function') {
     window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'rectangles--M-size--semitransparent_fill--random_semitransparent_stroke__random_pos--no-rotation',
+        id: 'rectangles--M-size--semitransparent_fill--random_semitransparent_stroke--random_pos--no-rotation',
         drawFunction: draw_rectangles__M_size__semitransparent_fill__random_semitransparent_stroke__random_pos__no_rotation,
         displayName: 'Perf: Rect M Axis-Aligned (Original Logic)',
         description: 'Performance of rendering axis-aligned rectangles, mimicking original low-level logic for parameter generation.',
