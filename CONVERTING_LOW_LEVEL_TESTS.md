@@ -16,6 +16,7 @@ Before starting the conversion, it's crucial to thoroughly understand the origin
         1.  **Prioritize Original Behavior**: Replicate the original (potentially quirky) data generation and behavior for strict test-to-test parity. The JSDoc for your new high-level test should note if it inherits such quirks.
         2.  **Prioritize Description/Intent**: Implement the high-level test according to the clearer name or descriptive intent, effectively "fixing" or clarifying an old inconsistency. This makes the new test cleaner but means it might not be a 1:1 data replication of the old one.
     *   Clearly document your chosen approach in the JSDoc of your new `draw_...` function.
+*   **Adherence to Naming Conventions and Guidelines**: Pay close attention to any established naming conventions (e.g., for file names, function names) and parameter guidelines (e.g., size categories like `S-size`, `M-size`, specific color palettes, stroke thickness ranges). If the high-level test's filename implies certain characteristics (like "M-size"), ensure the `draw_...` function generates parameters that conform to these documented guidelines. If such guidelines are in separate documents (e.g., a performance testing setup guide), consult them. This ensures consistency across the test suite.
 
 ## Overview of the Conversion Process
 
@@ -296,58 +297,55 @@ This is the core of the conversion. You'll translate the logic from the old `sha
     *   The `instances` parameter is passed by the performance testing harness. Its JSDoc in your `draw_` function must clearly explain how it's used.
     *   **Interpretation can vary**:
         *   **For tests drawing a single, well-defined primitive (or a fixed small set of them)**: `instances` typically acts as an outer loop multiplier. The `draw_` function should:
-            1.  **Calculate Archetype Properties**: Once, before the loop, calculate the core properties of the "archetype" primitive using `SeededRandom` (e.g., its dimensions, specific anchor points if it's a complex unique shape, initial positioning for the visual regression case). This ensures the fundamental nature of the shape being tested is reproducible.
-            2.  **Loop `instances` Times**: Iterate from `0` to `(isPerformanceRun ? instances : 1) - 1`.
-            3.  **Determine Instance Position (for performance mode)**: Inside the loop for performance runs, calculate the top-left drawing coordinates (`currentX`, `currentY`) for each instance. To ensure instances are spread across the entire canvas for a meaningful performance test:
-                *   These coordinates should typically be generated as absolute random positions within the canvas boundaries (e.g., `currentX = Math.floor(Math.random() * (canvasWidth - archetype.width))`).
-                *   Avoid merely applying small random offsets to a single, fixed base position (like the centered position used for the visual regression test's archetype), as this can lead to clustering.
-                *   If the specific visual characteristics of the archetype depend on its top-left coordinates having a particular sub-pixel alignment (e.g., being `X.5, Y.5` to ensure crispness with even dimensions), then adjust the randomly generated integer position accordingly (e.g., `currentX = Math.floor(Math.random() * (canvasWidth - archetype.width)) + 0.5;`).
-            4.  **Draw the Primitive**: Draw the primitive using its archetypal properties but at the newly determined (potentially offset) position.
+            1.  **Loop `instances` Times (or once for visual test)**: Iterate from `0` to `(isPerformanceRun ? instances : 1) - 1`.
+            2.  **Generate All Properties for Each Instance using `SeededRandom`**: Inside the loop, for *every* instance being drawn (whether for visual regression or performance), generate all its defining properties (geometric dimensions, styles like `lineWidth`, `strokeStyle`, `fillStyle`, initial anchor/center points) using `SeededRandom.getRandom()` (and helper utilities like `getRandomColor` or `adjustDimensionsForCrispStrokeRendering` that internally use `SeededRandom`). This ensures that each shape drawn in a performance frame is as unique as if it were drawn in a separate visual test iteration, consuming the `SeededRandom` sequence consistently.
+            3.  **Determine Final Drawing Position**:
+                *   For the single visual regression instance (`!isPerformanceRun`), use the `SeededRandom`-generated position (which might be a centered position or a specifically calculated one based on the properties generated in step 2).
+                *   For each performance instance (`isPerformanceRun`), take the `SeededRandom`-generated base position (from step 2) and apply an *additional, large random offset* using `Math.random()` (not `SeededRandom`) to its `x` and `y` coordinates. This spreads the uniquely generated shapes across the canvas for the performance test, preventing overlap and ensuring varied placement independent of the `SeededRandom` sequence used for the shape's intrinsic properties.
+            4.  **Draw the Primitive**: Draw the primitive using its fully randomized (per-instance from step 2) properties at its final calculated position (from step 3).
             5.  **Conditional Logic for Visual vs. Perf.**: 
                 *   If it's *not* a performance run (i.e., you are drawing the single instance for visual regression), then perform any necessary logging and calculate/store `checkData` based on this single, canonical (often un-offsetted or specifically placed) instance.
                 *   If it *is* a performance run, typically skip logging and `checkData` for efficiency for all instances, or at least for instances after the first if the first one also serves as a quick visual check.
             The function should generally return `null` if `isPerformanceRun` is true. The `checkData` is primarily relevant for the single-instance visual regression run.
 
-            **Conceptual Structure:**
+            **Conceptual Structure (Simplified):**
             ```javascript
-            function draw_single_precise_shape(ctx, currentIterationNumber, instances = null) {
+            function draw_individual_random_shapes(ctx, currentIterationNumber, instances = null) {
                 const isPerformanceRun = instances !== null && instances > 0;
                 const numToDraw = isPerformanceRun ? instances : 1;
-                let logs = null;         // Initialize to null, populate only for non-perf run
-                let checkData = null;    // Initialize to null, populate only for non-perf run
-
-                // 1. Calculate archetype properties (using SeededRandom)
-                // These define the shape's characteristics for all instances.
-                const archetypeRandomValue = SeededRandom.getRandom(); // Example
-                const archetype = {
-                    width: 50 + archetypeRandomValue * 100, // Seeded random dimension
-                    height: 30 + archetypeRandomValue * 50,
-                    lineWidth: 1,
-                    strokeStyle: 'rgb(255,0,0)',
-                    // Base coordinates for the visual regression instance (e.g., centered)
-                    baseVisualX: ctx.canvas.width / 2 - (50 + archetypeRandomValue * 100) / 2,
-                    baseVisualY: ctx.canvas.height / 2 - (30 + archetypeRandomValue * 50) / 2
-                };
-                
-                ctx.lineWidth = archetype.lineWidth;
-                ctx.strokeStyle = archetype.strokeStyle;
+                let logs = null;
+                let checkData = null;
 
                 for (let i = 0; i < numToDraw; i++) {
-                    let currentX, currentY;
+                    // 2. Generate ALL properties for THIS instance using SeededRandom
+                    const instanceWidth = Math.floor(50 + SeededRandom.getRandom() * 100);
+                    const instanceHeight = Math.floor(30 + SeededRandom.getRandom() * 50);
+                    const instanceLineWidth = 1 + Math.floor(SeededRandom.getRandom() * 5);
+                    const instanceFillColor = _getSeededRandomRgbaString(); // Helper uses SeededRandom
+                    const instanceStrokeColor = _getSeededRandomRgbaString(); // Helper uses SeededRandom
+                    
+                    // Initial base position based on SeededRandom (e.g., for centering logic if applicable)
+                    let currentX = (ctx.canvas.width - instanceWidth) / 2 + (SeededRandom.getRandom() * 20 - 10);
+                    let currentY = (ctx.canvas.height - instanceHeight) / 2 + (SeededRandom.getRandom() * 20 - 10);
+                    // Ensure it's within bounds for the visual test
+                    currentX = Math.max(0, Math.min(currentX, ctx.canvas.width - instanceWidth));
+                    currentY = Math.max(0, Math.min(currentY, ctx.canvas.height - instanceHeight));
 
+                    // 3. Adjust final drawing position for performance instances
                     if (isPerformanceRun) {
-                        // 3. Apply per-instance variations for performance runs
-                        // Use Math.random() for offsets for speed; these don't need to be seeded per iteration typically.
-                        currentX = Math.floor(Math.random() * (ctx.canvas.width - archetype.width));
-                        currentY = Math.floor(Math.random() * (ctx.canvas.height - archetype.height));
-                    } else {
-                        // For the single visual regression instance, use the calculated base position
-                        currentX = archetype.baseVisualX;
-                        currentY = archetype.baseVisualY;
+                        // Override with wide-spread Math.random() position for performance.
+                        // The SeededRandom calls above ensure each instance has unique properties,
+                        // Math.random() here just spreads them out without consuming the seeded sequence.
+                        currentX = Math.floor(Math.random() * (ctx.canvas.width - instanceWidth));
+                        currentY = Math.floor(Math.random() * (ctx.canvas.height - instanceHeight));
                     }
 
-                    // 4. Draw the varied primitive
-                    ctx.strokeRect(currentX, currentY, archetype.width, archetype.height);
+                    // 4. Draw the primitive
+                    ctx.lineWidth = instanceLineWidth;
+                    ctx.strokeStyle = instanceStrokeColor;
+                    ctx.fillStyle = instanceFillColor;
+                    ctx.fillRect(currentX, currentY, instanceWidth, instanceHeight);
+                    ctx.strokeRect(currentX, currentY, instanceWidth, instanceHeight);
 
                     // 5. Conditional logic for the single visual regression instance
                     if (!isPerformanceRun) {
@@ -412,82 +410,3 @@ For the new test to be discoverable by both the visual regression and performanc
     <script src="test-cases/your-new-shape--params--test.js"></script>
     <!-- ... other script tags ... -->
     ```
-*   **Performance Tests**:
-    Similarly, open `tests/browser-tests/performance-tests.html` and add a `<script>` tag for your new test file. This ensures the test's registration with `PERFORMANCE_TESTS_REGISTRY` is executed by this page:
-    ```html
-    <!-- Load test scripts -->
-    <!-- ... other test case script tags ... -->
-    <script src="test-cases/your-new-shape--params--test.js"></script>
-    <!-- ... other test case script tags ... -->
-    
-    <!-- Test definitions and UI -->
-    <script src="performance-tests/performance-ui.js"></script>
-    ```
-
-## Example Walkthrough: `add1PxHorizontalLineCenteredAtPixelTest`
-
-**1. Low-Level Test (Abbreviated):**
-
-*   `src/add-tests.js`:
-    ```javascript
-    function add1PxHorizontalLineCenteredAtPixelTest() {
-      return new RenderTestBuilder()
-        .withId('centered-1px-horizontal-line')
-        // ...
-        .addShapes(add1PxHorizontalLineCenteredAtPixel)
-        .withExtremesCheck()
-        // ...
-        .build();
-    }
-    ```
-*   `src/scene-creation/scene-creation-lines.js`:
-    ```javascript
-    function add1PxHorizontalLineCenteredAtPixel(shapes, log, currentIterationNumber) {
-      // ... uses SeededRandom, renderTestWidth, renderTestHeight ...
-      const lineWidth = Math.floor(20 + SeededRandom.getRandom() * 130);
-      const centerX = Math.floor(renderTestWidth / 2);
-      const centerY = Math.floor(renderTestHeight / 2) + 0.5;
-      return add1PxHorizontalLine(centerX, centerY, lineWidth, shapes, log);
-    }
-
-    function add1PxHorizontalLine(centerX, centerY, width, shapes, log) {
-      // ... calculates startX, endX, pixelY ...
-      shapes.push({
-        type: 'line',
-        start: { x: startX, y: centerY },
-        end: { x: endX, y: centerY },
-        thickness: 1,
-        color: { r: 255, g: 0, b: 0, a: 255 }
-      });
-      return { topY: pixelY, bottomY: pixelY, leftX, rightX: rightX - 1 };
-    }
-    ```
-
-**2. Converted High-Level Test:**
-`tests/browser-tests/test-cases/lines--M-size--no-fill--1px-opaque-stroke--crisp-pixel-pos--horizontal-orient--test.js`
-(Refer to the content of this file as shown in earlier analysis. Key aspects:)
-
-*   `draw_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__horizontal_orient(ctx, currentIterationNumber, instances = null)`:
-    *   (Assumes JSDoc explains parameters and return value clearly).
-    *   Uses `ctx.canvas.width`, `ctx.canvas.height`.
-    *   Includes pre-condition check for canvas dimensions.
-    *   Calculates `baseLineWidth`, `baseCenterX`, `baseCenterY` using `SeededRandom.getRandom()`.
-    *   Sets `ctx.lineWidth = 1; ctx.strokeStyle = 'rgb(255, 0, 0)';`.
-    *   Calls `ctx.strokeLine(currentStartX, currentCenterY, currentEndX, currentCenterY);`.
-    *   Returns `{ logs: [...], checkData: { topY: basePixelY, bottomY: basePixelY, leftX: ..., rightX: ... } }` for single instance.
-*   `define_lines__..._test()`:
-    *   `.withId('lines--M-size--no-fill--1px-opaque-stroke--crisp-pixel-pos--horizontal-orient')`
-    *   `.runCanvasCode(draw_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__horizontal_orient)`
-    *   Includes `.withExtremesCheck()`, `.withColorCheckMiddleRow()`, etc., from original.
-*   Performance registration block is present.
-*   File is included in `high-level-tests.html`.
-*   (For this walkthrough, assume it would also be added to `performance-tests.html` as per Step 6 above).
-
-## Final Checks
-
-*   Ensure your new test appears in the `high-level-tests.html` page in the browser.
-*   Verify it runs correctly, and visual comparisons make sense.
-*   Check that checks (like `withExtremesCheck`) are passing or failing as expected based on the `draw_...` function's return value.
-*   Confirm the test also appears and runs in the performance testing UI if that's separate, and that the `instances` parameter behaves as intended for that specific test.
-
-This detailed process should help in systematically converting all low-level tests. Remember to consult the already converted files in `tests/browser-tests/test-cases/` as practical examples and pay close attention to the JSDoc and logic within their `draw_...` functions. 
