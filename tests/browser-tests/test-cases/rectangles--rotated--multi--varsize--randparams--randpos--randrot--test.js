@@ -1,0 +1,130 @@
+/**
+ * @fileoverview Test definition for multiple rotated rectangles with random parameters.
+ */
+
+// _colorObjectToString, getRandomPoint, and getRandomColor are assumed to be globally available
+// from included utility scripts (e.g., random-utils.js) and use SeededRandom internally as needed.
+
+/**
+ * Converts a color object to an rgba string.
+ * Assumes _colorObjectToString is available from a shared utility or defined in a previous script.
+ * If not, it should be defined here:
+ * function _colorObjectToString(colorObj) {
+ *     if (!colorObj) return 'rgba(0,0,0,0)';
+ *     const alpha = (typeof colorObj.a === 'number') ? (colorObj.a / 255).toFixed(3) : 1;
+ *     return `rgba(${colorObj.r},${colorObj.g},${colorObj.b},${alpha})`;
+ * }
+ */
+
+/**
+ * Draws multiple rotated rectangles with random parameters.
+ *
+ * @param {CanvasRenderingContext2D | CrispSwContext} ctx The rendering context.
+ * @param {number} currentIterationNumber The current test iteration (for seeding via RenderTest).
+ * @param {?number} instances Optional: Number of instances to draw. Passed by the performance
+ *                  testing harness. For this test, it dictates the number of rectangles drawn.
+ *                  For visual regression (instances is null/0), 5 rectangles are drawn.
+ * @returns {?{logs: string[]}} Logs for single-instance mode, or null for performance mode.
+ *                   (No checkData as original test had no withExtremesCheck).
+ */
+function draw_rectangles_rotated_multi_varsize_randparams_randpos_randrot(ctx, currentIterationNumber, instances = null) {
+    const isPerformanceRun = instances !== null && instances > 0;
+    const numToDraw = isPerformanceRun ? instances : 5; // Original test draws 5
+
+    const logs = [];
+    const canvasWidth = ctx.canvas.width;
+    const canvasHeight = ctx.canvas.height;
+
+    // getRandomColor is assumed to be globally available from random-utils.js or similar and use SeededRandom
+    // const getRandomColor = (minAlpha, maxAlpha) => ({ r: Math.floor(SeededRandom.getRandom()*256), g: Math.floor(SeededRandom.getRandom()*256), b: Math.floor(SeededRandom.getRandom()*256), a: Math.floor(SeededRandom.getRandom()*(maxAlpha-minAlpha+1)+minAlpha) });
+
+    for (let i = 0; i < numToDraw; i++) {
+        // Preserve SeededRandom sequence from original addRotatedRectangles:
+        // 1. center (via getRandomPoint which uses SeededRandom)
+        const center = getRandomPoint(1, canvasWidth, canvasHeight);
+        
+        // 2. width
+        const width = 30 + SeededRandom.getRandom() * 100;
+        // 3. height
+        const height = 30 + SeededRandom.getRandom() * 100;
+        // 4. rotation
+        const rotation = SeededRandom.getRandom() * Math.PI * 2;
+        // 5. strokeWidth
+        const strokeWidth = SeededRandom.getRandom() * 10 + 1;
+        
+        // 6. strokeColor (getRandomColor uses SeededRandom)
+        const strokeColorObj = getRandomColor(200, 255); // Opaque stroke
+        // 7. fillColor (getRandomColor uses SeededRandom)
+        const fillColorObj = getRandomColor(100, 200);   // Semi-transparent fill possible
+
+        const strokeColorStr = _colorObjectToString(strokeColorObj);
+        const fillColorStr = _colorObjectToString(fillColorObj);
+
+        let drawAtX = center.x;
+        let drawAtY = center.y;
+
+        if (isPerformanceRun) {
+            // For performance, spread shapes widely using Math.random (does not affect SeededRandom sequence)
+            drawAtX = Math.random() * canvasWidth;
+            drawAtY = Math.random() * canvasHeight;
+        }
+
+        ctx.save();
+        ctx.translate(drawAtX, drawAtY);
+        ctx.rotate(rotation);
+
+        // Draw relative to the new origin (0,0) which is the rectangle's center
+        const rectX = -width / 2;
+        const rectY = -height / 2;
+
+        ctx.fillStyle = fillColorStr;
+        ctx.fillRect(rectX, rectY, width, height);
+
+        if (strokeWidth > 0) {
+            ctx.strokeStyle = strokeColorStr;
+            ctx.lineWidth = strokeWidth;
+            ctx.strokeRect(rectX, rectY, width, height);
+        }
+        ctx.restore();
+
+        if (!isPerformanceRun) {
+            logs.push(`Rotated Rect ${i+1}: center=(${center.x.toFixed(1)},${center.y.toFixed(1)}), w=${width.toFixed(1)}, h=${height.toFixed(1)}, rot=${(rotation * 180 / Math.PI).toFixed(1)}deg, sw=${strokeWidth.toFixed(1)}`);
+        }
+    }
+
+    if (isPerformanceRun) {
+        return null;
+    } else {
+        // Original test did not have withExtremesCheck, so no checkData is returned.
+        return { logs }; 
+    }
+}
+
+/**
+ * Defines and registers the rotated rectangles test case.
+ */
+function define_rectangles_rotated_multi_varsize_randparams_randpos_randrot_test() {
+    return new RenderTestBuilder()
+        .withId('rectangles--rotated--multi--varsize--randparams--randpos--randrot')
+        .withTitle('Rectangles: Rotated, Multiple, Variable Size & Params, Random Position & Rotation')
+        .withDescription('Tests rendering of multiple rotated rectangles with random positions, sizes, angles, strokes, and fills.')
+        .runCanvasCode(draw_rectangles_rotated_multi_varsize_randparams_randpos_randrot)
+        .build();
+}
+
+// Define and register the visual regression test immediately.
+if (typeof RenderTestBuilder === 'function') {
+    define_rectangles_rotated_multi_varsize_randparams_randpos_randrot_test();
+}
+
+// Register for performance testing.
+if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
+    typeof draw_rectangles_rotated_multi_varsize_randparams_randpos_randrot === 'function') {
+    window.PERFORMANCE_TESTS_REGISTRY.push({
+        id: 'rectangles--rotated--multi--varsize--randparams--randpos--randrot',
+        drawFunction: draw_rectangles_rotated_multi_varsize_randparams_randpos_randrot,
+        displayName: 'Perf: Rects Rotated Multi Random',
+        description: 'Performance test for multiple rotated rectangles with random parameters.',
+        category: 'rectangles'
+    });
+} 
