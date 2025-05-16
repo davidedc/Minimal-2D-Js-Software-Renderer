@@ -144,6 +144,33 @@ function printHelp() {
       resultText += `ID: ${testId}\n`;
       resultText += `Iteration: ${iterationNum}\n`;
       resultText += `Errors: ${test.errorCount}\n\n`;
+
+      // Add Primitive Logs
+      if (test.primitiveLogs && test.primitiveLogs.length > 0) {
+        resultText += 'Primitives Drawn:\n';
+        
+        let decodedLogs = test.primitiveLogs.replace(/<br\s*\/?>/gi, '\n'); // Convert <br> to \n first
+        
+        // Decode numeric HTML entities (hex and decimal)
+        decodedLogs = decodedLogs.replace(/&#x([0-9a-fA-F]+);/g, (match, hex) => String.fromCharCode(parseInt(hex, 16)));
+        decodedLogs = decodedLogs.replace(/&#([0-9]+);/g, (match, dec) => String.fromCharCode(parseInt(dec, 10)));
+        
+        // Also decode common named entities - &amp; must be last
+        decodedLogs = decodedLogs.replace(/&lt;/g, '<');
+        decodedLogs = decodedLogs.replace(/&gt;/g, '>');
+        decodedLogs = decodedLogs.replace(/&quot;/g, '"');
+        decodedLogs = decodedLogs.replace(/&apos;/g, "'");
+        decodedLogs = decodedLogs.replace(/&amp;/g, '&');
+
+        const plainTextLogs = decodedLogs
+          .split('\n')
+          .map(line => line.trim())
+          .filter(line => line.length > 0)
+          .join('\n');
+        resultText += plainTextLogs + '\n\n'; // Add extra newline for separation
+      } else {
+        resultText += 'Primitives Drawn: None logged.\n\n';
+      }
       
       if (test.errorCount > 0) {
         resultText += 'Error Messages:\n';

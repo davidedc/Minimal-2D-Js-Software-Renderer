@@ -644,18 +644,25 @@ class RenderTest {
   renderInNode(buildShapesFn, canvasCodeFn = null, iterationNumber = null) {
     // Use the provided iteration number or default to 1
     const currentCount = iterationNumber || 1;
-    
+    this.primitiveLogs = ''; // Initialize primitiveLogs
+
     if (buildShapesFn) {
       // Mock log container for Node
       const nodeLogContainer = {
         innerHTML: '',
+        // appendChild is not directly used by buildShapesFn for logging,
+        // as it appends to innerHTML. Kept for potential future compatibility
+        // or if some part of buildShapesFn might use it, though unlikely for logs.
         appendChild: (text) => {
           if (this.verbose) console.log(text);
+          // If appendChild were to be used for logs, it should append to innerHTML:
+          // nodeLogContainer.innerHTML += text.toString(); // Or appropriate conversion
         }
       };
       
       // Execute the shape builder
       this.builderReturnValue = buildShapesFn(this.shapes, nodeLogContainer, currentCount);
+      this.primitiveLogs = nodeLogContainer.innerHTML; // Capture logs
       this.drawSceneSW();
     }
     else if (canvasCodeFn) {
@@ -664,7 +671,12 @@ class RenderTest {
       
       // Use CrispSwCanvas for the software-rendered output
       SeededRandom.seedWithInteger(currentCount);
-      canvasCodeFn(this.crispSwCtx, currentCount);
+      const swDrawResult = canvasCodeFn(this.crispSwCtx, currentCount);
+
+      // Capture logs if returned by canvasCodeFn
+      if (swDrawResult?.logs && Array.isArray(swDrawResult.logs)) {
+        this.primitiveLogs = swDrawResult.logs.join('\n');
+      }
     }
     
     // Run checks if available
