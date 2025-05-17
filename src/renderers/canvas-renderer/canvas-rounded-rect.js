@@ -1,3 +1,5 @@
+// TODO anyone calling drawRoundedRectCanvas should rather do some call to
+// canvas.roundRect() instead !
 function drawRoundedRectCanvas(ctx, shape) {
   const {
       center, width, height, radius, rotation,

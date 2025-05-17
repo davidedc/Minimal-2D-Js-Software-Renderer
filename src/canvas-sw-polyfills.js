@@ -88,3 +88,85 @@ if (!CanvasRenderingContext2D.prototype.fillAndStrokeCircle) {
         }
     };
 }
+
+// --- Rounded Rectangle Polyfills/Overrides ---
+
+if (typeof CanvasRenderingContext2D.prototype.roundRect === 'undefined') {
+    /**
+     * Polyfill for CanvasRenderingContext2D.roundRect()
+     * Adds a rounded rectangle path to the current path.
+     * Assumes a single radius value for all corners for simplicity in this polyfill.
+     * @param {number} x The x-axis coordinate of the rectangle's starting point.
+     * @param {number} y The y-axis coordinate of the rectangle's starting point.
+     * @param {number} width The rectangle's width.
+     * @param {number} height The rectangle's height.
+     * @param {number} radius The radius for all corners.
+     */
+    CanvasRenderingContext2D.prototype.roundRect = function(x, y, width, height, radius) {
+        if (width < 2 * radius) radius = width / 2;
+        if (height < 2 * radius) radius = height / 2;
+        // this.beginPath(); // IMPORTANT: roundRect ADDS to the current path. Do not beginPath here.
+        this.moveTo(x + radius, y);
+        this.arcTo(x + width, y, x + width, y + height, radius);
+        this.arcTo(x + width, y + height, x, y + height, radius);
+        this.arcTo(x, y + height, x, y + radius, radius);
+        this.arcTo(x, y, x + radius, y, radius);
+        this.closePath();
+    };
+}
+
+if (typeof CanvasRenderingContext2D.prototype.fillRoundRect === 'undefined') {
+    /**
+     * Draws a filled rounded rectangle directly.
+     * This polyfill uses drawRoundedRectCanvas (assumed to be globally available).
+     * @param {number} x The x-axis coordinate of the rectangle's starting point.
+     * @param {number} y The y-axis coordinate of the rectangle's starting point.
+     * @param {number} width The rectangle's width.
+     * @param {number} height The rectangle's height.
+     * @param {number} radius The radius of the corners.
+     */
+    CanvasRenderingContext2D.prototype.fillRoundRect = function(x, y, width, height, radius) {
+        const shape = {
+            center: { x: x + width / 2, y: y + height / 2 },
+            width: width,
+            height: height,
+            radius: radius,
+            rotation: 0, // Assuming no rotation for this direct method
+            strokeWidth: 0,
+            strokeColor: { r: 0, g: 0, b: 0, a: 0 },
+            fillColor: parseColor(this.fillStyle) // parseColor needs to be available
+        };
+        // Assumes drawRoundedRectCanvas is loaded and available globally
+        // TODO this should use some call to canvas.roundRect() instead of drawRoundedRectCanvas
+        drawRoundedRectCanvas(this, shape); 
+    };
+}
+
+if (typeof CanvasRenderingContext2D.prototype.strokeRoundRect === 'undefined') {
+    /**
+     * Draws the stroke of a rounded rectangle directly.
+     * This polyfill uses drawRoundedRectCanvas (assumed to be globally available).
+     * @param {number} x The x-axis coordinate of the rectangle's starting point.
+     * @param {number} y The y-axis coordinate of the rectangle's starting point.
+     * @param {number} width The rectangle's width.
+     * @param {number} height The rectangle's height.
+     * @param {number} radius The radius of the corners.
+     */
+    CanvasRenderingContext2D.prototype.strokeRoundRect = function(x, y, width, height, radius) {
+        const shape = {
+            center: { x: x + width / 2, y: y + height / 2 },
+            width: width,
+            height: height,
+            radius: radius,
+            rotation: 0, // Assuming no rotation for this direct method
+            strokeWidth: this.lineWidth,
+            strokeColor: parseColor(this.strokeStyle), // parseColor needs to be available
+            fillColor: { r: 0, g: 0, b: 0, a: 0 }
+        };
+        // Assumes drawRoundedRectCanvas is loaded and available globally
+        // TODO this should use some call to canvas.roundRect() instead of drawRoundedRectCanvas
+        drawRoundedRectCanvas(this, shape); 
+    };
+}
+
+// --- End Rounded Rectangle Polyfills/Overrides ---

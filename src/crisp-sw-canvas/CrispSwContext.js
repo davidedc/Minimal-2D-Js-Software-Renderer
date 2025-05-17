@@ -42,7 +42,7 @@ class CrispSwContext {
         this.pixelRenderer = new SWRendererPixel(this.frameBufferUint8ClampedView, this.frameBufferUint32View, canvas.width, canvas.height, this);
         this.lineRenderer = new SWRendererLine(this.pixelRenderer);
         this.rectRenderer = new SWRendererRect(this.frameBufferUint8ClampedView, this.frameBufferUint32View, canvas.width, canvas.height, this.lineRenderer, this.pixelRenderer);
-        //this.roundedRectRenderer = new SWRendererRoundedRect(this.frameBufferUint8ClampedView, canvas.width, canvas.height, this.lineRenderer, this.pixelRenderer);
+        this.roundedRectRenderer = new SWRendererRoundedRect(this.frameBufferUint8ClampedView, this.frameBufferUint32View, canvas.width, canvas.height, this.lineRenderer, this.pixelRenderer, this.rectRenderer);
         this.circleRenderer = new SWRendererCircle(this.pixelRenderer);
         //this.arcRenderer = new SWRendererArc(this.pixelRenderer);
     }
@@ -390,4 +390,109 @@ class CrispSwContext {
         return imageData;
     }
     
+    // --- Rounded Rectangle Methods ---
+
+    /**
+     * Defines a rounded rectangle path.
+     * NOTE: In this software renderer, direct path definition for later fill/stroke is complex
+     * due to current fill()/stroke() limitations. This method currently does not build a path
+     * in the same way as native canvas. For drawing, use fillRoundRect or strokeRoundRect.
+     * It could be used for clipping if the renderer supports it.
+     * @param {number} x The x-axis coordinate of the rectangle's starting point.
+     * @param {number} y The y-axis coordinate of the rectangle's starting point.
+     * @param {number} width The rectangle's width.
+     * @param {number} height The rectangle's height.
+     * @param {number} radius The radius of the corners.
+     */
+    roundRect(x, y, width, height, radius) {
+        // TODO: Implement path definition for clipping or general path store if fill()/stroke() are enhanced.
+        // For now, this method might not do much or could be used for clipping.
+        // console.warn("CrispSwContext.roundRect() for path definition is not fully implemented for fill/stroke. Use fillRoundRect/strokeRoundRect for drawing.");
+        // Placeholder for potential clipping path definition:
+        const state = this.currentState;
+        const cx = x + width / 2;
+        const cy = y + height / 2;
+        const centerTransformed = transformPoint(cx, cy, state.transform.elements);
+        const rotation = getRotationAngle(state.transform.elements);
+        const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
+
+        // This is a guess, SWRendererRoundedRect might not support clippingOnly directly
+        // or might need a different shape structure for it.
+        /*
+        this.roundedRectRenderer.drawRoundedRect({
+            center: { x: centerTransformed.tx, y: centerTransformed.ty },
+            width: width * scaleX,
+            height: height * scaleY,
+            radius: radius * Math.min(scaleX, scaleY), // Simplistic radius scaling
+            rotation: rotation,
+            clippingOnly: true, // Hypothetical
+            strokeWidth: 0,
+            fillColor: {r:0,g:0,b:0,a:0},
+            strokeColor: {r:0,g:0,b:0,a:0}
+        });
+        */
+        // As rect() is used for clipping, this could be an extension point if SWRendererRoundedRect supports it.
+         throw new Error("CrispSwContext.roundRect() for path definition / clipping is not yet implemented.");
+    }
+
+    /**
+     * Draws a filled rounded rectangle.
+     * @param {number} x The x-axis coordinate of the rectangle's starting point.
+     * @param {number} y The y-axis coordinate of the rectangle's starting point.
+     * @param {number} width The rectangle's width.
+     * @param {number} height The rectangle's height.
+     * @param {number} radius The radius of the corners.
+     */
+    fillRoundRect(x, y, width, height, radius) {
+        const state = this.currentState;
+        const cx = x + width / 2;
+        const cy = y + height / 2;
+        const centerTransformed = transformPoint(cx, cy, state.transform.elements);
+        const rotation = getRotationAngle(state.transform.elements);
+        const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
+        const scaledRadius = radius * Math.min(Math.abs(scaleX), Math.abs(scaleY));
+
+        this.roundedRectRenderer.drawRoundedRect({
+            center: { x: centerTransformed.tx, y: centerTransformed.ty },
+            width: width * scaleX,
+            height: height * scaleY,
+            radius: scaledRadius,
+            rotation: rotation,
+            fillColor: state.fillColor, // Use state.fillColor directly
+            strokeWidth: 0,
+            strokeColor: { r: 0, g: 0, b: 0, a: 0 }
+        });
+    }
+
+    /**
+     * Draws the stroke of a rounded rectangle.
+     * @param {number} x The x-axis coordinate of the rectangle's starting point.
+     * @param {number} y The y-axis coordinate of the rectangle's starting point.
+     * @param {number} width The rectangle's width.
+     * @param {number} height The rectangle's height.
+     * @param {number} radius The radius of the corners.
+     */
+    strokeRoundRect(x, y, width, height, radius) {
+        const state = this.currentState;
+        const scaledLineWidth = getScaledLineWidth(state.transform.elements, state.lineWidth);
+        const cx = x + width / 2;
+        const cy = y + height / 2;
+        const centerTransformed = transformPoint(cx, cy, state.transform.elements);
+        const rotation = getRotationAngle(state.transform.elements);
+        const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
+        const scaledRadius = radius * Math.min(Math.abs(scaleX), Math.abs(scaleY));
+
+        this.roundedRectRenderer.drawRoundedRect({
+            center: { x: centerTransformed.tx, y: centerTransformed.ty },
+            width: width * scaleX,
+            height: height * scaleY,
+            radius: scaledRadius,
+            rotation: rotation,
+            fillColor: { r: 0, g: 0, b: 0, a: 0 },
+            strokeWidth: scaledLineWidth,
+            strokeColor: state.strokeColor // Use state.strokeColor directly
+        });
+    }
+
+    // --- End Rounded Rectangle Methods ---
 }
