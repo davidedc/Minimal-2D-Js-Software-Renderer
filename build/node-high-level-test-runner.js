@@ -914,7 +914,7 @@ class CrispSwContext {
         this.pixelRenderer = new SWRendererPixel(this.frameBufferUint8ClampedView, this.frameBufferUint32View, canvas.width, canvas.height, this);
         this.lineRenderer = new SWRendererLine(this.pixelRenderer);
         this.rectRenderer = new SWRendererRect(this.frameBufferUint8ClampedView, this.frameBufferUint32View, canvas.width, canvas.height, this.lineRenderer, this.pixelRenderer);
-        //this.roundedRectRenderer = new SWRendererRoundedRect(this.frameBufferUint8ClampedView, canvas.width, canvas.height, this.lineRenderer, this.pixelRenderer);
+        this.roundedRectRenderer = new SWRendererRoundedRect(this.frameBufferUint8ClampedView, this.frameBufferUint32View, canvas.width, canvas.height, this.lineRenderer, this.pixelRenderer, this.rectRenderer);
         this.circleRenderer = new SWRendererCircle(this.pixelRenderer);
         //this.arcRenderer = new SWRendererArc(this.pixelRenderer);
     }
@@ -1262,6 +1262,111 @@ class CrispSwContext {
         return imageData;
     }
     
+    // --- Rounded Rectangle Methods ---
+
+    /**
+     * Defines a rounded rectangle path.
+     * NOTE: In this software renderer, direct path definition for later fill/stroke is complex
+     * due to current fill()/stroke() limitations. This method currently does not build a path
+     * in the same way as native canvas. For drawing, use fillRoundRect or strokeRoundRect.
+     * It could be used for clipping if the renderer supports it.
+     * @param {number} x The x-axis coordinate of the rectangle's starting point.
+     * @param {number} y The y-axis coordinate of the rectangle's starting point.
+     * @param {number} width The rectangle's width.
+     * @param {number} height The rectangle's height.
+     * @param {number} radius The radius of the corners.
+     */
+    roundRect(x, y, width, height, radius) {
+        // TODO: Implement path definition for clipping or general path store if fill()/stroke() are enhanced.
+        // For now, this method might not do much or could be used for clipping.
+        // console.warn("CrispSwContext.roundRect() for path definition is not fully implemented for fill/stroke. Use fillRoundRect/strokeRoundRect for drawing.");
+        // Placeholder for potential clipping path definition:
+        const state = this.currentState;
+        const cx = x + width / 2;
+        const cy = y + height / 2;
+        const centerTransformed = transformPoint(cx, cy, state.transform.elements);
+        const rotation = getRotationAngle(state.transform.elements);
+        const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
+
+        // This is a guess, SWRendererRoundedRect might not support clippingOnly directly
+        // or might need a different shape structure for it.
+        /*
+        this.roundedRectRenderer.drawRoundedRect({
+            center: { x: centerTransformed.tx, y: centerTransformed.ty },
+            width: width * scaleX,
+            height: height * scaleY,
+            radius: radius * Math.min(scaleX, scaleY), // Simplistic radius scaling
+            rotation: rotation,
+            clippingOnly: true, // Hypothetical
+            strokeWidth: 0,
+            fillColor: {r:0,g:0,b:0,a:0},
+            strokeColor: {r:0,g:0,b:0,a:0}
+        });
+        */
+        // As rect() is used for clipping, this could be an extension point if SWRendererRoundedRect supports it.
+         throw new Error("CrispSwContext.roundRect() for path definition / clipping is not yet implemented.");
+    }
+
+    /**
+     * Draws a filled rounded rectangle.
+     * @param {number} x The x-axis coordinate of the rectangle's starting point.
+     * @param {number} y The y-axis coordinate of the rectangle's starting point.
+     * @param {number} width The rectangle's width.
+     * @param {number} height The rectangle's height.
+     * @param {number} radius The radius of the corners.
+     */
+    fillRoundRect(x, y, width, height, radius) {
+        const state = this.currentState;
+        const cx = x + width / 2;
+        const cy = y + height / 2;
+        const centerTransformed = transformPoint(cx, cy, state.transform.elements);
+        const rotation = getRotationAngle(state.transform.elements);
+        const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
+        const scaledRadius = radius * Math.min(Math.abs(scaleX), Math.abs(scaleY));
+
+        this.roundedRectRenderer.drawRoundedRect({
+            center: { x: centerTransformed.tx, y: centerTransformed.ty },
+            width: width * scaleX,
+            height: height * scaleY,
+            radius: scaledRadius,
+            rotation: rotation,
+            fillColor: state.fillColor, // Use state.fillColor directly
+            strokeWidth: 0,
+            strokeColor: { r: 0, g: 0, b: 0, a: 0 }
+        });
+    }
+
+    /**
+     * Draws the stroke of a rounded rectangle.
+     * @param {number} x The x-axis coordinate of the rectangle's starting point.
+     * @param {number} y The y-axis coordinate of the rectangle's starting point.
+     * @param {number} width The rectangle's width.
+     * @param {number} height The rectangle's height.
+     * @param {number} radius The radius of the corners.
+     */
+    strokeRoundRect(x, y, width, height, radius) {
+        const state = this.currentState;
+        const scaledLineWidth = getScaledLineWidth(state.transform.elements, state.lineWidth);
+        const cx = x + width / 2;
+        const cy = y + height / 2;
+        const centerTransformed = transformPoint(cx, cy, state.transform.elements);
+        const rotation = getRotationAngle(state.transform.elements);
+        const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
+        const scaledRadius = radius * Math.min(Math.abs(scaleX), Math.abs(scaleY));
+
+        this.roundedRectRenderer.drawRoundedRect({
+            center: { x: centerTransformed.tx, y: centerTransformed.ty },
+            width: width * scaleX,
+            height: height * scaleY,
+            radius: scaledRadius,
+            rotation: rotation,
+            fillColor: { r: 0, g: 0, b: 0, a: 0 },
+            strokeWidth: scaledLineWidth,
+            strokeColor: state.strokeColor // Use state.strokeColor directly
+        });
+    }
+
+    // --- End Rounded Rectangle Methods ---
 }
 /**
  * Shared rendering functions that work in both browser and Node.js environments
@@ -9915,6 +10020,161 @@ if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !=
         displayName: 'Perf: Rect S 1px Red Centered Pixel',
         description: 'Performance of a single 1px red stroked rectangle, centered at pixel.',
         category: 'rectangles' 
+    });
+} /**
+ * @fileoverview Test definition for a single 1px stroked rounded rectangle centered at a grid point.
+ */
+
+// Helper functions like _colorObjectToString, getRandomColor, placeCloseToCenterAtGrid, 
+// and adjustDimensionsForCrispStrokeRendering are assumed to be globally available
+// from included utility scripts (e.g., random-utils.js, scene-creation-utils.js)
+// and use SeededRandom internally as needed.
+
+/**
+ * Creates a path for a rounded rectangle.
+ * @param {CanvasRenderingContext2D | CrispSwContext} ctx The rendering context.
+ * @param {number} x The x-coordinate of the top-left corner.
+ * @param {number} y The y-coordinate of the top-left corner.
+ * @param {number} width The width of the rectangle.
+ * @param {number} height The height of the rectangle.
+ * @param {number} radius The corner radius.
+ */
+/*
+function _roundedRectPath(ctx, x, y, width, height, radius) {
+    if (width < 2 * radius) radius = width / 2;
+    if (height < 2 * radius) radius = height / 2;
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.arcTo(x + width, y, x + width, y + height, radius);
+    ctx.arcTo(x + width, y + height, x, y + height, radius);
+    ctx.arcTo(x, y + height, x, y + radius, radius);
+    ctx.arcTo(x, y, x + radius, y, radius);
+    ctx.closePath();
+}
+*/
+
+/**
+ * Draws a single 1px stroked rounded rectangle, centered at a grid point.
+ *
+ * @param {CanvasRenderingContext2D | CrispSwContext} ctx The rendering context.
+ * @param {number} currentIterationNumber The current test iteration (for seeding via RenderTest).
+ * @param {?number} instances Optional: Number of instances to draw. Passed by the performance
+ *                  testing harness. For this test, it should draw one primary shape for visual
+ *                  regression, and `instances` count for performance, each with unique properties based on SeededRandom.
+ * @returns {?{logs: string[], checkData: object}} Logs and data for checks for single-instance
+ *                  mode, or null for performance mode.
+ */
+function draw_rounded_rect_single_1px_stroke_crisp_center_grid(ctx, currentIterationNumber, instances = null) {
+    const isPerformanceRun = instances !== null && instances > 0;
+    const numToDraw = isPerformanceRun ? instances : 1;
+
+    let logs = [];
+    let checkData = null; 
+
+    const canvasWidth = ctx.canvas.width;
+    const canvasHeight = ctx.canvas.height;
+
+    // Pre-condition check from original test
+    if (canvasWidth % 2 !== 0 || canvasHeight % 2 !== 0) {
+        const msg = 'Warning: Canvas dimensions are not even. Crisp grid-centered rendering might be affected.';
+        if (!isPerformanceRun) logs.push(msg);
+        // console.warn(msg); // Or throw error as per original checkCanvasHasEvenDimensions if critical
+    }
+
+    for (let i = 0; i < numToDraw; i++) {
+        // Determine center point (integer coordinates for grid centering)
+        // Adapted from placeCloseToCenterAtGrid(canvasWidth, canvasHeight)
+        const centerX = Math.floor(canvasWidth / 2);
+        const centerY = Math.floor(canvasHeight / 2);
+
+        // SeededRandom Call 1: rectWidth base
+        const baseRectWidth = Math.floor(20 + SeededRandom.getRandom() * 130);
+        // SeededRandom Call 2: rectHeight base
+        const baseRectHeight = Math.floor(20 + SeededRandom.getRandom() * 130);
+
+        // Adjust dimensions for a 1px stroke centered at the grid point
+        const adjusted = adjustDimensionsForCrispStrokeRendering(baseRectWidth, baseRectHeight, 1, { x: centerX, y: centerY });
+        const finalRectWidth = adjusted.width;
+        const finalRectHeight = adjusted.height;
+
+        // SeededRandom Call 3: radius
+        const radius = Math.round(SeededRandom.getRandom() * Math.min(finalRectWidth, finalRectHeight) * 0.2);
+        
+        const strokeColorStr = 'rgba(255,0,0,1)'; // Red, Opaque
+        const fillColorStr = 'rgba(0,0,0,0)';   // Transparent
+
+        let geomX = centerX - finalRectWidth / 2;
+        let geomY = centerY - finalRectHeight / 2;
+
+        if (isPerformanceRun && numToDraw > 1) {
+            // For performance, spread additional shapes widely using Math.random for position only
+            // Properties (width, height, radius) are already randomized per instance via SeededRandom
+            geomX = Math.random() * Math.max(0, canvasWidth - finalRectWidth);
+            geomY = Math.random() * Math.max(0, canvasHeight - finalRectHeight);
+        }
+        
+        ctx.fillStyle = fillColorStr; // Though transparent, set it for consistency
+        ctx.strokeStyle = strokeColorStr;
+        ctx.lineWidth = 1;
+
+        // Use the new polyfilled/context method
+        ctx.strokeRoundRect(geomX, geomY, finalRectWidth, finalRectHeight, radius);
+
+        if (!isPerformanceRun || i === 0) { // Log and checkData only for the first/single instance
+            const currentLogs = [
+                `RoundedRect: center=(${centerX},${centerY}), base W/H=(${baseRectWidth},${baseRectHeight}), adj W/H=(${finalRectWidth},${finalRectHeight}), r=${radius}`
+            ];
+            if (i === 0) logs = logs.concat(currentLogs);
+
+            // Calculate checkData based on the geometry of the first drawn instance
+            if (i === 0) {
+                 // For a 1px stroke, the boundary is inclusive of the pixels the stroke touches.
+                 // If geomX/geomY are *.5 (typical for crisp 1px stroke), Math.floor gives the pixel coord.
+                 // If geomX/geomY are integer, it's also the pixel coord.
+                 // The guide's example for *.5 coordinates: Math.floor(x + finalRectWidth)
+                checkData = {
+                    leftX: Math.floor(geomX),
+                    rightX: Math.floor(geomX + finalRectWidth),
+                    topY: Math.floor(geomY),
+                    bottomY: Math.floor(geomY + finalRectHeight)
+                };
+            }
+        }
+    }
+
+    if (isPerformanceRun) {
+        return null; // No logs or checkData for multi-instance perf runs (except potentially first for debugging)
+    }
+    return { logs, checkData };
+}
+
+/**
+ * Defines and registers the 1px stroked rounded rectangle centered at grid test case.
+ */
+function define_rounded_rect_single_1px_stroke_crisp_center_grid_test() {
+    return new RenderTestBuilder()
+        .withId('rounded-rect--single--1px-stroke--crisp--center-grid')
+        .withTitle('Single 1px Stroked Rounded Rectangle (Crisp, Centered at Grid)')
+        .withDescription('Tests crisp rendering of a single 1px red stroked rounded rectangle, centered at a grid crossing.')
+        .runCanvasCode(draw_rounded_rect_single_1px_stroke_crisp_center_grid)
+        .withExtremesCheck() // Original test had this
+        .build();
+}
+
+// Define and register the visual regression test immediately.
+if (typeof RenderTestBuilder === 'function') {
+    define_rounded_rect_single_1px_stroke_crisp_center_grid_test();
+}
+
+// Register for performance testing.
+if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
+    typeof draw_rounded_rect_single_1px_stroke_crisp_center_grid === 'function') {
+    window.PERFORMANCE_TESTS_REGISTRY.push({
+        id: 'rounded-rect--single--1px-stroke--crisp--center-grid',
+        drawFunction: draw_rounded_rect_single_1px_stroke_crisp_center_grid,
+        displayName: 'Perf: RRect 1px Crisp Grid Center',
+        description: 'Performance of a single 1px stroked rounded rectangle, crisp and grid-centered.',
+        category: 'rounded-rectangles' 
     });
 } /**
  * Node.js Test Runner for Minimal-2D-Js-Software-Renderer - High Level Tests
