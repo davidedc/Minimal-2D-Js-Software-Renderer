@@ -303,6 +303,9 @@
       <div id="rectangle-tests" class="test-list-section">
         <!-- Rectangle tests will be inserted here -->
       </div>
+      <div id="rounded-rectangle-tests" class="test-list-section">
+        <!-- Rounded Rectangle tests will be inserted here -->
+      </div>
       <div id="circle-tests" class="test-list-section">
         <!-- Circle tests will be inserted here -->
       </div>
@@ -345,6 +348,7 @@
 
   <!-- Load library scripts -->
   <script src="../../build/crisp-sw-canvas-v1.0.2.min.js"></script>
+  <script src="../../src/renderers/canvas-renderer/canvas-rounded-rect.js"></script>
   <script src="../../src/canvas-sw-polyfills.js"></script>
   <script src="../../src/utils/random-utils.js"></script>
   <script src="../../src/scene-creation/SeededRandom.js"></script>
@@ -411,6 +415,9 @@
   
   <!-- Circle tests -->
   <!-- (No circle tests in high-level-tests folder provided, will be empty for now) -->
+  
+  <!-- Rounded Rectangle Test cases -->
+  <script src="test-cases/rounded-rect--single--1px-stroke--crisp--center-grid--test.js"></script>
   
   <!-- Test definitions and UI -->
   <script src="performance-tests/performance-ui.js"></script>

@@ -8,110 +8,105 @@ function generateTestButtons() {
   // Get containers for each test type
   const lineTestsContainer = document.getElementById('line-tests');
   const rectangleTestsContainer = document.getElementById('rectangle-tests');
+  const roundedRectangleTestsContainer = document.getElementById('rounded-rectangle-tests');
   const circleTestsContainer = document.getElementById('circle-tests');
   
-  if (!lineTestsContainer || !rectangleTestsContainer || !circleTestsContainer) return;
+  if (!lineTestsContainer || !rectangleTestsContainer || !circleTestsContainer || !roundedRectangleTestsContainer) return;
   
   // Clear existing content from each container
   lineTestsContainer.innerHTML = '';
   rectangleTestsContainer.innerHTML = '';
+  roundedRectangleTestsContainer.innerHTML = '';
   circleTestsContainer.innerHTML = '';
   
   // Create test list containers if there are tests for them
-  const linesList = window.PERFORMANCE_TESTS_REGISTRY.some(t => t.category === 'lines') ? createTestList('Lines Tests') : null;
-  const rectanglesList = window.PERFORMANCE_TESTS_REGISTRY.some(t => t.category === 'rectangles') ? createTestList('Rectangle Tests') : null;
-  const circlesList = window.PERFORMANCE_TESTS_REGISTRY.some(t => t.category === 'circles') ? createTestList('Circle Tests') : null;
-  
-  if (linesList) lineTestsContainer.appendChild(linesList);
-  if (rectanglesList) rectangleTestsContainer.appendChild(rectanglesList);
-  if (circlesList) circleTestsContainer.appendChild(circlesList);
+  const linesList = window.PERFORMANCE_TESTS_REGISTRY.some(t => t.category === 'lines') ? createTestList('Lines Tests', lineTestsContainer) : null;
+  const rectanglesList = window.PERFORMANCE_TESTS_REGISTRY.some(t => t.category === 'rectangles') ? createTestList('Rectangle Tests', rectangleTestsContainer) : null;
+  const roundedRectanglesList = window.PERFORMANCE_TESTS_REGISTRY.some(t => t.category === 'rounded-rectangles') ? createTestList('Rounded Rectangle Tests', roundedRectangleTestsContainer) : null;
+  const circlesList = window.PERFORMANCE_TESTS_REGISTRY.some(t => t.category === 'circles') ? createTestList('Circle Tests', circleTestsContainer) : null;
   
   // Add test entries to the appropriate list
   window.PERFORMANCE_TESTS_REGISTRY.forEach(test => {
-    let listContainer;
+    let targetListElement; // This will be the actual div.test-list
     
-    // Determine which container to add the test to based on test category
-    if (test.category === 'lines' && linesList) {
-      listContainer = linesList;
-    } else if (test.category === 'rectangles' && rectanglesList) {
-      listContainer = rectanglesList;
-    } else if (test.category === 'circles' && circlesList) {
-      listContainer = circlesList;
+    // Determine which list to add the test to based on test category
+    if (test.category === 'lines') {
+      targetListElement = linesList;
+    } else if (test.category === 'rectangles') {
+      targetListElement = rectanglesList;
+    } else if (test.category === 'rounded-rectangles') {
+      targetListElement = roundedRectanglesList;
+    } else if (test.category === 'circles') {
+      targetListElement = circlesList;
     }
     
-    if (listContainer) {
-      createTestEntry(test, listContainer);
+    if (targetListElement) { // targetListElement is now the div.test-list or null
+      createTestEntry(test, targetListElement); 
+    } else {
+      if (test && test.category && !['lines', 'rectangles', 'circles', 'rounded-rectangles'].includes(test.category)) {
+        console.warn(`[UI] Test "${test.displayName}" has unhandled category: ${test.category}`);
+      }
     }
   });
 }
 
 // Create a test list container with a title and check/uncheck all buttons
-function createTestList(title) {
-  const listContainer = document.createElement('div');
+// MODIFIED: Now takes parentContainer and appends to it, returns the inner list for items.
+function createTestList(title, parentContainer) { 
+  const listContainer = document.createElement('div'); // This is the outer div.test-list-container
   listContainer.className = 'test-list-container';
   
-  // Create header container with title and buttons
   const headerContainer = document.createElement('div');
   headerContainer.className = 'test-list-header';
   
-  // Create title
   const listTitle = document.createElement('h4');
   listTitle.textContent = title;
   listTitle.className = 'test-list-title';
   
-  // Create check/uncheck buttons container
   const buttonContainer = document.createElement('div');
   buttonContainer.className = 'checkbox-buttons';
   
-  // Check all button
   const checkAllBtn = document.createElement('button');
   checkAllBtn.textContent = 'Check All';
   checkAllBtn.className = 'small-button';
+  
+  const listItemsDiv = document.createElement('div'); // This is the div.test-list for items
+  listItemsDiv.className = 'test-list';
+
   checkAllBtn.addEventListener('click', () => {
-    // Find all checkboxes in this list and check them
-    const container = listContainer.querySelector('.test-list');
-    if (container) {
-      container.querySelectorAll('.test-checkbox').forEach(checkbox => {
+    listItemsDiv.querySelectorAll('.test-checkbox').forEach(checkbox => {
         checkbox.checked = true;
       });
-    }
   });
   
-  // Uncheck all button
   const uncheckAllBtn = document.createElement('button');
   uncheckAllBtn.textContent = 'Uncheck All';
   uncheckAllBtn.className = 'small-button';
   uncheckAllBtn.addEventListener('click', () => {
-    // Find all checkboxes in this list and uncheck them
-    const container = listContainer.querySelector('.test-list');
-    if (container) {
-      container.querySelectorAll('.test-checkbox').forEach(checkbox => {
+    listItemsDiv.querySelectorAll('.test-checkbox').forEach(checkbox => {
         checkbox.checked = false;
       });
-    }
   });
   
-  // Add buttons to container
   buttonContainer.appendChild(checkAllBtn);
   buttonContainer.appendChild(uncheckAllBtn);
   
-  // Add title and buttons to header
   headerContainer.appendChild(listTitle);
   headerContainer.appendChild(buttonContainer);
   
-  // Create list for test items
-  const list = document.createElement('div');
-  list.className = 'test-list';
-  
-  // Add components to container
   listContainer.appendChild(headerContainer);
-  listContainer.appendChild(list);
+  listContainer.appendChild(listItemsDiv); // Append the item list div
   
-  return list;
+  if (parentContainer) { // Append the whole created structure to the main category div on the page
+      parentContainer.appendChild(listContainer);
+  }
+  
+  return listItemsDiv; // Return the inner list (div.test-list) for direct item appending
 }
 
 // Create a test entry with checkbox and run button
-function createTestEntry(test, container) {
+// actualListElement is now expected to be the div with class 'test-list'
+function createTestEntry(test, actualListElement) {
   const testItem = document.createElement('div');
   testItem.className = 'test-item';
   
@@ -140,11 +135,11 @@ function createTestEntry(test, container) {
   testItem.appendChild(label);
   testItem.appendChild(runButton);
 
-  // The 'container' IS the actualListElement we want to append to, based on previous logs.
-  if (container) { // Check if container is not null
-      container.appendChild(testItem);
+  // The 'actualListElement' IS the actualListElement we want to append to.
+  if (actualListElement) { // Check if actualListElement is not null
+      actualListElement.appendChild(testItem);
   } else {
-      console.error('[UI] In createTestEntry, container is null or undefined. Cannot append testItem for:', test ? test.id : 'N/A');
+      console.error('[UI] In createTestEntry, actualListElement is null or undefined. Cannot append testItem for:', test ? test.id : 'N/A');
   }
   
   return testItem;
