@@ -56,6 +56,8 @@ function get_common_core_files() {
         "$PROJECT_ROOT/src/crisp-sw-canvas/color-utils.js"
         "$PROJECT_ROOT/src/crisp-sw-canvas/ContextState.js"
         "$PROJECT_ROOT/src/utils/geometry.js"
+        "$PROJECT_ROOT/src/utils/PixelSet.js"
+        "$PROJECT_ROOT/src/utils/ScanlineSpans.js"
         "$PROJECT_ROOT/src/renderers/renderer-utils.js"
         "$PROJECT_ROOT/src/renderers/sw-renderer/SWRendererPixel.js"
         "$PROJECT_ROOT/src/renderers/sw-renderer/SWRendererLine.js"
