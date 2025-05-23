@@ -170,3 +170,66 @@ if (typeof CanvasRenderingContext2D.prototype.strokeRoundRect === 'undefined') {
 }
 
 // --- End Rounded Rectangle Polyfills/Overrides ---
+
+// --- Arc Polyfills ---
+
+if (typeof CanvasRenderingContext2D.prototype.fillArc === 'undefined') {
+    /**
+     * Polyfill to draw a filled arc (pie slice).
+     * Angles are in radians, matching native ctx.arc().
+     * @param {number} x The x-axis coordinate of the arc's center.
+     * @param {number} y The y-axis coordinate of the arc's center.
+     * @param {number} radius The arc's radius.
+     * @param {number} startAngle The angle at which the arc starts, in radians.
+     * @param {number} endAngle The angle at which the arc ends, in radians.
+     * @param {boolean} [anticlockwise=false] Specifies whether the arc is drawn counter-clockwise.
+     */
+    CanvasRenderingContext2D.prototype.fillArc = function(x, y, radius, startAngle, endAngle, anticlockwise = false) {
+        this.beginPath();
+        this.moveTo(x, y); // Center of the pie slice
+        this.arc(x, y, radius, startAngle, endAngle, anticlockwise);
+        this.closePath(); // Connects to center, forming the slice
+        this.fill();
+    };
+}
+
+if (typeof CanvasRenderingContext2D.prototype.strokeArc === 'undefined') {
+    /**
+     * Polyfill to draw the stroke of an arc.
+     * Angles are in radians, matching native ctx.arc().
+     * @param {number} x The x-axis coordinate of the arc's center.
+     * @param {number} y The y-axis coordinate of the arc's center.
+     * @param {number} radius The arc's radius.
+     * @param {number} startAngle The angle at which the arc starts, in radians.
+     * @param {number} endAngle The angle at which the arc ends, in radians.
+     * @param {boolean} [anticlockwise=false] Specifies whether the arc is drawn counter-clockwise.
+     */
+    CanvasRenderingContext2D.prototype.strokeArc = function(x, y, radius, startAngle, endAngle, anticlockwise = false) {
+        this.beginPath();
+        this.arc(x, y, radius, startAngle, endAngle, anticlockwise);
+        this.stroke();
+    };
+}
+
+if (typeof CanvasRenderingContext2D.prototype.fillAndStrokeArc === 'undefined') {
+    /**
+     * Polyfill to draw a filled and stroked arc (pie slice with outline).
+     * Angles are in radians, matching native ctx.arc().
+     * @param {number} x The x-axis coordinate of the arc's center.
+     * @param {number} y The y-axis coordinate of the arc's center.
+     * @param {number} radius The arc's radius.
+     * @param {number} startAngle The angle at which the arc starts, in radians.
+     * @param {number} endAngle The angle at which the arc ends, in radians.
+     * @param {boolean} [anticlockwise=false] Specifies whether the arc is drawn counter-clockwise.
+     */
+    CanvasRenderingContext2D.prototype.fillAndStrokeArc = function(x, y, radius, startAngle, endAngle, anticlockwise = false) {
+        this.beginPath();
+        this.moveTo(x, y);
+        this.arc(x, y, radius, startAngle, endAngle, anticlockwise);
+        this.closePath();
+        this.fill();
+        this.stroke(); // Stroke after fill to ensure stroke is on top and not occluded by fill
+    };
+}
+
+// --- End Arc Polyfills ---
