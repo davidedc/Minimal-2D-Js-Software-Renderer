@@ -4504,7 +4504,7 @@ class CrispSwContext {
         this.rectRenderer = new SWRendererRect(this.frameBufferUint8ClampedView, this.frameBufferUint32View, canvas.width, canvas.height, this.lineRenderer, this.pixelRenderer);
         this.roundedRectRenderer = new SWRendererRoundedRect(this.frameBufferUint8ClampedView, this.frameBufferUint32View, canvas.width, canvas.height, this.lineRenderer, this.pixelRenderer, this.rectRenderer);
         this.circleRenderer = new SWRendererCircle(this.pixelRenderer);
-        //this.arcRenderer = new SWRendererArc(this.pixelRenderer);
+        this.arcRenderer = new SWRendererArc(this.pixelRenderer);
     }
 
     get currentState() {
@@ -4955,4 +4955,102 @@ class CrispSwContext {
     }
 
     // --- End Rounded Rectangle Methods ---
+
+    // --- Arc Methods ---
+
+    /**
+     * Adds an arc to the current path (for potential clipping or future path system).
+     * Angles are in radians.
+     * NOTE: Currently, this method is a stub and does not build a persistent path for fill/stroke
+     * due to limitations in the generic fill()/stroke() methods of CrispSwContext.
+     * For drawing, use fillArc, strokeArc, or fillAndStrokeArc.
+     */
+    arc(x, y, radius, startAngle, endAngle, anticlockwise = false) {
+        // TODO: Implement path definition for clipping if SWRendererArc supports it,
+        // or for a general path store if fill()/stroke() are enhanced.
+        throw new Error("CrispSwContext.arc() for path definition/clipping is not yet implemented. Use fillArc/strokeArc for drawing.");
+    }
+
+    /**
+     * Draws a filled arc (pie slice).
+     * Angles are in radians.
+     */
+    fillArc(x, y, radius, startAngle, endAngle, anticlockwise = false) {
+        const state = this.currentState;
+        const centerTransformed = transformPoint(x, y, state.transform.elements);
+        const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
+        // For circles, we used Math.max(scaleX, scaleY). For arcs, average might be more appropriate
+        // or individual scaling of x/y radii if ellipse arcs were supported. Sticking to simple scaling for now.
+        const scaledRadius = radius * Math.min(Math.abs(scaleX), Math.abs(scaleY)); 
+
+        // Convert radians to degrees for SWRendererArc and drawArcCanvas
+        const startAngleDeg = startAngle * 180 / Math.PI;
+        const endAngleDeg = endAngle * 180 / Math.PI;
+        // TODO: Handle anticlockwise if SWRendererArc needs it (it might infer from angle order)
+
+        this.arcRenderer.drawArc({
+            center: { x: centerTransformed.tx, y: centerTransformed.ty },
+            radius: scaledRadius,
+            startAngle: startAngleDeg,
+            endAngle: endAngleDeg,
+            // anticlockwise: anticlockwise, // If renderer supports it
+            fillColor: state.fillColor, // Assumes globalAlpha is handled by pixelRenderer
+            strokeWidth: 0,
+            strokeColor: { r: 0, g: 0, b: 0, a: 0 }
+        });
+    }
+
+    /**
+     * Draws the stroke of an arc.
+     * Angles are in radians.
+     */
+    strokeArc(x, y, radius, startAngle, endAngle, anticlockwise = false) {
+        const state = this.currentState;
+        const scaledLineWidth = getScaledLineWidth(state.transform.elements, state.lineWidth);
+        const centerTransformed = transformPoint(x, y, state.transform.elements);
+        const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
+        const scaledRadius = radius * Math.min(Math.abs(scaleX), Math.abs(scaleY));
+        
+        const startAngleDeg = startAngle * 180 / Math.PI;
+        const endAngleDeg = endAngle * 180 / Math.PI;
+
+        this.arcRenderer.drawArc({
+            center: { x: centerTransformed.tx, y: centerTransformed.ty },
+            radius: scaledRadius,
+            startAngle: startAngleDeg,
+            endAngle: endAngleDeg,
+            // anticlockwise: anticlockwise, 
+            fillColor: { r: 0, g: 0, b: 0, a: 0 },
+            strokeWidth: scaledLineWidth,
+            strokeColor: state.strokeColor // Assumes globalAlpha is handled by pixelRenderer
+        });
+    }
+    
+    /**
+     * Draws a filled and stroked arc.
+     * Angles are in radians.
+     */
+    fillAndStrokeArc(x, y, radius, startAngle, endAngle, anticlockwise = false) {
+        const state = this.currentState;
+        const scaledLineWidth = getScaledLineWidth(state.transform.elements, state.lineWidth);
+        const centerTransformed = transformPoint(x, y, state.transform.elements);
+        const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
+        const scaledRadius = radius * Math.min(Math.abs(scaleX), Math.abs(scaleY));
+
+        const startAngleDeg = startAngle * 180 / Math.PI;
+        const endAngleDeg = endAngle * 180 / Math.PI;
+
+        this.arcRenderer.drawArc({
+            center: { x: centerTransformed.tx, y: centerTransformed.ty },
+            radius: scaledRadius,
+            startAngle: startAngleDeg,
+            endAngle: endAngleDeg,
+            // anticlockwise: anticlockwise, 
+            fillColor: state.fillColor,
+            strokeWidth: scaledLineWidth,
+            strokeColor: state.strokeColor
+        });
+    }
+
+    // --- End Arc Methods ---
 }
