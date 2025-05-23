@@ -312,6 +312,9 @@
       <div id="arc-tests" class="test-list-section">
         <!-- Arc tests will be inserted here -->
       </div>
+      <div id="scene-tests" class="test-list-section">
+        <!-- Scene tests will be inserted here -->
+      </div>
       <div id="checkbox-controls" style="margin-top: 15px; margin-bottom: 10px; text-align: center;">
         <button id="btn-check-all" class="small-button">Check All Tests</button>
         <button id="btn-uncheck-all" class="small-button">Uncheck All Tests</button>
@@ -356,11 +359,18 @@
   <script src="../../src/utils/random-utils.js"></script>
   <script src="../../src/scene-creation/SeededRandom.js"></script>
   <script src="../../src/scene-creation/scene-creation-utils.js"></script>
+  <script src="../../src/scene-creation/scene-creation-lines.js"></script>
   <script src="../../src/scene-creation/scene-creation-rects.js"></script>
   <script src="../../src/scene-creation/scene-creation-rounded-rects.js"></script>
+  <script src="../../src/scene-creation/scene-creation-circles.js"></script>
+  <script src="../../src/scene-creation/scene-creation-arcs.js"></script>
   <script src="performance-tests/performance-utils.js"></script>
   
   <script>
+    // These will be set once CANVAS_WIDTH/HEIGHT are known from the framework/canvas elements
+    var renderTestWidth;
+    var renderTestHeight;
+
     // Elements
     const swCanvas = document.getElementById('sw-canvas');
     const canvas = document.getElementById('canvas');
@@ -371,11 +381,19 @@
     const overallProgressBar = document.getElementById('overall-progress-bar');
     const chartContainer = document.getElementById('chart-container');
     
-    // Set canvas dimensions immediately
+    // Set canvas dimensions immediately - CANVAS_WIDTH and CANVAS_HEIGHT are assumed to be globally defined 
+    // by the performance testing harness or an earlier script if not hardcoded here.
+    // If they are not globally defined before this point, they need to be defined here, e.g.:
+    // const CANVAS_WIDTH = 800; 
+    // const CANVAS_HEIGHT = 600;
     swCanvas.width = CANVAS_WIDTH;
     swCanvas.height = CANVAS_HEIGHT;
     canvas.width = CANVAS_WIDTH;
     canvas.height = CANVAS_HEIGHT;
+
+    // Now set renderTestWidth and renderTestHeight
+    renderTestWidth = CANVAS_WIDTH;
+    renderTestHeight = CANVAS_HEIGHT;
     
     // Canvas contexts
     const swCtx = new CrispSwContext(swCanvas);
@@ -441,7 +459,10 @@
   <!-- Arc Test cases -->
   <script src="test-cases/arcs--multi-12--90-deg--fixed-params--grid-layout--test.js"></script>
   <script src="test-cases/arcs--multi-5--fully-random--test.js"></script>
-  
+
+  <!-- Scene Test cases -->
+  <script src="test-cases/scene--all-shapes-combined--test.js"></script>
+
   <!-- Test definitions and UI -->
   <script src="performance-tests/performance-ui.js"></script>
 </body>

@@ -11,8 +11,9 @@ function generateTestButtons() {
   const roundedRectangleTestsContainer = document.getElementById('rounded-rectangle-tests');
   const circleTestsContainer = document.getElementById('circle-tests');
   const arcTestsContainer = document.getElementById('arc-tests');
+  const sceneTestsContainer = document.getElementById('scene-tests');
   
-  if (!lineTestsContainer || !rectangleTestsContainer || !circleTestsContainer || !roundedRectangleTestsContainer || !arcTestsContainer) return;
+  if (!lineTestsContainer || !rectangleTestsContainer || !circleTestsContainer || !roundedRectangleTestsContainer || !arcTestsContainer || !sceneTestsContainer) return;
   
   // Clear existing content from each container
   lineTestsContainer.innerHTML = '';
@@ -20,6 +21,7 @@ function generateTestButtons() {
   roundedRectangleTestsContainer.innerHTML = '';
   circleTestsContainer.innerHTML = '';
   arcTestsContainer.innerHTML = '';
+  sceneTestsContainer.innerHTML = '';
   
   // Create test list containers if there are tests for them
   const linesList = window.PERFORMANCE_TESTS_REGISTRY.some(t => t.category === 'lines') ? createTestList('Lines Tests', lineTestsContainer) : null;
@@ -27,6 +29,7 @@ function generateTestButtons() {
   const roundedRectanglesList = window.PERFORMANCE_TESTS_REGISTRY.some(t => t.category === 'rounded-rectangles') ? createTestList('Rounded Rectangle Tests', roundedRectangleTestsContainer) : null;
   const circlesList = window.PERFORMANCE_TESTS_REGISTRY.some(t => t.category === 'circles') ? createTestList('Circle Tests', circleTestsContainer) : null;
   const arcsList = window.PERFORMANCE_TESTS_REGISTRY.some(t => t.category === 'arcs') ? createTestList('Arc Tests', arcTestsContainer) : null;
+  const scenesList = window.PERFORMANCE_TESTS_REGISTRY.some(t => t.category === 'scenes') ? createTestList('Scene Tests', sceneTestsContainer) : null;
   
   // Add test entries to the appropriate list
   window.PERFORMANCE_TESTS_REGISTRY.forEach(test => {
@@ -43,12 +46,14 @@ function generateTestButtons() {
       targetListElement = circlesList;
     } else if (test.category === 'arcs') {
       targetListElement = arcsList;
+    } else if (test.category === 'scenes') {
+      targetListElement = scenesList;
     }
     
     if (targetListElement) { // targetListElement is now the div.test-list or null
       createTestEntry(test, targetListElement); 
     } else {
-      if (test && test.category && !['lines', 'rectangles', 'circles', 'rounded-rectangles', 'arcs'].includes(test.category)) {
+      if (test && test.category && !['lines', 'rectangles', 'circles', 'rounded-rectangles', 'arcs', 'scenes'].includes(test.category)) {
         console.warn(`[UI] Test "${test.displayName}" has unhandled category: ${test.category}`);
       }
     }
@@ -162,6 +167,19 @@ function initializeUI() {
   document.getElementById('btn-check-all').addEventListener('click', checkAllTests);
   document.getElementById('btn-uncheck-all').addEventListener('click', uncheckAllTests);
   
+  // Add event listeners for standard controls (moved here)
+  // Ensure these elements are defined in the main HTML script block before performance-ui.js is run
+  // or that initializeUI is called after they are certainly defined.
+  if (typeof btnRunChecked !== 'undefined' && btnRunChecked) { // Add null/undefined checks for safety
+    btnRunChecked.addEventListener('click', runCheckedTests);
+  }
+  if (typeof btnRunAll !== 'undefined' && btnRunAll) {
+    btnRunAll.addEventListener('click', runAllTests);
+  }
+  if (typeof btnAbort !== 'undefined' && btnAbort) {
+    btnAbort.addEventListener('click', abortTests);
+  }
+  
   // Detect refresh rate before allowing tests to run
   if (!refreshRateDetected) {
     // Disable test buttons until refresh rate is detected
@@ -219,11 +237,6 @@ document.getElementById('btn-profiling-mode').addEventListener('click', function
     resultsContainer.scrollTop = resultsContainer.scrollHeight;
   }
 });
-
-// Button event listeners for standard controls
-btnRunChecked.addEventListener('click', runCheckedTests);
-btnRunAll.addEventListener('click', runAllTests);
-btnAbort.addEventListener('click', abortTests);
 
 // Run all checked tests
 function runCheckedTests() {
