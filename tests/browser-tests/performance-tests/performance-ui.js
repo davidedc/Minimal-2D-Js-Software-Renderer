@@ -10,20 +10,23 @@ function generateTestButtons() {
   const rectangleTestsContainer = document.getElementById('rectangle-tests');
   const roundedRectangleTestsContainer = document.getElementById('rounded-rectangle-tests');
   const circleTestsContainer = document.getElementById('circle-tests');
+  const arcTestsContainer = document.getElementById('arc-tests');
   
-  if (!lineTestsContainer || !rectangleTestsContainer || !circleTestsContainer || !roundedRectangleTestsContainer) return;
+  if (!lineTestsContainer || !rectangleTestsContainer || !circleTestsContainer || !roundedRectangleTestsContainer || !arcTestsContainer) return;
   
   // Clear existing content from each container
   lineTestsContainer.innerHTML = '';
   rectangleTestsContainer.innerHTML = '';
   roundedRectangleTestsContainer.innerHTML = '';
   circleTestsContainer.innerHTML = '';
+  arcTestsContainer.innerHTML = '';
   
   // Create test list containers if there are tests for them
   const linesList = window.PERFORMANCE_TESTS_REGISTRY.some(t => t.category === 'lines') ? createTestList('Lines Tests', lineTestsContainer) : null;
   const rectanglesList = window.PERFORMANCE_TESTS_REGISTRY.some(t => t.category === 'rectangles') ? createTestList('Rectangle Tests', rectangleTestsContainer) : null;
   const roundedRectanglesList = window.PERFORMANCE_TESTS_REGISTRY.some(t => t.category === 'rounded-rectangles') ? createTestList('Rounded Rectangle Tests', roundedRectangleTestsContainer) : null;
   const circlesList = window.PERFORMANCE_TESTS_REGISTRY.some(t => t.category === 'circles') ? createTestList('Circle Tests', circleTestsContainer) : null;
+  const arcsList = window.PERFORMANCE_TESTS_REGISTRY.some(t => t.category === 'arcs') ? createTestList('Arc Tests', arcTestsContainer) : null;
   
   // Add test entries to the appropriate list
   window.PERFORMANCE_TESTS_REGISTRY.forEach(test => {
@@ -38,12 +41,14 @@ function generateTestButtons() {
       targetListElement = roundedRectanglesList;
     } else if (test.category === 'circles') {
       targetListElement = circlesList;
+    } else if (test.category === 'arcs') {
+      targetListElement = arcsList;
     }
     
     if (targetListElement) { // targetListElement is now the div.test-list or null
       createTestEntry(test, targetListElement); 
     } else {
-      if (test && test.category && !['lines', 'rectangles', 'circles', 'rounded-rectangles'].includes(test.category)) {
+      if (test && test.category && !['lines', 'rectangles', 'circles', 'rounded-rectangles', 'arcs'].includes(test.category)) {
         console.warn(`[UI] Test "${test.displayName}" has unhandled category: ${test.category}`);
       }
     }

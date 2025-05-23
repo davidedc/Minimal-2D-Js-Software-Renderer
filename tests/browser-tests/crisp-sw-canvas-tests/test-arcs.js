@@ -8,9 +8,12 @@
  */
 function draw_filled_arc_test(ctx) {
     ctx.fillStyle = 'rgba(255,0,0,0.7)'; // Red, semi-transparent
-    // fillArc(x, y, radius, startAngle, endAngle, anticlockwise?)
     ctx.fillArc(100, 75, 50, 0, Math.PI / 2, false); // 90 degree arc
+    
+    ctx.fillStyle = 'rgba(0,255,0,0.6)'; // Green, semi-transparent
     ctx.fillArc(100, 200, 60, Math.PI / 4, Math.PI * 1.5, false); // Larger arc, different angles
+    
+    ctx.fillStyle = 'rgba(0,0,255,0.5)'; // Blue, semi-transparent
     ctx.fillArc(250, 125, 40, 0, Math.PI * 2, false); // Full circle as an arc
 }
 
@@ -21,9 +24,12 @@ function draw_filled_arc_test(ctx) {
 function draw_stroked_arc_test(ctx) {
     ctx.strokeStyle = 'rgba(0,0,255,1)'; // Blue, opaque
     ctx.lineWidth = 5;
-    // strokeArc(x, y, radius, startAngle, endAngle, anticlockwise?)
     ctx.strokeArc(100, 75, 50, 0, Math.PI / 2, false);
+    
+    ctx.strokeStyle = 'rgba(255,0,255,1)'; // Magenta, opaque
+    ctx.lineWidth = 8;
     ctx.strokeArc(100, 200, 60, Math.PI / 4, Math.PI * 1.5, true); // Anticlockwise
+    
     ctx.lineWidth = 2;
     ctx.strokeStyle = 'rgba(0,128,0,0.5)'; // Green, semi-transparent
     ctx.strokeArc(250, 125, 40, Math.PI / 6, Math.PI, false);
@@ -37,7 +43,6 @@ function draw_fill_and_stroke_arc_test(ctx) {
     ctx.fillStyle = 'rgba(255,255,0,0.5)'; // Yellow, semi-transparent
     ctx.strokeStyle = 'rgba(0,0,0,1)';   // Black, opaque
     ctx.lineWidth = 3;
-    // fillAndStrokeArc(x, y, radius, startAngle, endAngle, anticlockwise?)
     ctx.fillAndStrokeArc(100, 75, 50, Math.PI, Math.PI * 1.75, false);
     
     ctx.fillStyle = 'rgba(128,0,128,0.8)'; // Purple, semi-transparent

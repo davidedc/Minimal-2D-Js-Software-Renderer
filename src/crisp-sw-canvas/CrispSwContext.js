@@ -519,23 +519,21 @@ class CrispSwContext {
         const state = this.currentState;
         const centerTransformed = transformPoint(x, y, state.transform.elements);
         const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
-        // For circles, we used Math.max(scaleX, scaleY). For arcs, average might be more appropriate
-        // or individual scaling of x/y radii if ellipse arcs were supported. Sticking to simple scaling for now.
         const scaledRadius = radius * Math.min(Math.abs(scaleX), Math.abs(scaleY)); 
 
-        // Convert radians to degrees for SWRendererArc and drawArcCanvas
         const startAngleDeg = startAngle * 180 / Math.PI;
         const endAngleDeg = endAngle * 180 / Math.PI;
-        // TODO: Handle anticlockwise if SWRendererArc needs it (it might infer from angle order)
-
+        
+        // SWRendererArc.drawArc expects a shape with fillColor and strokeColor (alpha 0-255)
+        // It internally handles fill and/or stroke based on these colors and strokeWidth.
         this.arcRenderer.drawArc({
             center: { x: centerTransformed.tx, y: centerTransformed.ty },
             radius: scaledRadius,
             startAngle: startAngleDeg,
             endAngle: endAngleDeg,
-            // anticlockwise: anticlockwise, // If renderer supports it
-            fillColor: state.fillColor, // Assumes globalAlpha is handled by pixelRenderer
-            strokeWidth: 0,
+            anticlockwise: anticlockwise, // Pass to shape, SWRendererArc might use it or infer
+            fillColor: state.fillColor, 
+            strokeWidth: 0, // Explicitly no stroke for fillArc
             strokeColor: { r: 0, g: 0, b: 0, a: 0 }
         });
     }
@@ -559,10 +557,10 @@ class CrispSwContext {
             radius: scaledRadius,
             startAngle: startAngleDeg,
             endAngle: endAngleDeg,
-            // anticlockwise: anticlockwise, 
-            fillColor: { r: 0, g: 0, b: 0, a: 0 },
+            anticlockwise: anticlockwise,
+            fillColor: { r: 0, g: 0, b: 0, a: 0 }, // Explicitly no fill for strokeArc
             strokeWidth: scaledLineWidth,
-            strokeColor: state.strokeColor // Assumes globalAlpha is handled by pixelRenderer
+            strokeColor: state.strokeColor 
         });
     }
     
@@ -580,12 +578,13 @@ class CrispSwContext {
         const startAngleDeg = startAngle * 180 / Math.PI;
         const endAngleDeg = endAngle * 180 / Math.PI;
 
+        // SWRendererArc.drawArc handles both fill and stroke if both colors are opaque and strokeWidth > 0
         this.arcRenderer.drawArc({
             center: { x: centerTransformed.tx, y: centerTransformed.ty },
             radius: scaledRadius,
             startAngle: startAngleDeg,
             endAngle: endAngleDeg,
-            // anticlockwise: anticlockwise, 
+            anticlockwise: anticlockwise, 
             fillColor: state.fillColor,
             strokeWidth: scaledLineWidth,
             strokeColor: state.strokeColor
