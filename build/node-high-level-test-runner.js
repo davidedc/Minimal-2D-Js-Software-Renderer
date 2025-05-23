@@ -1391,23 +1391,21 @@ class CrispSwContext {
         const state = this.currentState;
         const centerTransformed = transformPoint(x, y, state.transform.elements);
         const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
-        // For circles, we used Math.max(scaleX, scaleY). For arcs, average might be more appropriate
-        // or individual scaling of x/y radii if ellipse arcs were supported. Sticking to simple scaling for now.
         const scaledRadius = radius * Math.min(Math.abs(scaleX), Math.abs(scaleY)); 
 
-        // Convert radians to degrees for SWRendererArc and drawArcCanvas
         const startAngleDeg = startAngle * 180 / Math.PI;
         const endAngleDeg = endAngle * 180 / Math.PI;
-        // TODO: Handle anticlockwise if SWRendererArc needs it (it might infer from angle order)
-
+        
+        // SWRendererArc.drawArc expects a shape with fillColor and strokeColor (alpha 0-255)
+        // It internally handles fill and/or stroke based on these colors and strokeWidth.
         this.arcRenderer.drawArc({
             center: { x: centerTransformed.tx, y: centerTransformed.ty },
             radius: scaledRadius,
             startAngle: startAngleDeg,
             endAngle: endAngleDeg,
-            // anticlockwise: anticlockwise, // If renderer supports it
-            fillColor: state.fillColor, // Assumes globalAlpha is handled by pixelRenderer
-            strokeWidth: 0,
+            anticlockwise: anticlockwise, // Pass to shape, SWRendererArc might use it or infer
+            fillColor: state.fillColor, 
+            strokeWidth: 0, // Explicitly no stroke for fillArc
             strokeColor: { r: 0, g: 0, b: 0, a: 0 }
         });
     }
@@ -1431,10 +1429,10 @@ class CrispSwContext {
             radius: scaledRadius,
             startAngle: startAngleDeg,
             endAngle: endAngleDeg,
-            // anticlockwise: anticlockwise, 
-            fillColor: { r: 0, g: 0, b: 0, a: 0 },
+            anticlockwise: anticlockwise,
+            fillColor: { r: 0, g: 0, b: 0, a: 0 }, // Explicitly no fill for strokeArc
             strokeWidth: scaledLineWidth,
-            strokeColor: state.strokeColor // Assumes globalAlpha is handled by pixelRenderer
+            strokeColor: state.strokeColor 
         });
     }
     
@@ -1452,12 +1450,13 @@ class CrispSwContext {
         const startAngleDeg = startAngle * 180 / Math.PI;
         const endAngleDeg = endAngle * 180 / Math.PI;
 
+        // SWRendererArc.drawArc handles both fill and stroke if both colors are opaque and strokeWidth > 0
         this.arcRenderer.drawArc({
             center: { x: centerTransformed.tx, y: centerTransformed.ty },
             radius: scaledRadius,
             startAngle: startAngleDeg,
             endAngle: endAngleDeg,
-            // anticlockwise: anticlockwise, 
+            anticlockwise: anticlockwise, 
             fillColor: state.fillColor,
             strokeWidth: scaledLineWidth,
             strokeColor: state.strokeColor
@@ -7951,6 +7950,226 @@ class RenderTest {
       results.join('<br>'); // HTML for browser
   }
 }/**
+ * @fileoverview Test definition for 90-degree arcs with various radii and stroke widths.
+ */
+
+// Helper functions _colorObjectToString, getRandomColor, getRandomPoint are assumed globally available.
+
+/**
+ * Draws 90-degree arcs. 
+ * In visual regression mode, it draws a fixed grid of 12 arcs.
+ * In performance mode, it draws `instances` number of fully randomized 90-degree arcs.
+ *
+ * @param {CanvasRenderingContext2D | CrispSwContext} ctx The rendering context.
+ * @param {number} currentIterationNumber The current test iteration (for seeding via RenderTest).
+ * @param {?number} instances Optional: Number of instances to draw. For this test, it always draws
+ *                  the predefined set of 12 arcs for visual regression. For performance, it draws `instances` arcs.
+ * @returns {?{logs: string[]}} Logs for the visual regression run.
+ */
+function draw_arcs_multi_12_90_deg_fixed_params_grid_layout(ctx, currentIterationNumber, instances = null) {
+    const isPerformanceRun = instances !== null && instances > 0;
+    const numToDrawForPerf = isPerformanceRun ? instances : 0;
+    let logs = [];
+
+    const canvasWidth = ctx.canvas.width;
+    const canvasHeight = ctx.canvas.height;
+
+    if (!isPerformanceRun) {
+        // --- Visual Regression Mode: Draw the fixed grid of 12 arcs ---
+        const strokeSizes = [1, 2, 3, 4];
+        const radii = [20, 40, 60];
+        let xOffset = 150;
+        const fixedStrokeColorObj = { r: 200, g: 100, b: 100, a: 255 };
+        const fixedStrokeColorStr = _colorObjectToString(fixedStrokeColorObj);
+
+        for (const strokeWidth of strokeSizes) {
+            let yOffset = 150;
+            for (const radius of radii) {
+                const centerX = xOffset;
+                const centerY = yOffset;
+                const startAngleRad = 0; // 0 degrees
+                const endAngleRad = Math.PI / 2;   // 90 degrees
+
+                ctx.strokeStyle = fixedStrokeColorStr;
+                ctx.lineWidth = strokeWidth;
+                ctx.strokeArc(centerX, centerY, radius, startAngleRad, endAngleRad, false);
+
+                logs.push(
+                    `\u25DC 90° Arc (Fixed Grid): center=(${centerX},${centerY}), r=${radius}, sw=${strokeWidth}`
+                );
+                yOffset += radius * 2 + 20;
+            }
+            xOffset += 120;
+        }
+        return { logs };
+
+    } else {
+        // --- Performance Mode: Draw `numToDrawForPerf` randomized 90-degree arcs ---
+        const quadrants = [0, Math.PI / 2, Math.PI, Math.PI * 3 / 2];
+
+        for (let i = 0; i < numToDrawForPerf; i++) {
+            // Each arc gets fully random parameters
+            const radius = 10 + SeededRandom.getRandom() * 50; // Random radius 10-60
+            const strokeWidth = 1 + SeededRandom.getRandom() * 4; // Random stroke width 1-5
+            
+            // Random starting quadrant for the 90-degree arc
+            const startAngleRad = quadrants[Math.floor(SeededRandom.getRandom() * 4)];
+            const endAngleRad = startAngleRad + Math.PI / 2;
+
+            const strokeColorObj = getRandomColor(200, 255); // Opaque random color
+            const strokeColorStr = _colorObjectToString(strokeColorObj);
+
+            // Base position from SeededRandom
+            let drawCenterX = SeededRandom.getRandom() * canvasWidth;
+            let drawCenterY = SeededRandom.getRandom() * canvasHeight;
+
+            // Additional large random offset for performance test spread (using Math.random)
+            drawCenterX = Math.random() * canvasWidth;
+            drawCenterY = Math.random() * canvasHeight;
+            
+            // Ensure it's somewhat on screen (simple clamp)
+            drawCenterX = Math.max(radius + strokeWidth, Math.min(drawCenterX, canvasWidth - radius - strokeWidth));
+            drawCenterY = Math.max(radius + strokeWidth, Math.min(drawCenterY, canvasHeight - radius - strokeWidth));
+
+            ctx.strokeStyle = strokeColorStr;
+            ctx.lineWidth = strokeWidth;
+            ctx.strokeArc(drawCenterX, drawCenterY, radius, startAngleRad, endAngleRad, false);
+        }
+        return null; // No logs for performance run
+    }
+}
+
+/**
+ * Defines and registers the 90-degree arcs test case.
+ */
+function define_arcs_multi_12_90_deg_fixed_params_grid_layout_test() {
+    return new RenderTestBuilder()
+        .withId('arcs--multi-12--90-deg--fixed-params--grid-layout')
+        .withTitle('90\u00B0 Arcs (Multiple, Fixed Params, Grid Layout)')
+        .withDescription('Tests rendering of 90° arcs with various fixed radii and stroke widths in a grid.')
+        .runCanvasCode(draw_arcs_multi_12_90_deg_fixed_params_grid_layout)
+        // No specific checks in original test definition
+        .build();
+}
+
+// Define and register the visual regression test immediately.
+if (typeof RenderTestBuilder === 'function') {
+    define_arcs_multi_12_90_deg_fixed_params_grid_layout_test();
+}
+
+// Register for performance testing.
+if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
+    typeof draw_arcs_multi_12_90_deg_fixed_params_grid_layout === 'function') {
+    window.PERFORMANCE_TESTS_REGISTRY.push({
+        id: 'arcs--multi-12--90-deg--fixed-params--grid-layout',
+        drawFunction: draw_arcs_multi_12_90_deg_fixed_params_grid_layout,
+        displayName: 'Perf: 12 90Deg Arcs FixedGrid',
+        description: 'Performance of 12 90-degree arcs with fixed parameters.',
+        category: 'arcs' 
+    });
+} /**
+ * @fileoverview Test definition for multiple fully random arcs.
+ */
+
+// Helper functions _colorObjectToString, getRandomColor, getRandomPoint are assumed globally available.
+
+/**
+ * Draws multiple arcs with fully random parameters.
+ *
+ * @param {CanvasRenderingContext2D | CrispSwContext} ctx The rendering context.
+ * @param {number} currentIterationNumber The current test iteration (for seeding via RenderTest).
+ * @param {?number} instances Optional: Number of instances to draw. For visual regression (instances is null/0), 5 arcs are drawn.
+ * @returns {?{logs: string[]}} Logs for single-instance mode, or null for performance mode.
+ */
+function draw_arcs_multi_5_fully_random(ctx, currentIterationNumber, instances = null) {
+    const isPerformanceRun = instances !== null && instances > 0;
+    const numToDraw = isPerformanceRun ? instances : 5; // Original test draws 5
+
+    let logs = [];
+
+    const canvasWidth = ctx.canvas.width;
+    const canvasHeight = ctx.canvas.height;
+
+    for (let i = 0; i < numToDraw; i++) {
+        // Parameters from getRandomArc()
+        // SeededRandom Call 1 & 2 (inside getRandomPoint for x, y)
+        const center = getRandomPoint(1, canvasWidth, canvasHeight); 
+        // SeededRandom Call 3: radius
+        const radius = 15 + SeededRandom.getRandom() * 50; 
+        // SeededRandom Call 4: startAngle (degrees)
+        const startAngleDeg = SeededRandom.getRandom() * 360;
+        // SeededRandom Call 5: endAngle (degrees, relative to start)
+        const endAngleDeg = startAngleDeg + SeededRandom.getRandom() * 270 + 90;
+        // SeededRandom Call 6: strokeWidth
+        const strokeWidth = SeededRandom.getRandom() * 10 + 1;
+        // SeededRandom Call 7: strokeColor 
+        const strokeColorObj = getRandomColor(200, 255); 
+        // SeededRandom Call 8: fillColor
+        const fillColorObj = getRandomColor(100, 200);
+
+        const strokeColorForRender = { r: strokeColorObj.r, g: strokeColorObj.g, b: strokeColorObj.b, a: strokeColorObj.a };
+        const fillColorForRender = { r: fillColorObj.r, g: fillColorObj.g, b: fillColorObj.b, a: fillColorObj.a };
+
+        // Convert angles to radians for context arc methods
+        const startAngleRad = startAngleDeg * Math.PI / 180;
+        const endAngleRad = endAngleDeg * Math.PI / 180;
+
+        let drawCenterX = center.x;
+        let drawCenterY = center.y;
+
+        // The getRandomPoint already randomizes position for each arc.
+        // No additional Math.random() offset needed for performance mode spreading for this test.
+        
+        ctx.fillStyle = _colorObjectToString(fillColorForRender); // Set for fillAndStrokeArc
+        ctx.strokeStyle = _colorObjectToString(strokeColorForRender); // Set for fillAndStrokeArc
+        ctx.lineWidth = strokeWidth;
+
+        // Use fillAndStrokeArc as both fill and stroke are defined with random colors
+        // The polyfill and CrispSwContext method should handle drawing fill then stroke.
+        ctx.fillAndStrokeArc(drawCenterX, drawCenterY, radius, startAngleRad, endAngleRad, false);
+
+        if (!isPerformanceRun) { 
+            logs.push(
+                `RandArc ${i+1}: center=(${center.x.toFixed(1)},${center.y.toFixed(1)}), r=${radius.toFixed(1)}, ang=(${startAngleDeg.toFixed(0)}°,${endAngleDeg.toFixed(0)}°), sw=${strokeWidth.toFixed(1)}`
+            );
+        }
+    }
+
+    if (isPerformanceRun) {
+        return null; 
+    }
+    return { logs }; 
+}
+
+/**
+ * Defines and registers the multiple fully random arcs test case.
+ */
+function define_arcs_multi_5_fully_random_test() {
+    return new RenderTestBuilder()
+        .withId('arcs--multi-5--fully-random') // Derived from: random-arcs
+        .withTitle('Multiple Fully Random Arcs')
+        .withDescription('Tests rendering of 5 arcs with fully random positions, angles, sizes, colors, and strokes.')
+        .runCanvasCode(draw_arcs_multi_5_fully_random)
+        // No specific checks in original test definition
+        .build();
+}
+
+// Define and register the visual regression test immediately.
+if (typeof RenderTestBuilder === 'function') {
+    define_arcs_multi_5_fully_random_test();
+}
+
+// Register for performance testing.
+if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
+    typeof draw_arcs_multi_5_fully_random === 'function') {
+    window.PERFORMANCE_TESTS_REGISTRY.push({
+        id: 'arcs--multi-5--fully-random',
+        drawFunction: draw_arcs_multi_5_fully_random,
+        displayName: 'Perf: 5 FullyRandom Arcs',
+        description: 'Performance of 5 fully random arcs.',
+        category: 'arcs' 
+    });
+} /**
  * @fileoverview Test definition for a single 1px stroked circle centered at a grid point.
  */
 
