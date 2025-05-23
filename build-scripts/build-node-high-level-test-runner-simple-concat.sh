@@ -32,6 +32,32 @@ echo "  Added: src/crisp-sw-canvas/node-polyfills.js"
 # 2. Core Utilities (Including geometry.js for TransformationMatrix)
 echo "[Build Script] Adding Core Utilities..."
 
+# ----- these are needed for the Scene: All Shape Types Combined test, which
+# still uses scene creation stuff.
+
+# add src/scene-creation/scene-creation-lines.js
+cat "$PROJECT_ROOT/src/scene-creation/scene-creation-lines.js" >> "$OUTPUT_FILE"
+echo "  Added: src/scene-creation/scene-creation-lines.js"
+
+# add src/scene-creation/scene-creation-rects.js
+cat "$PROJECT_ROOT/src/scene-creation/scene-creation-rects.js" >> "$OUTPUT_FILE"
+echo "  Added: src/scene-creation/scene-creation-rects.js"
+
+# add src/scene-creation/scene-creation-rounded-rects.js
+cat "$PROJECT_ROOT/src/scene-creation/scene-creation-rounded-rects.js" >> "$OUTPUT_FILE"
+echo "  Added: src/scene-creation/scene-creation-rounded-rects.js"
+
+# add src/scene-creation/scene-creation-arcs.js
+cat "$PROJECT_ROOT/src/scene-creation/scene-creation-arcs.js" >> "$OUTPUT_FILE"
+echo "  Added: src/scene-creation/scene-creation-arcs.js"
+
+# add src/scene-creation/scene-creation-circles.js
+cat "$PROJECT_ROOT/src/scene-creation/scene-creation-circles.js" >> "$OUTPUT_FILE"
+echo "  Added: src/scene-creation/scene-creation-circles.js"
+
+# end of scene creation stuff for Scene: All Shape Types Combined test --------
+
+
 # add src/scene-creation/scene-creation-utils.js
 # TODO: put this in a different folder as it's not just for scene creation, it's also
 # used by the high-level tests to position rects so they draw crisply.
