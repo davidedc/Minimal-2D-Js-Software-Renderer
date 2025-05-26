@@ -17,7 +17,7 @@ The analysis was based on:
     *   These directories contain the `.js` files for individual tests whose contents were analyzed to determine precise parameter ranges and behaviors.
 *   **Guideline Documents**: Provided by the user to understand existing conventions and parameters, influencing initial facet extraction and some interpretations:
     *   `CONVERTING_LOW_LEVEL_TESTS.md`
-    *   `adding-performance-tests.md` (and its legacy counterpart `adding-tests-to-legacy-performance-tests-setup.md`)
+    *   `adding-performance-tests.md` (and its legacy counterpart `adding-tests-to-legacy-performance-tests-setup.md`, which became crucial for defining standardized `SizeCategory` pixel ranges).
 
 ## 3. Evolution of the Analysis Table (`test_case_naming_analysis_vX.md`)
 
@@ -101,20 +101,24 @@ The core of this project was the iterative refinement of a Markdown table design
 
 ### Version 15 (`test_case_naming_analysis_v15.md` - Final `StrokeThickness` Refinement with Legacy File Analysis)
 *   **User Request**: Complete the `StrokeThickness` refinement by analyzing the provided source code for the legacy test files (from `/tests/browser-tests/performance-tests-legacy/`) that still had `mixed` values derived from previous t-shirt size conversions.
-*   **Action**: The `StrokeThickness` for the four specified legacy test files (`lines--M-size--no-fill--L-opaque-stroke...`, `rectangles--M-size--opaque_fill--M-opaque_stroke...`, `circles--M-size--opaque_fill--M-opaque_stroke...`, `circles--XL-size--opaque_fill--XL-opaque_stroke...`) were updated from `mixed` to specific `[N]px-[M]px` ranges (e.g., `1px-5px`, `10px-20px`) based on direct analysis of their JavaScript source code. This version represents the most accurate `StrokeThickness` column based on all available information and code.
+*   **Action**: The `StrokeThickness` for the four specified legacy test files (`lines--M-size--no-fill--L-opaque-stroke...`, `rectangles--M-size--opaque_fill--M-opaque_stroke...`, `circles--M-size--opaque_fill--M-opaque_stroke...`, `circles--XL-size--opaque_fill--XL-opaque_stroke...`) were updated from `mixed` to specific `[N]px-[M]px` ranges (e.g., `1px-5px`, `10px-20px`) based on direct analysis of their JavaScript source code.
 
-## 4. Current State (Leading to `test_case_naming_analysis_v15.md`)
+### Version 16 (`test_case_naming_analysis_v16.md` - `SizeCategory` Refinement Based on Standardized Pixel Ranges)
+*   **User Request**: Revise the `SizeCategory` facet. The determination was to be based on analyzing test source code from `/tests/browser-tests/test-cases/` and `/tests/browser-tests/performance-tests-legacy/` and comparing actual shape dimensions against standardized pixel ranges defined in `adding-tests-to-legacy-performance-tests-setup.md` (XS, S, M, L, XL for lines, rectangles, circles).
+*   **Action**: Each test file was analyzed. Shape dimensions (length for lines, width/height for rectangles/rounded-rects, radius for circles) were extracted from the code. These were then compared against the standard pixel buckets. If dimensions (or randomized ranges) fell within a single bucket, that category was assigned. If they spanned multiple buckets, or if multiple shapes in a test had different size categories, `SizeCategory` was set to `mixed`. Filename cues were considered hints but superseded by code analysis. `Arcs` had their radii compared to circle categories. This resulted in `test_case_naming_analysis_v16.md` with a more rigorously defined `SizeCategory` column.
 
-The table `test_case_naming_analysis_v15.md` represents the most current, detailed breakdown of test facets. It has undergone several passes of refinement for columns like `SizeCategory`, `FillStyle`, `StrokeStyle`, and most recently, an intensive, code-driven refinement of `StrokeThickness`. It also includes a major restructuring (Layout, CenteredAt, EdgeAlignment, revised Orientation). All parenthetical comments have been removed, and specific columns have been dropped. The facet values, particularly for `StrokeThickness`, are now directly informed by analysis of the JavaScript test files in `/Users/davidedellacasa/code/Minimal-2D-Js-Software-Renderer/tests/browser-tests/test-cases/` and `/Users/davidedellacasa/code/Minimal-2D-Js-Software-Renderer/tests/browser-tests/performance-tests-legacy/`.
+## 4. Current State (Leading to `test_case_naming_analysis_v16.md`)
+
+The table `test_case_naming_analysis_v16.md` represents the most current, detailed breakdown of test facets. It has undergone several passes of refinement for columns like `FillStyle`, `StrokeStyle`, `StrokeThickness`, and `SizeCategory`. It also includes a major restructuring (Layout, CenteredAt, EdgeAlignment, revised Orientation). All parenthetical comments have been removed, and specific columns have been dropped. The facet values, particularly for `StrokeThickness` and `SizeCategory`, are now directly informed by analysis of the JavaScript test files in `/Users/davidedellacasa/code/Minimal-2D-Js-Software-Renderer/tests/browser-tests/test-cases/` and `/Users/davidedellacasa/code/Minimal-2D-Js-Software-Renderer/tests/browser-tests/performance-tests-legacy/`, and compared against standardized definitions where available (e.g., pixel ranges for `SizeCategory` from `adding-tests-to-legacy-performance-tests-setup.md`).
 
 ## 5. Purpose of this Document (`project_summary_and_context.md`)
 
-This document serves as a comprehensive log of the project's progression, the rationale behind changes to the analysis table, and the detailed criteria applied to each facet. It aims to provide clarity on how `test_case_naming_analysis_v15.md` was derived, facilitating the final steps of defining canonical facet values and establishing the new file naming convention.
+This document serves as a comprehensive log of the project's progression, the rationale behind changes to the analysis table, and the detailed criteria applied to each facet. It aims to provide clarity on how `test_case_naming_analysis_v16.md` was derived, facilitating the final steps of defining canonical facet values and establishing the new file naming convention.
 
-## 6. Next Steps (Following `v15.md`)
+## 6. Next Steps (Following `v16.md`)
 
 The immediate next steps involve:
-1.  Thorough review of `test_case_naming_analysis_v15.md` by the user.
+1.  Thorough review of `test_case_naming_analysis_v16.md` by the user.
 2.  Defining the canonical (standardized) set of allowed string values for each facet that will be part of the new filenames.
 3.  Defining the exact structure of the new filenames: which facets to include, their order, and separators.
 4.  Planning and executing the renaming of the test files based on the new convention. 
