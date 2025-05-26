@@ -50,13 +50,12 @@ The `test_case_naming_analysis_v15.md` table includes the following columns. Eac
 
 ### 4. `Count`
 
-*   **Description**: Specifies whether the test renders a single instance or multiple instances of the shape(s). For performance tests, this often refers to the archetype being drawn many times.
+*   **Description**: Specifies whether the test renders a single instance or multiple instances of the shape(s) **in non-performance-test mode** (for performance test mode, the shapes are *always* drawn a growing number of times to determine how many shapes can be drawn within a given frame budget).
 *   **Observed Values in v15.md**: `multi`, `multi-5`, `multi-12`, `multi-8`, `single`, `multi-10`, `multi-20`, `multi-15`.
 *   **Criteria**:
     *   `single`: One primary shape instance is drawn.
     *   `multi-[N]`: A specific number `N` of shapes are drawn (e.g., `multi-5` means 5 shapes). Often seen in filenames like `arcs--multi-5...`.
     *   `multi`: Multiple shapes are drawn, but the exact count isn't specified in the filename or is variable based on internal logic (e.g., the scene test).
-    *   For legacy performance tests, `single` was often used in the table to denote the *archetype* that would be drawn many times by the performance harness, even if the filename suggested a "size" (like M-size) rather than an explicit count. The current table (v15) attempts to reflect the visual regression aspect more directly.
 
 ---
 
