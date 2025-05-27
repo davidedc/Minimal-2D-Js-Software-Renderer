@@ -1,10 +1,21 @@
 ## High-Level Tests: Overview
 
-The primary goal of these tests is to **verify the correctness and visual fidelity** of the custom JavaScript software renderer (`CrispSwContext` interacting with `SWRenderer*` classes) by comparing its output directly against the browser's native HTML5 Canvas API (`CanvasRenderingContext2D`). Unlike the "Low-Level SW Renderer Tests," these tests define scenes using **higher-level, Canvas API-like function calls** (e.g., `ctx.fillRect`, `ctx.strokeLine`) rather than creating abstract shape objects.
+Historically, this project was previously tested with three different types of tests
 
-The focus is often on scenarios where pixel-perfect alignment and crisp rendering are critical, such as axis-aligned shapes, 1px lines, and specific coordinate positioning (e.g., centered on physical pixels vs. between physical pixels).
+* "low level tests" (run at high-level-tests.html, or without a browser, via the node harness): these bypassed the CrispSwContext and directly tested the visual appearance of shapes as drawn by low level sw rendering routines - comparing it with the result of HTML5Canvas. These low level routines would know nothing about clipping and nothing about transformations for example - they would just draw things at some coordinates. These tests were also handy because the project started from these primitives, so there was no CrispSwContext to lean on.
+* "organic tests" (run at crisp-sw-canvas-tests.html): these were introduced later and indeed used CrispSwContext. They allowed to use invocations similar to HTML5Canvas ones and allowed to compare with HTML5Canvas. One could test clipping and transformations this way.
+* "performance tests" (run at performance-tests-legacy.html): these used CrispSwContext and focused on drawing an increasing number of primitives over time, until the frame budget was exhausted. The same would be done using a standard HTML5Canvas, and a comparison is made.
 
-The tests run in the browser via `tests/browser-tests/high-level-tests.html`.
+This worked well, however this entailed three sets of tests and hence would be expensive to maintain. So I decided to side-step the isolated testing of the low level rendering primitives (i.e. abandoning the low level tests), as these could be indirectly tested by using CrispSwContext anyways, and focus on a single type of tests called "high level tests" which would contain one test definition that comprised both a way to visually test things, and also a loop to draw increasingly many instances of the test, and hence they would work as performance tests too.
+
+So, all in all there are two goals of these tests is
+
+1. to **verify the correctness and visual fidelity** of the custom JavaScript software renderer (`CrispSwContext` interacting with `SWRenderer*` classes) by comparing its output directly against the browser's native HTML5 Canvas API (`CanvasRenderingContext2D`). Unlike the "Low-Level SW Renderer Tests," these tests define scenes using **higher-level, Canvas API-like function calls** (e.g., `ctx.fillRect`, `ctx.strokeLine`) rather than creating abstract shape objects.
+   The focus is often on scenarios where pixel-perfect alignment and crisp rendering are critical, such as axis-aligned shapes, 1px lines, and specific coordinate positioning (e.g., centered on physical pixels vs. between physical pixels).
+   These tests run in the browser via `tests/browser-tests/high-level-tests.html`, or without a browser, via the node harness.
+2. to also do **performance tests**. These work off the same code, they usually just repeat the drawing of the base case multiple times. These can be run at performance-tests.html.
+
+
 
 ## How the Tests Work
 
