@@ -27,10 +27,10 @@ Each low-level test, typically invoked by an `add<TestName>Test()` function in `
 
 ## File Naming Convention
 
-New test files should follow a descriptive naming convention, using `--` as a separator for major characteristics and `_` (or `-` where appropriate within a characteristic) for sub-characteristics. The file must end with `--test.js`.
+New test files should follow a descriptive naming convention. The project is moving towards a standardized, fully hyphenated naming convention where facets of the test (like shape type, size, color, specific parameters) are separated by double hyphens (`--`), and components within a single facet use single hyphens (`-`). The file must end with `--test.js`.
 
-Example: `lines--M-size--no-fill--1px_opaque_stroke--crisp_pixel_pos--horizontal_orient--test.js`
-Another example: `circles--multi-12--precise--randparams--randpos--test.js`
+*   **Recommended (New Tests):** `shape--facet1-subfacet--facet2--test.js` (e.g., `lines--m-size--no-fill--1px-opaque-stroke--crisp-pixel-pos--horizontal-orient--test.js`)
+*   **Legacy Patterns (May still exist or be seen in examples):** Some older files or examples might use underscores (`_`) within facets (e.g., `1px_opaque_stroke`). While converting, aim to use the fully hyphenated style for new filenames and internal IDs where possible, but be aware of existing patterns.
 
 Consult existing files in `tests/browser-tests/test-cases/` for more examples. Aim for names that clearly convey the core aspects of the test (shape type, count, key parameters/behaviors).
 
@@ -271,13 +271,13 @@ This is the core of the conversion. You'll translate the logic from the old `sha
         *   `CrispSwContext` versions call its specific `SWRendererArc`.
         *   Remember that these custom methods take angles in radians, and `CrispSwContext` methods convert to degrees if its internal renderer needs them.
 *   **Return Value for Checks**:
-    *   If the original `shapeCreationFunction` returned an object (e.g., for `withExtremesCheck`), your new `draw_` function **must** return an object with a `checkData` property containing a similar structure for the single-instance mode.
+    *   If the original `shapeCreationFunction` returned an object (e.g., for `withExtremesCheck`), your new `draw_` function **must** return an object with a `checkData` property containing a similar structure for the single-instance mode. (See `High-Level-SW-Renderer-Tests-Overview.md` regarding `RenderTest` capturing this `checkData`).
     *   **Calculating `checkData` for `withExtremesCheck`**:
-        *   This requires careful determination of inclusive pixel boundaries.
-        *   Example for a 1px stroke where `geomX`, `geomY` are the top-left of the stroke geometry and might be `*.5` (e.g., after adjustment for crisp rendering at pixel center):
-            `checkData = { leftX: Math.floor(geomX), rightX: Math.floor(geomX + finalWidth), topY: Math.floor(geomY), bottomY: Math.floor(geomY + finalHeight) };` (Note: `rightX` and `bottomY` here are the coordinates of the pixel *after* the last rendered pixel if `geomX + finalWidth` isn't an integer, or the last pixel itself if it is. This means `rightX - 1` might be needed for an inclusive rightmost pixel if `geomX + finalWidth` is integer. The exact formulation like `Math.floor(geomX + finalWidth - epsilon)` or `Math.floor(geomX + finalWidth - 1)` vs `Math.floor(geomX + finalWidth)` depends on how the check utility and renderer define boundaries. Careful testing and comparison with original test values is key).
-        *   When in doubt, run the original test or consult `withExtremesCheck` failure outputs to determine the exact expected values.
-    *   If no checks in the original test required return data (e.g., no `withExtremesCheck`), the new `draw_...` function can return `null` or `{ logs: [...] }`.
+        *   This `checkData` should define the *inclusive pixel boundaries* of the rendered shape (e.g., `leftX`, `rightX`, `topY`, `bottomY`).
+        *   The exact calculation (e.g., `Math.floor(geomX + finalWidth)` vs. `Math.floor(geomX + finalWidth - 1)`) depends heavily on how the shape's geometry aligns with pixel coordinates and how `RenderChecks.checkExtremes()` interprets these values. For example, for a 1px stroke centered on a pixel grid line (e.g., `geomX = 10.5`), the inclusive `leftX` would be `10`. If `finalWidth` is `1`, then `geomX + finalWidth` is `11.5`, and `Math.floor(geomX + finalWidth - epsilon)` might be `11` if the line fills from `10.5` to `11.5` thus covering pixels `10` and `11`. However, if it's a 1px line intended to be on a single pixel column (e.g. `geomX` is `10.0`, `finalWidth` is `1.0`), then `leftX` would be `10` and `rightX` might be `Math.floor(10.0 + 1.0 - epsilon)` which is `10`.
+        *   Refer to `Work-summary.md` (Session 1, Point 3, "User Feedback: `checkData` discrepancy") for an example where `Math.floor(geomX + finalRectWidth)` was found to be correct for `rightX` in a specific rounded rectangle test. This implies that `rightX` was the coordinate of the rightmost pixel column that contained part of the shape.
+        *   **Crucially, always verify**: Run the original low-level test (if possible), consult `withExtremesCheck` failure outputs from the new high-level test, or examine the behavior of `RenderChecks.checkExtremes()` to determine the exact expected values and formula for your specific shape and rendering mode. Careful testing and comparison with original test values is key.
+    *   If no checks in the original test required return data (e.g., no `withExtremesCheck`), the new `draw_...` function can return `null` or `{ logs: [...] }` (or more precisely, `{ logs: [...], checkData: null }`).
     *   This return value (with `checkData`) is typically only for the single-instance visual regression run.
 *   **Handling `instances` for Performance**:
     *   The JSDoc for your `draw_` function must clearly explain how `instances` is used.
@@ -297,7 +297,7 @@ This is the core of the conversion. You'll translate the logic from the old `sha
 
 *   Instantiate `RenderTestBuilder`.
 *   Set `.withId('your-test-id')`.
-*   Set `.withTitle('Descriptive Test Title')`. Use `\\uXXXX` for special characters like `°` (`\\u00B0`).
+*   Set `.withTitle('Descriptive Test Title')`. For special characters like `°`, use Unicode escapes within the JavaScript string (e.g., `'Degree: \u00B0'`).
 *   Set `.withDescription('More detailed description.')`.
 *   Use `.runCanvasCode(your_draw_function_name /*, customArg1, ... */)`.
 *   **Migrate Checks**: Add the same checks (`.withExtremesCheck()`, `.withColorCheckMiddleRow()`, etc.) from the original low-level test.
@@ -357,10 +357,10 @@ if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !=
     *   **Fix for `draw_` functions with inlined/adapted logic**: Pass `ctx.canvas.width` and `ctx.canvas.height` as arguments to any adapted helper functions that need these dimensions.
 *   **Character Encoding Issues (e.g., `Â°` instead of `°`, or `â—œ` for `◜`)**:
     *   If special characters in test titles or log messages (defined in your `.js` file) appear garbled in the HTML, it's likely an encoding mismatch or direct pasting of multi-byte characters.
-    *   **Fix**: Use Unicode escape sequences in your JavaScript strings. For example, `°` becomes `\\u00B0`, `◜` (U+25DC) becomes `\\u25DC`.
+    *   **Fix**: Use Unicode escape sequences directly in your JavaScript strings. For example, to represent `°`, the JavaScript string literal should be `'\u00B0'`. For `◜` (Unicode U+25DC), use `'\u25DC'`.
         ```javascript
-        .withTitle('Test Title with 90\\u00B0 Angle') // For RenderTestBuilder
-        logs.push(`Arc symbol: \\u25DC`); // For logs array
+        .withTitle('Test Title with 90\u00B0 Angle') // JavaScript string: 'Test Title with 90\u00B0 Angle'
+        logs.push(`Arc symbol: \u25DC`); // JavaScript string: 'Arc symbol: \u25DC'
         ```
 *   **Performance Test Never Ends / Frame Budget Not Consumed**:
     *   This usually means the `draw_...` function is not correctly scaling the amount of work based on the `instances` parameter from the performance harness, or the work per instance is too small.

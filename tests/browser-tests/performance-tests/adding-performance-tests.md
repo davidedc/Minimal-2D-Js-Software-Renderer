@@ -67,7 +67,8 @@ if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !=
 
 **Key fields for the registration object:**
 
-*   `id`: A unique string identifier. Conventionally, this matches the filename without the `--test.js` suffix (e.g., `lines--M-size--no-fill--1px_opaque_stroke--crisp_pixel_pos--vertical_orient`).
+*   `id`: A unique string identifier. Conventionally, this matches the filename without the `--test.js` suffix.
+    *   While some current examples use underscores (e.g., `lines--M-size--no-fill--1px_opaque_stroke--crisp_pixel_pos--vertical_orient`), the project is moving towards a standardized hyphenated naming convention (e.g., `lines--m-size--no-fill--1px-opaque-stroke--crisp-pixel-pos--vertical-orient`). New tests should ideally follow the hyphenated pattern for their filenames and corresponding IDs.
 *   `drawFunction`: A direct reference to your test's main drawing function (e.g., `draw_lines__M_size__no_fill__1px_opaque_stroke--crisp_pixel_pos--vertical_orient`).
 *   `displayName`: A short, descriptive name that will appear in the performance test UI. It's good practice to prefix with "Perf:" or "HL:" (High-Level) to distinguish them if necessary.
 *   `description`: A slightly longer description for clarity.

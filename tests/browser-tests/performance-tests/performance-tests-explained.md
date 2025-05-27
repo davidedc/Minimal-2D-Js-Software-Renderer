@@ -91,7 +91,7 @@ The test suite determines the maximum number of shapes (lines, rectangles, circl
             *   If `consecutiveExceedances < requiredExceedances`: The loop continues *with the same `currentShapeCount`* to see if the budget is exceeded consistently.
             *   If `consecutiveExceedances >= requiredExceedances`: The budget has been consistently exceeded. The `exceededBudget` flag is set, stopping the loop for this phase.
     *   **Completion**: When the loop stops (either by exceeding the budget consistently or via abortion), the `callback` is called.
-    *   **Max Shapes Calculation (`findMaxShapes`)**: After a phase completes, this function determines the "maximum shapes". Since the test stops *after* exceeding the budget `requiredExceedances` times at a certain shape count (`N`), the maximum *successful* shape count is considered to be `N`.
+    *   **Max Shapes Calculation (`findMaxShapes`)**: After a phase completes, this function determines the "maximum shapes". The test stops after consistently exceeding the budget `requiredExceedances` times at a certain shape count (let's call this `N`). `findMaxShapes` then returns this value `N`, which represents the shape count at which rendering could no longer stay within the budget. It is effectively the performance limit or failure threshold.
 
 5.  **Results Reporting and Cleanup (`performance-utils.js`, `performance-ui.js`)**:
     *   `finalizeTest (`performance-ui.js`): Calculates final averages if multiple runs were performed.

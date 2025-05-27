@@ -8,21 +8,25 @@ Follow these steps:
     *   Create a new file inside the `tests/browser-tests/test-cases/` directory.
     *   Name the file according to the test parameters using `--` separators and ending with `--test.js` (e.g., `rectangles--S-size--filled--semitransparent-fill--crisp-pixel-pos-and-size--no-rotation--test.js`).
     *   Inside this file, create a JavaScript function for the drawing logic. Follow the established naming convention (e.g., `draw_rectangles__S_size__...`).
-    *   **Signature:** The function must accept the rendering context and the current iteration number: `function myDrawingFunction(ctx, currentIterationNumber /*, ...any extra args */)`.
+    *   **Signature:** The function should accept the rendering context, current iteration number, and optionally an `instances` parameter for potential performance testing compatibility:
+        `function myDrawingFunction(ctx, currentIterationNumber /*, ...any extra args, */, instances = null)`
         *   `ctx`: Will be either a `CrispSwContext` or a `CanvasRenderingContext2D`. Use Canvas API methods compatible with both (or check `typeof ctx.strokeLine === 'function'` etc. if needed to differentiate).
-        *   `currentIterationNumber`: Available if needed.
-    *   **Randomness:** Use `SeededRandom.getRandom()` *inside* the function for reproducible randomness. Do not call `SeededRandom.seedWithInteger()`; `RenderTest` handles seeding.
-    *   **Return Value for Checks:** If checks like `withExtremesCheck()` are used, calculate the required values (e.g., bounding box) and **return** them as an object. Note: If the returned object has a property named `checkData`, the test runner (`RenderTest`) will use the *value* of `checkData` as the input for checks; otherwise, it will use the entire returned object.
+        *   `currentIterationNumber`: Available if needed for the visual test logic (e.g., passed to helpers that might use it, though `SeededRandom` is usually sufficient directly).
+        *   `any extra args`: If you pass static arguments via `RenderTestBuilder.runCanvasCode(..., arg1, arg2)`, they will appear here before `instances`.
+        *   `instances`: Typically `null` when run via `high-level-tests.html`. Included for easier adaptation if the test is later used in the performance suite (`performance-tests.html`), where it would indicate the number of shapes to draw. Your drawing function for high-level visual tests can usually ignore this parameter or draw 1 instance if it's `null`.
+    *   **Randomness:** Use `SeededRandom.getRandom()` *inside* the function for reproducible randomness. Do not call `SeededRandom.seedWithInteger()`; `RenderTest` handles seeding before calling your drawing function.
+    *   **Return Value for Checks:** If checks like `withExtremesCheck()` are used, calculate the required values (e.g., bounding box for the primary/first element drawn, representing *inclusive pixel coordinates*) and **return** them as an object. Note: If the returned object has a property named `checkData`, the test runner (`RenderTest`) will use the *value* of `checkData` as the input for checks; otherwise, it will use the entire returned object.
         ```javascript
         // Inside: tests/browser-tests/test-cases/my-shape--params--test.js
 
-        function draw_my_shape(ctx, currentIterationNumber) {
+        function draw_my_shape(ctx, currentIterationNumber, instances = null) {
+          // instances can be ignored for basic high-level tests, or used to draw 1 shape if null.
           // ... setup, random values ...
           const x = 10, y = 20, width = 50, height = 30;
           const expectedLeftX = x;
-          const expectedRightX = x + width - 1; // Inclusive pixel coords
+          const expectedRightX = x + width - 1; // Inclusive: last pixel column covered by fillRect
           const expectedTopY = y;
-          const expectedBottomY = y + height - 1; // Inclusive pixel coords
+          const expectedBottomY = y + height - 1; // Inclusive: last pixel row covered by fillRect
 
           // ... use ctx to draw ...
           ctx.fillStyle = 'red';
