@@ -3,14 +3,14 @@
 ## Build Commands
 - `sh build-scripts/build-browser.sh` - Build browser version
 - `sh build-scripts/build-node.sh` - Build Node.js version
-- `sh build-scripts/build-node-test-runner-simple-concat.sh` - Build test runner
+- `sh build-scripts/build-node-high-level-test-runner-simple-concat.sh` - Build test runner
 - `sh run-all-scripts.sh` - Run all build scripts and examples
 
 ## Test Commands
-- `node build/node-test-runner.js --list` - List available tests
-- `node build/node-test-runner.js --test` - Run all tests (one iteration each)
-- `node build/node-test-runner.js --id=<test-id> --iteration=<num>` - Run specific test iteration
-- `node build/node-test-runner.js -i <test-id> -r <start>-<end>` - Run test range
+- `node build/node-high-level-test-runner.js --list` - List available tests
+- `node build/node-high-level-test-runner.js --test` - Run all tests (one iteration each)
+- `node build/node-high-level-test-runner.js --id=<test-id> --iteration=<num>` - Run specific test iteration
+- `node build/node-high-level-test-runner.js -i <test-id> -r <start>-<end>` - Run test range
 
 ## Code Style
 - **Naming**: camelCase for methods/variables, PascalCase for classes
