@@ -9018,7 +9018,151 @@ class RenderTest {
       results.join('\n') : // Plain text for Node
       results.join('<br>'); // HTML for browser
   }
-}/**
+}// Utility function to streamline the registration of high-level tests
+// for both visual regression (RenderTestBuilder) and performance testing.
+
+/**
+ * Registers a high-level test with RenderTestBuilder and/or the performance test registry.
+ *
+ * @param {string} filename - The filename of the test script (e.g., "rectangles--S-size--filled--test.js").
+ * @param {function} drawFunction - The actual drawing function (e.g., draw_rectangles__S_size__filled).
+ * @param {string} category - The category of the test (e.g., "rectangles", "lines", "circles").
+ * @param {object} checkConfiguration - An object specifying which checks to apply and their parameters for RenderTestBuilder.
+ * @param {object} [performanceTestConfig={}] - Optional configuration overrides for performance test registration.
+ */
+function registerHighLevelTest(filename, drawFunction, category, checkConfiguration, performanceTestConfig = {}) {
+    // --- 1. Derive common properties from filename ---
+    const baseId = filename.replace(/--test\.js$/, '');
+    const parts = baseId.split('--');
+    const categoryFromFile = parts[0]; // Category can also be explicitly passed, which is preferred.
+    const featureParts = parts.slice(1);
+
+    let titleCategory = category.charAt(0).toUpperCase() + category.slice(1);
+    if (category === 'rounded-rects') titleCategory = 'Rounded Rects'; // Handle specific cases
+    if (category === 'scene') titleCategory = 'Scene';
+
+
+    const titleFeatures = featureParts.map(part =>
+        part.split('_').map(subPart => subPart.charAt(0).toUpperCase() + subPart.slice(1)).join(' ')
+    ).join(' ');
+
+    const defaultTitle = `${titleCategory}: ${titleFeatures}`;
+    const defaultDescription = `Test for ${category} with features: ${featureParts.join(', ')}.`;
+
+    const shortFeatures = featureParts.map(part => {
+        return part.split('_').map(subPart => {
+            if (subPart.length > 4) return subPart.substring(0, 3) + (isNaN(subPart.charAt(3)) ? '.' : subPart.charAt(3));
+            return subPart;
+        }).join('');
+    }).join(' ');
+    const perfCategoryAbbrev = category.length > 4 ? category.substring(0,4) : category;
+    const defaultPerfDisplayName = `Perf: ${perfCategoryAbbrev.charAt(0).toUpperCase() + perfCategoryAbbrev.slice(1)} ${shortFeatures}`;
+
+
+    // --- 2. Register with RenderTestBuilder (Visual Tests) ---
+    if (typeof RenderTestBuilder === 'function' && typeof define_test_from_registration === 'undefined') {
+        // Check for a global flag to prevent re-definition if this util is called multiple times by mistake in a single file context (though it shouldn't)
+        // The primary definition should occur directly in the test file by calling this helper.
+
+        let builder = new RenderTestBuilder();
+
+        builder.withId(baseId)
+            .withTitle(performanceTestConfig.title || defaultTitle) // Allow override for visual title too
+            .withDescription(performanceTestConfig.description || defaultDescription) // Allow override for visual description too
+            .runCanvasCode(drawFunction, ...(checkConfiguration && checkConfiguration.drawFunctionArgs ? checkConfiguration.drawFunctionArgs : []));
+
+        // Apply checks based on checkConfiguration
+        if (checkConfiguration) {
+            if (checkConfiguration.extremes) {
+                if (typeof checkConfiguration.extremes === 'object' && checkConfiguration.extremes.tolerance !== undefined) {
+                    builder.withExtremesCheck(checkConfiguration.extremes.tolerance);
+                } else {
+                    builder.withExtremesCheck();
+                }
+            }
+            if (checkConfiguration.uniqueColors) {
+                const ucc = checkConfiguration.uniqueColors;
+                if (ucc.middleRow) {
+                    builder.withColorCheckMiddleRow({
+                        expectedUniqueColors: ucc.middleRow.count,
+                        tolerance: ucc.middleRow.tolerance,
+                        checkInCenterThird: ucc.middleRow.inCenterThird !== undefined ? ucc.middleRow.inCenterThird : false
+                    });
+                }
+                if (ucc.middleColumn) {
+                    builder.withColorCheckMiddleColumn({
+                        expectedUniqueColors: ucc.middleColumn.count,
+                        tolerance: ucc.middleColumn.tolerance,
+                        checkInCenterThird: ucc.middleColumn.inCenterThird !== undefined ? ucc.middleColumn.inCenterThird : false
+                    });
+                }
+            }
+            if (checkConfiguration.continuousStroke) {
+                if (typeof checkConfiguration.continuousStroke === 'object' && checkConfiguration.continuousStroke.tolerance !== undefined) {
+                    builder.withContinuousStrokeCheck(checkConfiguration.continuousStroke.tolerance);
+                } else {
+                    builder.withContinuousStrokeCheck();
+                }
+            }
+            if (checkConfiguration.speckles) {
+                 const sc = checkConfiguration.speckles;
+                if (typeof sc === 'object') {
+                    builder.withSpecklesCheckOnSwCanvas(sc.maxSpeckleSize, sc.tolerance);
+                } else { // Assume boolean true
+                    builder.withSpecklesCheckOnSwCanvas(); // Uses defaults
+                }
+            }
+            if (checkConfiguration.compare) {
+                const cc = checkConfiguration.compare;
+                if (typeof cc === 'object') {
+                    builder.compareWithThreshold(cc.swTol, cc.refTol, cc.diffTol);
+                } else { // Assume boolean true for (0,0,0)
+                    builder.compareWithThreshold(0, 0, 0);
+                }
+            }
+             if (checkConfiguration.noOffscreenPixels) {
+                builder.withNoOffscreenPixelsCheck();
+            }
+            if (checkConfiguration.noGapsInFillEdges) {
+                builder.withNoGapsInFillEdgesCheck();
+            }
+            if (checkConfiguration.noGapsInStrokeEdges) {
+                builder.withNoGapsInStrokeEdgesCheck();
+            }
+            if (checkConfiguration.totalUniqueColors) {
+                if (typeof checkConfiguration.totalUniqueColors === 'number') {
+                    builder.withUniqueColorsCheck(checkConfiguration.totalUniqueColors);
+                } else if (typeof checkConfiguration.totalUniqueColors === 'object' && checkConfiguration.totalUniqueColors.count !== undefined) {
+                    builder.withUniqueColorsCheck(checkConfiguration.totalUniqueColors.count);
+                }
+            }
+            // Add more checks here as needed, e.g.,
+            // if (checkConfiguration.noGapsInStrokeEdges) { builder.withNoGapsInStrokeEdgesCheck(); }
+        }
+        builder.build();
+    }
+
+    // --- 3. Register with Performance Test Registry ---
+    if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' && typeof drawFunction === 'function') {
+        const perfId = (performanceTestConfig && performanceTestConfig.id) ? performanceTestConfig.id : baseId;
+        const perfDisplayName = (performanceTestConfig && performanceTestConfig.displayName) ? performanceTestConfig.displayName : defaultPerfDisplayName;
+        const perfDescription = (performanceTestConfig && performanceTestConfig.description) ? performanceTestConfig.description : `Performance test for ${category}: ${featureParts.join(', ')}.`;
+
+        // Avoid duplicate registration if a test file somehow calls this multiple times or is loaded twice.
+        // A more robust check would be to see if an object with this perfId already exists.
+        const alreadyRegistered = window.PERFORMANCE_TESTS_REGISTRY.some(test => test.id === perfId);
+
+        if (!alreadyRegistered) {
+            window.PERFORMANCE_TESTS_REGISTRY.push({
+                id: perfId,
+                drawFunction: drawFunction,
+                displayName: perfDisplayName,
+                description: perfDescription,
+                category: category
+            });
+        }
+    }
+} /**
  * @fileoverview Test definition for 90-degree arcs with various radii and stroke widths.
  */
 
@@ -9108,35 +9252,20 @@ function draw_arcs_multi_12_90_deg_fixed_params_grid_layout(ctx, currentIteratio
     }
 }
 
-/**
- * Defines and registers the 90-degree arcs test case.
- */
-function define_arcs_multi_12_90_deg_fixed_params_grid_layout_test() {
-    return new RenderTestBuilder()
-        .withId('arcs--multi-12--90-deg--fixed-params--grid-layout')
-        .withTitle('90\u00B0 Arcs (Multiple, Fixed Params, Grid Layout)')
-        .withDescription('Tests rendering of 90° arcs with various fixed radii and stroke widths in a grid.')
-        .runCanvasCode(draw_arcs_multi_12_90_deg_fixed_params_grid_layout)
-        // No specific checks in original test definition
-        .build();
-}
-
-// Define and register the visual regression test immediately.
-if (typeof RenderTestBuilder === 'function') {
-    define_arcs_multi_12_90_deg_fixed_params_grid_layout_test();
-}
-
-// Register for performance testing.
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_arcs_multi_12_90_deg_fixed_params_grid_layout === 'function') {
-    window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'arcs--multi-12--90-deg--fixed-params--grid-layout',
-        drawFunction: draw_arcs_multi_12_90_deg_fixed_params_grid_layout,
-        displayName: 'Perf: 12 90Deg Arcs FixedGrid',
-        description: 'Performance of 12 90-degree arcs with fixed parameters.',
-        category: 'arcs' 
-    });
-} /**
+// Register the test
+registerHighLevelTest(
+    'arcs--multi-12--90-deg--fixed-params--grid-layout--test.js',
+    draw_arcs_multi_12_90_deg_fixed_params_grid_layout,
+    'arcs',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 } // Default visual comparison
+    },
+    {
+        title: '90\u00B0 Arcs (Multiple, Fixed Params, Grid Layout)',
+        description: 'Tests rendering of 90° arcs with various fixed radii and stroke widths in a grid.',
+        displayName: 'Perf: 12 90Deg Arcs FixedGrid'
+    }
+); /**
  * @fileoverview Test definition for multiple fully random arcs.
  */
 
@@ -9210,35 +9339,19 @@ function draw_arcs_multi_5_fully_random(ctx, currentIterationNumber, instances =
     return { logs }; 
 }
 
-/**
- * Defines and registers the multiple fully random arcs test case.
- */
-function define_arcs_multi_5_fully_random_test() {
-    return new RenderTestBuilder()
-        .withId('arcs--multi-5--fully-random') // Derived from: random-arcs
-        .withTitle('Multiple Fully Random Arcs')
-        .withDescription('Tests rendering of 5 arcs with fully random positions, angles, sizes, colors, and strokes.')
-        .runCanvasCode(draw_arcs_multi_5_fully_random)
-        // No specific checks in original test definition
-        .build();
-}
-
-// Define and register the visual regression test immediately.
-if (typeof RenderTestBuilder === 'function') {
-    define_arcs_multi_5_fully_random_test();
-}
-
-// Register for performance testing.
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_arcs_multi_5_fully_random === 'function') {
-    window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'arcs--multi-5--fully-random',
-        drawFunction: draw_arcs_multi_5_fully_random,
+// Register the test
+registerHighLevelTest(
+    'arcs--multi-5--fully-random--test.js',
+    draw_arcs_multi_5_fully_random,
+    'arcs',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 } // Default visual comparison
+    },
+    {
         displayName: 'Perf: 5 FullyRandom Arcs',
-        description: 'Performance of 5 fully random arcs.',
-        category: 'arcs' 
-    });
-} /**
+        description: '5 fully random arcs.'
+    }
+); /**
  * @fileoverview Test definition for a single 1px stroked circle centered at a grid point.
  */
 
@@ -9320,37 +9433,24 @@ function draw_circle_single_1px_stroke_crisp_center_grid(ctx, currentIterationNu
     return { logs, checkData };
 }
 
-/**
- * Defines and registers the 1px stroked circle centered at grid test case.
- */
-function define_circle_single_1px_stroke_crisp_center_grid_test() {
-    return new RenderTestBuilder()
-        .withId('circle--single--1px-stroke--crisp--center-grid') // Derived from original: centered-1px-circle
-        .withTitle('Single 1px Stroked Circle (Crisp, Centered at Grid)')
-        .withDescription('Tests crisp rendering of a single 1px red stroked circle, centered at a grid crossing.')
-        .runCanvasCode(draw_circle_single_1px_stroke_crisp_center_grid)
-        .withExtremesCheck(0.03) // Original test had this with tolerance
-        .withUniqueColorsCheck(1) // Original test had this
-        .withContinuousStrokeCheck({ verticalScan: true, horizontalScan: true }) // Original test had this
-        .build();
-}
-
-// Define and register the visual regression test immediately.
-if (typeof RenderTestBuilder === 'function') {
-    define_circle_single_1px_stroke_crisp_center_grid_test();
-}
-
-// Register for performance testing.
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_circle_single_1px_stroke_crisp_center_grid === 'function') {
-    window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'circle--single--1px-stroke--crisp--center-grid',
-        drawFunction: draw_circle_single_1px_stroke_crisp_center_grid,
-        displayName: 'Perf: Circle 1px Crisp Grid Center',
-        description: 'Performance of a single 1px stroked circle, crisp and grid-centered.',
-        category: 'circles' 
-    });
-} /**
+// Register the test
+registerHighLevelTest(
+    'circle--single--1px-stroke--crisp--center-grid--test.js',
+    draw_circle_single_1px_stroke_crisp_center_grid,
+    'circles',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 },
+        extremes: { tolerance: 0.03 },
+        totalUniqueColors: 1,
+        continuousStroke: true
+    },
+    {
+        title: 'Single 1px Stroked Circle (Crisp, Centered at Grid)',
+        description: 'Tests crisp rendering of a single 1px red stroked circle, centered at a grid crossing.',
+        displayName: 'Perf: Circle 1px Crisp Grid Center'
+        // The description above will also be used for the performance test registry entry.
+    }
+); /**
  * @fileoverview Test definition for a single 1px stroked circle centered at a pixel.
  */
 
@@ -9435,37 +9535,24 @@ function draw_circle_single_1px_stroke_crisp_center_pixel(ctx, currentIterationN
     return { logs, checkData };
 }
 
-/**
- * Defines and registers the 1px stroked circle centered at pixel test case.
- */
-function define_circle_single_1px_stroke_crisp_center_pixel_test() {
-    return new RenderTestBuilder()
-        .withId('circle--single--1px-stroke--crisp--center-pixel') // Derived from original: centered-1px-circle-pixel
-        .withTitle('Single 1px Stroked Circle (Crisp, Centered at Pixel)')
-        .withDescription('Tests crisp rendering of a single 1px red stroked circle, centered at a pixel center.')
-        .runCanvasCode(draw_circle_single_1px_stroke_crisp_center_pixel)
-        .withExtremesCheck(0.03) // Original test had this with tolerance
-        .withUniqueColorsCheck(1) // Original test had this
-        .withContinuousStrokeCheck({ verticalScan: true, horizontalScan: true }) // Original test had this
-        .build();
-}
-
-// Define and register the visual regression test immediately.
-if (typeof RenderTestBuilder === 'function') {
-    define_circle_single_1px_stroke_crisp_center_pixel_test();
-}
-
-// Register for performance testing.
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_circle_single_1px_stroke_crisp_center_pixel === 'function') {
-    window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'circle--single--1px-stroke--crisp--center-pixel',
-        drawFunction: draw_circle_single_1px_stroke_crisp_center_pixel,
-        displayName: 'Perf: Circle 1px Crisp Pixel Ctr',
-        description: 'Performance of a single 1px stroked circle, crisp and pixel-centered.',
-        category: 'circles' 
-    });
-} /**
+// Register the test
+registerHighLevelTest(
+    'circle--single--1px-stroke--crisp--center-pixel--test.js',
+    draw_circle_single_1px_stroke_crisp_center_pixel,
+    'circles',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 },
+        extremes: { tolerance: 0.03 },
+        totalUniqueColors: 1,
+        continuousStroke: true
+    },
+    {
+        title: 'Single 1px Stroked Circle (Crisp, Centered at Pixel)',
+        description: 'Tests crisp rendering of a single 1px red stroked circle, centered at a pixel center.',
+        displayName: 'Perf: Circle 1px Crisp Pixel Ctr'
+        // The description above will also be used for the performance test registry entry.
+    }
+); /**
  * @fileoverview Test definition for a single circle with fully random parameters.
  */
 
@@ -9533,38 +9620,22 @@ function draw_circle_single_fully_random(ctx, currentIterationNumber, instances 
     return { logs }; 
 }
 
-/**
- * Defines and registers the single fully random circle test case.
- */
-function define_circle_single_fully_random_test() {
-    return new RenderTestBuilder()
-        .withId('circle--single--fully-random') // Derived from: one-random-circle
-        .withTitle('Single Fully Random Circle')
-        .withDescription('Tests rendering of a single circle with fully random position, size, colors, and stroke.')
-        .runCanvasCode(draw_circle_single_fully_random)
-        // .withExtremesCheck(0.03) // Explicitly commented out in original
-        .withNoGapsInStrokeEdgesCheck()
-        .withUniqueColorsCheck(3)
-        .withSpecklesCheckOnSwCanvas()
-        .build();
-}
-
-// Define and register the visual regression test immediately.
-if (typeof RenderTestBuilder === 'function') {
-    define_circle_single_fully_random_test();
-}
-
-// Register for performance testing.
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_circle_single_fully_random === 'function') {
-    window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'circle--single--fully-random',
-        drawFunction: draw_circle_single_fully_random,
+// Register the test
+registerHighLevelTest(
+    'circle--single--fully-random--test.js',
+    draw_circle_single_fully_random,
+    'circles',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 }, // Default visual comparison
+        totalUniqueColors: 3, // Corrected: Was uniqueColors: { middleRow: { count: 3 } }
+        speckles: true,
+        noGapsInStrokeEdges: true
+    },
+    {
         displayName: 'Perf: Circle FullyRandom',
-        description: 'Performance of a single fully random circle.',
-        category: 'circles' 
-    });
-} /**
+        description: 'Performance of a single fully random circle.'
+    }
+); /**
  * @fileoverview Test definition for a single randomly positioned circle with no stroke.
  */
 
@@ -9705,38 +9776,24 @@ function draw_circle_single_no_stroke_randparams_crisp_randpos_explicit(ctx, cur
     return { logs, checkData };
 }
 
-/**
- * Defines and registers the randomly positioned circle with no stroke test case.
- */
-function define_circle_single_no_stroke_randparams_crisp_randpos_explicit_test() {
-    return new RenderTestBuilder()
-        .withId('circle--single--no-stroke--randparams--crisp--randpos-explicit') // Derived from: random-position-no-stroke-circle
-        .withTitle('Single Randomly Positioned Circle Without Stroke (Crisp)')
-        .withDescription('Tests a single randomly positioned circle with no stroke, random fill, and crisp center.')
-        .runCanvasCode(draw_circle_single_no_stroke_randparams_crisp_randpos_explicit)
-        .withExtremesCheck(0.03)
-        .withNoGapsInFillEdgesCheck()
-        .withUniqueColorsCheck(1)
-        .withSpecklesCheckOnSwCanvas()
-        .build();
-}
-
-// Define and register the visual regression test immediately.
-if (typeof RenderTestBuilder === 'function') {
-    define_circle_single_no_stroke_randparams_crisp_randpos_explicit_test();
-}
-
-// Register for performance testing.
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_circle_single_no_stroke_randparams_crisp_randpos_explicit === 'function') {
-    window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'circle--single--no-stroke--randparams--crisp--randpos-explicit',
-        drawFunction: draw_circle_single_no_stroke_randparams_crisp_randpos_explicit,
-        displayName: 'Perf: Circle RandPos NoStroke Crisp',
-        description: 'Performance of a single randomly positioned no-stroke circle with crisp rendering.',
-        category: 'circles' 
-    });
-} /**
+// Register the test
+registerHighLevelTest(
+    'circle--single--no-stroke--randparams--crisp--randpos-explicit--test.js',
+    draw_circle_single_no_stroke_randparams_crisp_randpos_explicit,
+    'circles',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 },
+        extremes: { tolerance: 0.03 },
+        noGapsInFillEdges: true,
+        totalUniqueColors: 1,
+        speckles: true
+    },
+    {
+        title: 'Single Randomly Positioned Circle Without Stroke (Crisp)',
+        description: 'Tests a single randomly positioned circle with no stroke, random fill, and crisp center.',
+        displayName: 'Perf: Circle RandPos NoStroke Crisp'
+    }
+); /**
  * @fileoverview Test definition for a single circle with no stroke and only fill.
  */
 
@@ -9850,38 +9907,25 @@ function draw_circle_single_no_stroke_randparams_crisp_center_randpos_type(ctx, 
     return { logs, checkData };
 }
 
-/**
- * Defines and registers the single no-stroke circle test case.
- */
-function define_circle_single_no_stroke_randparams_crisp_center_randpos_type_test() {
-    return new RenderTestBuilder()
-        .withId('circle--single--no-stroke--randparams--crisp-center--randpos-type') // Derived from: single-no-stroke-circle
-        .withTitle('Single Circle Without Stroke (Crisp, Random Center Type)')
-        .withDescription('Tests rendering of a single circle with no stroke, only fill, random params, and crisp center (grid or pixel).')
-        .runCanvasCode(draw_circle_single_no_stroke_randparams_crisp_center_randpos_type)
-        .withExtremesCheck(0.03)
-        .withNoGapsInFillEdgesCheck()
-        .withUniqueColorsCheck(1)
-        .withSpecklesCheckOnSwCanvas()
-        .build();
-}
-
-// Define and register the visual regression test immediately.
-if (typeof RenderTestBuilder === 'function') {
-    define_circle_single_no_stroke_randparams_crisp_center_randpos_type_test();
-}
-
-// Register for performance testing.
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_circle_single_no_stroke_randparams_crisp_center_randpos_type === 'function') {
-    window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'circle--single--no-stroke--randparams--crisp-center--randpos-type',
-        drawFunction: draw_circle_single_no_stroke_randparams_crisp_center_randpos_type,
-        displayName: 'Perf: Circle NoStroke Crisp RandCenterType',
-        description: 'Performance of a single no-stroke circle with crisp center (randomly grid/pixel aligned). ',
-        category: 'circles' 
-    });
-} /**
+// Register the test
+registerHighLevelTest(
+    'circle--single--no-stroke--randparams--crisp-center--randpos-type--test.js',
+    draw_circle_single_no_stroke_randparams_crisp_center_randpos_type,
+    'circles',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 },
+        extremes: { tolerance: 0.03 },
+        noGapsInFillEdges: true,
+        totalUniqueColors: 1,
+        speckles: true
+    },
+    {
+        title: 'Single Circle Without Stroke (Crisp, Random Center Type)',
+        description: 'Tests rendering of a single circle with no stroke, only fill, random params, and crisp center (grid or pixel).',
+        displayName: 'Perf: Circle NoStroke Crisp RandCenterType'
+        // The description above will also be used for the performance test registry entry.
+    }
+); /**
  * @fileoverview Test definition for a single randomly positioned circle with stroke.
  */
 
@@ -10033,38 +10077,24 @@ function draw_circle_single_randparams_crisp_randpos_explicit(ctx, currentIterat
     return { logs, checkData };
 }
 
-/**
- * Defines and registers the randomly positioned circle with stroke test case.
- */
-function define_circle_single_randparams_crisp_randpos_explicit_test() {
-    return new RenderTestBuilder()
-        .withId('circle--single--randparams--crisp--randpos-explicit') // Derived from: random-position-circle
-        .withTitle('Single Randomly Positioned Circle with Stroke (Crisp)')
-        .withDescription('Tests a single randomly positioned circle with random params, crisp stroke/fill.')
-        .runCanvasCode(draw_circle_single_randparams_crisp_randpos_explicit)
-        .withExtremesCheck(0.03)
-        .withNoGapsInStrokeEdgesCheck()
-        .withUniqueColorsCheck(3)
-        .withSpecklesCheckOnSwCanvas()
-        .build();
-}
-
-// Define and register the visual regression test immediately.
-if (typeof RenderTestBuilder === 'function') {
-    define_circle_single_randparams_crisp_randpos_explicit_test();
-}
-
-// Register for performance testing.
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_circle_single_randparams_crisp_randpos_explicit === 'function') {
-    window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'circle--single--randparams--crisp--randpos-explicit',
-        drawFunction: draw_circle_single_randparams_crisp_randpos_explicit,
-        displayName: 'Perf: Circle RandPos Crisp',
-        description: 'Performance of a single randomly positioned circle with crisp rendering.',
-        category: 'circles' 
-    });
-} /**
+// Register the test
+registerHighLevelTest(
+    'circle--single--randparams--crisp--randpos-explicit--test.js',
+    draw_circle_single_randparams_crisp_randpos_explicit,
+    'circles',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 },
+        extremes: { tolerance: 0.03 },
+        noGapsInStrokeEdges: true,
+        totalUniqueColors: 3,
+        speckles: true
+    },
+    {
+        title: 'Single Randomly Positioned Circle with Stroke (Crisp)',
+        description: 'Tests a single randomly positioned circle with random params, crisp stroke/fill.',
+        displayName: 'Perf: Circle RandPos Crisp'
+    }
+); /**
  * @fileoverview Test definition for a single random circle with proper pixel alignment.
  */
 
@@ -10190,38 +10220,25 @@ function draw_circle_single_randparams_crisp_center_randpos_type(ctx, currentIte
     return { logs, checkData };
 }
 
-/**
- * Defines and registers the single random circle test case.
- */
-function define_circle_single_randparams_crisp_center_randpos_type_test() {
-    return new RenderTestBuilder()
-        .withId('circle--single--randparams--crisp-center--randpos-type') // Derived from: single-random-circle
-        .withTitle('Single Random Circle (Crisp, Random Center Type)')
-        .withDescription('Tests a single random circle with random params, crisp center (grid or pixel), stroke, and fill.')
-        .runCanvasCode(draw_circle_single_randparams_crisp_center_randpos_type)
-        .withExtremesCheck(0.03)
-        .withNoGapsInStrokeEdgesCheck()
-        .withUniqueColorsCheck(3)
-        .withSpecklesCheckOnSwCanvas()
-        .build();
-}
-
-// Define and register the visual regression test immediately.
-if (typeof RenderTestBuilder === 'function') {
-    define_circle_single_randparams_crisp_center_randpos_type_test();
-}
-
-// Register for performance testing.
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_circle_single_randparams_crisp_center_randpos_type === 'function') {
-    window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'circle--single--randparams--crisp-center--randpos-type',
-        drawFunction: draw_circle_single_randparams_crisp_center_randpos_type,
-        displayName: 'Perf: Circle SingleRand Crisp RandCenterType',
-        description: 'Performance of a single random circle with crisp center (randomly grid/pixel aligned). ',
-        category: 'circles' 
-    });
-} /**
+// Register the test
+registerHighLevelTest(
+    'circle--single--randparams--crisp-center--randpos-type--test.js',
+    draw_circle_single_randparams_crisp_center_randpos_type,
+    'circles',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 },
+        extremes: { tolerance: 0.03 },
+        noGapsInStrokeEdges: true,
+        totalUniqueColors: 3,
+        speckles: true
+    },
+    {
+        title: 'Single Random Circle (Crisp, Random Center Type)',
+        description: 'Tests a single random circle with random params, crisp center (grid or pixel), stroke, and fill.',
+        displayName: 'Perf: Circle SingleRand Crisp RandCenterType'
+        // The description above will also be used for the performance test registry entry.
+    }
+); /**
  * @fileoverview Test definition for multiple precise fill-only circles.
  */
 
@@ -10343,35 +10360,20 @@ function draw_circles_multi_12_precise_no_stroke_randparams_randpos(ctx, current
     return { logs }; 
 }
 
-/**
- * Defines and registers the multiple precise fill-only circles test case.
- */
-function define_circles_multi_12_precise_no_stroke_randparams_randpos_test() {
-    return new RenderTestBuilder()
-        .withId('circles--multi-12--precise--no-stroke--randparams--randpos') // Derived from: multiple-precise-no-stroke-circles
-        .withTitle('Multiple Precise Fill-Only Circles (Random Params & Pos)')
-        .withDescription('Tests rendering of 12 circles with no strokes, only fills, precise alignment, and random parameters/positions.')
-        .runCanvasCode(draw_circles_multi_12_precise_no_stroke_randparams_randpos)
-        // No specific checks in original test definition
-        .build();
-}
-
-// Define and register the visual regression test immediately.
-if (typeof RenderTestBuilder === 'function') {
-    define_circles_multi_12_precise_no_stroke_randparams_randpos_test();
-}
-
-// Register for performance testing.
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_circles_multi_12_precise_no_stroke_randparams_randpos === 'function') {
-    window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'circles--multi-12--precise--no-stroke--randparams--randpos',
-        drawFunction: draw_circles_multi_12_precise_no_stroke_randparams_randpos,
-        displayName: 'Perf: 12 Precise NoStroke RandCircles',
-        description: 'Performance of 12 precise fill-only random circles.',
-        category: 'circles' 
-    });
-} /**
+// Register the test
+registerHighLevelTest(
+    'circles--multi-12--precise--no-stroke--randparams--randpos--test.js',
+    draw_circles_multi_12_precise_no_stroke_randparams_randpos,
+    'circles',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 } // Default visual comparison
+    },
+    {
+        title: 'Multiple Precise Fill-Only Circles (Random Params & Pos)',
+        description: 'Tests rendering of 12 circles with no strokes, only fills, precise alignment, and random parameters/positions.',
+        displayName: 'Perf: 12 Precise NoStroke RandCircles'
+    }
+); /**
  * @fileoverview Test definition for multiple precise random circles with strokes and fills.
  */
 
@@ -10508,35 +10510,20 @@ function draw_circles_multi_12_precise_randparams_randpos(ctx, currentIterationN
     return { logs }; 
 }
 
-/**
- * Defines and registers the multiple precise random circles test case.
- */
-function define_circles_multi_12_precise_randparams_randpos_test() {
-    return new RenderTestBuilder()
-        .withId('circles--multi-12--precise--randparams--randpos') // Derived from: multiple-precise-random-circles
-        .withTitle('Multiple Precise Random Circles (Stroked & Filled)')
-        .withDescription('Tests rendering of 12 circles with precise pixel alignment, varied strokes and fills, and random positions.')
-        .runCanvasCode(draw_circles_multi_12_precise_randparams_randpos)
-        // No specific checks in original test definition
-        .build();
-}
-
-// Define and register the visual regression test immediately.
-if (typeof RenderTestBuilder === 'function') {
-    define_circles_multi_12_precise_randparams_randpos_test();
-}
-
-// Register for performance testing.
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_circles_multi_12_precise_randparams_randpos === 'function') {
-    window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'circles--multi-12--precise--randparams--randpos',
-        drawFunction: draw_circles_multi_12_precise_randparams_randpos,
-        displayName: 'Perf: 12 Precise RandCircles',
-        description: 'Performance of 12 precise random circles with varied strokes/fills.',
-        category: 'circles' 
-    });
-} /**
+// Register the test
+registerHighLevelTest(
+    'circles--multi-12--precise--randparams--randpos--test.js',
+    draw_circles_multi_12_precise_randparams_randpos,
+    'circles',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 } // Default visual comparison
+    },
+    {
+        title: 'Multiple Precise Random Circles (Stroked & Filled)',
+        description: 'Tests rendering of 12 circles with precise pixel alignment, varied strokes and fills, and random positions.',
+        displayName: 'Perf: 12 Precise RandCircles'
+    }
+); /**
  * @fileoverview Test definition for multiple fully random circles.
  */
 
@@ -10610,35 +10597,19 @@ function draw_circles_multi_8_fully_random(ctx, currentIterationNumber, instance
     return { logs }; 
 }
 
-/**
- * Defines and registers the multiple fully random circles test case.
- */
-function define_circles_multi_8_fully_random_test() {
-    return new RenderTestBuilder()
-        .withId('circles--multi-8--fully-random') // Derived from: random-circles
-        .withTitle('Multiple Fully Random Circles')
-        .withDescription('Tests rendering of 8 circles with fully random positions, sizes, colors, and strokes.')
-        .runCanvasCode(draw_circles_multi_8_fully_random)
-        // No specific checks in original test definition
-        .build();
-}
-
-// Define and register the visual regression test immediately.
-if (typeof RenderTestBuilder === 'function') {
-    define_circles_multi_8_fully_random_test();
-}
-
-// Register for performance testing.
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_circles_multi_8_fully_random === 'function') {
-    window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'circles--multi-8--fully-random',
-        drawFunction: draw_circles_multi_8_fully_random,
+// Register the test
+registerHighLevelTest(
+    'circles--multi-8--fully-random--test.js',
+    draw_circles_multi_8_fully_random,
+    'circles',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 } // Default visual comparison
+    },
+    {
         displayName: 'Perf: 8 FullyRandom Circles',
-        description: 'Performance of 8 fully random circles.',
-        category: 'circles' 
-    });
-} /**
+        description: 'Performance of 8 fully random circles.'
+    }
+); /**
  * @fileoverview Test definition for rendering a medium-sized, vertical, 1px thick,
  * opaque stroke line positioned precisely between pixels horizontally.
  *
@@ -10771,46 +10742,25 @@ function draw_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__vertic
     }
 }
 
-/**
- * Defines and registers the test case using RenderTestBuilder.
- */
-function define_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__vertical_orient() {
-  if (typeof RenderTestBuilder !== 'function' || typeof draw_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__vertical_orient !== 'function') {
-    console.error('Missing RenderTestBuilder or drawing function for vertical line test');
-    return;
-  }
-
-  return new RenderTestBuilder()
-    .withId('lines--M-size--no-fill--1px-opaque-stroke--crisp-pixel-pos--vertical-orient')
-    .withTitle('Lines: M-Size No-Fill 1px-Opaque-Stroke Crisp-Pixel-Pos Vertical')
-    .withDescription('Tests crisp rendering of a vertical 1px line centered between pixels using canvas code.')
-    .runCanvasCode(draw_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__vertical_orient)
-    // --- Checks from original add1PxVerticalLineCenteredAtPixelTest --- 
-    .withColorCheckMiddleRow({ expectedUniqueColors: 1 })
-    .withColorCheckMiddleColumn({ expectedUniqueColors: 1 })
-    .withExtremesCheck() // Uses return value from draw_ function
-    // --- End checks ---
-    .build(); 
-}
-
-// Define and register the test immediately when this script is loaded.
-if (typeof RenderTestBuilder === 'function') {
-  define_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__vertical_orient();
-}
-
-// Performance test registration
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__vertical_orient === 'function') {
-    
-    const perfTestData = {
-        id: 'lines--M-size--no-fill--1px_opaque_stroke--crisp_pixel_pos--vertical_orient',
-        drawFunction: draw_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__vertical_orient,
-        displayName: 'Perf: Lines M 1px Crisp Vertical',
-        description: 'Performance test for vertical 1px lines, crisp pixel positioning.',
-        category: 'lines'
-    };
-    window.PERFORMANCE_TESTS_REGISTRY.push(perfTestData);
-} /**
+// Register the test
+registerHighLevelTest(
+    'lines--M-size--no-fill--1px_opaque_stroke--crisp_pixel_pos--vertical_orient--test.js',
+    draw_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__vertical_orient,
+    'lines',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 }, // Default visual comparison
+        uniqueColors: {
+            middleRow: { count: 1 },
+            middleColumn: { count: 1 } // Added MiddleColumn
+        }, 
+        extremes: true
+    },
+    {
+        title: 'Lines: M-Size No-Fill 1px-Opaque-Stroke Crisp-Pixel-Pos Vertical',
+        description: 'Tests crisp rendering of a vertical 1px line centered between pixels using canvas code.',
+        displayName: 'Perf: Lines M 1px Crisp Vertical'
+    }
+); /**
  * @fileoverview Test definition for rendering a medium-sized, horizontal, 1px thick,
  * opaque stroke line positioned precisely between pixels.
  *
@@ -10929,37 +10879,25 @@ function draw_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__horizo
     }
 }
 
-/**
- * Defines and registers the test case using RenderTestBuilder.
- */
-function define_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__horizontal_orient() {
-    return new RenderTestBuilder()
-      .withId('lines--M-size--no-fill--1px-opaque-stroke--crisp-pixel-pos--horizontal-orient')
-      .withTitle('Lines: M-Size No-Fill 1px-Opaque-Stroke Crisp-Pixel-Pos Horizontal')
-      .withDescription('Tests crisp rendering of a horizontal 1px line centered between pixels using canvas code.')
-      .runCanvasCode(draw_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__horizontal_orient) // Use the new drawing function
-      .withColorCheckMiddleRow({ expectedUniqueColors: 1 }) // Same check as original
-      .withColorCheckMiddleColumn({ expectedUniqueColors: 1 }) // Same check as original
-      .withExtremesCheck() // Same check as original, uses return value from runCanvasCode
-      .build(); // Creates and registers the RenderTest instance
-}
-
-// Define and register the test immediately when this script is loaded.
-if (typeof RenderTestBuilder === 'function') {
-  define_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__horizontal_orient();
-}
-
-// Performance test registration
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__horizontal_orient === 'function') {
-    window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'lines--M-size--no-fill--1px-opaque-stroke--crisp-pixel-pos--horizontal-orient',
-        drawFunction: draw_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__horizontal_orient,
-        displayName: 'Perf: Lines M 1px Crisp Horizontal',
-        description: 'Performance test for horizontal 1px lines, crisp pixel positioning.',
-        category: 'lines'
-    });
-} /**
+// Register the test
+registerHighLevelTest(
+    'lines--M-size--no-fill--1px-opaque-stroke--crisp-pixel-pos--horizontal-orient--test.js',
+    draw_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__horizontal_orient,
+    'lines',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 }, // Default visual comparison
+        uniqueColors: { 
+            middleRow: { count: 1 },
+            middleColumn: { count: 1 } // Added MiddleColumn
+        }, 
+        extremes: true
+    },
+    {
+        title: 'Lines: M-Size No-Fill 1px-Opaque-Stroke Crisp-Pixel-Pos Horizontal',
+        description: 'Tests crisp rendering of a horizontal 1px line centered between pixels using canvas code.',
+        displayName: 'Perf: Lines M 1px Crisp Horizontal'
+    }
+); /**
  * @fileoverview Test definition for rendering a medium-sized, horizontal, 2px thick,
  * opaque stroke line centered at a grid intersection.
  *
@@ -11085,44 +11023,25 @@ function draw_lines__M_size__no_fill__2px_opaque_stroke__centered_at_grid__horiz
     }
 }
 
-/**
- * Defines and registers the test case using RenderTestBuilder.
- */
-function define_lines__M_size__no_fill__2px_opaque_stroke__centered_at_grid__horizontal_orient() {
-  if (typeof RenderTestBuilder !== 'function' || typeof draw_lines__M_size__no_fill__2px_opaque_stroke__centered_at_grid__horizontal_orient !== 'function') {
-    console.error('Missing RenderTestBuilder or drawing function for 2px horizontal line test');
-    return;
-  }
-
-  return new RenderTestBuilder()
-    .withId('lines--M-size--no-fill--2px-opaque-stroke--centered-at-grid--horizontal-orient')
-    .withTitle('Lines: M-Size No-Fill 2px-Opaque-Stroke Centered-At-Grid Horizontal')
-    .withDescription('Tests crisp rendering of a horizontal 2px line centered at grid crossing using canvas code.')
-    .runCanvasCode(draw_lines__M_size__no_fill__2px_opaque_stroke__centered_at_grid__horizontal_orient)
-    // --- Checks from original add2PxHorizontalLineCenteredAtGridTest --- 
-    .withColorCheckMiddleRow({ expectedUniqueColors: 1 })
-    .withColorCheckMiddleColumn({ expectedUniqueColors: 1 })
-    .withExtremesCheck() // Uses return value from draw_ function
-    // --- End checks ---
-    .build(); 
-}
-
-// Define and register the test immediately when this script is loaded.
-if (typeof RenderTestBuilder === 'function') {
-  define_lines__M_size__no_fill__2px_opaque_stroke__centered_at_grid__horizontal_orient();
-}
-
-// Performance test registration
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_lines__M_size__no_fill__2px_opaque_stroke__centered_at_grid__horizontal_orient === 'function') {
-    window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'lines--M-size--no-fill--2px-opaque-stroke--centered-at-grid--horizontal-orient',
-        drawFunction: draw_lines__M_size__no_fill__2px_opaque_stroke__centered_at_grid__horizontal_orient,
-        displayName: 'Perf: Lines M 2px Grid Horizontal',
-        description: 'Performance test for horizontal 2px lines, grid centered.',
-        category: 'lines'
-    });
-} /**
+// Register the test
+registerHighLevelTest(
+    'lines--M-size--no-fill--2px-opaque-stroke--centered-at-grid--horizontal-orient--test.js',
+    draw_lines__M_size__no_fill__2px_opaque_stroke__centered_at_grid__horizontal_orient,
+    'lines',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 }, // Default visual comparison
+        uniqueColors: {
+            middleRow: { count: 1 },
+            middleColumn: { count: 1 } // Added MiddleColumn
+        }, 
+        extremes: true
+    },
+    {
+        title: 'Lines: M-Size No-Fill 2px-Opaque-Stroke Centered-At-Grid Horizontal',
+        description: 'Tests crisp rendering of a horizontal 2px line centered at grid crossing using canvas code.',
+        displayName: 'Perf: Lines M 2px Grid Horizontal'
+    }
+); /**
  * @fileoverview Test definition for rendering a medium-sized, vertical, 2px thick,
  * opaque stroke line centered at a grid intersection.
  *
@@ -11248,44 +11167,25 @@ function draw_lines__M_size__no_fill__2px_opaque_stroke__centered_at_grid__verti
     }
 }
 
-/**
- * Defines and registers the test case using RenderTestBuilder.
- */
-function define_lines__M_size__no_fill__2px_opaque_stroke__centered_at_grid__vertical_orient() {
-  if (typeof RenderTestBuilder !== 'function' || typeof draw_lines__M_size__no_fill__2px_opaque_stroke__centered_at_grid__vertical_orient !== 'function') {
-    console.error('Missing RenderTestBuilder or drawing function for 2px vertical line test');
-    return;
-  }
-
-  return new RenderTestBuilder()
-    .withId('lines--M-size--no-fill--2px-opaque-stroke--centered-at-grid--vertical-orient')
-    .withTitle('Lines: M-Size No-Fill 2px-Opaque-Stroke Centered-At-Grid Vertical')
-    .withDescription('Tests crisp rendering of a vertical 2px line centered at grid crossing using canvas code.')
-    .runCanvasCode(draw_lines__M_size__no_fill__2px_opaque_stroke__centered_at_grid__vertical_orient)
-    // --- Checks from original add2PxVerticalLineCenteredAtGridTest --- 
-    .withColorCheckMiddleRow({ expectedUniqueColors: 1 })
-    .withColorCheckMiddleColumn({ expectedUniqueColors: 1 })
-    .withExtremesCheck() // Uses return value from draw_ function
-    // --- End checks ---
-    .build(); 
-}
-
-// Define and register the test immediately when this script is loaded.
-if (typeof RenderTestBuilder === 'function') {
-  define_lines__M_size__no_fill__2px_opaque_stroke__centered_at_grid__vertical_orient();
-}
-
-// Performance test registration
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_lines__M_size__no_fill__2px_opaque_stroke__centered_at_grid__vertical_orient === 'function') {
-    window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'lines--M-size--no-fill--2px-opaque-stroke--centered-at-grid--vertical-orient',
-        drawFunction: draw_lines__M_size__no_fill__2px_opaque_stroke__centered_at_grid__vertical_orient,
-        displayName: 'Perf: Lines M 2px Grid Vertical',
-        description: 'Performance test for vertical 2px lines, grid centered.',
-        category: 'lines'
-    });
-} /**
+// Register the test
+registerHighLevelTest(
+    'lines--M-size--no-fill--2px-opaque-stroke--centered-at-grid--vertical-orient--test.js',
+    draw_lines__M_size__no_fill__2px_opaque_stroke__centered_at_grid__vertical_orient,
+    'lines',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 }, // Default visual comparison
+        uniqueColors: {
+            middleRow: { count: 1 },
+            middleColumn: { count: 1 } // Added MiddleColumn
+        }, 
+        extremes: true
+    },
+    {
+        title: 'Lines: M-Size No-Fill 2px-Opaque-Stroke Centered-At-Grid Vertical',
+        description: 'Tests crisp rendering of a vertical 2px line centered at grid crossing using canvas code.',
+        displayName: 'Perf: Lines M 2px Grid Vertical'
+    }
+); /**
  * @fileoverview
  * Test definition for rendering multiple (typically 15 for visual regression,
  * 'instances' count for performance) lines with random thickness, color (including alpha),
@@ -11378,38 +11278,21 @@ function draw_lines__multi_15__no_fill__random_stroke__random_pos__random_orient
     return logs && logs.length > 0 ? { logs } : null;
 }
 
-/**
- * Defines and registers the test case for rendering multiple random lines using RenderTestBuilder.
- */
-function define_lines__multi_15__no_fill__random_stroke__random_pos__random_orient_test() {
-    const defaultLineCount = 15; // Default number of lines for visual regression test
-
-    return new RenderTestBuilder()
-        .withId('lines--multi_15--no-fill--random-stroke__random_pos--random_orient')
-        .withTitle('Lines: Multi-15 No-Fill Random-Stroke Random-Pos Random-Orient')
-        .withDescription('Tests rendering of ' + defaultLineCount + ' lines with random positions, thickness, and colors.')
-        .runCanvasCode(draw_lines__multi_15__no_fill__random_stroke__random_pos__random_orient, defaultLineCount)
-        // No specific checks from original low-level test.
-        // Visual inspection and performance are the main goals.
-        .build(); // Creates and registers the RenderTest instance
-}
-
-// Define and register the visual regression test immediately when this script is loaded.
-if (typeof RenderTestBuilder === 'function') {
-    define_lines__multi_15__no_fill__random_stroke__random_pos__random_orient_test();
-}
-
-// Register for performance testing
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_lines__multi_15__no_fill__random_stroke__random_pos__random_orient === 'function') {
-    window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'lines--multi_15--no-fill--random-stroke__random_pos--random_orient',
-        drawFunction: draw_lines__multi_15__no_fill__random_stroke__random_pos__random_orient,
+// Register the test
+registerHighLevelTest(
+    'lines--multi_15--no-fill--random-stroke__random_pos--random_orient--test.js',
+    draw_lines__multi_15__no_fill__random_stroke__random_pos__random_orient,
+    'lines',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 }, // Default visual comparison
+        drawFunctionArgs: [15] // initialCount for the draw function
+    },
+    {
+        title: 'Lines: Multi-15 No-Fill Random-Stroke Random-Pos Random-Orient',
         displayName: 'Perf: Lines Multi Random Props',
-        description: 'Performance test for rendering multiple (default ' + 15 + ', or N from harness) lines with random properties.',
-        category: 'lines'
-    });
-} /**
+        description: 'Performance test for rendering multiple (default 15, or N from harness) lines with random properties.'
+    }
+); /**
  * @fileoverview
  * Test definition for rendering multiple (typically 20 for visual regression,
  * 'instances' count for performance) 10px thick, black, opaque stroke lines
@@ -11495,42 +11378,22 @@ function draw_lines__multi_20__no_fill__10px_black_opaque_stroke__random_pos__ra
     return logs && logs.length > 0 ? { logs } : null;
 }
 
-/**
- * Defines and registers the test case for rendering multiple 10px black lines using RenderTestBuilder.
- */
-function define_lines__multi_20__no_fill__10px_black_opaque_stroke__random_pos__random_orient_test() {
-    const defaultLineCount = 20; // Default number of lines for visual regression test
-
-    return new RenderTestBuilder()
-        .withId('lines--multi_20--no-fill--10px_black_opaque_stroke__random_pos--random_orient')
-        .withTitle('Lines: Multi-20 No-Fill 10px-Black-Opaque-Stroke Random-Pos Random-Orient')
-        .withDescription('Tests rendering of ' + defaultLineCount + ' randomly positioned and oriented 10px thick black lines.')
-        // Pass the draw function and the default number of lines for the visual regression mode.
-        // The 'instances' parameter in the draw function will be handled by the performance runner.
-        .runCanvasCode(draw_lines__multi_20__no_fill__10px_black_opaque_stroke__random_pos__random_orient, defaultLineCount)
-        // No specific checks like withExtremesCheck or color checks are typically applied to "multi-random" tests
-        // as the focus is on rendering capability and performance. Visual inspection handles correctness.
-        .build(); // Creates and registers the RenderTest instance
-}
-
-// Define and register the visual regression test immediately when this script is loaded.
-if (typeof RenderTestBuilder === 'function') {
-    define_lines__multi_20__no_fill__10px_black_opaque_stroke__random_pos__random_orient_test();
-}
-
-// Register for performance testing
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_lines__multi_20__no_fill__10px_black_opaque_stroke__random_pos__random_orient === 'function') {
-    window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'lines--multi_20--no-fill--10px_black_opaque_stroke__random_pos--random_orient',
-        drawFunction: draw_lines__multi_20__no_fill__10px_black_opaque_stroke__random_pos__random_orient,
-        // The 'initialCount' for the drawFunction will be its default (20),
-        // the performance harness will pass 'instances'.
+// Register the test
+registerHighLevelTest(
+    'lines--multi_20--no-fill--10px_black_opaque_stroke__random_pos--random_orient--test.js',
+    draw_lines__multi_20__no_fill__10px_black_opaque_stroke__random_pos__random_orient,
+    'lines',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 }, // Default visual comparison
+        drawFunctionArgs: [20] // initialCount for the draw function
+    },
+    {
+        title: 'Lines: Multi-20 No-Fill 10px-Black-Opaque-Stroke Random-Pos Random-Orient',
+        // Visual description will be default generated. The one in perf config is more specific to perf.
         displayName: 'Perf: Lines Multi 10px Black Random',
-        description: 'Performance test for rendering multiple (default 20, or N from harness) 10px black lines at random positions.',
-        category: 'lines'
-    });
-} /**
+        description: 'Performance test for rendering multiple (default 20, or N from harness) 10px black lines at random positions.'
+    }
+); /**
  * @fileoverview Test definition for rendering multiple (20 by default) 1px thick, black, opaque
  * lines with random start/end points. Supports a parameter to vary the number of instances.
  *
@@ -11627,45 +11490,22 @@ function draw_lines__multi_20__no_fill__1px_black_opaque_stroke__random_pos__ran
     }
 }
 
-/**
- * Defines and registers the test case using RenderTestBuilder.
- */
-function define_lines__multi_20__no_fill__1px_black_opaque_stroke__random_pos__random_orient() {
-  if (typeof RenderTestBuilder !== 'function' || typeof draw_lines__multi_20__no_fill__1px_black_opaque_stroke__random_pos__random_orient !== 'function') {
-    console.error('Missing RenderTestBuilder or drawing function for 1px black lines test');
-    return;
-  }
-  // Ensure utility function is available
-  if (typeof getRandomPoint !== 'function') {
-    console.error('Missing utility function getRandomPoint');
-    return;
-  }
-
-  return new RenderTestBuilder()
-    .withId('lines--multi-20--no-fill--1px-black-opaque-stroke--random-pos--random-orient')
-    .withTitle('Lines: Multi-20 No-Fill 1px-Black-Opaque-Stroke Random-Pos Random-Orient')
-    .withDescription('Tests rendering of 20 black lines (1px width) with random positions/orientations using canvas code.')
-    .runCanvasCode(draw_lines__multi_20__no_fill__1px_black_opaque_stroke__random_pos__random_orient)
-    // No specific checks were applied in the original test definition
-    .build(); 
-}
-
-// Define and register the test immediately when this script is loaded.
-if (typeof RenderTestBuilder === 'function') {
-  define_lines__multi_20__no_fill__1px_black_opaque_stroke__random_pos__random_orient();
-}
-
-// Performance test registration
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_lines__multi_20__no_fill__1px_black_opaque_stroke__random_pos__random_orient === 'function') {
-    window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'lines--multi_20--no_fill__1px_black_opaque_stroke__random_pos--random_orient',
-        drawFunction: draw_lines__multi_20__no_fill__1px_black_opaque_stroke__random_pos__random_orient,
-        displayName: 'Perf: Lines Multi-20 1px Random',
-        description: 'Performance test for Multi-20 lines, 1px black, random.',
-        category: 'lines'
-    });
-} /**
+// Register the test
+registerHighLevelTest(
+    'lines--multi_20--no-fill--1px_black_opaque_stroke__random_pos--random_orient--test.js',
+    draw_lines__multi_20__no_fill__1px_black_opaque_stroke__random_pos__random_orient,
+    'lines',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 } // Default visual comparison
+        // No drawFunctionArgs needed as the draw function handles null instances to draw 20 lines.
+    },
+    {
+        title: 'Lines: Multi-20 No-Fill 1px-Black-Opaque-Stroke Random-Pos Random-Orient',
+        description: 'Tests rendering of 20 black lines (1px width) with random positions/orientations using canvas code.',
+        displayName: 'Perf: Lines Multi-20 1px Random'
+        // The description above will also be used for the performance test registry entry.
+    }
+); /**
  * @fileoverview
  * Test definition for rendering multiple (typically 20 for visual regression,
  * 'instances' count for performance) 2px thick, black, opaque stroke lines
@@ -11751,42 +11591,21 @@ function draw_lines__multi_20__no_fill__2px_black_opaque_stroke__random_pos__ran
     return logs && logs.length > 0 ? { logs } : null;
 }
 
-/**
- * Defines and registers the test case for rendering multiple 2px black lines using RenderTestBuilder.
- */
-function define_lines__multi_20__no_fill__2px_black_opaque_stroke__random_pos__random_orient_test() {
-    const defaultLineCount = 20; // Default number of lines for visual regression test
-
-    return new RenderTestBuilder()
-        .withId('lines--multi_20--no-fill--2px_black_opaque_stroke__random_pos--random_orient')
-        .withTitle('Lines: Multi-20 No-Fill 2px-Black-Opaque-Stroke Random-Pos Random-Orient')
-        .withDescription('Tests rendering of ' + defaultLineCount + ' randomly positioned and oriented 2px thick black lines.')
-        // Pass the draw function and the default number of lines for the visual regression mode.
-        // The 'instances' parameter in the draw function will be handled by the performance runner.
-        .runCanvasCode(draw_lines__multi_20__no_fill__2px_black_opaque_stroke__random_pos__random_orient, defaultLineCount)
-        // No specific checks like withExtremesCheck or color checks are typically applied to "multi-random" tests
-        // as the focus is on rendering capability and performance. Visual inspection handles correctness.
-        .build(); // Creates and registers the RenderTest instance
-}
-
-// Define and register the visual regression test immediately when this script is loaded.
-if (typeof RenderTestBuilder === 'function') {
-    define_lines__multi_20__no_fill__2px_black_opaque_stroke__random_pos__random_orient_test();
-}
-
-// Register for performance testing
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_lines__multi_20__no_fill__2px_black_opaque_stroke__random_pos__random_orient === 'function') {
-    window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'lines--multi_20--no-fill--2px_black_opaque_stroke__random_pos--random_orient',
-        drawFunction: draw_lines__multi_20__no_fill__2px_black_opaque_stroke__random_pos__random_orient,
-        // The 'initialCount' for the drawFunction will be its default (20),
-        // the performance harness will pass 'instances'.
+// Register the test
+registerHighLevelTest(
+    'lines--multi_20--no-fill--2px_black_opaque_stroke__random_pos--random_orient--test.js',
+    draw_lines__multi_20__no_fill__2px_black_opaque_stroke__random_pos__random_orient,
+    'lines',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 }, // Default visual comparison
+        drawFunctionArgs: [20] // initialCount for the draw function
+    },
+    {
+        title: 'Lines: Multi-20 No-Fill 2px-Black-Opaque-Stroke Random-Pos Random-Orient',
         displayName: 'Perf: Lines Multi 2px Black Random',
-        description: 'Performance test for rendering multiple (default 20, or N from harness) 2px black lines at random positions.',
-        category: 'lines'
-    });
-} /**
+        description: 'Performance test for rendering multiple (default 20, or N from harness) 2px black lines at random positions.'
+    }
+); /**
  * @fileoverview
  * Test definition for rendering multiple (typically 20 for visual regression,
  * 'instances' count for performance) 3px thick, black, opaque stroke lines
@@ -11872,42 +11691,21 @@ function draw_lines__multi_20__no_fill__3px_black_opaque_stroke__random_pos__ran
     return logs && logs.length > 0 ? { logs } : null;
 }
 
-/**
- * Defines and registers the test case for rendering multiple 3px black lines using RenderTestBuilder.
- */
-function define_lines__multi_20__no_fill__3px_black_opaque_stroke__random_pos__random_orient_test() {
-    const defaultLineCount = 20; // Default number of lines for visual regression test
-
-    return new RenderTestBuilder()
-        .withId('lines--multi_20--no-fill--3px_black_opaque_stroke__random_pos--random_orient')
-        .withTitle('Lines: Multi-20 No-Fill 3px-Black-Opaque-Stroke Random-Pos Random-Orient')
-        .withDescription('Tests rendering of ' + defaultLineCount + ' randomly positioned and oriented 3px thick black lines.')
-        // Pass the draw function and the default number of lines for the visual regression mode.
-        // The 'instances' parameter in the draw function will be handled by the performance runner.
-        .runCanvasCode(draw_lines__multi_20__no_fill__3px_black_opaque_stroke__random_pos__random_orient, defaultLineCount)
-        // No specific checks like withExtremesCheck or color checks are typically applied to "multi-random" tests
-        // as the focus is on rendering capability and performance. Visual inspection handles correctness.
-        .build(); // Creates and registers the RenderTest instance
-}
-
-// Define and register the visual regression test immediately when this script is loaded.
-if (typeof RenderTestBuilder === 'function') {
-    define_lines__multi_20__no_fill__3px_black_opaque_stroke__random_pos__random_orient_test();
-}
-
-// Register for performance testing
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_lines__multi_20__no_fill__3px_black_opaque_stroke__random_pos__random_orient === 'function') {
-    window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'lines--multi_20--no-fill--3px_black_opaque_stroke__random_pos--random_orient',
-        drawFunction: draw_lines__multi_20__no_fill__3px_black_opaque_stroke__random_pos__random_orient,
-        // The 'initialCount' for the drawFunction will be its default (20),
-        // the performance harness will pass 'instances'.
+// Register the test
+registerHighLevelTest(
+    'lines--multi_20--no-fill--3px_black_opaque_stroke__random_pos--random_orient--test.js',
+    draw_lines__multi_20__no_fill__3px_black_opaque_stroke__random_pos__random_orient,
+    'lines',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 }, // Default visual comparison
+        drawFunctionArgs: [20] // initialCount for the draw function
+    },
+    {
+        title: 'Lines: Multi-20 No-Fill 3px-Black-Opaque-Stroke Random-Pos Random-Orient',
         displayName: 'Perf: Lines Multi 3px Black Random',
-        description: 'Performance test for rendering multiple (default 20, or N from harness) 3px black lines at random positions.',
-        category: 'lines'
-    });
-} /**
+        description: 'Performance test for rendering multiple (default 20, or N from harness) 3px black lines at random positions.'
+    }
+); /**
  * @fileoverview
  * Test definition for rendering multiple (typically 20 for visual regression,
  * 'instances' count for performance) 5px thick, black, opaque stroke lines
@@ -11993,42 +11791,21 @@ function draw_lines__multi_20__no_fill__5px_black_opaque_stroke__random_pos__ran
     return logs && logs.length > 0 ? { logs } : null;
 }
 
-/**
- * Defines and registers the test case for rendering multiple 5px black lines using RenderTestBuilder.
- */
-function define_lines__multi_20__no_fill__5px_black_opaque_stroke__random_pos__random_orient_test() {
-    const defaultLineCount = 20; // Default number of lines for visual regression test
-
-    return new RenderTestBuilder()
-        .withId('lines--multi_20--no-fill--5px_black_opaque_stroke__random_pos--random_orient')
-        .withTitle('Lines: Multi-20 No-Fill 5px-Black-Opaque-Stroke Random-Pos Random-Orient')
-        .withDescription('Tests rendering of ' + defaultLineCount + ' randomly positioned and oriented 5px thick black lines.')
-        // Pass the draw function and the default number of lines for the visual regression mode.
-        // The 'instances' parameter in the draw function will be handled by the performance runner.
-        .runCanvasCode(draw_lines__multi_20__no_fill__5px_black_opaque_stroke__random_pos__random_orient, defaultLineCount)
-        // No specific checks like withExtremesCheck or color checks are typically applied to "multi-random" tests
-        // as the focus is on rendering capability and performance. Visual inspection handles correctness.
-        .build(); // Creates and registers the RenderTest instance
-}
-
-// Define and register the visual regression test immediately when this script is loaded.
-if (typeof RenderTestBuilder === 'function') {
-    define_lines__multi_20__no_fill__5px_black_opaque_stroke__random_pos__random_orient_test();
-}
-
-// Register for performance testing
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_lines__multi_20__no_fill__5px_black_opaque_stroke__random_pos__random_orient === 'function') {
-    window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'lines--multi_20--no-fill--5px_black_opaque_stroke__random_pos--random_orient',
-        drawFunction: draw_lines__multi_20__no_fill__5px_black_opaque_stroke__random_pos__random_orient,
-        // The 'initialCount' for the drawFunction will be its default (20),
-        // the performance harness will pass 'instances'.
+// Register the test
+registerHighLevelTest(
+    'lines--multi_20--no-fill--5px_black_opaque_stroke__random_pos--random_orient--test.js',
+    draw_lines__multi_20__no_fill__5px_black_opaque_stroke__random_pos__random_orient,
+    'lines',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 }, // Default visual comparison
+        drawFunctionArgs: [20] // initialCount for the draw function
+    },
+    {
+        title: 'Lines: Multi-20 No-Fill 5px-Black-Opaque-Stroke Random-Pos Random-Orient',
         displayName: 'Perf: Lines Multi 5px Black Random',
-        description: 'Performance test for rendering multiple (default 20, or N from harness) 5px black lines at random positions.',
-        category: 'lines'
-    });
-} /**
+        description: 'Performance test for rendering multiple (default 20, or N from harness) 5px black lines at random positions.'
+    }
+); /**
  * @fileoverview Test definition for multiple axis-aligned rectangles with random parameters,
  * matching the new descriptive naming convention.
  */
@@ -12237,36 +12014,21 @@ function draw_rectangles_axalign_multi_varsize_randfill_randstroke_randpos_no_ro
     }
 }
 
-/**
- * Defines and registers the test case with the new descriptive ID.
- */
-function define_rectangles_axalign_multi_varsize_randfill_randstroke_randpos_no_rotation_test() {
-    return new RenderTestBuilder()
-        .withId('rectangles--axalign--multi--varsize--randfill--randstroke--randpos--no-rotation')
-        .withTitle('Rectangles: Axis-aligned, Multiple, Variable Size, Random Fill & Stroke, Random Position, No Rotation')
-        .withDescription('Tests rendering of multiple axis-aligned rectangles with random sizes, fills (variable alpha), strokes (opaque, even width), and positions. No rotation.')
-        .runCanvasCode(draw_rectangles_axalign_multi_varsize_randfill_randstroke_randpos_no_rotation)
-        .withExtremesCheck()
-        .compareWithThreshold(3,1) // Matching the single axis-aligned rect test threshold
-        .build();
-}
-
-// Define and register the visual regression test immediately.
-if (typeof RenderTestBuilder === 'function') {
-    define_rectangles_axalign_multi_varsize_randfill_randstroke_randpos_no_rotation_test();
-}
-
-// Register for performance testing.
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_rectangles_axalign_multi_varsize_randfill_randstroke_randpos_no_rotation === 'function') {
-    window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'rectangles--axalign--multi--varsize--randfill--randstroke--randpos--no-rotation',
-        drawFunction: draw_rectangles_axalign_multi_varsize_randfill_randstroke_randpos_no_rotation,
-        displayName: 'Perf: Rects AxAlign Multi Random',
-        description: 'Performance test for multiple axis-aligned rectangles with various random parameters.',
-        category: 'rectangles'
-    });
-} /**
+// Register the test
+registerHighLevelTest(
+    'rectangles--axalign--multi--varsize--randfill--randstroke--randpos--no-rotation--test.js',
+    draw_rectangles_axalign_multi_varsize_randfill_randstroke_randpos_no_rotation,
+    'rectangles',
+    {
+        extremes: true,
+        compare: { swTol: 3, refTol: 1, diffTol: 0 }
+    },
+    {
+        title: 'Rectangles: Axis-aligned, Multiple, Variable Size, Random Fill & Stroke, Random Position, No Rotation',
+        description: 'Tests rendering of multiple axis-aligned rectangles with random sizes, fills (variable alpha), strokes (opaque, even width), and positions. No rotation.',
+        displayName: 'Perf: Rects AxAlign Multi Random'
+    }
+); /**
  * @fileoverview
  * Test definition for rendering a single, medium-sized, axis-aligned rectangle.
  * This version aims to replicate the logic from the original low-level test's
@@ -12386,36 +12148,21 @@ function draw_rectangles__M_size__semitransparent_fill__random_semitransparent_s
     return (logs || checkData) ? { logs, checkData } : null; 
 }
 
-/**
- * Defines and registers the test case.
- */
-function define_rectangles__M_size__semitransparent_fill__random_semitransparent_stroke__random_pos__no_rotation_test() {
-    return new RenderTestBuilder()
-        .withId('rectangles--M-size--semitransparent_fill--random_semitransparent_stroke--random_pos--no-rotation')
-        .withTitle('Rectangles: M-Size Semi-Transparent Fill, Random Semi-Transparent Stroke, Random Position, No Rotation')
-        .withDescription('Tests a single axis-aligned rectangle with random dimensions, stroke width, and semi-transparent colors, mimicking original low-level logic including color generation.')
-        .runCanvasCode(draw_rectangles__M_size__semitransparent_fill__random_semitransparent_stroke__random_pos__no_rotation)
-        .withExtremesCheck()
-        .compareWithThreshold(3, 1) // From original low-level test addSingleAxisAlignedRectangleTest
-        .build();
-}
-
-// Define and register the visual regression test.
-if (typeof RenderTestBuilder === 'function') {
-    define_rectangles__M_size__semitransparent_fill__random_semitransparent_stroke__random_pos__no_rotation_test();
-}
-
-// Register for performance testing.
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_rectangles__M_size__semitransparent_fill__random_semitransparent_stroke__random_pos__no_rotation === 'function') {
-    window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'rectangles--M-size--semitransparent_fill--random_semitransparent_stroke--random_pos--no-rotation',
-        drawFunction: draw_rectangles__M_size__semitransparent_fill__random_semitransparent_stroke__random_pos__no_rotation,
-        displayName: 'Perf: Rect M Axis-Aligned (Original Logic)',
-        description: 'Performance of rendering axis-aligned rectangles, mimicking original low-level logic for parameter generation.',
-        category: 'rectangles' 
-    });
-} /**
+// Register the test
+registerHighLevelTest(
+    'rectangles--M-size--semitransparent_fill--random_semitransparent_stroke--random_pos--no-rotation--test.js',
+    draw_rectangles__M_size__semitransparent_fill__random_semitransparent_stroke__random_pos__no_rotation,
+    'rectangles',
+    {
+        extremes: true,
+        compare: { swTol: 3, refTol: 1, diffTol: 0 }
+    },
+    {
+        title: 'Rectangles: M-Size Semi-Transparent Fill, Random Semi-Transparent Stroke, Random Position, No Rotation',
+        description: 'Tests a single axis-aligned rectangle with random dimensions, stroke width, and semi-transparent colors, mimicking original low-level logic including color generation.',
+        displayName: 'Perf: Rect M Axis-Aligned (Original Logic)'
+    }
+); /**
  * @fileoverview Test definition for multiple rotated rectangles with random parameters.
  */
 
@@ -12517,34 +12264,20 @@ function draw_rectangles_rotated_multi_varsize_randparams_randpos_randrot(ctx, c
     }
 }
 
-/**
- * Defines and registers the rotated rectangles test case.
- */
-function define_rectangles_rotated_multi_varsize_randparams_randpos_randrot_test() {
-    return new RenderTestBuilder()
-        .withId('rectangles--rotated--multi--varsize--randparams--randpos--randrot')
-        .withTitle('Rectangles: Rotated, Multiple, Variable Size & Params, Random Position & Rotation')
-        .withDescription('Tests rendering of multiple rotated rectangles with random positions, sizes, angles, strokes, and fills.')
-        .runCanvasCode(draw_rectangles_rotated_multi_varsize_randparams_randpos_randrot)
-        .build();
-}
-
-// Define and register the visual regression test immediately.
-if (typeof RenderTestBuilder === 'function') {
-    define_rectangles_rotated_multi_varsize_randparams_randpos_randrot_test();
-}
-
-// Register for performance testing.
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_rectangles_rotated_multi_varsize_randparams_randpos_randrot === 'function') {
-    window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'rectangles--rotated--multi--varsize--randparams--randpos--randrot',
-        drawFunction: draw_rectangles_rotated_multi_varsize_randparams_randpos_randrot,
-        displayName: 'Perf: Rects Rotated Multi Random',
-        description: 'Performance test for multiple rotated rectangles with random parameters.',
-        category: 'rectangles'
-    });
-} /**
+// Register the test
+registerHighLevelTest(
+    'rectangles--rotated--multi--varsize--randparams--randpos--randrot--test.js',
+    draw_rectangles_rotated_multi_varsize_randparams_randpos_randrot,
+    'rectangles',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 } // Default visual comparison
+    },
+    {
+        title: 'Rectangles: Rotated, Multiple, Variable Size & Params, Random Position & Rotation',
+        description: 'Tests rendering of multiple rotated rectangles with random positions, sizes, angles, strokes, and fills.',
+        displayName: 'Perf: Rects Rotated Multi Random'
+    }
+); /**
  * @fileoverview
  * Test definition for rendering a single, small-to-medium sized, 1px thick, red, opaque stroked rectangle
  * with no fill, centered at a grid crossing, and with no rotation.
@@ -12653,36 +12386,21 @@ function draw_rectangles__S_size__no_fill__1px_red_opaque_stroke__centered_at_gr
     return { logs, checkData };
 }
 
-/**
- * Defines and registers the test case.
- */
-function define_rectangles__S_size__no_fill__1px_red_opaque_stroke__centered_at_grid__no_rotation_test() {
-    return new RenderTestBuilder()
-        .withId('rectangles--S-size--no-fill--1px_red_opaque_stroke--centered_at_grid--no-rotation')
-        .withTitle('Rectangles: S-Size No-Fill 1px-Red-Opaque-Stroke Centered-At-Grid No-Rotation')
-        .withDescription('Tests a single 1px red stroked rectangle, centered on grid lines, with even dimensions.')
-        .runCanvasCode(draw_rectangles__S_size__no_fill__1px_red_opaque_stroke__centered_at_grid__no_rotation)
-        .withExtremesCheck() // Uses the checkData returned by the draw function
-        // Original low-level test did not have a .compareWithThreshold(), implying visual check or other specific checks.
-        .build();
-}
-
-// Define and register the visual regression test.
-if (typeof RenderTestBuilder === 'function') {
-    define_rectangles__S_size__no_fill__1px_red_opaque_stroke__centered_at_grid__no_rotation_test();
-}
-
-// Register for performance testing.
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_rectangles__S_size__no_fill__1px_red_opaque_stroke__centered_at_grid__no_rotation === 'function') {
-    window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'rectangles--S-size--no-fill--1px_red_opaque_stroke--centered_at_grid--no-rotation',
-        drawFunction: draw_rectangles__S_size__no_fill__1px_red_opaque_stroke__centered_at_grid__no_rotation,
-        displayName: 'Perf: Rect S 1px Red Centered Grid',
-        description: 'Performance of a single 1px red stroked rectangle, centered on grid.',
-        category: 'rectangles' // Or 'rects' to match scene-creation file names
-    });
-} /**
+// Register the test
+registerHighLevelTest(
+    'rectangles--S-size--no-fill--1px_red_opaque_stroke--centered_at_grid--no-rotation--test.js',
+    draw_rectangles__S_size__no_fill__1px_red_opaque_stroke__centered_at_grid__no_rotation,
+    'rectangles',
+    {
+        extremes: true,
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 } // Default visual comparison
+    },
+    {
+        title: 'Rectangles: S-Size No-Fill 1px-Red-Opaque-Stroke Centered-At-Grid No-Rotation',
+        description: 'Tests a single 1px red stroked rectangle, centered on grid lines, with even dimensions.',
+        displayName: 'Perf: Rect S 1px Red Centered Grid'
+    }
+); /**
  * @fileoverview
  * Test definition for rendering a single, small-to-medium sized, 1px thick, red, opaque stroked rectangle
  * with no fill, centered at a pixel center (X.5, Y.5 coordinates), and with no rotation.
@@ -12779,35 +12497,21 @@ function draw_rectangles__S_size__no_fill__1px_red_opaque_stroke__centered_at_pi
     return { logs, checkData }; 
 }
 
-/**
- * Defines and registers the test case.
- */
-function define_rectangles__S_size__no_fill__1px_red_opaque_stroke__centered_at_pixel__no_rotation_test() {
-    return new RenderTestBuilder()
-        .withId('rectangles--S-size--no-fill--1px_red_opaque_stroke--centered_at_pixel--no-rotation') // Unique ID
-        .withTitle('Rectangles: S-Size No-Fill 1px-Red-Opaque-Stroke Centered-At-Pixel No-Rotation')
-        .withDescription('Tests a single 1px red stroked rectangle, centered at pixel centers (X.5,Y.5), with adjusted even dimensions.')
-        .runCanvasCode(draw_rectangles__S_size__no_fill__1px_red_opaque_stroke__centered_at_pixel__no_rotation)
-        .withExtremesCheck() 
-        .build();
-}
-
-// Define and register the visual regression test.
-if (typeof RenderTestBuilder === 'function') {
-    define_rectangles__S_size__no_fill__1px_red_opaque_stroke__centered_at_pixel__no_rotation_test();
-}
-
-// Register for performance testing.
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_rectangles__S_size__no_fill__1px_red_opaque_stroke__centered_at_pixel__no_rotation === 'function') {
-    window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'rectangles--S-size--no-fill--1px_red_opaque_stroke--centered_at_pixel--no-rotation',
-        drawFunction: draw_rectangles__S_size__no_fill__1px_red_opaque_stroke__centered_at_pixel__no_rotation,
-        displayName: 'Perf: Rect S 1px Red Centered Pixel',
-        description: 'Performance of a single 1px red stroked rectangle, centered at pixel.',
-        category: 'rectangles' 
-    });
-} /**
+// Register the test
+registerHighLevelTest(
+    'rectangles--S-size--no-fill--1px_red_opaque_stroke--centered_at_pixel--no-rotation--test.js',
+    draw_rectangles__S_size__no_fill__1px_red_opaque_stroke__centered_at_pixel__no_rotation,
+    'rectangles',
+    {
+        extremes: true,
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 } // Default visual comparison
+    },
+    {
+        title: 'Rectangles: S-Size No-Fill 1px-Red-Opaque-Stroke Centered-At-Pixel No-Rotation',
+        description: 'Tests a single 1px red stroked rectangle, centered at pixel centers (X.5,Y.5), with adjusted even dimensions.',
+        displayName: 'Perf: Rect S 1px Red Centered Pixel'
+    }
+); /**
  * @fileoverview Test definition for a single 1px stroked rounded rectangle centered at a grid point.
  */
 
@@ -12934,35 +12638,21 @@ function draw_rounded_rect_single_1px_stroke_crisp_center_grid(ctx, currentItera
     return { logs, checkData };
 }
 
-/**
- * Defines and registers the 1px stroked rounded rectangle centered at grid test case.
- */
-function define_rounded_rect_single_1px_stroke_crisp_center_grid_test() {
-    return new RenderTestBuilder()
-        .withId('rounded-rect--single--1px-stroke--crisp--center-grid')
-        .withTitle('Single 1px Stroked Rounded Rectangle (Crisp, Centered at Grid)')
-        .withDescription('Tests crisp rendering of a single 1px red stroked rounded rectangle, centered at a grid crossing.')
-        .runCanvasCode(draw_rounded_rect_single_1px_stroke_crisp_center_grid)
-        .withExtremesCheck() // Original test had this
-        .build();
-}
-
-// Define and register the visual regression test immediately.
-if (typeof RenderTestBuilder === 'function') {
-    define_rounded_rect_single_1px_stroke_crisp_center_grid_test();
-}
-
-// Register for performance testing.
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_rounded_rect_single_1px_stroke_crisp_center_grid === 'function') {
-    window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'rounded-rect--single--1px-stroke--crisp--center-grid',
-        drawFunction: draw_rounded_rect_single_1px_stroke_crisp_center_grid,
-        displayName: 'Perf: RRect 1px Crisp Grid Center',
-        description: 'Performance of a single 1px stroked rounded rectangle, crisp and grid-centered.',
-        category: 'rounded-rectangles' 
-    });
-} /**
+// Register the test
+registerHighLevelTest(
+    'rounded-rect--single--1px-stroke--crisp--center-grid--test.js',
+    draw_rounded_rect_single_1px_stroke_crisp_center_grid,
+    'rounded-rects',
+    {
+        extremes: true,
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 } // Default visual comparison
+    },
+    {
+        title: 'Single 1px Stroked Rounded Rectangle (Crisp, Centered at Grid)',
+        description: 'Tests crisp rendering of a single 1px red stroked rounded rectangle, centered at a grid crossing.',
+        displayName: 'Perf: RRect 1px Crisp Grid Center'
+    }
+); /**
  * @fileoverview Test definition for a single 1px stroked rounded rectangle centered at a pixel.
  */
 
@@ -13062,36 +12752,21 @@ function draw_rounded_rect_single_1px_stroke_crisp_center_pixel(ctx, currentIter
     return { logs, checkData };
 }
 
-/**
- * Defines and registers the 1px stroked rounded rectangle centered at pixel test case.
- */
-function define_rounded_rect_single_1px_stroke_crisp_center_pixel_test() {
-    return new RenderTestBuilder()
-        .withId('rounded-rect--single--1px-stroke--crisp--center-pixel')
-        .withTitle('Single 1px Stroked Rounded Rectangle (Crisp, Centered at Pixel)')
-        .withDescription('Tests crisp rendering of a single 1px red stroked rounded rectangle, centered at a pixel center.')
-        .runCanvasCode(draw_rounded_rect_single_1px_stroke_crisp_center_pixel)
-        .withExtremesCheck() // Original test had this
-        // No explicit compareWithThreshold in original, defaults to (0,0)
-        .build();
-}
-
-// Define and register the visual regression test immediately.
-if (typeof RenderTestBuilder === 'function') {
-    define_rounded_rect_single_1px_stroke_crisp_center_pixel_test();
-}
-
-// Register for performance testing.
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_rounded_rect_single_1px_stroke_crisp_center_pixel === 'function') {
-    window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'rounded-rect--single--1px-stroke--crisp--center-pixel',
-        drawFunction: draw_rounded_rect_single_1px_stroke_crisp_center_pixel,
-        displayName: 'Perf: RRect 1px Crisp Pixel Center',
-        description: 'Performance of a single 1px stroked rounded rectangle, crisp and pixel-centered.',
-        category: 'rounded-rectangles' 
-    });
-} /**
+// Register the test
+registerHighLevelTest(
+    'rounded-rect--single--1px-stroke--crisp--center-pixel--test.js',
+    draw_rounded_rect_single_1px_stroke_crisp_center_pixel,
+    'rounded-rects',
+    {
+        extremes: true,
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 } // Default visual comparison
+    },
+    {
+        title: 'Single 1px Stroked Rounded Rectangle (Crisp, Centered at Pixel)',
+        description: 'Tests crisp rendering of a single 1px red stroked rounded rectangle, centered at a pixel center.',
+        displayName: 'Perf: RRect 1px Crisp Pixel Center'
+    }
+); /**
  * @fileoverview Test definition for a single centered rounded rectangle with random opaque stroke and random fill, centered at a grid point.
  */
 
@@ -13188,38 +12863,25 @@ function draw_rounded_rect_single_rand_opaque_stroke_center_grid_rand_fill(ctx, 
     return { logs }; 
 }
 
-/**
- * Defines and registers the centered rounded rectangle with random opaque stroke test case.
- */
-function define_rounded_rect_single_rand_opaque_stroke_center_grid_rand_fill_test() {
-    return new RenderTestBuilder()
-        .withId('rounded-rect--single--rand-opaque-stroke--center-grid--rand-fill')
-        .withTitle('Single Centered Rounded Rectangle (Random Opaque Stroke, Random Fill, Grid Center)')
-        .withDescription('Tests a single rounded rectangle with random stroke widths (opaque), random fills, centered at a grid crossing.')
-        .runCanvasCode(draw_rounded_rect_single_rand_opaque_stroke_center_grid_rand_fill)
-        .withColorCheckMiddleRow({ expectedUniqueColors: 2 }) // From original test
-        .withColorCheckMiddleColumn({ expectedUniqueColors: 2 }) // From original test
-        .withSpecklesCheckOnSwCanvas() // From original test
-        // No explicit compareWithThreshold in original, defaults to (0,0)
-        .build();
-}
-
-// Define and register the visual regression test immediately.
-if (typeof RenderTestBuilder === 'function') {
-    define_rounded_rect_single_rand_opaque_stroke_center_grid_rand_fill_test();
-}
-
-// Register for performance testing.
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_rounded_rect_single_rand_opaque_stroke_center_grid_rand_fill === 'function') {
-    window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'rounded-rect--single--rand-opaque-stroke--center-grid--rand-fill',
-        drawFunction: draw_rounded_rect_single_rand_opaque_stroke_center_grid_rand_fill,
-        displayName: 'Perf: RRect RandStroke Opaque Grid Fill',
-        description: 'Performance of a single centered rounded rectangle with random opaque stroke and random fill.',
-        category: 'rounded-rectangles' 
-    });
-} /**
+// Register the test
+registerHighLevelTest(
+    'rounded-rect--single--rand-opaque-stroke--center-grid--rand-fill--test.js',
+    draw_rounded_rect_single_rand_opaque_stroke_center_grid_rand_fill,
+    'rounded-rects',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 }, // Default visual comparison
+        uniqueColors: { 
+            middleRow: { count: 2 }, // Updated structure
+            middleColumn: { count: 2 } // Added from original define
+        }, 
+        speckles: true
+    },
+    {
+        title: 'Single Centered Rounded Rectangle (Random Opaque Stroke, Random Fill, Grid Center)',
+        description: 'Tests a single rounded rectangle with random stroke widths (opaque), random fills, centered at a grid crossing.',
+        displayName: 'Perf: RRect RandStroke Opaque Grid Fill'
+    }
+); /**
  * @fileoverview Test definition for a single centered rounded rectangle with semi-transparent stroke and fill.
  */
 
@@ -13334,37 +12996,25 @@ function draw_rounded_rect_single_rand_semitrans_stroke_fill_crisp_center(ctx, c
     return { logs }; 
 }
 
-/**
- * Defines and registers the centered rounded rectangle with semi-transparent stroke/fill test case.
- */
-function define_rounded_rect_single_rand_semitrans_stroke_fill_crisp_center_test() {
-    return new RenderTestBuilder()
-        .withId('rounded-rect--single--rand-semitrans-stroke-fill--crisp-center') // Derived from original: centered-rounded-rect-transparent
-        .withTitle('Single Centered Rounded Rectangle (Semi-Transparent Stroke & Fill, Crisp Center)')
-        .withDescription('Tests a single rounded rectangle with random stroke widths and semi-transparent colors, centered crisply (grid or pixel).')
-        .runCanvasCode(draw_rounded_rect_single_rand_semitrans_stroke_fill_crisp_center)
-        .withColorCheckMiddleRow({ expectedUniqueColors: 3 }) 
-        .withColorCheckMiddleColumn({ expectedUniqueColors: 3 })
-        .withSpecklesCheckOnSwCanvas()
-        .build();
-}
-
-// Define and register the visual regression test immediately.
-if (typeof RenderTestBuilder === 'function') {
-    define_rounded_rect_single_rand_semitrans_stroke_fill_crisp_center_test();
-}
-
-// Register for performance testing.
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_rounded_rect_single_rand_semitrans_stroke_fill_crisp_center === 'function') {
-    window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'rounded-rect--single--rand-semitrans-stroke-fill--crisp-center',
-        drawFunction: draw_rounded_rect_single_rand_semitrans_stroke_fill_crisp_center,
-        displayName: 'Perf: RRect RandTrans Stroke/Fill CrispCenter',
-        description: 'Performance of a single centered rounded rectangle with random semi-transparent stroke/fill.',
-        category: 'rounded-rectangles' 
-    });
-} /**
+// Register the test
+registerHighLevelTest(
+    'rounded-rect--single--rand-semitrans-stroke-fill--crisp-center--test.js',
+    draw_rounded_rect_single_rand_semitrans_stroke_fill_crisp_center,
+    'rounded-rects',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 },
+        uniqueColors: {
+            middleRow: { count: 3 },
+            middleColumn: { count: 3 }
+        },
+        speckles: true
+    },
+    {
+        title: 'Single Centered Rounded Rectangle (Semi-Transparent Stroke & Fill, Crisp Center)',
+        description: 'Tests a single rounded rectangle with random stroke widths and semi-transparent colors, centered crisply (grid or pixel).',
+        displayName: 'Perf: RRect RandTrans Stroke/Fill CrispCenter'
+    }
+);/**
  * @fileoverview Test definition for multiple large, transparent-stroked rounded rectangles.
  */
 
@@ -13479,35 +13129,20 @@ function draw_rounded_rects_axalign_multi_6_large_transparent_stroke_randpos_ran
     return { logs }; 
 }
 
-/**
- * Defines and registers the large transparent rounded rectangles test case.
- */
-function define_rounded_rects_axalign_multi_6_large_transparent_stroke_randpos_randsize_randfill_test() {
-    return new RenderTestBuilder()
-        .withId('rounded-rects--axalign--multi-6--large--transparent-stroke--randpos--randsize--randfill') // Derived from: large-transparent-rounded-rectangles
-        .withTitle('Large Transparent-Stroke Rounded Rectangles (Multiple, Random Params)')
-        .withDescription('Tests rendering of multiple large rounded rectangles with transparent strokes, random fills, and fixed large radius.')
-        .runCanvasCode(draw_rounded_rects_axalign_multi_6_large_transparent_stroke_randpos_randsize_randfill)
-        // No specific checks in original test definition
-        .build();
-}
-
-// Define and register the visual regression test immediately.
-if (typeof RenderTestBuilder === 'function') {
-    define_rounded_rects_axalign_multi_6_large_transparent_stroke_randpos_randsize_randfill_test();
-}
-
-// Register for performance testing.
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_rounded_rects_axalign_multi_6_large_transparent_stroke_randpos_randsize_randfill === 'function') {
-    window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'rounded-rects--axalign--multi-6--large--transparent-stroke--randpos--randsize--randfill',
-        drawFunction: draw_rounded_rects_axalign_multi_6_large_transparent_stroke_randpos_randsize_randfill,
-        displayName: 'Perf: 6 Large TranspStroke RRects',
-        description: 'Performance of 6 large rounded rectangles with transparent strokes and random parameters.',
-        category: 'rounded-rectangles' 
-    });
-} /**
+// Register the test
+registerHighLevelTest(
+    'rounded-rects--axalign--multi-6--large--transparent-stroke--randpos--randsize--randfill--test.js',
+    draw_rounded_rects_axalign_multi_6_large_transparent_stroke_randpos_randsize_randfill,
+    'rounded-rects',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 } // Default visual comparison
+    },
+    {
+        title: 'Large Transparent-Stroke Rounded Rectangles (Multiple, Random Params)',
+        description: 'Tests rendering of multiple large rounded rectangles with transparent strokes, random fills, and fixed large radius.',
+        displayName: 'Perf: 6 Large TranspStroke RRects'
+    }
+); /**
  * @fileoverview Test definition for multiple axis-aligned rounded rectangles with random parameters.
  */
 
@@ -13630,35 +13265,20 @@ function draw_rounded_rects_axalign_multi_8_randpos_randsize_randstroke_randfill
     return { logs }; 
 }
 
-/**
- * Defines and registers the axis-aligned rounded rectangles test case.
- */
-function define_rounded_rects_axalign_multi_8_randpos_randsize_randstroke_randfill_test() {
-    return new RenderTestBuilder()
-        .withId('rounded-rects--axalign--multi-8--randpos--randsize--randstroke--randfill') // Derived from: axis-aligned-rounded-rectangles
-        .withTitle('Axis-Aligned Rounded Rectangles (Multiple, Random Params)')
-        .withDescription('Tests rendering of multiple axis-aligned rounded rectangles with random positions, sizes, strokes, fills, and corner radii.')
-        .runCanvasCode(draw_rounded_rects_axalign_multi_8_randpos_randsize_randstroke_randfill)
-        // No specific checks in original test definition
-        .build();
-}
-
-// Define and register the visual regression test immediately.
-if (typeof RenderTestBuilder === 'function') {
-    define_rounded_rects_axalign_multi_8_randpos_randsize_randstroke_randfill_test();
-}
-
-// Register for performance testing.
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_rounded_rects_axalign_multi_8_randpos_randsize_randstroke_randfill === 'function') {
-    window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'rounded-rects--axalign--multi-8--randpos--randsize--randstroke--randfill',
-        drawFunction: draw_rounded_rects_axalign_multi_8_randpos_randsize_randstroke_randfill,
-        displayName: 'Perf: 8 AxAlign RRects RandParams',
-        description: 'Performance of 8 axis-aligned rounded rectangles with various random parameters.',
-        category: 'rounded-rectangles' 
-    });
-} /**
+// Register the test
+registerHighLevelTest(
+    'rounded-rects--axalign--multi-8--randpos--randsize--randstroke--randfill--test.js',
+    draw_rounded_rects_axalign_multi_8_randpos_randsize_randstroke_randfill,
+    'rounded-rects',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 } // Default visual comparison
+    },
+    {
+        title: 'Axis-Aligned Rounded Rectangles (Multiple, Random Params)',
+        description: 'Tests rendering of multiple axis-aligned rounded rectangles with random positions, sizes, strokes, fills, and corner radii.',
+        displayName: 'Perf: 8 AxAlign RRects RandParams'
+    }
+); /**
  * @fileoverview Test definition for 10 thin, opaque-stroked rounded rectangles with 1px line width.
  */
 
@@ -13751,35 +13371,20 @@ function draw_rounded_rects_multi_10_1px_opaque_stroke_rand_fill_crisp_center_ad
     return { logs }; 
 }
 
-/**
- * Defines and registers the 10 thin opaque-stroked rounded rectangles test case.
- */
-function define_rounded_rects_multi_10_1px_opaque_stroke_rand_fill_crisp_center_adj_test() {
-    return new RenderTestBuilder()
-        .withId('rounded-rects--multi-10--1px-opaque-stroke--rand-fill--crisp-center-adj') // Derived from original: thin-rounded-rects
-        .withTitle('10 Thin Opaque-Stroke Rounded Rectangles (1px, Crisp Center Adj.)')
-        .withDescription('Tests rendering of 10 rounded rectangles with 1px opaque strokes, random fills, and crisp center adjustment.')
-        .runCanvasCode(draw_rounded_rects_multi_10_1px_opaque_stroke_rand_fill_crisp_center_adj)
-        // No specific checks in original test definition
-        .build();
-}
-
-// Define and register the visual regression test immediately.
-if (typeof RenderTestBuilder === 'function') {
-    define_rounded_rects_multi_10_1px_opaque_stroke_rand_fill_crisp_center_adj_test();
-}
-
-// Register for performance testing.
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_rounded_rects_multi_10_1px_opaque_stroke_rand_fill_crisp_center_adj === 'function') {
-    window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'rounded-rects--multi-10--1px-opaque-stroke--rand-fill--crisp-center-adj',
-        drawFunction: draw_rounded_rects_multi_10_1px_opaque_stroke_rand_fill_crisp_center_adj,
-        displayName: 'Perf: 10 RRects ThinOpaque AdjCenter',
-        description: 'Performance of 10 thin opaque-stroked rounded rectangles with crisp center adjustment.',
-        category: 'rounded-rectangles' 
-    });
-} /**
+// Register the test
+registerHighLevelTest(
+    'rounded-rects--multi-10--1px-opaque-stroke--rand-fill--crisp-center-adj--test.js',
+    draw_rounded_rects_multi_10_1px_opaque_stroke_rand_fill_crisp_center_adj,
+    'rounded-rects',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 } // Default visual comparison
+    },
+    {
+        title: '10 Thin Opaque-Stroke Rounded Rectangles (1px, Crisp Center Adj.)',
+        description: 'Tests rendering of 10 rounded rectangles with 1px opaque strokes, random fills, and crisp center adjustment.',
+        displayName: 'Perf: 10 RRects ThinOpaque AdjCenter'
+    }
+); /**
  * @fileoverview Test definition for 8 rounded rectangles with no stroke and fixed size/radius.
  */
 
@@ -13857,35 +13462,20 @@ function draw_rounded_rects_multi_8_no_stroke_fixed_size_large_radius_randpos_ra
     return { logs }; 
 }
 
-/**
- * Defines and registers the no-stroke rounded rectangles test case.
- */
-function define_rounded_rects_multi_8_no_stroke_fixed_size_large_radius_randpos_randfill_test() {
-    return new RenderTestBuilder()
-        .withId('rounded-rects--multi-8--no-stroke--fixed-size-large-radius--randpos--randfill') // Derived from: no-stroke-rounded-rectangles
-        .withTitle('Rounded Rectangles Without Stroke (Multiple, Fixed Size, Random Pos)')
-        .withDescription('Tests rendering of 8 rounded rectangles with no stroke, only fill, fixed size/radius, and random positions.')
-        .runCanvasCode(draw_rounded_rects_multi_8_no_stroke_fixed_size_large_radius_randpos_randfill)
-        // No specific checks in original test definition
-        .build();
-}
-
-// Define and register the visual regression test immediately.
-if (typeof RenderTestBuilder === 'function') {
-    define_rounded_rects_multi_8_no_stroke_fixed_size_large_radius_randpos_randfill_test();
-}
-
-// Register for performance testing.
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_rounded_rects_multi_8_no_stroke_fixed_size_large_radius_randpos_randfill === 'function') {
-    window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'rounded-rects--multi-8--no-stroke--fixed-size-large-radius--randpos--randfill',
-        drawFunction: draw_rounded_rects_multi_8_no_stroke_fixed_size_large_radius_randpos_randfill,
-        displayName: 'Perf: 8 NoStroke RRects FixedSize RandPos',
-        description: 'Performance of 8 no-stroke rounded rectangles with fixed size/radius and random positions.',
-        category: 'rounded-rectangles' 
-    });
-} /**
+// Register the test
+registerHighLevelTest(
+    'rounded-rects--multi-8--no-stroke--fixed-size-large-radius--randpos--randfill--test.js',
+    draw_rounded_rects_multi_8_no_stroke_fixed_size_large_radius_randpos_randfill,
+    'rounded-rects',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 } // Default visual comparison
+    },
+    {
+        title: 'Rounded Rectangles Without Stroke (Multiple, Fixed Size, Random Pos)',
+        description: 'Tests rendering of 8 rounded rectangles with no stroke, only fill, fixed size/radius, and random positions.',
+        displayName: 'Perf: 8 NoStroke RRects FixedSize RandPos'
+    }
+); /**
  * @fileoverview Test definition for a combined scene with all shape types.
  */
 
@@ -14051,35 +13641,19 @@ function draw_scene_all_shapes_combined(ctx, currentIterationNumber, instances =
     return { logs };
 }
 
-/**
- * Defines and registers the combined scene test case.
- */
-function define_scene_all_shapes_combined_test() {
-    return new RenderTestBuilder()
-        .withId('scene--all-shapes-combined') // Derived from: all-shapes
-        .withTitle('Scene: All Shape Types Combined')
-        .withDescription('Tests rendering of a combined scene with various shape types, mimicking original buildScene.')
-        .runCanvasCode(draw_scene_all_shapes_combined)
-        // No specific checks in original test definition
-        .build();
-}
-
-// Define and register the visual regression test immediately.
-if (typeof RenderTestBuilder === 'function') {
-    define_scene_all_shapes_combined_test();
-}
-
-// Register for performance testing.
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_scene_all_shapes_combined === 'function') {
-    window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'scene--all-shapes-combined',
-        drawFunction: draw_scene_all_shapes_combined,
-        displayName: 'Perf: Combined Scene',
-        description: 'Performance of drawing a combined scene with multiple shape types.',
-        category: 'scenes' // New category
-    });
-} /**
+// Register the test
+registerHighLevelTest(
+    'scene--all-shapes-combined--test.js',
+    draw_scene_all_shapes_combined,
+    'scenes',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 } // Default visual comparison
+    },
+    {
+        displayName: 'Perf: Scene All Combined',
+        description: 'Performance of drawing a combined scene with multiple shape types.'
+    }
+); /**
  * Node.js Test Runner for Minimal-2D-Js-Software-Renderer - High Level Tests
  * ==========================================================================
  * 
