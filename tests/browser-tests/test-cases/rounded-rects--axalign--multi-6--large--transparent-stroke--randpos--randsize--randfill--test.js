@@ -113,32 +113,17 @@ function draw_rounded_rects_axalign_multi_6_large_transparent_stroke_randpos_ran
     return { logs }; 
 }
 
-/**
- * Defines and registers the large transparent rounded rectangles test case.
- */
-function define_rounded_rects_axalign_multi_6_large_transparent_stroke_randpos_randsize_randfill_test() {
-    return new RenderTestBuilder()
-        .withId('rounded-rects--axalign--multi-6--large--transparent-stroke--randpos--randsize--randfill') // Derived from: large-transparent-rounded-rectangles
-        .withTitle('Large Transparent-Stroke Rounded Rectangles (Multiple, Random Params)')
-        .withDescription('Tests rendering of multiple large rounded rectangles with transparent strokes, random fills, and fixed large radius.')
-        .runCanvasCode(draw_rounded_rects_axalign_multi_6_large_transparent_stroke_randpos_randsize_randfill)
-        // No specific checks in original test definition
-        .build();
-}
-
-// Define and register the visual regression test immediately.
-if (typeof RenderTestBuilder === 'function') {
-    define_rounded_rects_axalign_multi_6_large_transparent_stroke_randpos_randsize_randfill_test();
-}
-
-// Register for performance testing.
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_rounded_rects_axalign_multi_6_large_transparent_stroke_randpos_randsize_randfill === 'function') {
-    window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'rounded-rects--axalign--multi-6--large--transparent-stroke--randpos--randsize--randfill',
-        drawFunction: draw_rounded_rects_axalign_multi_6_large_transparent_stroke_randpos_randsize_randfill,
-        displayName: 'Perf: 6 Large TranspStroke RRects',
-        description: 'Performance of 6 large rounded rectangles with transparent strokes and random parameters.',
-        category: 'rounded-rectangles' 
-    });
-} 
+// Register the test
+registerHighLevelTest(
+    'rounded-rects--axalign--multi-6--large--transparent-stroke--randpos--randsize--randfill--test.js',
+    draw_rounded_rects_axalign_multi_6_large_transparent_stroke_randpos_randsize_randfill,
+    'rounded-rects',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 } // Default visual comparison
+    },
+    {
+        title: 'Large Transparent-Stroke Rounded Rectangles (Multiple, Random Params)',
+        description: 'Tests rendering of multiple large rounded rectangles with transparent strokes, random fills, and fixed large radius.',
+        displayName: 'Perf: 6 Large TranspStroke RRects'
+    }
+); 

@@ -95,32 +95,18 @@ function draw_rectangles__S_size__no_fill__1px_red_opaque_stroke__centered_at_pi
     return { logs, checkData }; 
 }
 
-/**
- * Defines and registers the test case.
- */
-function define_rectangles__S_size__no_fill__1px_red_opaque_stroke__centered_at_pixel__no_rotation_test() {
-    return new RenderTestBuilder()
-        .withId('rectangles--S-size--no-fill--1px_red_opaque_stroke--centered_at_pixel--no-rotation') // Unique ID
-        .withTitle('Rectangles: S-Size No-Fill 1px-Red-Opaque-Stroke Centered-At-Pixel No-Rotation')
-        .withDescription('Tests a single 1px red stroked rectangle, centered at pixel centers (X.5,Y.5), with adjusted even dimensions.')
-        .runCanvasCode(draw_rectangles__S_size__no_fill__1px_red_opaque_stroke__centered_at_pixel__no_rotation)
-        .withExtremesCheck() 
-        .build();
-}
-
-// Define and register the visual regression test.
-if (typeof RenderTestBuilder === 'function') {
-    define_rectangles__S_size__no_fill__1px_red_opaque_stroke__centered_at_pixel__no_rotation_test();
-}
-
-// Register for performance testing.
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_rectangles__S_size__no_fill__1px_red_opaque_stroke__centered_at_pixel__no_rotation === 'function') {
-    window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'rectangles--S-size--no-fill--1px_red_opaque_stroke--centered_at_pixel--no-rotation',
-        drawFunction: draw_rectangles__S_size__no_fill__1px_red_opaque_stroke__centered_at_pixel__no_rotation,
-        displayName: 'Perf: Rect S 1px Red Centered Pixel',
-        description: 'Performance of a single 1px red stroked rectangle, centered at pixel.',
-        category: 'rectangles' 
-    });
-} 
+// Register the test
+registerHighLevelTest(
+    'rectangles--S-size--no-fill--1px_red_opaque_stroke--centered_at_pixel--no-rotation--test.js',
+    draw_rectangles__S_size__no_fill__1px_red_opaque_stroke__centered_at_pixel__no_rotation,
+    'rectangles',
+    {
+        extremes: true,
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 } // Default visual comparison
+    },
+    {
+        title: 'Rectangles: S-Size No-Fill 1px-Red-Opaque-Stroke Centered-At-Pixel No-Rotation',
+        description: 'Tests a single 1px red stroked rectangle, centered at pixel centers (X.5,Y.5), with adjusted even dimensions.',
+        displayName: 'Perf: Rect S 1px Red Centered Pixel'
+    }
+); 

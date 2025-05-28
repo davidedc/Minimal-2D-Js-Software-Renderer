@@ -164,32 +164,16 @@ function draw_scene_all_shapes_combined(ctx, currentIterationNumber, instances =
     return { logs };
 }
 
-/**
- * Defines and registers the combined scene test case.
- */
-function define_scene_all_shapes_combined_test() {
-    return new RenderTestBuilder()
-        .withId('scene--all-shapes-combined') // Derived from: all-shapes
-        .withTitle('Scene: All Shape Types Combined')
-        .withDescription('Tests rendering of a combined scene with various shape types, mimicking original buildScene.')
-        .runCanvasCode(draw_scene_all_shapes_combined)
-        // No specific checks in original test definition
-        .build();
-}
-
-// Define and register the visual regression test immediately.
-if (typeof RenderTestBuilder === 'function') {
-    define_scene_all_shapes_combined_test();
-}
-
-// Register for performance testing.
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_scene_all_shapes_combined === 'function') {
-    window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'scene--all-shapes-combined',
-        drawFunction: draw_scene_all_shapes_combined,
-        displayName: 'Perf: Combined Scene',
-        description: 'Performance of drawing a combined scene with multiple shape types.',
-        category: 'scenes' // New category
-    });
-} 
+// Register the test
+registerHighLevelTest(
+    'scene--all-shapes-combined--test.js',
+    draw_scene_all_shapes_combined,
+    'scenes',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 } // Default visual comparison
+    },
+    {
+        displayName: 'Perf: Scene All Combined',
+        description: 'Performance of drawing a combined scene with multiple shape types.'
+    }
+); 

@@ -121,32 +121,17 @@ function draw_rounded_rects_axalign_multi_8_randpos_randsize_randstroke_randfill
     return { logs }; 
 }
 
-/**
- * Defines and registers the axis-aligned rounded rectangles test case.
- */
-function define_rounded_rects_axalign_multi_8_randpos_randsize_randstroke_randfill_test() {
-    return new RenderTestBuilder()
-        .withId('rounded-rects--axalign--multi-8--randpos--randsize--randstroke--randfill') // Derived from: axis-aligned-rounded-rectangles
-        .withTitle('Axis-Aligned Rounded Rectangles (Multiple, Random Params)')
-        .withDescription('Tests rendering of multiple axis-aligned rounded rectangles with random positions, sizes, strokes, fills, and corner radii.')
-        .runCanvasCode(draw_rounded_rects_axalign_multi_8_randpos_randsize_randstroke_randfill)
-        // No specific checks in original test definition
-        .build();
-}
-
-// Define and register the visual regression test immediately.
-if (typeof RenderTestBuilder === 'function') {
-    define_rounded_rects_axalign_multi_8_randpos_randsize_randstroke_randfill_test();
-}
-
-// Register for performance testing.
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_rounded_rects_axalign_multi_8_randpos_randsize_randstroke_randfill === 'function') {
-    window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'rounded-rects--axalign--multi-8--randpos--randsize--randstroke--randfill',
-        drawFunction: draw_rounded_rects_axalign_multi_8_randpos_randsize_randstroke_randfill,
-        displayName: 'Perf: 8 AxAlign RRects RandParams',
-        description: 'Performance of 8 axis-aligned rounded rectangles with various random parameters.',
-        category: 'rounded-rectangles' 
-    });
-} 
+// Register the test
+registerHighLevelTest(
+    'rounded-rects--axalign--multi-8--randpos--randsize--randstroke--randfill--test.js',
+    draw_rounded_rects_axalign_multi_8_randpos_randsize_randstroke_randfill,
+    'rounded-rects',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 } // Default visual comparison
+    },
+    {
+        title: 'Axis-Aligned Rounded Rectangles (Multiple, Random Params)',
+        description: 'Tests rendering of multiple axis-aligned rounded rectangles with random positions, sizes, strokes, fills, and corner radii.',
+        displayName: 'Perf: 8 AxAlign RRects RandParams'
+    }
+); 

@@ -100,31 +100,17 @@ function draw_rectangles_rotated_multi_varsize_randparams_randpos_randrot(ctx, c
     }
 }
 
-/**
- * Defines and registers the rotated rectangles test case.
- */
-function define_rectangles_rotated_multi_varsize_randparams_randpos_randrot_test() {
-    return new RenderTestBuilder()
-        .withId('rectangles--rotated--multi--varsize--randparams--randpos--randrot')
-        .withTitle('Rectangles: Rotated, Multiple, Variable Size & Params, Random Position & Rotation')
-        .withDescription('Tests rendering of multiple rotated rectangles with random positions, sizes, angles, strokes, and fills.')
-        .runCanvasCode(draw_rectangles_rotated_multi_varsize_randparams_randpos_randrot)
-        .build();
-}
-
-// Define and register the visual regression test immediately.
-if (typeof RenderTestBuilder === 'function') {
-    define_rectangles_rotated_multi_varsize_randparams_randpos_randrot_test();
-}
-
-// Register for performance testing.
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_rectangles_rotated_multi_varsize_randparams_randpos_randrot === 'function') {
-    window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'rectangles--rotated--multi--varsize--randparams--randpos--randrot',
-        drawFunction: draw_rectangles_rotated_multi_varsize_randparams_randpos_randrot,
-        displayName: 'Perf: Rects Rotated Multi Random',
-        description: 'Performance test for multiple rotated rectangles with random parameters.',
-        category: 'rectangles'
-    });
-} 
+// Register the test
+registerHighLevelTest(
+    'rectangles--rotated--multi--varsize--randparams--randpos--randrot--test.js',
+    draw_rectangles_rotated_multi_varsize_randparams_randpos_randrot,
+    'rectangles',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 } // Default visual comparison
+    },
+    {
+        title: 'Rectangles: Rotated, Multiple, Variable Size & Params, Random Position & Rotation',
+        description: 'Tests rendering of multiple rotated rectangles with random positions, sizes, angles, strokes, and fills.',
+        displayName: 'Perf: Rects Rotated Multi Random'
+    }
+); 

@@ -125,32 +125,18 @@ function draw_rounded_rect_single_1px_stroke_crisp_center_grid(ctx, currentItera
     return { logs, checkData };
 }
 
-/**
- * Defines and registers the 1px stroked rounded rectangle centered at grid test case.
- */
-function define_rounded_rect_single_1px_stroke_crisp_center_grid_test() {
-    return new RenderTestBuilder()
-        .withId('rounded-rect--single--1px-stroke--crisp--center-grid')
-        .withTitle('Single 1px Stroked Rounded Rectangle (Crisp, Centered at Grid)')
-        .withDescription('Tests crisp rendering of a single 1px red stroked rounded rectangle, centered at a grid crossing.')
-        .runCanvasCode(draw_rounded_rect_single_1px_stroke_crisp_center_grid)
-        .withExtremesCheck() // Original test had this
-        .build();
-}
-
-// Define and register the visual regression test immediately.
-if (typeof RenderTestBuilder === 'function') {
-    define_rounded_rect_single_1px_stroke_crisp_center_grid_test();
-}
-
-// Register for performance testing.
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_rounded_rect_single_1px_stroke_crisp_center_grid === 'function') {
-    window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'rounded-rect--single--1px-stroke--crisp--center-grid',
-        drawFunction: draw_rounded_rect_single_1px_stroke_crisp_center_grid,
-        displayName: 'Perf: RRect 1px Crisp Grid Center',
-        description: 'Performance of a single 1px stroked rounded rectangle, crisp and grid-centered.',
-        category: 'rounded-rectangles' 
-    });
-} 
+// Register the test
+registerHighLevelTest(
+    'rounded-rect--single--1px-stroke--crisp--center-grid--test.js',
+    draw_rounded_rect_single_1px_stroke_crisp_center_grid,
+    'rounded-rects',
+    {
+        extremes: true,
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 } // Default visual comparison
+    },
+    {
+        title: 'Single 1px Stroked Rounded Rectangle (Crisp, Centered at Grid)',
+        description: 'Tests crisp rendering of a single 1px red stroked rounded rectangle, centered at a grid crossing.',
+        displayName: 'Perf: RRect 1px Crisp Grid Center'
+    }
+); 

@@ -135,32 +135,17 @@ function draw_circles_multi_12_precise_randparams_randpos(ctx, currentIterationN
     return { logs }; 
 }
 
-/**
- * Defines and registers the multiple precise random circles test case.
- */
-function define_circles_multi_12_precise_randparams_randpos_test() {
-    return new RenderTestBuilder()
-        .withId('circles--multi-12--precise--randparams--randpos') // Derived from: multiple-precise-random-circles
-        .withTitle('Multiple Precise Random Circles (Stroked & Filled)')
-        .withDescription('Tests rendering of 12 circles with precise pixel alignment, varied strokes and fills, and random positions.')
-        .runCanvasCode(draw_circles_multi_12_precise_randparams_randpos)
-        // No specific checks in original test definition
-        .build();
-}
-
-// Define and register the visual regression test immediately.
-if (typeof RenderTestBuilder === 'function') {
-    define_circles_multi_12_precise_randparams_randpos_test();
-}
-
-// Register for performance testing.
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_circles_multi_12_precise_randparams_randpos === 'function') {
-    window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'circles--multi-12--precise--randparams--randpos',
-        drawFunction: draw_circles_multi_12_precise_randparams_randpos,
-        displayName: 'Perf: 12 Precise RandCircles',
-        description: 'Performance of 12 precise random circles with varied strokes/fills.',
-        category: 'circles' 
-    });
-} 
+// Register the test
+registerHighLevelTest(
+    'circles--multi-12--precise--randparams--randpos--test.js',
+    draw_circles_multi_12_precise_randparams_randpos,
+    'circles',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 } // Default visual comparison
+    },
+    {
+        title: 'Multiple Precise Random Circles (Stroked & Filled)',
+        description: 'Tests rendering of 12 circles with precise pixel alignment, varied strokes and fills, and random positions.',
+        displayName: 'Perf: 12 Precise RandCircles'
+    }
+); 

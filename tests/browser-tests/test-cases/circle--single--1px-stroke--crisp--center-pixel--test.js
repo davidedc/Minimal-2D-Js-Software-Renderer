@@ -83,34 +83,21 @@ function draw_circle_single_1px_stroke_crisp_center_pixel(ctx, currentIterationN
     return { logs, checkData };
 }
 
-/**
- * Defines and registers the 1px stroked circle centered at pixel test case.
- */
-function define_circle_single_1px_stroke_crisp_center_pixel_test() {
-    return new RenderTestBuilder()
-        .withId('circle--single--1px-stroke--crisp--center-pixel') // Derived from original: centered-1px-circle-pixel
-        .withTitle('Single 1px Stroked Circle (Crisp, Centered at Pixel)')
-        .withDescription('Tests crisp rendering of a single 1px red stroked circle, centered at a pixel center.')
-        .runCanvasCode(draw_circle_single_1px_stroke_crisp_center_pixel)
-        .withExtremesCheck(0.03) // Original test had this with tolerance
-        .withUniqueColorsCheck(1) // Original test had this
-        .withContinuousStrokeCheck({ verticalScan: true, horizontalScan: true }) // Original test had this
-        .build();
-}
-
-// Define and register the visual regression test immediately.
-if (typeof RenderTestBuilder === 'function') {
-    define_circle_single_1px_stroke_crisp_center_pixel_test();
-}
-
-// Register for performance testing.
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_circle_single_1px_stroke_crisp_center_pixel === 'function') {
-    window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'circle--single--1px-stroke--crisp--center-pixel',
-        drawFunction: draw_circle_single_1px_stroke_crisp_center_pixel,
-        displayName: 'Perf: Circle 1px Crisp Pixel Ctr',
-        description: 'Performance of a single 1px stroked circle, crisp and pixel-centered.',
-        category: 'circles' 
-    });
-} 
+// Register the test
+registerHighLevelTest(
+    'circle--single--1px-stroke--crisp--center-pixel--test.js',
+    draw_circle_single_1px_stroke_crisp_center_pixel,
+    'circles',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 },
+        extremes: { tolerance: 0.03 },
+        totalUniqueColors: 1,
+        continuousStroke: true
+    },
+    {
+        title: 'Single 1px Stroked Circle (Crisp, Centered at Pixel)',
+        description: 'Tests crisp rendering of a single 1px red stroked circle, centered at a pixel center.',
+        displayName: 'Perf: Circle 1px Crisp Pixel Ctr'
+        // The description above will also be used for the performance test registry entry.
+    }
+); 

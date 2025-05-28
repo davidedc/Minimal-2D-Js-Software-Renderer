@@ -91,32 +91,17 @@ function draw_rounded_rects_multi_10_1px_opaque_stroke_rand_fill_crisp_center_ad
     return { logs }; 
 }
 
-/**
- * Defines and registers the 10 thin opaque-stroked rounded rectangles test case.
- */
-function define_rounded_rects_multi_10_1px_opaque_stroke_rand_fill_crisp_center_adj_test() {
-    return new RenderTestBuilder()
-        .withId('rounded-rects--multi-10--1px-opaque-stroke--rand-fill--crisp-center-adj') // Derived from original: thin-rounded-rects
-        .withTitle('10 Thin Opaque-Stroke Rounded Rectangles (1px, Crisp Center Adj.)')
-        .withDescription('Tests rendering of 10 rounded rectangles with 1px opaque strokes, random fills, and crisp center adjustment.')
-        .runCanvasCode(draw_rounded_rects_multi_10_1px_opaque_stroke_rand_fill_crisp_center_adj)
-        // No specific checks in original test definition
-        .build();
-}
-
-// Define and register the visual regression test immediately.
-if (typeof RenderTestBuilder === 'function') {
-    define_rounded_rects_multi_10_1px_opaque_stroke_rand_fill_crisp_center_adj_test();
-}
-
-// Register for performance testing.
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_rounded_rects_multi_10_1px_opaque_stroke_rand_fill_crisp_center_adj === 'function') {
-    window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'rounded-rects--multi-10--1px-opaque-stroke--rand-fill--crisp-center-adj',
-        drawFunction: draw_rounded_rects_multi_10_1px_opaque_stroke_rand_fill_crisp_center_adj,
-        displayName: 'Perf: 10 RRects ThinOpaque AdjCenter',
-        description: 'Performance of 10 thin opaque-stroked rounded rectangles with crisp center adjustment.',
-        category: 'rounded-rectangles' 
-    });
-} 
+// Register the test
+registerHighLevelTest(
+    'rounded-rects--multi-10--1px-opaque-stroke--rand-fill--crisp-center-adj--test.js',
+    draw_rounded_rects_multi_10_1px_opaque_stroke_rand_fill_crisp_center_adj,
+    'rounded-rects',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 } // Default visual comparison
+    },
+    {
+        title: '10 Thin Opaque-Stroke Rounded Rectangles (1px, Crisp Center Adj.)',
+        description: 'Tests rendering of 10 rounded rectangles with 1px opaque strokes, random fills, and crisp center adjustment.',
+        displayName: 'Perf: 10 RRects ThinOpaque AdjCenter'
+    }
+); 

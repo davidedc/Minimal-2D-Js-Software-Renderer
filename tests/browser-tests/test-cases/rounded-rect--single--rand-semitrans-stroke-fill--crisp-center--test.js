@@ -113,34 +113,22 @@ function draw_rounded_rect_single_rand_semitrans_stroke_fill_crisp_center(ctx, c
     return { logs }; 
 }
 
-/**
- * Defines and registers the centered rounded rectangle with semi-transparent stroke/fill test case.
- */
-function define_rounded_rect_single_rand_semitrans_stroke_fill_crisp_center_test() {
-    return new RenderTestBuilder()
-        .withId('rounded-rect--single--rand-semitrans-stroke-fill--crisp-center') // Derived from original: centered-rounded-rect-transparent
-        .withTitle('Single Centered Rounded Rectangle (Semi-Transparent Stroke & Fill, Crisp Center)')
-        .withDescription('Tests a single rounded rectangle with random stroke widths and semi-transparent colors, centered crisply (grid or pixel).')
-        .runCanvasCode(draw_rounded_rect_single_rand_semitrans_stroke_fill_crisp_center)
-        .withColorCheckMiddleRow({ expectedUniqueColors: 3 }) 
-        .withColorCheckMiddleColumn({ expectedUniqueColors: 3 })
-        .withSpecklesCheckOnSwCanvas()
-        .build();
-}
-
-// Define and register the visual regression test immediately.
-if (typeof RenderTestBuilder === 'function') {
-    define_rounded_rect_single_rand_semitrans_stroke_fill_crisp_center_test();
-}
-
-// Register for performance testing.
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_rounded_rect_single_rand_semitrans_stroke_fill_crisp_center === 'function') {
-    window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'rounded-rect--single--rand-semitrans-stroke-fill--crisp-center',
-        drawFunction: draw_rounded_rect_single_rand_semitrans_stroke_fill_crisp_center,
-        displayName: 'Perf: RRect RandTrans Stroke/Fill CrispCenter',
-        description: 'Performance of a single centered rounded rectangle with random semi-transparent stroke/fill.',
-        category: 'rounded-rectangles' 
-    });
-} 
+// Register the test
+registerHighLevelTest(
+    'rounded-rect--single--rand-semitrans-stroke-fill--crisp-center--test.js',
+    draw_rounded_rect_single_rand_semitrans_stroke_fill_crisp_center,
+    'rounded-rects',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 },
+        uniqueColors: {
+            middleRow: { count: 3 },
+            middleColumn: { count: 3 }
+        },
+        speckles: true
+    },
+    {
+        title: 'Single Centered Rounded Rectangle (Semi-Transparent Stroke & Fill, Crisp Center)',
+        description: 'Tests a single rounded rectangle with random stroke widths and semi-transparent colors, centered crisply (grid or pixel).',
+        displayName: 'Perf: RRect RandTrans Stroke/Fill CrispCenter'
+    }
+);

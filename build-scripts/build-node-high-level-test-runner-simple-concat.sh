@@ -139,7 +139,11 @@ cat "$PROJECT_ROOT/src/RenderTestBuilder.js" >> "$OUTPUT_FILE"
 echo "  Added: src/RenderTestBuilder.js"
 echo "[Build Script] Finished Test Framework Core."
 
-# 7. Individual High-Level Test Files (Define tests)
+# 7. Registration code for high-level tests
+cat "$PROJECT_ROOT/tests/browser-tests/test-utils/test-registration-utils.js" >> "$OUTPUT_FILE"
+echo "  Added: tests/browser-tests/test-utils/test-registration-utils.js"
+
+# 8. Individual High-Level Test Files (Define tests)
 TEST_FILES_DIR="$PROJECT_ROOT/tests/browser-tests/test-cases"
 echo "[Build Script] Adding High-Level Test Files from: $TEST_FILES_DIR"
 for file in "$TEST_FILES_DIR/"*--test.js; do
@@ -151,7 +155,7 @@ for file in "$TEST_FILES_DIR/"*--test.js; do
 done
 echo "[Build Script] Finished High-Level Test Files."
 
-# 8. Node High-Level Test Runner Base Logic
+# 9. Node High-Level Test Runner Base Logic
 echo "[Build Script] Adding Node High-Level Test Runner Base Logic..."
 cat "$PROJECT_ROOT/src/node-high-level-test-runner-base.js" >> "$OUTPUT_FILE"
 echo "  Added: src/node-high-level-test-runner-base.js"

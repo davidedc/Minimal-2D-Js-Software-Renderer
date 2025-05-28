@@ -124,35 +124,22 @@ function draw_circle_single_randparams_crisp_center_randpos_type(ctx, currentIte
     return { logs, checkData };
 }
 
-/**
- * Defines and registers the single random circle test case.
- */
-function define_circle_single_randparams_crisp_center_randpos_type_test() {
-    return new RenderTestBuilder()
-        .withId('circle--single--randparams--crisp-center--randpos-type') // Derived from: single-random-circle
-        .withTitle('Single Random Circle (Crisp, Random Center Type)')
-        .withDescription('Tests a single random circle with random params, crisp center (grid or pixel), stroke, and fill.')
-        .runCanvasCode(draw_circle_single_randparams_crisp_center_randpos_type)
-        .withExtremesCheck(0.03)
-        .withNoGapsInStrokeEdgesCheck()
-        .withUniqueColorsCheck(3)
-        .withSpecklesCheckOnSwCanvas()
-        .build();
-}
-
-// Define and register the visual regression test immediately.
-if (typeof RenderTestBuilder === 'function') {
-    define_circle_single_randparams_crisp_center_randpos_type_test();
-}
-
-// Register for performance testing.
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_circle_single_randparams_crisp_center_randpos_type === 'function') {
-    window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'circle--single--randparams--crisp-center--randpos-type',
-        drawFunction: draw_circle_single_randparams_crisp_center_randpos_type,
-        displayName: 'Perf: Circle SingleRand Crisp RandCenterType',
-        description: 'Performance of a single random circle with crisp center (randomly grid/pixel aligned). ',
-        category: 'circles' 
-    });
-} 
+// Register the test
+registerHighLevelTest(
+    'circle--single--randparams--crisp-center--randpos-type--test.js',
+    draw_circle_single_randparams_crisp_center_randpos_type,
+    'circles',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 },
+        extremes: { tolerance: 0.03 },
+        noGapsInStrokeEdges: true,
+        totalUniqueColors: 3,
+        speckles: true
+    },
+    {
+        title: 'Single Random Circle (Crisp, Random Center Type)',
+        description: 'Tests a single random circle with random params, crisp center (grid or pixel), stroke, and fill.',
+        displayName: 'Perf: Circle SingleRand Crisp RandCenterType'
+        // The description above will also be used for the performance test registry entry.
+    }
+); 

@@ -117,34 +117,22 @@ function draw_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__horizo
     }
 }
 
-/**
- * Defines and registers the test case using RenderTestBuilder.
- */
-function define_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__horizontal_orient() {
-    return new RenderTestBuilder()
-      .withId('lines--M-size--no-fill--1px-opaque-stroke--crisp-pixel-pos--horizontal-orient')
-      .withTitle('Lines: M-Size No-Fill 1px-Opaque-Stroke Crisp-Pixel-Pos Horizontal')
-      .withDescription('Tests crisp rendering of a horizontal 1px line centered between pixels using canvas code.')
-      .runCanvasCode(draw_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__horizontal_orient) // Use the new drawing function
-      .withColorCheckMiddleRow({ expectedUniqueColors: 1 }) // Same check as original
-      .withColorCheckMiddleColumn({ expectedUniqueColors: 1 }) // Same check as original
-      .withExtremesCheck() // Same check as original, uses return value from runCanvasCode
-      .build(); // Creates and registers the RenderTest instance
-}
-
-// Define and register the test immediately when this script is loaded.
-if (typeof RenderTestBuilder === 'function') {
-  define_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__horizontal_orient();
-}
-
-// Performance test registration
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__horizontal_orient === 'function') {
-    window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'lines--M-size--no-fill--1px-opaque-stroke--crisp-pixel-pos--horizontal-orient',
-        drawFunction: draw_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__horizontal_orient,
-        displayName: 'Perf: Lines M 1px Crisp Horizontal',
-        description: 'Performance test for horizontal 1px lines, crisp pixel positioning.',
-        category: 'lines'
-    });
-} 
+// Register the test
+registerHighLevelTest(
+    'lines--M-size--no-fill--1px-opaque-stroke--crisp-pixel-pos--horizontal-orient--test.js',
+    draw_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__horizontal_orient,
+    'lines',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 }, // Default visual comparison
+        uniqueColors: { 
+            middleRow: { count: 1 },
+            middleColumn: { count: 1 } // Added MiddleColumn
+        }, 
+        extremes: true
+    },
+    {
+        title: 'Lines: M-Size No-Fill 1px-Opaque-Stroke Crisp-Pixel-Pos Horizontal',
+        description: 'Tests crisp rendering of a horizontal 1px line centered between pixels using canvas code.',
+        displayName: 'Perf: Lines M 1px Crisp Horizontal'
+    }
+); 

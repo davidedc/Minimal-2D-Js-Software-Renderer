@@ -112,35 +112,22 @@ function draw_circle_single_no_stroke_randparams_crisp_center_randpos_type(ctx, 
     return { logs, checkData };
 }
 
-/**
- * Defines and registers the single no-stroke circle test case.
- */
-function define_circle_single_no_stroke_randparams_crisp_center_randpos_type_test() {
-    return new RenderTestBuilder()
-        .withId('circle--single--no-stroke--randparams--crisp-center--randpos-type') // Derived from: single-no-stroke-circle
-        .withTitle('Single Circle Without Stroke (Crisp, Random Center Type)')
-        .withDescription('Tests rendering of a single circle with no stroke, only fill, random params, and crisp center (grid or pixel).')
-        .runCanvasCode(draw_circle_single_no_stroke_randparams_crisp_center_randpos_type)
-        .withExtremesCheck(0.03)
-        .withNoGapsInFillEdgesCheck()
-        .withUniqueColorsCheck(1)
-        .withSpecklesCheckOnSwCanvas()
-        .build();
-}
-
-// Define and register the visual regression test immediately.
-if (typeof RenderTestBuilder === 'function') {
-    define_circle_single_no_stroke_randparams_crisp_center_randpos_type_test();
-}
-
-// Register for performance testing.
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_circle_single_no_stroke_randparams_crisp_center_randpos_type === 'function') {
-    window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'circle--single--no-stroke--randparams--crisp-center--randpos-type',
-        drawFunction: draw_circle_single_no_stroke_randparams_crisp_center_randpos_type,
-        displayName: 'Perf: Circle NoStroke Crisp RandCenterType',
-        description: 'Performance of a single no-stroke circle with crisp center (randomly grid/pixel aligned). ',
-        category: 'circles' 
-    });
-} 
+// Register the test
+registerHighLevelTest(
+    'circle--single--no-stroke--randparams--crisp-center--randpos-type--test.js',
+    draw_circle_single_no_stroke_randparams_crisp_center_randpos_type,
+    'circles',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 },
+        extremes: { tolerance: 0.03 },
+        noGapsInFillEdges: true,
+        totalUniqueColors: 1,
+        speckles: true
+    },
+    {
+        title: 'Single Circle Without Stroke (Crisp, Random Center Type)',
+        description: 'Tests rendering of a single circle with no stroke, only fill, random params, and crisp center (grid or pixel).',
+        displayName: 'Perf: Circle NoStroke Crisp RandCenterType'
+        // The description above will also be used for the performance test registry entry.
+    }
+); 

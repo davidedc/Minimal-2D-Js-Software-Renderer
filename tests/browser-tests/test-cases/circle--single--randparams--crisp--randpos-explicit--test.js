@@ -150,35 +150,21 @@ function draw_circle_single_randparams_crisp_randpos_explicit(ctx, currentIterat
     return { logs, checkData };
 }
 
-/**
- * Defines and registers the randomly positioned circle with stroke test case.
- */
-function define_circle_single_randparams_crisp_randpos_explicit_test() {
-    return new RenderTestBuilder()
-        .withId('circle--single--randparams--crisp--randpos-explicit') // Derived from: random-position-circle
-        .withTitle('Single Randomly Positioned Circle with Stroke (Crisp)')
-        .withDescription('Tests a single randomly positioned circle with random params, crisp stroke/fill.')
-        .runCanvasCode(draw_circle_single_randparams_crisp_randpos_explicit)
-        .withExtremesCheck(0.03)
-        .withNoGapsInStrokeEdgesCheck()
-        .withUniqueColorsCheck(3)
-        .withSpecklesCheckOnSwCanvas()
-        .build();
-}
-
-// Define and register the visual regression test immediately.
-if (typeof RenderTestBuilder === 'function') {
-    define_circle_single_randparams_crisp_randpos_explicit_test();
-}
-
-// Register for performance testing.
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_circle_single_randparams_crisp_randpos_explicit === 'function') {
-    window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'circle--single--randparams--crisp--randpos-explicit',
-        drawFunction: draw_circle_single_randparams_crisp_randpos_explicit,
-        displayName: 'Perf: Circle RandPos Crisp',
-        description: 'Performance of a single randomly positioned circle with crisp rendering.',
-        category: 'circles' 
-    });
-} 
+// Register the test
+registerHighLevelTest(
+    'circle--single--randparams--crisp--randpos-explicit--test.js',
+    draw_circle_single_randparams_crisp_randpos_explicit,
+    'circles',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 },
+        extremes: { tolerance: 0.03 },
+        noGapsInStrokeEdges: true,
+        totalUniqueColors: 3,
+        speckles: true
+    },
+    {
+        title: 'Single Randomly Positioned Circle with Stroke (Crisp)',
+        description: 'Tests a single randomly positioned circle with random params, crisp stroke/fill.',
+        displayName: 'Perf: Circle RandPos Crisp'
+    }
+); 

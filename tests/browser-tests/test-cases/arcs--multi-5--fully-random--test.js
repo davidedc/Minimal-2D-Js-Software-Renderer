@@ -72,32 +72,16 @@ function draw_arcs_multi_5_fully_random(ctx, currentIterationNumber, instances =
     return { logs }; 
 }
 
-/**
- * Defines and registers the multiple fully random arcs test case.
- */
-function define_arcs_multi_5_fully_random_test() {
-    return new RenderTestBuilder()
-        .withId('arcs--multi-5--fully-random') // Derived from: random-arcs
-        .withTitle('Multiple Fully Random Arcs')
-        .withDescription('Tests rendering of 5 arcs with fully random positions, angles, sizes, colors, and strokes.')
-        .runCanvasCode(draw_arcs_multi_5_fully_random)
-        // No specific checks in original test definition
-        .build();
-}
-
-// Define and register the visual regression test immediately.
-if (typeof RenderTestBuilder === 'function') {
-    define_arcs_multi_5_fully_random_test();
-}
-
-// Register for performance testing.
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_arcs_multi_5_fully_random === 'function') {
-    window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'arcs--multi-5--fully-random',
-        drawFunction: draw_arcs_multi_5_fully_random,
+// Register the test
+registerHighLevelTest(
+    'arcs--multi-5--fully-random--test.js',
+    draw_arcs_multi_5_fully_random,
+    'arcs',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 } // Default visual comparison
+    },
+    {
         displayName: 'Perf: 5 FullyRandom Arcs',
-        description: 'Performance of 5 fully random arcs.',
-        category: 'arcs' 
-    });
-} 
+        description: '5 fully random arcs.'
+    }
+); 

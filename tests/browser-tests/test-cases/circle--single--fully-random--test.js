@@ -66,35 +66,19 @@ function draw_circle_single_fully_random(ctx, currentIterationNumber, instances 
     return { logs }; 
 }
 
-/**
- * Defines and registers the single fully random circle test case.
- */
-function define_circle_single_fully_random_test() {
-    return new RenderTestBuilder()
-        .withId('circle--single--fully-random') // Derived from: one-random-circle
-        .withTitle('Single Fully Random Circle')
-        .withDescription('Tests rendering of a single circle with fully random position, size, colors, and stroke.')
-        .runCanvasCode(draw_circle_single_fully_random)
-        // .withExtremesCheck(0.03) // Explicitly commented out in original
-        .withNoGapsInStrokeEdgesCheck()
-        .withUniqueColorsCheck(3)
-        .withSpecklesCheckOnSwCanvas()
-        .build();
-}
-
-// Define and register the visual regression test immediately.
-if (typeof RenderTestBuilder === 'function') {
-    define_circle_single_fully_random_test();
-}
-
-// Register for performance testing.
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_circle_single_fully_random === 'function') {
-    window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'circle--single--fully-random',
-        drawFunction: draw_circle_single_fully_random,
+// Register the test
+registerHighLevelTest(
+    'circle--single--fully-random--test.js',
+    draw_circle_single_fully_random,
+    'circles',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 }, // Default visual comparison
+        totalUniqueColors: 3, // Corrected: Was uniqueColors: { middleRow: { count: 3 } }
+        speckles: true,
+        noGapsInStrokeEdges: true
+    },
+    {
         displayName: 'Perf: Circle FullyRandom',
-        description: 'Performance of a single fully random circle.',
-        category: 'circles' 
-    });
-} 
+        description: 'Performance of a single fully random circle.'
+    }
+); 

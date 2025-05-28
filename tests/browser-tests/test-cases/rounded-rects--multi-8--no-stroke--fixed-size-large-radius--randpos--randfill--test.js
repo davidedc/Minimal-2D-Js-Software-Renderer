@@ -76,32 +76,17 @@ function draw_rounded_rects_multi_8_no_stroke_fixed_size_large_radius_randpos_ra
     return { logs }; 
 }
 
-/**
- * Defines and registers the no-stroke rounded rectangles test case.
- */
-function define_rounded_rects_multi_8_no_stroke_fixed_size_large_radius_randpos_randfill_test() {
-    return new RenderTestBuilder()
-        .withId('rounded-rects--multi-8--no-stroke--fixed-size-large-radius--randpos--randfill') // Derived from: no-stroke-rounded-rectangles
-        .withTitle('Rounded Rectangles Without Stroke (Multiple, Fixed Size, Random Pos)')
-        .withDescription('Tests rendering of 8 rounded rectangles with no stroke, only fill, fixed size/radius, and random positions.')
-        .runCanvasCode(draw_rounded_rects_multi_8_no_stroke_fixed_size_large_radius_randpos_randfill)
-        // No specific checks in original test definition
-        .build();
-}
-
-// Define and register the visual regression test immediately.
-if (typeof RenderTestBuilder === 'function') {
-    define_rounded_rects_multi_8_no_stroke_fixed_size_large_radius_randpos_randfill_test();
-}
-
-// Register for performance testing.
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_rounded_rects_multi_8_no_stroke_fixed_size_large_radius_randpos_randfill === 'function') {
-    window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'rounded-rects--multi-8--no-stroke--fixed-size-large-radius--randpos--randfill',
-        drawFunction: draw_rounded_rects_multi_8_no_stroke_fixed_size_large_radius_randpos_randfill,
-        displayName: 'Perf: 8 NoStroke RRects FixedSize RandPos',
-        description: 'Performance of 8 no-stroke rounded rectangles with fixed size/radius and random positions.',
-        category: 'rounded-rectangles' 
-    });
-} 
+// Register the test
+registerHighLevelTest(
+    'rounded-rects--multi-8--no-stroke--fixed-size-large-radius--randpos--randfill--test.js',
+    draw_rounded_rects_multi_8_no_stroke_fixed_size_large_radius_randpos_randfill,
+    'rounded-rects',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 } // Default visual comparison
+    },
+    {
+        title: 'Rounded Rectangles Without Stroke (Multiple, Fixed Size, Random Pos)',
+        description: 'Tests rendering of 8 rounded rectangles with no stroke, only fill, fixed size/radius, and random positions.',
+        displayName: 'Perf: 8 NoStroke RRects FixedSize RandPos'
+    }
+); 

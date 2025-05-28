@@ -91,35 +91,18 @@ function draw_lines__multi_15__no_fill__random_stroke__random_pos__random_orient
     return logs && logs.length > 0 ? { logs } : null;
 }
 
-/**
- * Defines and registers the test case for rendering multiple random lines using RenderTestBuilder.
- */
-function define_lines__multi_15__no_fill__random_stroke__random_pos__random_orient_test() {
-    const defaultLineCount = 15; // Default number of lines for visual regression test
-
-    return new RenderTestBuilder()
-        .withId('lines--multi_15--no-fill--random-stroke__random_pos--random_orient')
-        .withTitle('Lines: Multi-15 No-Fill Random-Stroke Random-Pos Random-Orient')
-        .withDescription('Tests rendering of ' + defaultLineCount + ' lines with random positions, thickness, and colors.')
-        .runCanvasCode(draw_lines__multi_15__no_fill__random_stroke__random_pos__random_orient, defaultLineCount)
-        // No specific checks from original low-level test.
-        // Visual inspection and performance are the main goals.
-        .build(); // Creates and registers the RenderTest instance
-}
-
-// Define and register the visual regression test immediately when this script is loaded.
-if (typeof RenderTestBuilder === 'function') {
-    define_lines__multi_15__no_fill__random_stroke__random_pos__random_orient_test();
-}
-
-// Register for performance testing
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_lines__multi_15__no_fill__random_stroke__random_pos__random_orient === 'function') {
-    window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'lines--multi_15--no-fill--random-stroke__random_pos--random_orient',
-        drawFunction: draw_lines__multi_15__no_fill__random_stroke__random_pos__random_orient,
+// Register the test
+registerHighLevelTest(
+    'lines--multi_15--no-fill--random-stroke__random_pos--random_orient--test.js',
+    draw_lines__multi_15__no_fill__random_stroke__random_pos__random_orient,
+    'lines',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 }, // Default visual comparison
+        drawFunctionArgs: [15] // initialCount for the draw function
+    },
+    {
+        title: 'Lines: Multi-15 No-Fill Random-Stroke Random-Pos Random-Orient',
         displayName: 'Perf: Lines Multi Random Props',
-        description: 'Performance test for rendering multiple (default ' + 15 + ', or N from harness) lines with random properties.',
-        category: 'lines'
-    });
-} 
+        description: 'Performance test for rendering multiple (default 15, or N from harness) lines with random properties.'
+    }
+); 

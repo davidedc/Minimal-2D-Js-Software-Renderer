@@ -95,42 +95,19 @@ function draw_lines__multi_20__no_fill__1px_black_opaque_stroke__random_pos__ran
     }
 }
 
-/**
- * Defines and registers the test case using RenderTestBuilder.
- */
-function define_lines__multi_20__no_fill__1px_black_opaque_stroke__random_pos__random_orient() {
-  if (typeof RenderTestBuilder !== 'function' || typeof draw_lines__multi_20__no_fill__1px_black_opaque_stroke__random_pos__random_orient !== 'function') {
-    console.error('Missing RenderTestBuilder or drawing function for 1px black lines test');
-    return;
-  }
-  // Ensure utility function is available
-  if (typeof getRandomPoint !== 'function') {
-    console.error('Missing utility function getRandomPoint');
-    return;
-  }
-
-  return new RenderTestBuilder()
-    .withId('lines--multi-20--no-fill--1px-black-opaque-stroke--random-pos--random-orient')
-    .withTitle('Lines: Multi-20 No-Fill 1px-Black-Opaque-Stroke Random-Pos Random-Orient')
-    .withDescription('Tests rendering of 20 black lines (1px width) with random positions/orientations using canvas code.')
-    .runCanvasCode(draw_lines__multi_20__no_fill__1px_black_opaque_stroke__random_pos__random_orient)
-    // No specific checks were applied in the original test definition
-    .build(); 
-}
-
-// Define and register the test immediately when this script is loaded.
-if (typeof RenderTestBuilder === 'function') {
-  define_lines__multi_20__no_fill__1px_black_opaque_stroke__random_pos__random_orient();
-}
-
-// Performance test registration
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_lines__multi_20__no_fill__1px_black_opaque_stroke__random_pos__random_orient === 'function') {
-    window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'lines--multi_20--no_fill__1px_black_opaque_stroke__random_pos--random_orient',
-        drawFunction: draw_lines__multi_20__no_fill__1px_black_opaque_stroke__random_pos__random_orient,
-        displayName: 'Perf: Lines Multi-20 1px Random',
-        description: 'Performance test for Multi-20 lines, 1px black, random.',
-        category: 'lines'
-    });
-} 
+// Register the test
+registerHighLevelTest(
+    'lines--multi_20--no-fill--1px_black_opaque_stroke__random_pos--random_orient--test.js',
+    draw_lines__multi_20__no_fill__1px_black_opaque_stroke__random_pos__random_orient,
+    'lines',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 } // Default visual comparison
+        // No drawFunctionArgs needed as the draw function handles null instances to draw 20 lines.
+    },
+    {
+        title: 'Lines: Multi-20 No-Fill 1px-Black-Opaque-Stroke Random-Pos Random-Orient',
+        description: 'Tests rendering of 20 black lines (1px width) with random positions/orientations using canvas code.',
+        displayName: 'Perf: Lines Multi-20 1px Random'
+        // The description above will also be used for the performance test registry entry.
+    }
+); 

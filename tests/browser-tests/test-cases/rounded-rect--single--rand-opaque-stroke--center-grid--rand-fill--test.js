@@ -95,35 +95,22 @@ function draw_rounded_rect_single_rand_opaque_stroke_center_grid_rand_fill(ctx, 
     return { logs }; 
 }
 
-/**
- * Defines and registers the centered rounded rectangle with random opaque stroke test case.
- */
-function define_rounded_rect_single_rand_opaque_stroke_center_grid_rand_fill_test() {
-    return new RenderTestBuilder()
-        .withId('rounded-rect--single--rand-opaque-stroke--center-grid--rand-fill')
-        .withTitle('Single Centered Rounded Rectangle (Random Opaque Stroke, Random Fill, Grid Center)')
-        .withDescription('Tests a single rounded rectangle with random stroke widths (opaque), random fills, centered at a grid crossing.')
-        .runCanvasCode(draw_rounded_rect_single_rand_opaque_stroke_center_grid_rand_fill)
-        .withColorCheckMiddleRow({ expectedUniqueColors: 2 }) // From original test
-        .withColorCheckMiddleColumn({ expectedUniqueColors: 2 }) // From original test
-        .withSpecklesCheckOnSwCanvas() // From original test
-        // No explicit compareWithThreshold in original, defaults to (0,0)
-        .build();
-}
-
-// Define and register the visual regression test immediately.
-if (typeof RenderTestBuilder === 'function') {
-    define_rounded_rect_single_rand_opaque_stroke_center_grid_rand_fill_test();
-}
-
-// Register for performance testing.
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_rounded_rect_single_rand_opaque_stroke_center_grid_rand_fill === 'function') {
-    window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'rounded-rect--single--rand-opaque-stroke--center-grid--rand-fill',
-        drawFunction: draw_rounded_rect_single_rand_opaque_stroke_center_grid_rand_fill,
-        displayName: 'Perf: RRect RandStroke Opaque Grid Fill',
-        description: 'Performance of a single centered rounded rectangle with random opaque stroke and random fill.',
-        category: 'rounded-rectangles' 
-    });
-} 
+// Register the test
+registerHighLevelTest(
+    'rounded-rect--single--rand-opaque-stroke--center-grid--rand-fill--test.js',
+    draw_rounded_rect_single_rand_opaque_stroke_center_grid_rand_fill,
+    'rounded-rects',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 }, // Default visual comparison
+        uniqueColors: { 
+            middleRow: { count: 2 }, // Updated structure
+            middleColumn: { count: 2 } // Added from original define
+        }, 
+        speckles: true
+    },
+    {
+        title: 'Single Centered Rounded Rectangle (Random Opaque Stroke, Random Fill, Grid Center)',
+        description: 'Tests a single rounded rectangle with random stroke widths (opaque), random fills, centered at a grid crossing.',
+        displayName: 'Perf: RRect RandStroke Opaque Grid Fill'
+    }
+); 

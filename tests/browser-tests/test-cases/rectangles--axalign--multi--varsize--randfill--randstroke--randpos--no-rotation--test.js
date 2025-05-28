@@ -207,33 +207,18 @@ function draw_rectangles_axalign_multi_varsize_randfill_randstroke_randpos_no_ro
     }
 }
 
-/**
- * Defines and registers the test case with the new descriptive ID.
- */
-function define_rectangles_axalign_multi_varsize_randfill_randstroke_randpos_no_rotation_test() {
-    return new RenderTestBuilder()
-        .withId('rectangles--axalign--multi--varsize--randfill--randstroke--randpos--no-rotation')
-        .withTitle('Rectangles: Axis-aligned, Multiple, Variable Size, Random Fill & Stroke, Random Position, No Rotation')
-        .withDescription('Tests rendering of multiple axis-aligned rectangles with random sizes, fills (variable alpha), strokes (opaque, even width), and positions. No rotation.')
-        .runCanvasCode(draw_rectangles_axalign_multi_varsize_randfill_randstroke_randpos_no_rotation)
-        .withExtremesCheck()
-        .compareWithThreshold(3,1) // Matching the single axis-aligned rect test threshold
-        .build();
-}
-
-// Define and register the visual regression test immediately.
-if (typeof RenderTestBuilder === 'function') {
-    define_rectangles_axalign_multi_varsize_randfill_randstroke_randpos_no_rotation_test();
-}
-
-// Register for performance testing.
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_rectangles_axalign_multi_varsize_randfill_randstroke_randpos_no_rotation === 'function') {
-    window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'rectangles--axalign--multi--varsize--randfill--randstroke--randpos--no-rotation',
-        drawFunction: draw_rectangles_axalign_multi_varsize_randfill_randstroke_randpos_no_rotation,
-        displayName: 'Perf: Rects AxAlign Multi Random',
-        description: 'Performance test for multiple axis-aligned rectangles with various random parameters.',
-        category: 'rectangles'
-    });
-} 
+// Register the test
+registerHighLevelTest(
+    'rectangles--axalign--multi--varsize--randfill--randstroke--randpos--no-rotation--test.js',
+    draw_rectangles_axalign_multi_varsize_randfill_randstroke_randpos_no_rotation,
+    'rectangles',
+    {
+        extremes: true,
+        compare: { swTol: 3, refTol: 1, diffTol: 0 }
+    },
+    {
+        title: 'Rectangles: Axis-aligned, Multiple, Variable Size, Random Fill & Stroke, Random Position, No Rotation',
+        description: 'Tests rendering of multiple axis-aligned rectangles with random sizes, fills (variable alpha), strokes (opaque, even width), and positions. No rotation.',
+        displayName: 'Perf: Rects AxAlign Multi Random'
+    }
+); 

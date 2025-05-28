@@ -84,39 +84,18 @@ function draw_lines__multi_20__no_fill__3px_black_opaque_stroke__random_pos__ran
     return logs && logs.length > 0 ? { logs } : null;
 }
 
-/**
- * Defines and registers the test case for rendering multiple 3px black lines using RenderTestBuilder.
- */
-function define_lines__multi_20__no_fill__3px_black_opaque_stroke__random_pos__random_orient_test() {
-    const defaultLineCount = 20; // Default number of lines for visual regression test
-
-    return new RenderTestBuilder()
-        .withId('lines--multi_20--no-fill--3px_black_opaque_stroke__random_pos--random_orient')
-        .withTitle('Lines: Multi-20 No-Fill 3px-Black-Opaque-Stroke Random-Pos Random-Orient')
-        .withDescription('Tests rendering of ' + defaultLineCount + ' randomly positioned and oriented 3px thick black lines.')
-        // Pass the draw function and the default number of lines for the visual regression mode.
-        // The 'instances' parameter in the draw function will be handled by the performance runner.
-        .runCanvasCode(draw_lines__multi_20__no_fill__3px_black_opaque_stroke__random_pos__random_orient, defaultLineCount)
-        // No specific checks like withExtremesCheck or color checks are typically applied to "multi-random" tests
-        // as the focus is on rendering capability and performance. Visual inspection handles correctness.
-        .build(); // Creates and registers the RenderTest instance
-}
-
-// Define and register the visual regression test immediately when this script is loaded.
-if (typeof RenderTestBuilder === 'function') {
-    define_lines__multi_20__no_fill__3px_black_opaque_stroke__random_pos__random_orient_test();
-}
-
-// Register for performance testing
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_lines__multi_20__no_fill__3px_black_opaque_stroke__random_pos__random_orient === 'function') {
-    window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'lines--multi_20--no-fill--3px_black_opaque_stroke__random_pos--random_orient',
-        drawFunction: draw_lines__multi_20__no_fill__3px_black_opaque_stroke__random_pos__random_orient,
-        // The 'initialCount' for the drawFunction will be its default (20),
-        // the performance harness will pass 'instances'.
+// Register the test
+registerHighLevelTest(
+    'lines--multi_20--no-fill--3px_black_opaque_stroke__random_pos--random_orient--test.js',
+    draw_lines__multi_20__no_fill__3px_black_opaque_stroke__random_pos__random_orient,
+    'lines',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 }, // Default visual comparison
+        drawFunctionArgs: [20] // initialCount for the draw function
+    },
+    {
+        title: 'Lines: Multi-20 No-Fill 3px-Black-Opaque-Stroke Random-Pos Random-Orient',
         displayName: 'Perf: Lines Multi 3px Black Random',
-        description: 'Performance test for rendering multiple (default 20, or N from harness) 3px black lines at random positions.',
-        category: 'lines'
-    });
-} 
+        description: 'Performance test for rendering multiple (default 20, or N from harness) 3px black lines at random positions.'
+    }
+); 

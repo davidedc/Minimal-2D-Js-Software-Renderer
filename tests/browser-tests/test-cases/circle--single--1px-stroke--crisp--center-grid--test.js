@@ -80,34 +80,21 @@ function draw_circle_single_1px_stroke_crisp_center_grid(ctx, currentIterationNu
     return { logs, checkData };
 }
 
-/**
- * Defines and registers the 1px stroked circle centered at grid test case.
- */
-function define_circle_single_1px_stroke_crisp_center_grid_test() {
-    return new RenderTestBuilder()
-        .withId('circle--single--1px-stroke--crisp--center-grid') // Derived from original: centered-1px-circle
-        .withTitle('Single 1px Stroked Circle (Crisp, Centered at Grid)')
-        .withDescription('Tests crisp rendering of a single 1px red stroked circle, centered at a grid crossing.')
-        .runCanvasCode(draw_circle_single_1px_stroke_crisp_center_grid)
-        .withExtremesCheck(0.03) // Original test had this with tolerance
-        .withUniqueColorsCheck(1) // Original test had this
-        .withContinuousStrokeCheck({ verticalScan: true, horizontalScan: true }) // Original test had this
-        .build();
-}
-
-// Define and register the visual regression test immediately.
-if (typeof RenderTestBuilder === 'function') {
-    define_circle_single_1px_stroke_crisp_center_grid_test();
-}
-
-// Register for performance testing.
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_circle_single_1px_stroke_crisp_center_grid === 'function') {
-    window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'circle--single--1px-stroke--crisp--center-grid',
-        drawFunction: draw_circle_single_1px_stroke_crisp_center_grid,
-        displayName: 'Perf: Circle 1px Crisp Grid Center',
-        description: 'Performance of a single 1px stroked circle, crisp and grid-centered.',
-        category: 'circles' 
-    });
-} 
+// Register the test
+registerHighLevelTest(
+    'circle--single--1px-stroke--crisp--center-grid--test.js',
+    draw_circle_single_1px_stroke_crisp_center_grid,
+    'circles',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 },
+        extremes: { tolerance: 0.03 },
+        totalUniqueColors: 1,
+        continuousStroke: true
+    },
+    {
+        title: 'Single 1px Stroked Circle (Crisp, Centered at Grid)',
+        description: 'Tests crisp rendering of a single 1px red stroked circle, centered at a grid crossing.',
+        displayName: 'Perf: Circle 1px Crisp Grid Center'
+        // The description above will also be used for the performance test registry entry.
+    }
+); 

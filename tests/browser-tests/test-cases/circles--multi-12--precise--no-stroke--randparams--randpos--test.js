@@ -120,32 +120,17 @@ function draw_circles_multi_12_precise_no_stroke_randparams_randpos(ctx, current
     return { logs }; 
 }
 
-/**
- * Defines and registers the multiple precise fill-only circles test case.
- */
-function define_circles_multi_12_precise_no_stroke_randparams_randpos_test() {
-    return new RenderTestBuilder()
-        .withId('circles--multi-12--precise--no-stroke--randparams--randpos') // Derived from: multiple-precise-no-stroke-circles
-        .withTitle('Multiple Precise Fill-Only Circles (Random Params & Pos)')
-        .withDescription('Tests rendering of 12 circles with no strokes, only fills, precise alignment, and random parameters/positions.')
-        .runCanvasCode(draw_circles_multi_12_precise_no_stroke_randparams_randpos)
-        // No specific checks in original test definition
-        .build();
-}
-
-// Define and register the visual regression test immediately.
-if (typeof RenderTestBuilder === 'function') {
-    define_circles_multi_12_precise_no_stroke_randparams_randpos_test();
-}
-
-// Register for performance testing.
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_circles_multi_12_precise_no_stroke_randparams_randpos === 'function') {
-    window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'circles--multi-12--precise--no-stroke--randparams--randpos',
-        drawFunction: draw_circles_multi_12_precise_no_stroke_randparams_randpos,
-        displayName: 'Perf: 12 Precise NoStroke RandCircles',
-        description: 'Performance of 12 precise fill-only random circles.',
-        category: 'circles' 
-    });
-} 
+// Register the test
+registerHighLevelTest(
+    'circles--multi-12--precise--no-stroke--randparams--randpos--test.js',
+    draw_circles_multi_12_precise_no_stroke_randparams_randpos,
+    'circles',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 } // Default visual comparison
+    },
+    {
+        title: 'Multiple Precise Fill-Only Circles (Random Params & Pos)',
+        description: 'Tests rendering of 12 circles with no strokes, only fills, precise alignment, and random parameters/positions.',
+        displayName: 'Perf: 12 Precise NoStroke RandCircles'
+    }
+); 

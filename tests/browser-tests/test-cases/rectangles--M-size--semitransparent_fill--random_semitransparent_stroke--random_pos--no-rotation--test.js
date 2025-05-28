@@ -118,33 +118,18 @@ function draw_rectangles__M_size__semitransparent_fill__random_semitransparent_s
     return (logs || checkData) ? { logs, checkData } : null; 
 }
 
-/**
- * Defines and registers the test case.
- */
-function define_rectangles__M_size__semitransparent_fill__random_semitransparent_stroke__random_pos__no_rotation_test() {
-    return new RenderTestBuilder()
-        .withId('rectangles--M-size--semitransparent_fill--random_semitransparent_stroke--random_pos--no-rotation')
-        .withTitle('Rectangles: M-Size Semi-Transparent Fill, Random Semi-Transparent Stroke, Random Position, No Rotation')
-        .withDescription('Tests a single axis-aligned rectangle with random dimensions, stroke width, and semi-transparent colors, mimicking original low-level logic including color generation.')
-        .runCanvasCode(draw_rectangles__M_size__semitransparent_fill__random_semitransparent_stroke__random_pos__no_rotation)
-        .withExtremesCheck()
-        .compareWithThreshold(3, 1) // From original low-level test addSingleAxisAlignedRectangleTest
-        .build();
-}
-
-// Define and register the visual regression test.
-if (typeof RenderTestBuilder === 'function') {
-    define_rectangles__M_size__semitransparent_fill__random_semitransparent_stroke__random_pos__no_rotation_test();
-}
-
-// Register for performance testing.
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_rectangles__M_size__semitransparent_fill__random_semitransparent_stroke__random_pos__no_rotation === 'function') {
-    window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'rectangles--M-size--semitransparent_fill--random_semitransparent_stroke--random_pos--no-rotation',
-        drawFunction: draw_rectangles__M_size__semitransparent_fill__random_semitransparent_stroke__random_pos__no_rotation,
-        displayName: 'Perf: Rect M Axis-Aligned (Original Logic)',
-        description: 'Performance of rendering axis-aligned rectangles, mimicking original low-level logic for parameter generation.',
-        category: 'rectangles' 
-    });
-} 
+// Register the test
+registerHighLevelTest(
+    'rectangles--M-size--semitransparent_fill--random_semitransparent_stroke--random_pos--no-rotation--test.js',
+    draw_rectangles__M_size__semitransparent_fill__random_semitransparent_stroke__random_pos__no_rotation,
+    'rectangles',
+    {
+        extremes: true,
+        compare: { swTol: 3, refTol: 1, diffTol: 0 }
+    },
+    {
+        title: 'Rectangles: M-Size Semi-Transparent Fill, Random Semi-Transparent Stroke, Random Position, No Rotation',
+        description: 'Tests a single axis-aligned rectangle with random dimensions, stroke width, and semi-transparent colors, mimicking original low-level logic including color generation.',
+        displayName: 'Perf: Rect M Axis-Aligned (Original Logic)'
+    }
+); 

@@ -72,32 +72,16 @@ function draw_circles_multi_8_fully_random(ctx, currentIterationNumber, instance
     return { logs }; 
 }
 
-/**
- * Defines and registers the multiple fully random circles test case.
- */
-function define_circles_multi_8_fully_random_test() {
-    return new RenderTestBuilder()
-        .withId('circles--multi-8--fully-random') // Derived from: random-circles
-        .withTitle('Multiple Fully Random Circles')
-        .withDescription('Tests rendering of 8 circles with fully random positions, sizes, colors, and strokes.')
-        .runCanvasCode(draw_circles_multi_8_fully_random)
-        // No specific checks in original test definition
-        .build();
-}
-
-// Define and register the visual regression test immediately.
-if (typeof RenderTestBuilder === 'function') {
-    define_circles_multi_8_fully_random_test();
-}
-
-// Register for performance testing.
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_circles_multi_8_fully_random === 'function') {
-    window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'circles--multi-8--fully-random',
-        drawFunction: draw_circles_multi_8_fully_random,
+// Register the test
+registerHighLevelTest(
+    'circles--multi-8--fully-random--test.js',
+    draw_circles_multi_8_fully_random,
+    'circles',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 } // Default visual comparison
+    },
+    {
         displayName: 'Perf: 8 FullyRandom Circles',
-        description: 'Performance of 8 fully random circles.',
-        category: 'circles' 
-    });
-} 
+        description: 'Performance of 8 fully random circles.'
+    }
+); 

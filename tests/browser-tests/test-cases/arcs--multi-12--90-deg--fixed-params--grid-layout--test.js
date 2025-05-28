@@ -88,32 +88,17 @@ function draw_arcs_multi_12_90_deg_fixed_params_grid_layout(ctx, currentIteratio
     }
 }
 
-/**
- * Defines and registers the 90-degree arcs test case.
- */
-function define_arcs_multi_12_90_deg_fixed_params_grid_layout_test() {
-    return new RenderTestBuilder()
-        .withId('arcs--multi-12--90-deg--fixed-params--grid-layout')
-        .withTitle('90\u00B0 Arcs (Multiple, Fixed Params, Grid Layout)')
-        .withDescription('Tests rendering of 90° arcs with various fixed radii and stroke widths in a grid.')
-        .runCanvasCode(draw_arcs_multi_12_90_deg_fixed_params_grid_layout)
-        // No specific checks in original test definition
-        .build();
-}
-
-// Define and register the visual regression test immediately.
-if (typeof RenderTestBuilder === 'function') {
-    define_arcs_multi_12_90_deg_fixed_params_grid_layout_test();
-}
-
-// Register for performance testing.
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_arcs_multi_12_90_deg_fixed_params_grid_layout === 'function') {
-    window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'arcs--multi-12--90-deg--fixed-params--grid-layout',
-        drawFunction: draw_arcs_multi_12_90_deg_fixed_params_grid_layout,
-        displayName: 'Perf: 12 90Deg Arcs FixedGrid',
-        description: 'Performance of 12 90-degree arcs with fixed parameters.',
-        category: 'arcs' 
-    });
-} 
+// Register the test
+registerHighLevelTest(
+    'arcs--multi-12--90-deg--fixed-params--grid-layout--test.js',
+    draw_arcs_multi_12_90_deg_fixed_params_grid_layout,
+    'arcs',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 } // Default visual comparison
+    },
+    {
+        title: '90\u00B0 Arcs (Multiple, Fixed Params, Grid Layout)',
+        description: 'Tests rendering of 90° arcs with various fixed radii and stroke widths in a grid.',
+        displayName: 'Perf: 12 90Deg Arcs FixedGrid'
+    }
+); 

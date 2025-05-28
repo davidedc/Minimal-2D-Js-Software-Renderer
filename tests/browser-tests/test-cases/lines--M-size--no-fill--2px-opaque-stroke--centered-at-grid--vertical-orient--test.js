@@ -124,41 +124,22 @@ function draw_lines__M_size__no_fill__2px_opaque_stroke__centered_at_grid__verti
     }
 }
 
-/**
- * Defines and registers the test case using RenderTestBuilder.
- */
-function define_lines__M_size__no_fill__2px_opaque_stroke__centered_at_grid__vertical_orient() {
-  if (typeof RenderTestBuilder !== 'function' || typeof draw_lines__M_size__no_fill__2px_opaque_stroke__centered_at_grid__vertical_orient !== 'function') {
-    console.error('Missing RenderTestBuilder or drawing function for 2px vertical line test');
-    return;
-  }
-
-  return new RenderTestBuilder()
-    .withId('lines--M-size--no-fill--2px-opaque-stroke--centered-at-grid--vertical-orient')
-    .withTitle('Lines: M-Size No-Fill 2px-Opaque-Stroke Centered-At-Grid Vertical')
-    .withDescription('Tests crisp rendering of a vertical 2px line centered at grid crossing using canvas code.')
-    .runCanvasCode(draw_lines__M_size__no_fill__2px_opaque_stroke__centered_at_grid__vertical_orient)
-    // --- Checks from original add2PxVerticalLineCenteredAtGridTest --- 
-    .withColorCheckMiddleRow({ expectedUniqueColors: 1 })
-    .withColorCheckMiddleColumn({ expectedUniqueColors: 1 })
-    .withExtremesCheck() // Uses return value from draw_ function
-    // --- End checks ---
-    .build(); 
-}
-
-// Define and register the test immediately when this script is loaded.
-if (typeof RenderTestBuilder === 'function') {
-  define_lines__M_size__no_fill__2px_opaque_stroke__centered_at_grid__vertical_orient();
-}
-
-// Performance test registration
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_lines__M_size__no_fill__2px_opaque_stroke__centered_at_grid__vertical_orient === 'function') {
-    window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'lines--M-size--no-fill--2px-opaque-stroke--centered-at-grid--vertical-orient',
-        drawFunction: draw_lines__M_size__no_fill__2px_opaque_stroke__centered_at_grid__vertical_orient,
-        displayName: 'Perf: Lines M 2px Grid Vertical',
-        description: 'Performance test for vertical 2px lines, grid centered.',
-        category: 'lines'
-    });
-} 
+// Register the test
+registerHighLevelTest(
+    'lines--M-size--no-fill--2px-opaque-stroke--centered-at-grid--vertical-orient--test.js',
+    draw_lines__M_size__no_fill__2px_opaque_stroke__centered_at_grid__vertical_orient,
+    'lines',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 }, // Default visual comparison
+        uniqueColors: {
+            middleRow: { count: 1 },
+            middleColumn: { count: 1 } // Added MiddleColumn
+        }, 
+        extremes: true
+    },
+    {
+        title: 'Lines: M-Size No-Fill 2px-Opaque-Stroke Centered-At-Grid Vertical',
+        description: 'Tests crisp rendering of a vertical 2px line centered at grid crossing using canvas code.',
+        displayName: 'Perf: Lines M 2px Grid Vertical'
+    }
+); 

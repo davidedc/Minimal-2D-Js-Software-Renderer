@@ -98,33 +98,18 @@ function draw_rounded_rect_single_1px_stroke_crisp_center_pixel(ctx, currentIter
     return { logs, checkData };
 }
 
-/**
- * Defines and registers the 1px stroked rounded rectangle centered at pixel test case.
- */
-function define_rounded_rect_single_1px_stroke_crisp_center_pixel_test() {
-    return new RenderTestBuilder()
-        .withId('rounded-rect--single--1px-stroke--crisp--center-pixel')
-        .withTitle('Single 1px Stroked Rounded Rectangle (Crisp, Centered at Pixel)')
-        .withDescription('Tests crisp rendering of a single 1px red stroked rounded rectangle, centered at a pixel center.')
-        .runCanvasCode(draw_rounded_rect_single_1px_stroke_crisp_center_pixel)
-        .withExtremesCheck() // Original test had this
-        // No explicit compareWithThreshold in original, defaults to (0,0)
-        .build();
-}
-
-// Define and register the visual regression test immediately.
-if (typeof RenderTestBuilder === 'function') {
-    define_rounded_rect_single_1px_stroke_crisp_center_pixel_test();
-}
-
-// Register for performance testing.
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_rounded_rect_single_1px_stroke_crisp_center_pixel === 'function') {
-    window.PERFORMANCE_TESTS_REGISTRY.push({
-        id: 'rounded-rect--single--1px-stroke--crisp--center-pixel',
-        drawFunction: draw_rounded_rect_single_1px_stroke_crisp_center_pixel,
-        displayName: 'Perf: RRect 1px Crisp Pixel Center',
-        description: 'Performance of a single 1px stroked rounded rectangle, crisp and pixel-centered.',
-        category: 'rounded-rectangles' 
-    });
-} 
+// Register the test
+registerHighLevelTest(
+    'rounded-rect--single--1px-stroke--crisp--center-pixel--test.js',
+    draw_rounded_rect_single_1px_stroke_crisp_center_pixel,
+    'rounded-rects',
+    {
+        extremes: true,
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 } // Default visual comparison
+    },
+    {
+        title: 'Single 1px Stroked Rounded Rectangle (Crisp, Centered at Pixel)',
+        description: 'Tests crisp rendering of a single 1px red stroked rounded rectangle, centered at a pixel center.',
+        displayName: 'Perf: RRect 1px Crisp Pixel Center'
+    }
+); 

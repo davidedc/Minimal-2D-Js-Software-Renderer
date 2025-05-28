@@ -131,43 +131,22 @@ function draw_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__vertic
     }
 }
 
-/**
- * Defines and registers the test case using RenderTestBuilder.
- */
-function define_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__vertical_orient() {
-  if (typeof RenderTestBuilder !== 'function' || typeof draw_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__vertical_orient !== 'function') {
-    console.error('Missing RenderTestBuilder or drawing function for vertical line test');
-    return;
-  }
-
-  return new RenderTestBuilder()
-    .withId('lines--M-size--no-fill--1px-opaque-stroke--crisp-pixel-pos--vertical-orient')
-    .withTitle('Lines: M-Size No-Fill 1px-Opaque-Stroke Crisp-Pixel-Pos Vertical')
-    .withDescription('Tests crisp rendering of a vertical 1px line centered between pixels using canvas code.')
-    .runCanvasCode(draw_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__vertical_orient)
-    // --- Checks from original add1PxVerticalLineCenteredAtPixelTest --- 
-    .withColorCheckMiddleRow({ expectedUniqueColors: 1 })
-    .withColorCheckMiddleColumn({ expectedUniqueColors: 1 })
-    .withExtremesCheck() // Uses return value from draw_ function
-    // --- End checks ---
-    .build(); 
-}
-
-// Define and register the test immediately when this script is loaded.
-if (typeof RenderTestBuilder === 'function') {
-  define_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__vertical_orient();
-}
-
-// Performance test registration
-if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !== 'undefined' &&
-    typeof draw_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__vertical_orient === 'function') {
-    
-    const perfTestData = {
-        id: 'lines--M-size--no-fill--1px_opaque_stroke--crisp_pixel_pos--vertical_orient',
-        drawFunction: draw_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__vertical_orient,
-        displayName: 'Perf: Lines M 1px Crisp Vertical',
-        description: 'Performance test for vertical 1px lines, crisp pixel positioning.',
-        category: 'lines'
-    };
-    window.PERFORMANCE_TESTS_REGISTRY.push(perfTestData);
-} 
+// Register the test
+registerHighLevelTest(
+    'lines--M-size--no-fill--1px_opaque_stroke--crisp_pixel_pos--vertical_orient--test.js',
+    draw_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__vertical_orient,
+    'lines',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 }, // Default visual comparison
+        uniqueColors: {
+            middleRow: { count: 1 },
+            middleColumn: { count: 1 } // Added MiddleColumn
+        }, 
+        extremes: true
+    },
+    {
+        title: 'Lines: M-Size No-Fill 1px-Opaque-Stroke Crisp-Pixel-Pos Vertical',
+        description: 'Tests crisp rendering of a vertical 1px line centered between pixels using canvas code.',
+        displayName: 'Perf: Lines M 1px Crisp Vertical'
+    }
+); 
