@@ -2449,7 +2449,30 @@ class CrispSwContext {
     arc(x, y, radius, startAngle, endAngle, anticlockwise = false) {
         // TODO: Implement path definition for clipping if SWRendererArc supports it,
         // or for a general path store if fill()/stroke() are enhanced.
-        throw new Error("CrispSwContext.arc() for path definition/clipping is not yet implemented. Use fillArc/strokeArc for drawing.");
+        // For now, only full circles are supported for clipping.
+        const isFullCircle = Math.abs(Math.abs(endAngle - startAngle) - (2 * Math.PI)) < 1e-9; // Check for 2PI difference
+
+        if (isFullCircle) {
+            const state = this.currentState;
+            const centerTransformed = transformPoint(x, y, state.transform.elements);
+            const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
+            // For circles, radius is scaled by the max of scaleX and scaleY to maintain circularity
+            // as we don't support ellipses yet.
+            const scaledRadius = radius * Math.max(Math.abs(scaleX), Math.abs(scaleY));
+
+            this.circleRenderer.drawCircle({
+                center: { x: centerTransformed.tx, y: centerTransformed.ty },
+                radius: scaledRadius,
+                clippingOnly: true,
+                // These are not used for clippingOnly, but provided for shape consistency
+                // TODO: can these be omitted?
+                strokeWidth: 0,
+                strokeColor: { r: 0, g: 0, b: 0, a: 0 },
+                fillColor: { r: 0, g: 0, b: 0, a: 0 }
+            });
+        } else {
+            throw new Error("CrispSwContext.arc() for path definition/clipping is only implemented for full circles. Use fillArc/strokeArc for drawing partial arcs.");
+        }
     }
 
     /**
@@ -2937,8 +2960,14 @@ class SWRendererCircle {
     const {
       center, radius,
       strokeWidth, strokeColor: { r: strokeR, g: strokeG, b: strokeB, a: strokeA },
-      fillColor: { r: fillR, g: fillG, b: fillB, a: fillA }
+      fillColor: { r: fillR, g: fillG, b: fillB, a: fillA },
+      clippingOnly
     } = shape;
+
+    if (clippingOnly === true) {
+      this._clipCircleShape(shape);
+      return;
+    }
 
     // Check for no fill and 1px stroke case - special optimization
     const hasFill = fillA > 0;
@@ -3646,12 +3675,7 @@ class SWRendererCircle {
    * @param {Number} b - Blue component of stroke color (0-255)
    */
   draw1PxStrokeFullCircleBresenhamOpaque(centerX, centerY, radius, r, g, b) {
-    // --- Early Exit & Renderer Property Caching ---
     const renderer = this.pixelRenderer;
-    if (!renderer) {
-      console.error("Pixel renderer not found!");
-      return;
-    }
 
     const width = renderer.width;
     const height = renderer.height;
@@ -3810,12 +3834,7 @@ class SWRendererCircle {
    * @param {Number} a - Alpha component of stroke color (0-255)
    */
   draw1PxStrokeFullCircleBresenhamAlpha(centerX, centerY, radius, r, g, b, a) {
-    // --- Early Exit & Renderer Property Caching ---
     const renderer = this.pixelRenderer;
-    if (!renderer) {
-      console.error("Pixel renderer not found!");
-      return;
-    }
 
     const globalAlpha = renderer.context.globalAlpha;
     if (a === 0 || globalAlpha <= 0) return; // Fully transparent
@@ -4006,12 +4025,7 @@ class SWRendererCircle {
    * @param {Number} b - Blue component of fill color (0-255)
    */
   drawOpaqueFillFullCircleBresenham(centerX, centerY, radius, r, g, b) {
-    // --- Early Exit & Renderer Property Caching ---
     const renderer = this.pixelRenderer;
-    if (!renderer) {
-      console.error("Pixel renderer not found!");
-      return;
-    }
 
     const width = renderer.width;
     const height = renderer.height;
@@ -4227,12 +4241,7 @@ class SWRendererCircle {
    * @param {Number} a - Alpha component of fill color (0-255)
    */
   drawSemiTransparentFillFullCircleBresenham(centerX, centerY, radius, r, g, b, a) {
-    // --- Early Exit & Renderer Property Caching ---
     const renderer = this.pixelRenderer;
-    if (!renderer) {
-      console.error("Pixel renderer not found!");
-      return;
-    }
 
     const globalAlpha = renderer.context.globalAlpha;
     if (a === 0 || globalAlpha <= 0) return; // Fully transparent
@@ -4420,6 +4429,63 @@ class SWRendererCircle {
         }
       }
     } // End of if (!clippingMask) / else
+  }
+
+  // TODO 1: can we re-use an existing circle filling routine for this?
+  // TODO 2: this in the end causes very many calls to clipPixel, which seems slow,
+  //         can we bake that routine?
+  _clipCircleShape(shape) {
+    const { center, radius } = shape;
+
+    const renderer = this.pixelRenderer;
+
+    // --- Generate Relative Extents ---
+    const extentData = this._generateRelativeHorizontalExtentsBresenham(radius);
+    if (!extentData) return; // Invalid radius handled by generator
+
+    const { relativeExtents, intRadius, xOffset, yOffset } = extentData;
+
+    // --- Handle Zero Radius Case (Single Pixel) ---
+    if (intRadius === 0 && radius >= 0) {
+        const centerPx = Math.round(center.x);
+        const centerPy = Math.round(center.y);
+        // Call clipPixel for the single pixel
+        renderer.clipPixel(centerPx, centerPy);
+        return; // Done if radius effectively zero
+    }
+    // Now we know intRadius > 0
+
+    // --- Calculate Absolute Center ---
+    const adjCenterX = Math.floor(center.x - 0.5);
+    const adjCenterY = Math.floor(center.y - 0.5);
+    
+    // --- Scanline Clipping Loop ---
+    for (let rel_y = 0; rel_y <= intRadius; rel_y++) {
+      const max_rel_x = relativeExtents[rel_y];
+      const abs_x_min = adjCenterX - max_rel_x - xOffset + 1;
+      const abs_x_max = adjCenterX + max_rel_x;
+      const abs_y_bottom = adjCenterY + rel_y;
+      const abs_y_top = adjCenterY - rel_y - yOffset + 1;
+
+      // --- Clip Bottom Scanline ---
+      if (abs_y_bottom >= 0 && abs_y_bottom < renderer.height) {
+        const startX = Math.max(0, abs_x_min);
+        const endX = Math.min(renderer.width - 1, abs_x_max);
+        for (let x = startX; x <= endX; x++) {
+          renderer.clipPixel(x, abs_y_bottom);
+        }
+      }
+
+      // --- Clip Top Scanline ---
+      const drawTop = rel_y > 0 && !(rel_y === 1 && yOffset === 0) && abs_y_top >= 0 && abs_y_top < renderer.height;
+      if (drawTop) {
+        const startX = Math.max(0, abs_x_min);
+        const endX = Math.min(renderer.width - 1, abs_x_max);
+        for (let x = startX; x <= endX; x++) {
+          renderer.clipPixel(x, abs_y_top);
+        }
+      }
+    }
   }
 
 }class SWRendererLine {
