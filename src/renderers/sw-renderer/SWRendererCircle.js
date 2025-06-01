@@ -716,12 +716,7 @@ class SWRendererCircle {
    * @param {Number} b - Blue component of stroke color (0-255)
    */
   draw1PxStrokeFullCircleBresenhamOpaque(centerX, centerY, radius, r, g, b) {
-    // --- Early Exit & Renderer Property Caching ---
     const renderer = this.pixelRenderer;
-    if (!renderer) {
-      console.error("Pixel renderer not found!");
-      return;
-    }
 
     const width = renderer.width;
     const height = renderer.height;
@@ -880,12 +875,7 @@ class SWRendererCircle {
    * @param {Number} a - Alpha component of stroke color (0-255)
    */
   draw1PxStrokeFullCircleBresenhamAlpha(centerX, centerY, radius, r, g, b, a) {
-    // --- Early Exit & Renderer Property Caching ---
     const renderer = this.pixelRenderer;
-    if (!renderer) {
-      console.error("Pixel renderer not found!");
-      return;
-    }
 
     const globalAlpha = renderer.context.globalAlpha;
     if (a === 0 || globalAlpha <= 0) return; // Fully transparent
@@ -1076,12 +1066,7 @@ class SWRendererCircle {
    * @param {Number} b - Blue component of fill color (0-255)
    */
   drawOpaqueFillFullCircleBresenham(centerX, centerY, radius, r, g, b) {
-    // --- Early Exit & Renderer Property Caching ---
     const renderer = this.pixelRenderer;
-    if (!renderer) {
-      console.error("Pixel renderer not found!");
-      return;
-    }
 
     const width = renderer.width;
     const height = renderer.height;
@@ -1297,12 +1282,7 @@ class SWRendererCircle {
    * @param {Number} a - Alpha component of fill color (0-255)
    */
   drawSemiTransparentFillFullCircleBresenham(centerX, centerY, radius, r, g, b, a) {
-    // --- Early Exit & Renderer Property Caching ---
     const renderer = this.pixelRenderer;
-    if (!renderer) {
-      console.error("Pixel renderer not found!");
-      return;
-    }
 
     const globalAlpha = renderer.context.globalAlpha;
     if (a === 0 || globalAlpha <= 0) return; // Fully transparent
