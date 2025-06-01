@@ -508,7 +508,30 @@ class CrispSwContext {
     arc(x, y, radius, startAngle, endAngle, anticlockwise = false) {
         // TODO: Implement path definition for clipping if SWRendererArc supports it,
         // or for a general path store if fill()/stroke() are enhanced.
-        throw new Error("CrispSwContext.arc() for path definition/clipping is not yet implemented. Use fillArc/strokeArc for drawing.");
+        // For now, only full circles are supported for clipping.
+        const isFullCircle = Math.abs(Math.abs(endAngle - startAngle) - (2 * Math.PI)) < 1e-9; // Check for 2PI difference
+
+        if (isFullCircle) {
+            const state = this.currentState;
+            const centerTransformed = transformPoint(x, y, state.transform.elements);
+            const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
+            // For circles, radius is scaled by the max of scaleX and scaleY to maintain circularity
+            // as we don't support ellipses yet.
+            const scaledRadius = radius * Math.max(Math.abs(scaleX), Math.abs(scaleY));
+
+            this.circleRenderer.drawCircle({
+                center: { x: centerTransformed.tx, y: centerTransformed.ty },
+                radius: scaledRadius,
+                clippingOnly: true,
+                // These are not used for clippingOnly, but provided for shape consistency
+                // TODO: can these be omitted?
+                strokeWidth: 0,
+                strokeColor: { r: 0, g: 0, b: 0, a: 0 },
+                fillColor: { r: 0, g: 0, b: 0, a: 0 }
+            });
+        } else {
+            throw new Error("CrispSwContext.arc() for path definition/clipping is only implemented for full circles. Use fillArc/strokeArc for drawing partial arcs.");
+        }
     }
 
     /**

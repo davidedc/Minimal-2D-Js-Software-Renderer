@@ -204,6 +204,37 @@ function drawOrganicTestScene(ctx) {
   ctx.fillCircle(centerX, centerY, 10, 255, 255, 255, 255);
   
   ctx.restore();
+
+  // Test circle clipping
+  ctx.save();
+  ctx.translate(400, 450); // Position for the circle clipping test
+
+  ctx.beginPath(); // Important to start a new path for clipping
+  // Define a circular path for clipping
+  // arc(x, y, radius, startAngle, endAngle, anticlockwise = false)
+  ctx.arc(50, 50, 50, 0, 2 * Math.PI);
+  ctx.clip();
+
+  // Draw shapes that should be clipped by the circle
+  ctx.fillStyle = "rgba(255, 0, 255, 0.7)"; // Magenta
+  ctx.fillRect(0, 0, 100, 100); // A square that will be clipped into a circle segment
+
+  ctx.strokeStyle = "rgba(0, 255, 0, 1)"; // Green
+  ctx.lineWidth = 5;
+  ctx.strokeLine(0, 50, 100, 50); // Horizontal line through the circle center
+  ctx.strokeLine(50, 0, 50, 100); // Vertical line through the circle center
+
+  ctx.strokeStyle = "rgba(255, 255, 0, 1)"; // Yellow
+  ctx.lineWidth = 2;
+  ctx.strokeRect(25, 25, 50, 50); // A smaller rectangle inside the circle
+  
+  // Draw lines that extend outside the circle
+  ctx.strokeStyle = "rgba(0, 0, 0, 1)"; // Black
+  ctx.lineWidth = 3;
+  ctx.strokeLine(-20, -20, 120, 120); // Diagonal line across the clipping region
+  ctx.strokeLine(-20, 120, 120, -20); // Another diagonal line
+
+  ctx.restore();
 }
 
 function createOrganicTest() {
