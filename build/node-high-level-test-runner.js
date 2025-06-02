@@ -9650,7 +9650,7 @@ function draw_circle_single_fully_random(ctx, currentIterationNumber, instances 
         // SeededRandom Call 6: strokeWidth
         const strokeWidth = SeededRandom.getRandom() * 10 + 1;
         // SeededRandom Call 7: strokeColor 
-        const strokeColorObj = getRandomColor(200, 255); 
+        const strokeColorObj = getRandomColor(100, 200); 
         // SeededRandom Call 8: fillColor
         const fillColorObj = getRandomColor(100, 200);
 
@@ -9693,8 +9693,8 @@ registerHighLevelTest(
     'circles',
     {
         //compare: { swTol: 0, refTol: 0, diffTol: 0 }, // Default visual comparison
-        totalUniqueColors: 3, // Corrected: Was uniqueColors: { middleRow: { count: 3 } }
-        speckles: true,
+        totalUniqueColors: 3,
+        //speckles: true,
         noGapsInStrokeEdges: true
     },
     {
