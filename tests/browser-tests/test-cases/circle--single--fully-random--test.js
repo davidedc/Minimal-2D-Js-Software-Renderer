@@ -73,8 +73,8 @@ registerHighLevelTest(
     'circles',
     {
         //compare: { swTol: 0, refTol: 0, diffTol: 0 }, // Default visual comparison
-        totalUniqueColors: 3, // Corrected: Was uniqueColors: { middleRow: { count: 3 } }
         speckles: true,
+        totalUniqueColors: 3,
         noGapsInStrokeEdges: true
     },
     {
