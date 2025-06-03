@@ -11,7 +11,7 @@ The main objective was to systematically convert a suite of low-level tests, as 
 **B. Key Objectives:**
 *   **Visual and Behavioral Accuracy:** Precisely replicate original test visuals, especially concerning `SeededRandom` usage for parameter generation.
 *   **Framework Adaptation:** Integrate tests into the new high-level framework, utilizing `RenderTestBuilder` and the performance testing harness ( `window.PERFORMANCE_TESTS_REGISTRY`, `instances` parameter).
-*   **API Extension:** Refactor and extend `CrispSwContext` and `CanvasRenderingContext2D` (via polyfills) with new drawing methods (e.g., `fillRoundRect`, `strokeRoundRect`, `fillArc`, `strokeArc`, `fillAndStrokeArc`) to simplify test logic.
+*   **API Extension:** Refactor and extend `CrispSwContext` and `CanvasRenderingContext2D` (via polyfills) with new drawing methods (e.g., `fillRoundRect`, `strokeRoundRect`, `fillArc`, `outerStrokeArc`, `fillAndOuterStrokeArc`) to simplify test logic.
 *   **Debugging:** Resolve JavaScript errors, visual discrepancies, performance test issues, and character encoding problems.
 *   **Documentation:** Maintain and update `CONVERTING_LOW_LEVEL_TESTS.md` with lessons learned and best practices.
 
@@ -100,11 +100,11 @@ The following tests were converted in sequence. Each entry outlines the original
     *   **Action (Correction):** Confirmed it *was* added when created and included in `high-level-tests.html`. No change needed for `performance-tests.html` inclusion.
 
 **4. Arc Method Refactor & Testing**
-    *   **User Request:** Add `arc`, `fillArc`, `strokeArc`, `fillAndStrokeArc` to `CrispSwContext` and as polyfills, similar to `roundRect`.
+    *   **User Request:** Add `arc`, `fillArc`, `outerStrokeArc`, `fillAndOuterStrokeArc` to `CrispSwContext` and as polyfills, similar to `roundRect`.
     *   **Actions:**
         *   Read `SWRendererArc.js` (constructor, `drawArc` expects degrees). Read `canvas-arc.js` (uses degrees internally, `drawArcCanvas`).
-        *   Updated `CrispSwContext.js`: Initialized `arcRenderer`. Added `fillArc`, `strokeArc`, `fillAndStrokeArc` (taking radians, converting to degrees for the renderer). Stubbed `arc()`.
-        *   Updated `canvas-sw-polyfills.js`: Added `fillArc`, `strokeArc`, `fillAndStrokeArc` (taking radians, using native `ctx.arc()` and `fill`/`stroke`).
+        *   Updated `CrispSwContext.js`: Initialized `arcRenderer`. Added `fillArc`, `outerStrokeArc`, `fillAndOuterStrokeArc` (taking radians, converting to degrees for the renderer). Stubbed `arc()`.
+        *   Updated `canvas-sw-polyfills.js`: Added `fillArc`, `outerStrokeArc`, `fillAndOuterStrokeArc` (taking radians, using native `ctx.arc()` and `fill`/`stroke`).
     *   **User Request:** Add arc tests to `crisp-sw-canvas-tests.html`.
     *   **Actions:**
         *   Read `crisp-sw-canvas-tests.html` structure.
@@ -114,7 +114,7 @@ The following tests were converted in sequence. Each entry outlines the original
     *   **Action:** Corrected `runSwCanvasCode` to `runCanvasCode` in `test-arcs.js`.
     *   **User Feedback (Relating to "90° Arcs" test, though not yet formally converted):** Canvas thickness constant, SW arcs not showing. Log and title encoding issues.
     *   **Debugging Actions (for generic `test-arcs.js` initially):**
-        *   Realized `CrispSwContext.strokeArc` and the canvas polyfill `strokeArc` had different calling conventions regarding style arguments.
+        *   Realized `CrispSwContext.outerStrokeArc` and the canvas polyfill `outerStrokeArc` had different calling conventions regarding style arguments.
         *   Refactored `CrispSwContext` arc methods to use context state (similar to polyfills).
         *   Updated drawing functions in `test-arcs.js` to set `ctx.strokeStyle/fillStyle/lineWidth` before calling the simplified arc methods.
 
@@ -227,7 +227,7 @@ The following tests were converted in sequence. Each entry outlines the original
         *   Searched `add-tests.js`: ID `ninety-degree-arcs`, function `addNinetyDegreeArcs`, no checks.
         *   Searched `scene-creation-arcs.js`. Deterministic, fixed parameters for 12 arcs.
         *   Proposed ID and filename `arcs--multi-12--90-deg--fixed-params--grid-layout--test.js`. New category 'arcs'.
-        *   Created test file, used `ctx.strokeArc`.
+        *   Created test file, used `ctx.outerStrokeArc`.
         *   Added to HTML files, updated performance UI for 'arcs' category.
     *   **User Debugging Feedback:** HTML5 canvas thickness constant, SW arcs not showing. Log/title encoding issues.
     *   **Debugging Actions:**
@@ -306,7 +306,7 @@ The following tests were converted in sequence. Each entry outlines the original
     *   **Importance:** The custom software rendering context being tested and extended.
     *   **Changes:**
         *   Initialized `this.roundedRectRenderer` and `this.arcRenderer`.
-        *   Added new methods: `fillRoundRect`, `strokeRoundRect`, `fillArc`, `strokeArc`, `fillAndStrokeArc`. These methods were designed to use the context's current state (`fillStyle`, `strokeStyle`, `lineWidth`) and call the respective shape renderer (e.g., `this.roundedRectRenderer.drawRoundedRect(shape)`).
+        *   Added new methods: `fillRoundRect`, `strokeRoundRect`, `fillArc`, `outerStrokeArc`, `fillAndOuterStrokeArc`. These methods were designed to use the context's current state (`fillStyle`, `strokeStyle`, `lineWidth`) and call the respective shape renderer (e.g., `this.roundedRectRenderer.drawRoundedRect(shape)`).
         *   The `roundRect()` and `arc()` methods (intended for path definition analogous to native canvas) were stubbed to throw errors, as generic path filling/stroking is not supported by `CrispSwContext`.
     *   **Key Snippet Example (`fillRoundRect`):**
         ```javascript
@@ -336,7 +336,7 @@ The following tests were converted in sequence. Each entry outlines the original
     *   **Importance:** Used to add missing methods to `CanvasRenderingContext2D.prototype` for API consistency with `CrispSwContext` and to ensure tests run correctly on native canvas.
     *   **Changes:**
         *   Added polyfills for `roundRect` (path definition using `moveTo`/`arcTo`), `fillRoundRect`, `strokeRoundRect`. The latter two call a global `drawRoundedRectCanvas` helper, assuming it's available.
-        *   Added polyfills for `fillArc`, `strokeArc`, `fillAndStrokeArc`. These use the native `this.arc()` to build paths and then `this.fill()` or `this.stroke()`.
+        *   Added polyfills for `fillArc`, `outerStrokeArc`, `fillAndOuterStrokeArc`. These use the native `this.arc()` to build paths and then `this.fill()` or `this.stroke()`.
     *   **Key Snippet Example (`fillArc` polyfill):**
         ```javascript
         if (typeof CanvasRenderingContext2D.prototype.fillArc === 'undefined') {
@@ -463,7 +463,7 @@ Throughout the conversion process, various issues were encountered and resolved:
 *   **Incorrect Function Signature Usage:** Corrected the call to `getRandomPoint` in `rectangles--rotated--multi--varsize--randparams--randpos--randrot--test.js` to match its proper signature.
 *   **`checkData` Discrepancies:** Adjusted the calculation of `rightX` and `bottomY` for `withExtremesCheck` in `rounded-rect--single--1px-stroke--crisp--center-grid--test.js`. This was based on observed behavior and guide examples for 1px strokes at `.5` coordinate boundaries (pixel centers).
 *   **API Mismatch for Arc Drawing:**
-    *   Initial `strokeArc` and related methods in `CrispSwContext` took color/width arguments directly.
+    *   Initial `outerStrokeArc` and related methods in `CrispSwContext` took color/width arguments directly.
     *   Canvas polyfills relied on context properties (`fillStyle`, `strokeStyle`, `lineWidth`).
     *   Harmonized by making `CrispSwContext` methods also use context state properties. Test scripts were updated to set these properties before calling the arc methods.
 

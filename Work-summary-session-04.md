@@ -74,7 +74,7 @@ This session focused on extending the `CrispSwContext` and its underlying softwa
                          fillColor: { r: 0, g: 0, b: 0, a: 0 }
                      });
                  } else {
-                     throw new Error("CrispSwContext.arc() for path definition/clipping is only implemented for full circles. Use fillArc/strokeArc for drawing partial arcs.");
+                     throw new Error("CrispSwContext.arc() for path definition/clipping is only implemented for full circles. Use fillArc/outerStrokeArc for drawing partial arcs.");
                  }
              }
              ```

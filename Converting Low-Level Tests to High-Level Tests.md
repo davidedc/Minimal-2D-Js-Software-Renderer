@@ -250,7 +250,7 @@ This is the core of the conversion. You'll translate the logic from the old `sha
         *   Alternatively, if a utility is simple, widely used, and already loaded by the test HTML pages (like `getRandomColor` from `random-utils.js`, or `adjustDimensionsForCrispStrokeRendering` from `scene-creation-utils.js`), you can call it directly if its output is suitable or can be easily adapted (see Color Conversion below). Ensure it doesn't have side effects (like re-seeding `SeededRandom`) that would break your sequence.
 *   **Drawing Commands (Mapping `type` to `ctx` calls)**:
     *   The old `shapes.push({ type: '...', ... })` needs to be converted to direct `ctx` drawing method calls.
-    *   **`CrispSwContext` does not support generic path building with `ctx.beginPath()`, `ctx.lineTo()`, `ctx.arc()`, etc., followed by a general `ctx.fill()` or `ctx.stroke()` on that path.** All drawing must be done using specific shape drawing methods (e.g., `ctx.fillRect()`, `ctx.strokeLine()`, `ctx.fillCircle()`, `ctx.strokeArc()`).
+    *   **`CrispSwContext` does not support generic path building with `ctx.beginPath()`, `ctx.lineTo()`, `ctx.arc()`, etc., followed by a general `ctx.fill()` or `ctx.stroke()` on that path.** All drawing must be done using specific shape drawing methods (e.g., `ctx.fillRect()`, `ctx.strokeLine()`, `ctx.fillCircle()`, `ctx.outerStrokeArc()`).
     *   **Color Conversion**: Shape properties like `strokeColor: { r, g, b, a }` or `fillColor` must be converted to CSS color strings for `ctx.strokeStyle` or `ctx.fillStyle` when using native canvas methods that rely on these properties (like the polyfills for `fillArc` that call `this.arc()` then `this.fill()`). For direct `CrispSwContext` methods like `ctx.fillCircle(..., r,g,b,a)`, color components are passed directly.
         *   A local helper like `function _colorObjectToString(colorObj) { if (!colorObj) return 'rgba(0,0,0,0)'; const alpha = (typeof colorObj.a === 'number') ? (colorObj.a / 255).toFixed(3) : 1; return \`rgba(\${colorObj.r},\${colorObj.g},\${colorObj.b},\${alpha})\`; }` is useful for setting `ctx.fillStyle` or `ctx.strokeStyle`.
     *   **`line`**:
@@ -266,7 +266,7 @@ This is the core of the conversion. You'll translate the logic from the old `sha
         *   Use `ctx.fillCircle(...)`, `ctx.strokeCircle(...)`, or `ctx.fillAndStrokeCircle(...)`. These methods are available on `CrispSwContext` and polyfilled for `CanvasRenderingContext2D`.
         *   Avoid `ctx.beginPath(); ctx.arc(..., 2 * Math.PI); ctx.fill();` because `CrispSwContext` does not support general `fill()` on paths built with `arc()`.
     *   **`arc`**:
-        *   Use `ctx.fillArc(...)`, `ctx.strokeArc(...)`, or `ctx.fillAndStrokeArc(...)`. These custom methods were added to `CrispSwContext` and polyfilled for `CanvasRenderingContext2D`.
+        *   Use `ctx.fillArc(...)`, `ctx.outerStrokeArc(...)`, or `ctx.fillAndOuterStrokeArc(...)`. These custom methods were added to `CrispSwContext` and polyfilled for `CanvasRenderingContext2D`.
         *   The polyfills for `CanvasRenderingContext2D` utilize `this.arc()` internally to build the path for the native context.
         *   `CrispSwContext` versions call its specific `SWRendererArc`.
         *   Remember that these custom methods take angles in radians, and `CrispSwContext` methods convert to degrees if its internal renderer needs them.
@@ -376,7 +376,7 @@ if (typeof window !== 'undefined' && typeof window.PERFORMANCE_TESTS_REGISTRY !=
     *   Ensure the minified build (`crisp-sw-canvas-vX.Y.Z.min.js`), if used, is up-to-date and includes these new methods and renderers. If in doubt during development, comment out the minified build and load individual source files in the HTML test page.
 *   **`TypeError: ctx.fill is not a function` or `ctx.stroke is not a function` (when used after `beginPath`, `lineTo`, `arc`)**:
     *   The `CrispSwContext` does not support general path accumulation with `beginPath()`, `moveTo()`, `lineTo()`, `arc()`, etc., followed by a generic `fill()` or `stroke()` call to render that arbitrary path. 
-    *   **Fix**: You must use the specific drawing methods provided by `CrispSwContext` and its polyfills for `CanvasRenderingContext2D`, such as `ctx.fillRect()`, `ctx.strokeLine()`, `ctx.fillCircle()`, `ctx.strokeArc()`, `ctx.fillRoundRect()`, etc. These methods perform immediate drawing or call specialized renderers. The native Canvas `arc()` and `roundRect()` methods *do* define paths, which can then be filled/stroked on a `CanvasRenderingContext2D` but not on a `CrispSwContext` using a general `fill()`/`stroke()`.
+    *   **Fix**: You must use the specific drawing methods provided by `CrispSwContext` and its polyfills for `CanvasRenderingContext2D`, such as `ctx.fillRect()`, `ctx.strokeLine()`, `ctx.fillCircle()`, `ctx.outerStrokeArc()`, `ctx.fillRoundRect()`, etc. These methods perform immediate drawing or call specialized renderers. The native Canvas `arc()` and `roundRect()` methods *do* define paths, which can then be filled/stroked on a `CanvasRenderingContext2D` but not on a `CrispSwContext` using a general `fill()`/`stroke()`.
 
 
 </rewritten_file>
