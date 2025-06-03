@@ -193,9 +193,9 @@ if (typeof CanvasRenderingContext2D.prototype.fillArc === 'undefined') {
     };
 }
 
-if (typeof CanvasRenderingContext2D.prototype.strokeArc === 'undefined') {
+if (typeof CanvasRenderingContext2D.prototype.outerStrokeArc === 'undefined') {
     /**
-     * Polyfill to draw the stroke of an arc.
+     * Polyfill to draw the stroke of an arc (outline only on the curved part).
      * Angles are in radians, matching native ctx.arc().
      * @param {number} x The x-axis coordinate of the arc's center.
      * @param {number} y The y-axis coordinate of the arc's center.
@@ -204,16 +204,23 @@ if (typeof CanvasRenderingContext2D.prototype.strokeArc === 'undefined') {
      * @param {number} endAngle The angle at which the arc ends, in radians.
      * @param {boolean} [anticlockwise=false] Specifies whether the arc is drawn counter-clockwise.
      */
-    CanvasRenderingContext2D.prototype.strokeArc = function(x, y, radius, startAngle, endAngle, anticlockwise = false) {
+    CanvasRenderingContext2D.prototype.outerStrokeArc = function(x, y, radius, startAngle, endAngle, anticlockwise = false) {
+        // For a normal arc stroke, we would do:
+        //  this.beginPath();
+        //  this.arc(x, y, radius, startAngle, endAngle, anticlockwise);
+        //  this.stroke();
+
         this.beginPath();
         this.arc(x, y, radius, startAngle, endAngle, anticlockwise);
+        this.lineWidth = this.lineWidth;
+        this.strokeStyle = this.strokeStyle;
         this.stroke();
     };
 }
 
-if (typeof CanvasRenderingContext2D.prototype.fillAndStrokeArc === 'undefined') {
+if (typeof CanvasRenderingContext2D.prototype.fillAndOuterStrokeArc === 'undefined') {
     /**
-     * Polyfill to draw a filled and stroked arc (pie slice with outline).
+     * Polyfill to draw a filled and partially stroked arc (pie slice with outline only on the curved part).
      * Angles are in radians, matching native ctx.arc().
      * @param {number} x The x-axis coordinate of the arc's center.
      * @param {number} y The y-axis coordinate of the arc's center.
@@ -222,13 +229,17 @@ if (typeof CanvasRenderingContext2D.prototype.fillAndStrokeArc === 'undefined') 
      * @param {number} endAngle The angle at which the arc ends, in radians.
      * @param {boolean} [anticlockwise=false] Specifies whether the arc is drawn counter-clockwise.
      */
-    CanvasRenderingContext2D.prototype.fillAndStrokeArc = function(x, y, radius, startAngle, endAngle, anticlockwise = false) {
-        this.beginPath();
-        this.moveTo(x, y);
-        this.arc(x, y, radius, startAngle, endAngle, anticlockwise);
-        this.closePath();
-        this.fill();
-        this.stroke(); // Stroke after fill to ensure stroke is on top and not occluded by fill
+    CanvasRenderingContext2D.prototype.fillAndOuterStrokeArc = function(x, y, radius, startAngle, endAngle, anticlockwise = false) {
+        // For a normal arc stroke, we would do:
+        //  this.beginPath();
+        //  this.moveTo(x, y);
+        //  this.arc(x, y, radius, startAngle, endAngle, anticlockwise);
+        //  this.closePath();
+        //  this.fill();
+        //  this.stroke(); // Stroke after fill to ensure stroke is on top and not occluded by fill
+
+        this.fillArc(x, y, radius, startAngle, endAngle, anticlockwise);
+        this.outerStrokeArc(x, y, radius, startAngle, endAngle, anticlockwise);
     };
 }
 

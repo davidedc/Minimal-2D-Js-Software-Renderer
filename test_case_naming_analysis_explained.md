@@ -104,7 +104,7 @@ The `test_case_naming_analysis_v16.md` table includes the following columns. Eac
     *   `semitransparent`: A fill is applied with partial opacity (alpha between 0 and 1, exclusive). Filenames with "semitransparent_fill" or "transparent_fill" (if fill is present but alpha is <1) lead to this.
     *   `mixed`: If different shapes in the test have different fill styles (e.g., some opaque, some none), or if the fill opacity itself is randomized across these categories. The `scene--all-shapes-combined--test.js` is a prime example.
     *   `N/A`: For the main scene test, as fills are per-component.
-    *   Determined by analyzing `ctx.fillStyle` assignments, alpha values in color objects, and calls to fill methods (`fillRect`, `fillCircle`, `fillAndStrokeArc`, etc.) in the test scripts. Parenthesized comments were removed.
+    *   Determined by analyzing `ctx.fillStyle` assignments, alpha values in color objects, and calls to fill methods (`fillRect`, `fillCircle`, `fillAndOuterStrokeArc`, etc.) in the test scripts. Parenthesized comments were removed.
 
 ---
 
@@ -118,7 +118,7 @@ The `test_case_naming_analysis_v16.md` table includes the following columns. Eac
     *   `semitransparent`: A stroke is applied with partial opacity. Filenames with "semitransparent_stroke" or "semi-stroke" or "transparent_stroke" lead to this.
     *   `mixed`: If different shapes in the test have different stroke styles, or if stroke opacity is randomized across opaque/semitransparent/none categories. The `scene--all-shapes-combined--test.js` is an example.
     *   `N/A`: For the main scene test, as strokes are per-component.
-    *   Determined by analyzing `ctx.strokeStyle`, `ctx.lineWidth`, alpha values in stroke color objects, and calls to stroke methods (`strokeRect`, `strokeCircle`, `fillAndStrokeArc`, etc.) in the test scripts. Parenthesized comments were removed.
+    *   Determined by analyzing `ctx.strokeStyle`, `ctx.lineWidth`, alpha values in stroke color objects, and calls to stroke methods (`strokeRect`, `strokeCircle`, `fillAndOuterStrokeArc`, etc.) in the test scripts. Parenthesized comments were removed.
 
 ---
 
