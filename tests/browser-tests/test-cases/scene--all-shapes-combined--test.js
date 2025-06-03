@@ -86,13 +86,13 @@ function draw_scene_all_shapes_combined(ctx, currentIterationNumber, instances =
                 const hasStroke = shape.strokeColor && shape.strokeColor.a > 0 && shape.strokeWidth > 0;
 
                 if (hasFill && hasStroke) {
-                    context.fillAndStrokeArc(shape.center.x, shape.center.y, shape.radius, 
+                    context.fillAndOuterStrokeArc(shape.center.x, shape.center.y, shape.radius, 
                                            startAngleRad, endAngleRad, shape.counterClockwise || false);
                 } else if (hasFill) {
                     context.fillArc(shape.center.x, shape.center.y, shape.radius, 
                                   startAngleRad, endAngleRad, shape.counterClockwise || false);
                 } else if (hasStroke) {
-                    context.strokeArc(shape.center.x, shape.center.y, shape.radius, 
+                    context.outerStrokeArc(shape.center.x, shape.center.y, shape.radius, 
                                     startAngleRad, endAngleRad, shape.counterClockwise || false);
                 }
             }

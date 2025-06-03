@@ -51,13 +51,13 @@ function draw_arcs_multi_5_fully_random(ctx, currentIterationNumber, instances =
         // The getRandomPoint already randomizes position for each arc.
         // No additional Math.random() offset needed for performance mode spreading for this test.
         
-        ctx.fillStyle = _colorObjectToString(fillColorForRender); // Set for fillAndStrokeArc
-        ctx.strokeStyle = _colorObjectToString(strokeColorForRender); // Set for fillAndStrokeArc
+        ctx.fillStyle = _colorObjectToString(fillColorForRender); // Set for fillAndOuterStrokeArc
+        ctx.strokeStyle = _colorObjectToString(strokeColorForRender); // Set for fillAndOuterStrokeArc
         ctx.lineWidth = strokeWidth;
 
-        // Use fillAndStrokeArc as both fill and stroke are defined with random colors
+        // Use fillAndOuterStrokeArc as both fill and stroke are defined with random colors
         // The polyfill and CrispSwContext method should handle drawing fill then stroke.
-        ctx.fillAndStrokeArc(drawCenterX, drawCenterY, radius, startAngleRad, endAngleRad, false);
+        ctx.fillAndOuterStrokeArc(drawCenterX, drawCenterY, radius, startAngleRad, endAngleRad, false);
 
         if (!isPerformanceRun) { 
             logs.push(

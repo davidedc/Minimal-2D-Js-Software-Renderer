@@ -41,7 +41,7 @@ function draw_arcs_multi_12_90_deg_fixed_params_grid_layout(ctx, currentIteratio
 
                 ctx.strokeStyle = fixedStrokeColorStr;
                 ctx.lineWidth = strokeWidth;
-                ctx.strokeArc(centerX, centerY, radius, startAngleRad, endAngleRad, false);
+                ctx.outerStrokeArc(centerX, centerY, radius, startAngleRad, endAngleRad, false);
 
                 logs.push(
                     `\u25DC 90° Arc (Fixed Grid): center=(${centerX},${centerY}), r=${radius}, sw=${strokeWidth}`
@@ -82,7 +82,7 @@ function draw_arcs_multi_12_90_deg_fixed_params_grid_layout(ctx, currentIteratio
 
             ctx.strokeStyle = strokeColorStr;
             ctx.lineWidth = strokeWidth;
-            ctx.strokeArc(drawCenterX, drawCenterY, radius, startAngleRad, endAngleRad, false);
+            ctx.outerStrokeArc(drawCenterX, drawCenterY, radius, startAngleRad, endAngleRad, false);
         }
         return null; // No logs for performance run
     }

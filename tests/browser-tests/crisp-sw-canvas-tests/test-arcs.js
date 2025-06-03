@@ -24,15 +24,15 @@ function draw_filled_arc_test(ctx) {
 function draw_stroked_arc_test(ctx) {
     ctx.strokeStyle = 'rgba(0,0,255,1)'; // Blue, opaque
     ctx.lineWidth = 5;
-    ctx.strokeArc(100, 75, 50, 0, Math.PI / 2, false);
+    ctx.outerStrokeArc(100, 75, 50, 0, Math.PI / 2, false);
     
     ctx.strokeStyle = 'rgba(255,0,255,1)'; // Magenta, opaque
     ctx.lineWidth = 8;
-    ctx.strokeArc(100, 200, 60, Math.PI / 4, Math.PI * 1.5, true); // Anticlockwise
+    ctx.outerStrokeArc(100, 200, 60, Math.PI / 4, Math.PI * 1.5, true); // Anticlockwise
     
     ctx.lineWidth = 2;
     ctx.strokeStyle = 'rgba(0,128,0,0.5)'; // Green, semi-transparent
-    ctx.strokeArc(250, 125, 40, Math.PI / 6, Math.PI, false);
+    ctx.outerStrokeArc(250, 125, 40, Math.PI / 6, Math.PI, false);
 }
 
 /**
@@ -43,12 +43,12 @@ function draw_fill_and_stroke_arc_test(ctx) {
     ctx.fillStyle = 'rgba(255,255,0,0.5)'; // Yellow, semi-transparent
     ctx.strokeStyle = 'rgba(0,0,0,1)';   // Black, opaque
     ctx.lineWidth = 3;
-    ctx.fillAndStrokeArc(100, 75, 50, Math.PI, Math.PI * 1.75, false);
+    ctx.fillAndOuterStrokeArc(100, 75, 50, Math.PI, Math.PI * 1.75, false);
     
     ctx.fillStyle = 'rgba(128,0,128,0.8)'; // Purple, semi-transparent
     ctx.strokeStyle = 'rgba(255,165,0,1)'; // Orange, opaque
     ctx.lineWidth = 1;
-    ctx.fillAndStrokeArc(250, 150, 60, 0, Math.PI * 0.8, true); // Anticlockwise
+    ctx.fillAndOuterStrokeArc(250, 150, 60, 0, Math.PI * 0.8, true); // Anticlockwise
 }
 
 /**
@@ -65,14 +65,14 @@ function createArcsTest() {
     new RenderTestBuilder()
         .withId('crisp-sw-arc-stroke')
         .withTitle('Crisp SW: Stroked Arcs')
-        .withDescription('Tests drawing of stroked arcs using strokeArc.')
+        .withDescription('Tests drawing of stroked arcs using outerStrokeArc.')
         .runCanvasCode(draw_stroked_arc_test)
         .build();
 
     new RenderTestBuilder()
         .withId('crisp-sw-arc-fill-and-stroke')
         .withTitle('Crisp SW: Filled & Stroked Arcs')
-        .withDescription('Tests drawing of filled and stroked arcs using fillAndStrokeArc.')
+        .withDescription('Tests drawing of filled and stroked arcs using fillAndOuterStrokeArc.')
         .runCanvasCode(draw_fill_and_stroke_arc_test)
         .build();
 } 
