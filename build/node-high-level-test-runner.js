@@ -2444,7 +2444,7 @@ class CrispSwContext {
      * Angles are in radians.
      * NOTE: Currently, this method is a stub and does not build a persistent path for fill/stroke
      * due to limitations in the generic fill()/stroke() methods of CrispSwContext.
-     * For drawing, use fillArc, strokeArc, or fillAndStrokeArc.
+     * For drawing, use fillArc, outerStrokeArc, or fillAndOuterStrokeArc.
      */
     arc(x, y, radius, startAngle, endAngle, anticlockwise = false) {
         // TODO: Implement path definition for clipping if SWRendererArc supports it,
@@ -2471,7 +2471,7 @@ class CrispSwContext {
                 fillColor: { r: 0, g: 0, b: 0, a: 0 }
             });
         } else {
-            throw new Error("CrispSwContext.arc() for path definition/clipping is only implemented for full circles. Use fillArc/strokeArc for drawing partial arcs.");
+            throw new Error("CrispSwContext.arc() for path definition/clipping is only implemented for full circles. Use fillArc/outerStrokeArc for drawing partial arcs.");
         }
     }
 
@@ -2506,7 +2506,7 @@ class CrispSwContext {
      * Draws the stroke of an arc.
      * Angles are in radians.
      */
-    strokeArc(x, y, radius, startAngle, endAngle, anticlockwise = false) {
+    outerStrokeArc(x, y, radius, startAngle, endAngle, anticlockwise = false) {
         const state = this.currentState;
         const scaledLineWidth = getScaledLineWidth(state.transform.elements, state.lineWidth);
         const centerTransformed = transformPoint(x, y, state.transform.elements);
@@ -2522,7 +2522,7 @@ class CrispSwContext {
             startAngle: startAngleDeg,
             endAngle: endAngleDeg,
             anticlockwise: anticlockwise,
-            fillColor: { r: 0, g: 0, b: 0, a: 0 }, // Explicitly no fill for strokeArc
+            fillColor: { r: 0, g: 0, b: 0, a: 0 }, // Explicitly no fill for outerStrokeArc
             strokeWidth: scaledLineWidth,
             strokeColor: state.strokeColor 
         });
@@ -2532,7 +2532,7 @@ class CrispSwContext {
      * Draws a filled and stroked arc.
      * Angles are in radians.
      */
-    fillAndStrokeArc(x, y, radius, startAngle, endAngle, anticlockwise = false) {
+    fillAndOuterStrokeArc(x, y, radius, startAngle, endAngle, anticlockwise = false) {
         const state = this.currentState;
         const scaledLineWidth = getScaledLineWidth(state.transform.elements, state.lineWidth);
         const centerTransformed = transformPoint(x, y, state.transform.elements);
@@ -9271,7 +9271,7 @@ function draw_arcs_multi_12_90_deg_fixed_params_grid_layout(ctx, currentIteratio
 
                 ctx.strokeStyle = fixedStrokeColorStr;
                 ctx.lineWidth = strokeWidth;
-                ctx.strokeArc(centerX, centerY, radius, startAngleRad, endAngleRad, false);
+                ctx.outerStrokeArc(centerX, centerY, radius, startAngleRad, endAngleRad, false);
 
                 logs.push(
                     `\u25DC 90° Arc (Fixed Grid): center=(${centerX},${centerY}), r=${radius}, sw=${strokeWidth}`
@@ -9312,7 +9312,7 @@ function draw_arcs_multi_12_90_deg_fixed_params_grid_layout(ctx, currentIteratio
 
             ctx.strokeStyle = strokeColorStr;
             ctx.lineWidth = strokeWidth;
-            ctx.strokeArc(drawCenterX, drawCenterY, radius, startAngleRad, endAngleRad, false);
+            ctx.outerStrokeArc(drawCenterX, drawCenterY, radius, startAngleRad, endAngleRad, false);
         }
         return null; // No logs for performance run
     }
@@ -9384,13 +9384,13 @@ function draw_arcs_multi_5_fully_random(ctx, currentIterationNumber, instances =
         // The getRandomPoint already randomizes position for each arc.
         // No additional Math.random() offset needed for performance mode spreading for this test.
         
-        ctx.fillStyle = _colorObjectToString(fillColorForRender); // Set for fillAndStrokeArc
-        ctx.strokeStyle = _colorObjectToString(strokeColorForRender); // Set for fillAndStrokeArc
+        ctx.fillStyle = _colorObjectToString(fillColorForRender); // Set for fillAndOuterStrokeArc
+        ctx.strokeStyle = _colorObjectToString(strokeColorForRender); // Set for fillAndOuterStrokeArc
         ctx.lineWidth = strokeWidth;
 
-        // Use fillAndStrokeArc as both fill and stroke are defined with random colors
+        // Use fillAndOuterStrokeArc as both fill and stroke are defined with random colors
         // The polyfill and CrispSwContext method should handle drawing fill then stroke.
-        ctx.fillAndStrokeArc(drawCenterX, drawCenterY, radius, startAngleRad, endAngleRad, false);
+        ctx.fillAndOuterStrokeArc(drawCenterX, drawCenterY, radius, startAngleRad, endAngleRad, false);
 
         if (!isPerformanceRun) { 
             logs.push(
@@ -13629,13 +13629,13 @@ function draw_scene_all_shapes_combined(ctx, currentIterationNumber, instances =
                 const hasStroke = shape.strokeColor && shape.strokeColor.a > 0 && shape.strokeWidth > 0;
 
                 if (hasFill && hasStroke) {
-                    context.fillAndStrokeArc(shape.center.x, shape.center.y, shape.radius, 
+                    context.fillAndOuterStrokeArc(shape.center.x, shape.center.y, shape.radius, 
                                            startAngleRad, endAngleRad, shape.counterClockwise || false);
                 } else if (hasFill) {
                     context.fillArc(shape.center.x, shape.center.y, shape.radius, 
                                   startAngleRad, endAngleRad, shape.counterClockwise || false);
                 } else if (hasStroke) {
-                    context.strokeArc(shape.center.x, shape.center.y, shape.radius, 
+                    context.outerStrokeArc(shape.center.x, shape.center.y, shape.radius, 
                                     startAngleRad, endAngleRad, shape.counterClockwise || false);
                 }
             }

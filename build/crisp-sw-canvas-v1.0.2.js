@@ -5006,7 +5006,7 @@ class CrispSwContext {
      * Angles are in radians.
      * NOTE: Currently, this method is a stub and does not build a persistent path for fill/stroke
      * due to limitations in the generic fill()/stroke() methods of CrispSwContext.
-     * For drawing, use fillArc, strokeArc, or fillAndStrokeArc.
+     * For drawing, use fillArc, outerStrokeArc, or fillAndOuterStrokeArc.
      */
     arc(x, y, radius, startAngle, endAngle, anticlockwise = false) {
         // TODO: Implement path definition for clipping if SWRendererArc supports it,
@@ -5033,7 +5033,7 @@ class CrispSwContext {
                 fillColor: { r: 0, g: 0, b: 0, a: 0 }
             });
         } else {
-            throw new Error("CrispSwContext.arc() for path definition/clipping is only implemented for full circles. Use fillArc/strokeArc for drawing partial arcs.");
+            throw new Error("CrispSwContext.arc() for path definition/clipping is only implemented for full circles. Use fillArc/outerStrokeArc for drawing partial arcs.");
         }
     }
 
@@ -5068,7 +5068,7 @@ class CrispSwContext {
      * Draws the stroke of an arc.
      * Angles are in radians.
      */
-    strokeArc(x, y, radius, startAngle, endAngle, anticlockwise = false) {
+    outerStrokeArc(x, y, radius, startAngle, endAngle, anticlockwise = false) {
         const state = this.currentState;
         const scaledLineWidth = getScaledLineWidth(state.transform.elements, state.lineWidth);
         const centerTransformed = transformPoint(x, y, state.transform.elements);
@@ -5084,7 +5084,7 @@ class CrispSwContext {
             startAngle: startAngleDeg,
             endAngle: endAngleDeg,
             anticlockwise: anticlockwise,
-            fillColor: { r: 0, g: 0, b: 0, a: 0 }, // Explicitly no fill for strokeArc
+            fillColor: { r: 0, g: 0, b: 0, a: 0 }, // Explicitly no fill for outerStrokeArc
             strokeWidth: scaledLineWidth,
             strokeColor: state.strokeColor 
         });
@@ -5094,7 +5094,7 @@ class CrispSwContext {
      * Draws a filled and stroked arc.
      * Angles are in radians.
      */
-    fillAndStrokeArc(x, y, radius, startAngle, endAngle, anticlockwise = false) {
+    fillAndOuterStrokeArc(x, y, radius, startAngle, endAngle, anticlockwise = false) {
         const state = this.currentState;
         const scaledLineWidth = getScaledLineWidth(state.transform.elements, state.lineWidth);
         const centerTransformed = transformPoint(x, y, state.transform.elements);
