@@ -83,7 +83,18 @@ The test suite determines the maximum number of shapes (lines, rectangles, circl
         *   The canvas is cleared (`clearRect`).
         *   The appropriate `drawFunction` (referenced in the test object from `window.PERFORMANCE_TESTS_REGISTRY`) is called. The call signature is now adapted: `testType.drawFunction(context, 0, currentShapeCount)`. Here, `currentShapeCount` (from the ramp-up logic) is passed as the `instances` argument to the high-level test's drawing function. A dummy value like `0` is passed for the `iterationNumber` argument, as it's not typically used by the performance aspect of these functions.
         *   For Software Canvas, `swCtx.blitToCanvas()` is called *if* `includeBlitting` is checked.
-    *   **Timing**: `performance.now()` is used to measure the time taken for drawing (and potentially blitting).
+    *   **Clipping in Performance Tests**:
+        *   The application of clipping in performance tests depends on the nature of the original high-level visual test's `Count` facet (which describes the number of *drawn* shapes, not clipping shapes). This strategy is designed to distinguish between the performance cost of *defining* a clip versus *applying* an existing clip.
+        *   **Scenario 1: Visual Test `Count` is `single` (for drawn shapes)**
+            *   **Behavior**: If the corresponding visual test draws a single primary shape (or a single composition of shapes), and that test involves clipping, then in the performance test, a new clipping region is **defined and applied for each instance** of the drawn shape(s) as the `currentShapeCount` (i.e., `instances`) ramps up.
+            *   **Effect**: This scenario heavily tests the setup cost of clipping (e.g., `ctx.save()`, path definition, `ctx.clip()`, `ctx.restore()`) because these operations are repeated for every drawn entity scaled by `instances`.
+            *   The characteristics of the clipping region itself (shape, size, arrangement, etc.) are taken from the visual test's specific clipping facets.
+        *   **Scenario 2: Visual Test `Count` is `multi*` (e.g., `multi-5`, `multi-10`, for drawn shapes)**
+            *   **Behavior**: If the corresponding visual test draws multiple primary shapes, and that test involves clipping, then in the performance test, the clipping region is **defined once per frame**. All drawn shapes rendered within that frame (as their collective number or complexity is scaled by `instances`) are clipped against this single, pre-defined region.
+            *   **Effect**: This scenario primarily tests the rendering cost of drawing primitives that are subject to an already active clipping region, thus emphasizing the "application" cost of the clip rather than its setup cost.
+            *   The characteristics of the single clipping region (which might be complex, e.g., a grid of clipping shapes) are taken from the visual test's specific clipping facets.
+        *   The drawing functions within the test case files (`*--test.js`) must implement the necessary logic to detect if they are in performance mode (via the `instances` parameter) and apply the correct clipping strategy based on their original `Count` classification for drawn shapes.
+    *   **Timing**: `performance.now()` is used to measure the time taken for drawing (and potentially blitting and clipping operations).
     *   **Logging**: Results (`SW Canvas with X shapes: Y ms`) are logged based on the `quietMode` setting.
     *   **Budget Check**: The `elapsedTime` is compared to `FRAME_BUDGET`.
         *   **If Under Budget**: `consecutiveExceedances` is reset to 0, `currentShapeCount` is increased by the respective `incrementSize`, and the loop continues.
