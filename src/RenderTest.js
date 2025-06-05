@@ -677,6 +677,9 @@ class RenderTest {
       if (swDrawResult?.logs && Array.isArray(swDrawResult.logs)) {
         this.primitiveLogs = swDrawResult.logs.join('\n');
       }
+
+      // Capture the return value for checks, mirroring the browser logic
+      this.builderReturnValue = swDrawResult?.checkData === undefined ? swDrawResult : swDrawResult.checkData;
     }
     
     // Run checks if available
