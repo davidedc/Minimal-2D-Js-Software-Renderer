@@ -44,7 +44,7 @@ function draw_arcs_multi_12_90_deg_fixed_params_grid_layout(ctx, currentIteratio
                 ctx.outerStrokeArc(centerX, centerY, radius, startAngleRad, endAngleRad, false);
 
                 logs.push(
-                    `\u25DC 90° Arc (Fixed Grid): center=(${centerX},${centerY}), r=${radius}, sw=${strokeWidth}`
+                    `\u25DC 90\u00B0 Arc (Fixed Grid): center=(${centerX},${centerY}), r=${radius}, sw=${strokeWidth}`
                 );
                 yOffset += radius * 2 + 20;
             }
@@ -98,7 +98,7 @@ registerHighLevelTest(
     },
     {
         title: '90\u00B0 Arcs (Multiple, Fixed Params, Grid Layout)',
-        description: 'Tests rendering of 90° arcs with various fixed radii and stroke widths in a grid.',
+        description: 'Tests rendering of 90\u00B0 arcs with various fixed radii and stroke widths in a grid.',
         displayName: 'Perf: 12 90Deg Arcs FixedGrid'
     }
 ); 
