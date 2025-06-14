@@ -1,6 +1,6 @@
-# Explanation of `test_case_naming_analysis_v17.md` Table Composition
+# Explanation of Test Case Analysis Data (`test_case_naming_analysis_v19.tsv`)
 
-This document provides a detailed explanation of how the `test_case_naming_analysis_v17.md` table was constructed, the source of the test files, and a breakdown of each column (facet), including its observed values and the criteria for their assignment.
+This document provides a detailed explanation of the facets used in the final test case analysis file, `test_case_naming_analysis_v19.tsv`. This TSV file is the definitive, machine-readable output of a comprehensive analysis project, containing a full breakdown of every test case and the proposed new filename generated according to the convention defined in `new_test_naming_convention.md`.
 
 ## Source of Test Files
 
@@ -13,7 +13,7 @@ The analysis aims to create a unified and descriptive naming convention applicab
 
 ## Column (Facet) Breakdown
 
-The `test_case_naming_analysis_v17.md` table includes the following columns. Each facet's observed values are derived from the V17 table itself (or represent the possible values if not yet fully populated for new facets).
+The `test_case_naming_analysis_v19.tsv` file includes the following columns. The `New Test Name` column is generated based on the values of the preceding facet columns.
 
 ---
 
@@ -36,7 +36,7 @@ The `test_case_naming_analysis_v17.md` table includes the following columns. Eac
 ### 3. `Shape category`
 
 *   **Description**: The primary type of graphical primitive or entity being tested.
-*   **Observed Values in v17.md**: `mixed`, `arcs`, `circles`, `rounded-rects`, `rectangles`, `lines`.
+*   **Observed Values in v19.tsv**: `mixed`, `arcs`, `circles`, `rounded-rects`, `rectangles`, `lines`.
 *   **Criteria**:
     *   `arcs`: Tests focusing on arc shapes.
     *   `circles`: Tests focusing on circle shapes.
@@ -51,7 +51,7 @@ The `test_case_naming_analysis_v17.md` table includes the following columns. Eac
 ### 4. `Count`
 
 *   **Description**: Specifies whether the test renders a single instance or multiple instances of the shape(s) **in non-performance-test mode** (for performance test mode, the shapes are *always* drawn a growing number of times to determine how many shapes can be drawn within a given frame budget).
-*   **Observed Values in v17.md**: `multi`, `multi-5`, `multi-12`, `multi-8`, `single`, `multi-10`, `multi-20`, `multi-15`.
+*   **Observed Values in v19.tsv**: `multi`, `multi-5`, `multi-12`, `multi-8`, `single`, `multi-10`, `multi-20`, `multi-15`.
 *   **Criteria**:
     *   `single`: One primary shape instance is drawn.
     *   `multi-[N]`: A specific number `N` of shapes are drawn (e.g., `multi-5` means 5 shapes). Often seen in filenames like `arcs--multi-5...`.
@@ -62,7 +62,7 @@ The `test_case_naming_analysis_v17.md` table includes the following columns. Eac
 ### 5. `SizeCategory`
 
 *   **Description**: Classifies the general size of the shapes being rendered. This is determined by analyzing the test's source code to ascertain the actual dimensions (length for lines, width/height for rectangles/rounded-rects, radius for circles) and comparing them against standardized pixel ranges.
-*   **Observed Values in v17.md**: `mixed`, `L`, `M`, `S`, `XS`, `XL`.
+*   **Observed Values in v19.tsv**: `mixed`, `L`, `M`, `S`, `XS`, `XL`.
 *   **Standardized Pixel Ranges:**
     *   **Lines (length):**
         *   `XS`: 5-20px
@@ -82,14 +82,14 @@ The `test_case_naming_analysis_v17.md` table includes the following columns. Eac
         *   `M`: 10-50px
         *   `L`: 40-100px
         *   `XL`: 80-200px
-*   **Criteria for Assignment (as applied for v17):**
+*   **Criteria for Assignment (as applied for v19)**:
     *   `XS`, `S`, `M`, `L`, `XL`: Assigned if the shape's dimensions (determined from source code analysis) consistently fall within the corresponding pixel range for its category. If dimensions are randomized, the entire randomized range must fall within a single bucket. Filename cues (e.g., `--m-size--`) serve as hints but are superseded by code analysis.
     *   `mixed`:
         *   If a test script randomizes a shape's dimensions such that the resulting range spans *multiple* defined buckets (e.g., a rectangle width randomized from 10px to 150px would be `mixed` as it covers S, M, and L).
         *   If a test draws multiple shapes of distinctly different fixed size categories (e.g., one XS circle and one L circle).
         *   If the `Shape category` itself is `mixed` (like in `scene--all-shapes-combined--test.js`), then `SizeCategory` will also typically be `mixed`.
         *   For `arcs`, their radius was compared to the `circles` size categories. If the radius or randomized radius range spanned multiple circle categories, `SizeCategory` became `mixed`.
-    *   `N/A`: This value was not used in v17 as all shape types could be categorized or determined as `mixed`.
+    *   `N/A`: This value was not used in the final analysis as all shape types could be categorized or determined as `mixed`.
     *   The primary source for determination is the test's `.js` source file located in `/Users/davidedellacasa/code/Minimal-2D-Js-Software-Renderer/tests/browser-tests/test-cases/` or `/Users/davidedellacasa/code/Minimal-2D-Js-Software-Renderer/tests/browser-tests/performance-tests-legacy/`.
 
 ---
@@ -97,7 +97,7 @@ The `test_case_naming_analysis_v17.md` table includes the following columns. Eac
 ### 6. `FillStyle`
 
 *   **Description**: Indicates the nature of the shape's fill, focusing on its presence and opacity.
-*   **Observed Values in v17.md**: `N/A`, `mixed`, `opaque`, `none`, `semitransparent`.
+*   **Observed Values in v19.tsv**: `N/A`, `mixed`, `opaque`, `none`, `semitransparent`.
 *   **Criteria**:
     *   `none`: No fill is applied (e.g., lines by default, or if `fillStyle` alpha is 0, or no fill operation is called for a shape). Filenames with `--no-fill--` also map to this.
     *   `opaque`: A fill is applied with full opacity (alpha = 1.0 or 255). This is often the default for `getRandomColor()` if alpha isn't specified.
@@ -111,7 +111,7 @@ The `test_case_naming_analysis_v17.md` table includes the following columns. Eac
 ### 7. `StrokeStyle`
 
 *   **Description**: Indicates the nature of the shape's stroke, focusing on its presence and opacity.
-*   **Observed Values in v17.md**: `N/A`, `mixed`, `opaque`, `none`, `semitransparent`.
+*   **Observed Values in v19.tsv**: `N/A`, `mixed`, `opaque`, `none`, `semitransparent`.
 *   **Criteria**:
     *   `none`: No stroke is applied (e.g., `strokeWidth` is 0, no stroke operation, or filename explicitly states `--no-stroke--` or `--no-NA-stroke--`).
     *   `opaque`: A stroke is applied with full opacity. This is common if `strokeStyle` is set by `getRandomColor()` without specific alpha manipulation, or if color is a fixed opaque color. Filenames with "opaque_stroke" also map here.
@@ -125,8 +125,8 @@ The `test_case_naming_analysis_v17.md` table includes the following columns. Eac
 ### 8. `StrokeThickness`
 
 *   **Description**: Specifies the thickness of the stroke.
-*   **Observed Values in v17.md**: `none`, `1px`, `2px`, `3px`, `5px`, `10px`, `1px-4px`, `1px-5px`, `1px-10px`, `1px-11px`, `10px-20px`, `1px-30px`, `mixed`.
-*   **Criteria (as applied for v17)**:
+*   **Observed Values in v19.tsv**: `none`, `1px`, `2px`, `3px`, `5px`, `10px`, `1px-4px`, `1px-5px`, `1px-10px`, `1px-11px`, `10px-20px`, `1px-30px`, `mixed`.
+*   **Criteria (as applied for v19)**:
     *   `none`: If `StrokeStyle` is `none`, or if the test script explicitly sets `lineWidth` to 0 or does not perform a stroke operation.
     *   `[N]px`: If an explicit, single pixel value is used. This is determined either from the filename (e.g., `--1px_...`, `10px_black_opaque_stroke`) or by analyzing the test script's code to find a constant `lineWidth` assignment.
     *   `[N]px-[M]px`: If stroke width is randomized within a discernible, continuous integer pixel range. This is determined by analyzing the test script's code, typically looking for `SeededRandom.getRandom()` calls that define a min and max for `lineWidth` (e.g., `Math.floor(SeededRandom.getRandom() * RANGE_SIZE) + MIN_WIDTH`).
@@ -134,15 +134,15 @@ The `test_case_naming_analysis_v17.md` table includes the following columns. Eac
         *   Used for the main scene test (`scene--all-shapes-combined--test.js`) as it combines components with varying stroke thicknesses.
         *   If a test script uses a discrete set of different fixed pixel values for strokes within the same test (e.g., drawing some shapes with 1px, then 2px, then 4px strokes, as in `arcs--multi-12--90-deg--fixed-params--grid-layout--test.js`).
         *   If randomization logic in the code results in a scattered set of specific values rather than a continuous range (e.g., only specific even numbers like `2, 4, ..., 12px`).
-        *   Original t-shirt sizes (`L`, `M`, `XL`) from filenames in legacy tests were re-evaluated by examining their source code. If the code revealed a specific pixel value or a continuous range, it was converted to `[N]px` or `[N]px-[M]px`. If the code was unavailable or the t-shirt size didn't map to a clear pixel definition, it would have remained `mixed`, but for v17 (via v15), all such legacy files provided were mapped to specific ranges.
-    *   The `unknown` values from previous versions were resolved by filename cues or by assuming `mixed` if no other information was available (though for v17, all `unknown` were resolved to more specific values based on filename or code). Parenthesized comments were removed.
+        *   Original t-shirt sizes (`L`, `M`, `XL`) from filenames in legacy tests were re-evaluated by examining their source code. If the code revealed a specific pixel value or a continuous range, it was converted to `[N]px` or `[N]px-[M]px`. If the code was unavailable or the t-shirt size didn't map to a clear pixel definition, it would have remained `mixed`, but for the final analysis, all such legacy files provided were mapped to specific ranges.
+    *   The `unknown` values from previous versions were resolved by filename cues or by assuming `mixed` if no other information was available (though for the final analysis, all `unknown` were resolved to more specific values based on filename or code). Parenthesized comments were removed.
 
 ---
 
 ### 9. `Layout`
 
 *   **Description**: Describes the overall arrangement or placement strategy of shapes on the canvas.
-*   **Observed Values in v17.md**: `spread`, `grid`, `random`, `centered`, `N/A`.
+*   **Observed Values in v19.tsv**: `spread`, `grid`, `random`, `centered`, `N/A`.
 *   **Criteria**:
     *   `spread`: Multiple shapes are drawn, and their positions are randomized or systematically varied to distribute them across the canvas, often with the intent to minimize overlap for visual inspection (e.g., `getRandomPoint()` called for each instance in a loop, or `Math.random() * canvasDimension` applied to x/y of each instance).
     *   `grid`: Shapes are explicitly arranged in a grid formation.
@@ -155,7 +155,7 @@ The `test_case_naming_analysis_v17.md` table includes the following columns. Eac
 ### 10. `CenteredAt`
 
 *   **Description**: For shapes like circles, arcs, and rectangles, this specifies if their geometric center is aligned with a pixel center, a grid intersection, or neither.
-*   **Observed Values in v17.md**: `N/A`, `random`, `mixed-pixel-grid`, `pixel`, `grid`.
+*   **Observed Values in v19.tsv**: `N/A`, `random`, `mixed-pixel-grid`, `pixel`, `grid`.
 *   **Criteria**:
     *   `pixel`: Center coordinates are `*.5` (e.g., `centerX = Math.floor(width/2) + 0.5`).
     *   `grid`: Center coordinates are integers (e.g., `centerX = Math.floor(width/2)`).
@@ -169,7 +169,7 @@ The `test_case_naming_analysis_v17.md` table includes the following columns. Eac
 ### 11. `EdgeAlignment`
 
 *   **Description**: Indicates if the shape's final rendered edges (considering stroke) align with pixel boundaries to avoid anti-aliasing "feathering".
-*   **Observed Values in v17.md**: `mixed`, `not-crisp`, `crisp`.
+*   **Observed Values in v19.tsv**: `mixed`, `not-crisp`, `crisp`.
 *   **Criteria**:
     *   `crisp`:
         *   If the filename explicitly contains "crisp" or "precise".
@@ -188,22 +188,23 @@ The `test_case_naming_analysis_v17.md` table includes the following columns. Eac
 ### 12. `Orientation`
 
 *   **Description**: Describes the rotation or fixed orientation of shapes. Merges previous "Orientation" and "Rotation" columns.
-*   **Observed Values in v17.md**: `mixed`, `random`, `fixed-90-deg`, `N/A`, `square`, `45-degree`, `horizontal`, `vertical`.
+*   **Observed Values in v19.tsv**: `mixed`, `random`, `fixed-90-deg`, `N/A`, `square`, `45-degree`, `horizontal`, `vertical`.
 *   **Criteria**:
     *   `horizontal`, `vertical`, `45-degree`: For lines or other shapes explicitly drawn at these orientations.
     *   `square`: For axis-aligned rectangles (no rotation), or lines explicitly drawn at 0, 90, 180, 270 degrees.
     *   `rotated`: If `ctx.rotate()` is used with an arbitrary, non-axis-aligned angle, or if coordinates imply this.
     *   `random`: If the rotation angle or orientation is randomized.
-    *   `fixed-90-deg`: A specific case for arcs at 90 degrees. (This should likely be standardized to just `90-deg` or similar under a broader "fixed-angle" concept if needed).
+    *   `fixed-90-deg`: A specific case for arcs at 90 degrees.
     *   `N/A`: For circles (which have no inherent orientation beyond their center), or if orientation is not a relevant characteristic of the test.
     *   The `scene--all-shapes-combined--test.js` is `mixed` as it contains various orientations.
+    *   For `arcs`, this describes the rotation of the arc's baseline (e.g., `vertical` for an arc in the top-right or bottom-right quadrant), and is distinct from its extent.
 
 ---
 
-### 13. `ArcAngle`
+### 13. `ArcAngleExtent`
 
-*   **Description**: Specifies the angular extent of an arc. Applicable only to `arcs`.
-*   **Observed Values in v17.md**: `mixed`, `randomized`, `90-deg`, `N/A`.
+*   **Description**: Specifies the angular extent (or span) of an arc. Applicable only to `arcs`. This facet was previously named `ArcAngle`.
+*   **Observed Values in v19.tsv**: `mixed`, `randomized`, `90-deg`, `N/A`.
 *   **Criteria**:
     *   `90-deg`: For arcs explicitly drawn with a 90-degree extent.
     *   `randomized`: If `startAngle` and `endAngle` are randomized to produce variable extents.
@@ -215,17 +216,41 @@ The `test_case_naming_analysis_v17.md` table includes the following columns. Eac
 ### 14. `RoundRectRadius`
 
 *   **Description**: Specifies the corner radius for rounded rectangles. Applicable only to `rounded-rects`.
-*   **Observed Values in v17.md**: `mixed`, `N/A`, `large-cat`, `randomized`, `unknown`.
+*   **Observed Values in v19.tsv**: `mixed`, `N/A`, `large-cat`, `randomized`.
 *   **Criteria**:
     *   `large-cat`: If the filename or code explicitly indicates a "large" radius category (e.g., `fixedRadius = 40` in a test named with "large-radius").
     *   `randomized`: If the corner radius is determined by `SeededRandom.getRandom()`.
-    *   `unknown`: If the radius is fixed but its specific value or category isn't clear from the filename or readily available code insights from previous steps.
     *   `mixed`: For the scene test. Could also apply if a test draws rounded rectangles with multiple distinct fixed or categorized radii.
     *   `N/A`: For all non-rounded-rectangle shapes.
+    *   The `unknown` values from previous versions were resolved to `randomized` after code analysis.
 
 ---
 
-### 15. `Uncaptured Aspects`
+### 15. `ContextTranslation`
+
+*   **Description**: Specifies if the rendering context is translated using `ctx.translate()`.
+*   **Possible Values**: `none`, `fixed`, `random`.
+*   **Criteria**: Determined by inspecting test source code for calls to `ctx.translate()`. `none` if not called; `fixed` if called with constant values; `random` if called with randomized values.
+
+---
+
+### 16. `ContextRotation`
+
+*   **Description**: Specifies if the rendering context is rotated using `ctx.rotate()`.
+*   **Possible Values**: `none`, `fixed`, `random`.
+*   **Criteria**: Determined by inspecting test source code for calls to `ctx.rotate()`. `none` if not called; `fixed` if called with a constant angle; `random` if called with a randomized angle.
+
+---
+
+### 17. `ContextScaling`
+
+*   **Description**: Specifies if the rendering context is scaled using `ctx.scale()`.
+*   **Possible Values**: `none`, `fixed`, `random`.
+*   **Criteria**: Determined by inspecting test source code for calls to `ctx.scale()`. `none` if not called; `fixed` if called with constant factors; `random` if called with randomized factors.
+
+---
+
+### 18. `Uncaptured Aspects`
 
 *   **Description**: A notes field to list any significant test characteristics or details that are not fully captured by the preceding structured facet columns. This is especially important after removing parenthesized comments, as nuances might have been lost.
 *   **Values**: Free-form text.
@@ -233,7 +258,7 @@ The `test_case_naming_analysis_v17.md` table includes the following columns. Eac
 
 ---
 
-### 16. `Clipped on shape`
+### 19. `Clipped on shape`
 
 *   **Description**: Specifies the type of geometric primitive used to define the clipping region.
 *   **Possible Values**: `none`, `circle`, `arc`, `rect`, `rounded rect`.
@@ -241,7 +266,7 @@ The `test_case_naming_analysis_v17.md` table includes the following columns. Eac
 
 ---
 
-### 17. `Clipped on shape count`
+### 20. `Clipped on shape count`
 
 *   **Description**: Specifies whether the clipping region is formed by a single clipping shape or multiple clipping shapes.
 *   **Possible Values**: `n/a`, `one`, `many`.
@@ -252,7 +277,7 @@ The `test_case_naming_analysis_v17.md` table includes the following columns. Eac
 
 ---
 
-### 18. `Clipped on shape arrangement`
+### 21. `Clipped on shape arrangement`
 
 *   **Description**: Describes the layout or placement strategy of the clipping shape(s) on the canvas.
 *   **Possible Values**:
@@ -263,7 +288,7 @@ The `test_case_naming_analysis_v17.md` table includes the following columns. Eac
 
 ---
 
-### 19. `Clipped on shape size`
+### 22. `Clipped on shape size`
 
 *   **Description**: Classifies the general size of the clipping shape(s), using the T-shirt sizing categories (XS-XL) consistent with the `SizeCategory` for drawn shapes. This is determined by comparing the actual dimensions of the clipping shape(s) (from source code analysis) against standardized pixel ranges.
 *   **Possible Values**: `n/a`, `XS`, `S`, `M`, `L`, `XL`, `mixed`.
@@ -277,4 +302,12 @@ The `test_case_naming_analysis_v17.md` table includes the following columns. Eac
 
 ---
 
-This detailed breakdown should clarify the structure and content of `test_case_naming_analysis_v17.md`. 
+### 23. `New Test Name`
+
+*   **Description**: The final, proposed new filename for the test script, generated programmatically based on the preceding facet values and the rules defined in `new_test_naming_convention.md`.
+*   **Values**: A string representing the new filename, e.g., `rect-sgl-s-fNone-sOpaq-sw1px-lytCenter-cenPx-edgeCrisp-ornAxial-test.js`.
+*   **Criteria**: Generated by applying the naming convention.
+
+---
+
+This detailed breakdown should clarify the structure and content of `test_case_naming_analysis_v19.tsv`. 
