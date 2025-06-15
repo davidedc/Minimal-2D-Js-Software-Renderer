@@ -58,7 +58,7 @@ Facets are ordered from the most general to the most specific, following this se
 | **FillStyle** | `none`, `opaque`, `semitransparent`, `mixed` | `fNone`, `fOpaq`, `fSemi`, `fMix` |
 | **StrokeStyle** | `none`, `opaque`, `semitransparent`, `mixed` | `sNone`, `sOpaq`, `sSemi`, `sMix` |
 | **StrokeThickness**| `[N]px`, `[N]-[M]px`, `mixed` | `sw[N]px`, `sw[N]-[M]px`, `swMix` |
-| **Layout** | `spread`, `grid`, `random`, `centered` | `lytSpread`, `lytGrid`, `lytRand`, `lytCenter` |
+| **Layout** | `spread`, `grid`, `random`, `centered`, `mixed` | `lytSpread`, `lytGrid`, `lytRand`, `lytCenter`, `lytMix` |
 | **CenteredAt** | `pixel`, `grid`, `mixed-pixel-grid`, `random` | `cenPx`, `cenGrid`, `cenMixPG`, `cenRand` |
 | **EdgeAlignment** | `crisp`, `not-crisp`, `mixed` | `edgeCrisp`, `edgeNotCrisp`, `edgeMix` |
 | **Orientation** | `horizontal`, `vertical`, `square` (axis-aligned), `45-degree`, `random` | `ornHoriz`, `ornVert`, `ornAxial`, `ornDeg45`, `ornRand` |

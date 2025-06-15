@@ -142,12 +142,13 @@ The `test_case_naming_analysis_v19.tsv` file includes the following columns. The
 ### 9. `Layout`
 
 *   **Description**: Describes the overall arrangement or placement strategy of shapes on the canvas.
-*   **Observed Values in v19.tsv**: `spread`, `grid`, `random`, `centered`, `N/A`.
+*   **Observed Values in v19.tsv**: `spread`, `grid`, `random`, `centered`, `mixed`, `N/A`.
 *   **Criteria**:
     *   `spread`: Multiple shapes are drawn, and their positions are randomized or systematically varied to distribute them across the canvas, often with the intent to minimize overlap for visual inspection (e.g., `getRandomPoint()` called for each instance in a loop, or `Math.random() * canvasDimension` applied to x/y of each instance).
     *   `grid`: Shapes are explicitly arranged in a grid formation.
     *   `random`: Typically for a single shape whose position is chosen randomly on the canvas. Could also apply to multiple shapes if their random positioning doesn't inherently imply a "spread" (less common).
     *   `centered`: A single primary shape (or a fixed composition) is explicitly positioned at or near the canvas center.
+    *   `mixed`: Used for tests that combine multiple distinct layout strategies, for instance when some shapes are arranged in a `grid` and others are `spread` randomly.
     *   `N/A`: If layout is not a primary characteristic or the concept doesn't clearly apply (e.g., for some single-item tests where the focus is purely on rendering parameters other than its specific global placement).
 
 ---

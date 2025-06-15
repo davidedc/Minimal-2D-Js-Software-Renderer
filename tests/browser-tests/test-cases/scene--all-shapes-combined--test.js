@@ -1,5 +1,48 @@
 /**
  * @fileoverview Test definition for a combined scene with all shape types.
+ *
+ * TEST SUMMARY:
+ * =================
+ *
+ * Description: A test scene combining various shapes. This test draws a large, complex
+ * scene by calling numerous individual shape-generating functions (e.g., for lines,
+ * rectangles, circles, arcs) to populate the canvas. It serves as a comprehensive
+ * integration test for the renderer.
+ *
+ * New Filename: scene-multi-szMix-fMix-sMix-swMix-lytMix-edgeMix-ornMix-arcAMix-rrrMix-ctxTransFixed-ctxRotFixed-test.js
+ *
+ * ---
+ *
+ * | Facet                  | Value          | Reason
+ * |------------------------|----------------|-----------------------------------------------------------------------------------------------------
+ * | Shape category         | mixed          | Draws lines, rectangles, circles, arcs, and rounded-rects.
+ * | Count                  | multi          | Draws a large number of shapes in total (15 lines, 10 rects, 40+ rounded-rects, etc.).
+ * | SizeCategory           | mixed          | The various shape-generating functions create primitives of many different sizes.
+ * | FillStyle              | mixed          | Some shapes are filled (opaque/transparent), others are not (e.g., lines).
+ * | StrokeStyle            | mixed          | Some shapes have opaque/transparent strokes, while others have no stroke.
+ * | StrokeThickness        | mixed          | Stroke width varies between the different shape types being drawn.
+ * | Layout                 | mixed          | Shapes are distributed across the canvas, some in grids, some randomly.
+ * | CenteredAt             | N/A            | Not a relevant characteristic for a complex scene with a `mixed` layout.
+ * | EdgeAlignment          | mixed          | Combines axis-aligned, rotated, and random shapes, resulting in both crisp and non-crisp edges.
+ * | Orientation            | mixed          | Includes axis-aligned, rotated, and randomly oriented shapes.
+ * | ArcAngleExtent         | mixed          | Includes both fixed 90-degree arcs and random-angle arcs.
+ * | RoundRectRadius        | mixed          | Includes rounded rectangles with various and likely randomized corner radii.
+ * | ContextTranslation     | fixed          | Uses `ctx.translate()` to position rectangles before rotation.
+ * | ContextRotation        | fixed          | Uses `ctx.rotate()` to draw rotated rectangles.
+ * | ContextScaling         | none           | The code does not use `ctx.scale()`.
+ * | Clipped on shape       | none           | No clipping is performed in this test.
+ * | Clipped on shape count | N/A            | Not applicable as no clipping is performed.
+ * | Clipped on shape arrangement | N/A      | Not applicable as no clipping is performed.
+ * | Clipped on shape size  | N/A            | Not applicable as no clipping is performed.
+ *
+ * ---
+ *
+ * UNCAPTURED ASPECTS IN FILENAME / FACETS ABOVE:
+ * ----------------------------------------------
+ * Specific shapes included, count of each, actual scene parameters/layout; precise
+ * randomization details for each sub-component (size, fill, stroke, etc.) are mixed
+ * and not individually captured. SizeCategory remains mixed as shape category is mixed.
+ *
  */
 
 // Assumes all individual scene-creation functions (addRandomLines, addAxisAlignedRectangles, etc.)
