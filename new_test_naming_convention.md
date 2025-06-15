@@ -64,9 +64,9 @@ Facets are ordered from the most general to the most specific, following this se
 | **Orientation** | `horizontal`, `vertical`, `square` (axis-aligned), `45-degree`, `random` | `ornHoriz`, `ornVert`, `ornAxial`, `ornDeg45`, `ornRand` |
 | **ArcAngleExtent**| `90-deg`, `randomized`, `mixed` | `arcADeg90`, `arcARand`, `arcAMix` |
 | **RoundRectRadius**| `large-cat`, `randomized`, `mixed`, `fixed-[N]` | `rrrLrg`, `rrrRand`, `rrrMix`, `rrrFix[N]` |
-| **ContextTrans**| `fixed`, `random` | `ctxTransFixed`, `ctxTransRand` |
-| **ContextRot** | `fixed`, `random` | `ctxRotFixed`, `ctxRotRand` |
-| **ContextScale**| `fixed`, `random` | `ctxScaleFixed`, `ctxScaleRand` |
+| **ContextTrans**| `none`, `fixed`, `random` | `(omitted)`, `ctxTransFixed`, `ctxTransRand` |
+| **ContextRot** | `none`, `fixed`, `random` | `(omitted)`, `ctxRotFixed`, `ctxRotRand` |
+| **ContextScale**| `none`, `fixed`, `random` | `(omitted)`, `ctxScaleFixed`, `ctxScaleRand` |
 | **Clip on Shape**| `circle`, `arc`, `rect`, `rounded rect` | `clpOnCirc`, `clpOnArc`, `clpOnRect`, `clpOnRoundRect` |
 | **Clip Count** | `one`, `many` | `clpCt1`, `clpCtN` |
 | **Clip Arrange**| `centered`, `random`, `grid`, `spread` | `clpArrCenter`, `clpArrRand`, `clpArrGrid`, `clpArrSpread` |
