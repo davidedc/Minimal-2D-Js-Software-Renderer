@@ -1,4 +1,44 @@
 /**
+ * TEST SUMMARY:
+ * =================
+ *
+ * Description: Test with 5 arcs, all parameters fully randomized.
+ *
+ * New Filename: arc-m5-szMix-fOpaq-sOpaq-sw1-10px-lytSpread-cenRand-edgeNotCrisp-ornRand-arcARand-test.js
+ *
+ * ---
+ *
+ * | Facet                  | Value          | Reason
+ * |------------------------|----------------|-----------------------------------------------------------------------------------------------------
+ * | Shape category         | arcs           | The test draws exclusively `arc` shapes using `ctx.fillAndOuterStrokeArc`.
+ * | Count                  | multi-5        | The test draws 5 instances in a loop for the visual regression case.
+ * | SizeCategory           | mixed          | The radius is randomized in `[15, 65)`, which spans the S, M, and L size categories for circles.
+ * | FillStyle              | opaque         | `fillStyle` is set via `getRandomColor()` which produces a fully opaque color. A fill is applied.
+ * | StrokeStyle            | opaque         | `strokeStyle` is set via `getRandomColor()` which produces a fully opaque color. A stroke is applied.
+ * | StrokeThickness        | 1px-10px       | `lineWidth` is randomized in the range `[1, 11)`, which is categorized as `1px-10px`.
+ * | Layout                 | spread         | The 5 arcs are positioned randomly across the canvas using `getRandomPoint()` for each.
+ * | CenteredAt             | random         | Arc centers are random floating-point coordinates with no snapping to a grid or pixel centers.
+ * | EdgeAlignment          | not-crisp      | Use of random floating-point values for position, size, and stroke width without adjustment results in non-pixel-aligned edges.
+ * | Orientation            | random         | Both the start angle and end angle of the arcs are randomized, resulting in random orientations.
+ * | ArcAngleExtent         | randomized     | The arc's angular extent is randomized in the range `[90, 360)` degrees.
+ * | RoundRectRadius        | N/A            | This facet is not applicable to `arc` shapes.
+ * | ContextTranslation     | none           | The test code does not use `ctx.translate()`.
+ * | ContextRotation        | none           | The test code does not use `ctx.rotate()`.
+ * | ContextScaling         | none           | The test code does not use `ctx.scale()`.
+ * | Clipped on shape       | none           | The test code does not use clipping.
+ * | Clipped on shape count | n/a            | Not applicable as there is no clipping.
+ * | Clipped on shape arrangement | n/a      | Not applicable as there is no clipping.
+ * | Clipped on shape size  | n/a            | Not applicable as there is no clipping.
+ *
+ * ---
+ *
+ * UNCAPTURED ASPECTS IN FILENAME / FACETS ABOVE:
+ * ----------------------------------------------
+ * Specific randomization ranges for radius, start/end angles, stroke color. strokeWidth: SR.get()*10+1 => [1,11) => 1-10px. Arc radius [15,65) spans S,M,L circle categories.
+ *
+ */
+
+/**
  * @fileoverview Test definition for multiple fully random arcs.
  */
 
