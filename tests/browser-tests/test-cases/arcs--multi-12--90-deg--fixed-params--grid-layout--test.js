@@ -1,4 +1,46 @@
 /**
+ * TEST SUMMARY:
+ * =================
+ *
+ * Description: Test with 12 arcs, each at 90 degrees, using fixed parameters and a grid layout.
+ *
+ * New Filename: arc-m12-szMix-fNone-sOpaq-swMix-lytGrid-cenGrid-edgeNotCrisp-ornHoriz-arcADeg90-test.js
+ *
+ * ---
+ *
+ * | Facet                  | Value          | Reason
+ * |------------------------|----------------|-----------------------------------------------------------------------------------------------------
+ * | Shape category         | arcs           | The test calls `ctx.outerStrokeArc` to draw arcs.
+ * | Count                  | multi-12       | The test uses nested loops (4 stroke sizes * 3 radii) to draw exactly 12 arcs.
+ * | SizeCategory           | mixed          | The radii used are `[20, 40, 60]`, which span size categories 'M' (10-50px) and 'L' (40-100px).
+ * | FillStyle              | none           | No fill operation is performed; only `outerStrokeArc` is called.
+ * | StrokeStyle            | opaque         | The stroke color alpha value is fixed at 255, making it fully opaque.
+ * | StrokeThickness        | mixed          | The test uses a discrete set of stroke widths: `[1, 2, 3, 4]`.
+ * | Layout                 | grid           | Arcs are positioned in a clear grid formation using `xOffset` and `yOffset` increments.
+ * | CenteredAt             | grid           | The centers of the arcs are set to explicit integer coordinates, aligning them to the pixel grid.
+ * | EdgeAlignment          | not-crisp      | No specific logic is used to align strokes to pixel boundaries, leading to anti-aliased edges.
+ * | Orientation            | horizontal     | The `startAngle` for all arcs is fixed at 0, representing a consistent horizontal baseline.
+ * | ArcAngleExtent         | 90-deg         | The angle extent is fixed at `Math.PI / 2`, which is 90 degrees.
+ * | RoundRectRadius        | N/A            | This facet is not applicable to arc shapes.
+ * | ContextTranslation     | none           | The test does not use `ctx.translate()`.
+ * | ContextRotation        | none           | The test does not use `ctx.rotate()`.
+ * | ContextScaling         | none           | The test does not use `ctx.scale()`.
+ * | Clipped on shape       | none           | The test does not involve any clipping operations.
+ * | Clipped on shape count | n/a            | Not applicable as there is no clipping.
+ * | Clipped on shape arrangement | n/a      | Not applicable as there is no clipping.
+ * | Clipped on shape size  | n/a            | Not applicable as there is no clipping.
+ *
+ * ---
+ *
+ * UNCAPTURED ASPECTS IN FILENAME / FACETS ABOVE:
+ * ----------------------------------------------
+ * - The visual regression mode uses a fixed stroke color of `rgba(200, 100, 100, 255)`.
+ * - The performance mode (`isPerformanceRun = true`) uses different, fully randomized parameters for radius,
+ *   stroke width, color, and position, which are not reflected in the facets for the visual test.
+ *
+ */
+
+/**
  * @fileoverview Test definition for 90-degree arcs with various radii and stroke widths.
  */
 
