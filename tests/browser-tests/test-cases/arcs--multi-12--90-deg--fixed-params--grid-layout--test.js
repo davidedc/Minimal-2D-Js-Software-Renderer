@@ -12,7 +12,7 @@
  * |------------------------|----------------|-----------------------------------------------------------------------------------------------------
  * | Shape category         | arcs           | The test calls `ctx.outerStrokeArc` to draw arcs.
  * | Count                  | multi-12       | The test uses nested loops (4 stroke sizes * 3 radii) to draw exactly 12 arcs.
- * | SizeCategory           | mixed          | The radii used are `[20, 40, 60]`, which span size categories 'M' (10-50px) and 'L' (40-100px).
+ * | SizeCategory           | mixed          | The radii used are `[20, 40, 60]`, which span size categories 'S' (16-39px) and 'M' (40-79px).
  * | FillStyle              | none           | No fill operation is performed; only `outerStrokeArc` is called.
  * | StrokeStyle            | opaque         | The stroke color alpha value is fixed at 255, making it fully opaque.
  * | StrokeThickness        | mixed          | The test uses a discrete set of stroke widths: `[1, 2, 3, 4]`.
