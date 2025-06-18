@@ -12,7 +12,7 @@
  * |------------------------|----------------|-----------------------------------------------------------------------------------------------------
  * | Shape category         | arcs           | The test draws exclusively `arc` shapes using `ctx.fillAndOuterStrokeArc`.
  * | Count                  | multi-5        | The test draws 5 instances in a loop for the visual regression case.
- * | SizeCategory           | mixed          | The radius is randomized in `[15, 65)`, which spans the S, M, and L size categories for circles.
+ * | SizeCategory           | mixed          | The radius is randomized in `[15, 65)`, which spans the S and M size categories for circles.
  * | FillStyle              | opaque         | `fillStyle` is set via `getRandomColor()` which produces a fully opaque color. A fill is applied.
  * | StrokeStyle            | opaque         | `strokeStyle` is set via `getRandomColor()` which produces a fully opaque color. A stroke is applied.
  * | StrokeThickness        | 1px-10px       | `lineWidth` is randomized in the range `[1, 11)`, which is categorized as `1px-10px`.
@@ -34,7 +34,7 @@
  *
  * UNCAPTURED ASPECTS IN FILENAME / FACETS ABOVE:
  * ----------------------------------------------
- * Specific randomization ranges for radius, start/end angles, stroke color. strokeWidth: SR.get()*10+1 => [1,11) => 1-10px. Arc radius [15,65) spans S,M,L circle categories.
+ * Specific randomization ranges for radius, start/end angles, stroke color. strokeWidth: SR.get()*10+1 => [1,11) => 1-10px. Arc radius [15,65) spans S,M circle categories.
  *
  */
 
