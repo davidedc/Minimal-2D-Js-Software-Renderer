@@ -61,35 +61,33 @@ The `test_case_naming_analysis_v19.tsv` file includes the following columns. The
 
 ### 5. `SizeCategory`
 
-*   **Description**: Classifies the general size of the shapes being rendered. This is determined by analyzing the test's source code to ascertain the actual dimensions (length for lines, width/height for rectangles/rounded-rects, radius for circles) and comparing them against standardized pixel ranges.
+*   **Description**: Classifies the general size of the shapes being rendered. This is determined by applying a **unified, non-overlapping size scale** to a key linear dimension of the shape (e.g., length, radius, or longest side).
 *   **Observed Values in v19.tsv**: `mixed`, `L`, `M`, `S`, `XS`, `XL`.
-*   **Standardized Pixel Ranges:**
-    *   **Lines (length):**
-        *   `XS`: 5-20px
-        *   `S`: 15-40px
-        *   `M`: 30-100px
-        *   `L`: 80-200px
-        *   `XL`: 150-400px
-    *   **Rectangles & Rounded Rectangles (width/height apply to any dimension):**
-        *   `XS`: 5-15px
-        *   `S`: 10-30px
-        *   `M`: 20-120px
-        *   `L`: 100-300px
-        *   `XL`: 200-500px
-    *   **Circles (radius):**
-        *   `XS`: 2-8px
-        *   `S`: 5-15px
-        *   `M`: 10-50px
-        *   `L`: 40-100px
-        *   `XL`: 80-200px
+
+#### Unified T-Shirt Size Scale
+
+This single scale is used for all linear pixel measurements across all shape categories.
+
+| Size Category | Unified Pixel Range |
+| :--- | :--- |
+| **XS** | `5-15px` |
+| **S** | `16-39px` |
+| **M** | `40-79px` |
+| **L** | `80-159px` |
+| **XL** | `160-400px` |
+
+#### Application of the Unified Scale
+
+*   **For `lines`**: The `SizeCategory` is determined by applying the unified scale to the line's **length**.
+*   **For `circles` and `arcs`**: The `SizeCategory` is determined by applying the unified scale to the shape's **radius**.
+*   **For `rectangles` and `rounded-rects`**: The `SizeCategory` is determined by applying the unified scale to the rectangle's **longest side** (i.e., `Math.max(width, height)`).
+
 *   **Criteria for Assignment (as applied for v19)**:
-    *   `XS`, `S`, `M`, `L`, `XL`: Assigned if the shape's dimensions (determined from source code analysis) consistently fall within the corresponding pixel range for its category. If dimensions are randomized, the entire randomized range must fall within a single bucket. Filename cues (e.g., `--m-size--`) serve as hints but are superseded by code analysis.
+    *   `XS`, `S`, `M`, `L`, `XL`: Assigned if the shape's key dimension (length, radius, or longest side) consistently falls within the corresponding pixel range of the unified scale. If dimensions are randomized, the entire randomized range must fall within a single bucket. Filename cues (e.g., `--m-size--`) serve as hints but are superseded by code analysis based on the unified scale.
     *   `mixed`:
-        *   If a test script randomizes a shape's dimensions such that the resulting range spans *multiple* defined buckets (e.g., a rectangle width randomized from 10px to 150px would be `mixed` as it covers S, M, and L).
+        *   If a test script randomizes a shape's key dimension such that the resulting range spans *multiple* defined buckets (e.g., a rectangle width randomized from 30px to 90px would be `mixed` as it covers S, M, and L).
         *   If a test draws multiple shapes of distinctly different fixed size categories (e.g., one XS circle and one L circle).
         *   If the `Shape category` itself is `mixed` (like in `scene--all-shapes-combined--test.js`), then `SizeCategory` will also typically be `mixed`.
-        *   For `arcs`, their radius was compared to the `circles` size categories. If the radius or randomized radius range spanned multiple circle categories, `SizeCategory` became `mixed`.
-    *   `N/A`: This value was not used in the final analysis as all shape types could be categorized or determined as `mixed`.
     *   The primary source for determination is the test's `.js` source file located in `/Users/davidedellacasa/code/Minimal-2D-Js-Software-Renderer/tests/browser-tests/test-cases/` or `/Users/davidedellacasa/code/Minimal-2D-Js-Software-Renderer/tests/browser-tests/performance-tests-legacy/`.
 
 ---
