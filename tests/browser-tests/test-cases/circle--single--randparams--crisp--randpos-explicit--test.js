@@ -1,4 +1,48 @@
 /**
+ * TEST SUMMARY:
+ * =================
+ * 
+ * Description: 
+ * Tests a single circle with fully randomized parameters for position, size, fill, and stroke. 
+ * The final rendering is adjusted to ensure the circle's edges are crisp (pixel-aligned).
+ * 
+ * New Filename: 
+ * circle-sgl-szMix-fOpaq-sOpaq-sw1-30px-lytRand-cenRand-edgeCrisp-test.js
+ * 
+ * ---
+ * 
+ * | Facet                  | Value          | Reason
+ * |------------------------|----------------|-----------------------------------------------------------------------------------------------------
+ * | Shape category         | circles        | The test draws circles using `ctx.fillAndStrokeCircle()`.
+ * | Count                  | single         | The test is designed to draw a single circle instance in its primary visual test mode.
+ * | SizeCategory           | mixed          | The `baseRadius` is randomized in a range of [10, 224], spanning multiple size categories (XS-XL).
+ * | FillStyle              | opaque         | `getRandomColor()` is called for the fill without a specific alpha, defaulting to opaque.
+ * | StrokeStyle            | opaque         | `getRandomColor()` is called for the stroke without a specific alpha, defaulting to opaque.
+ * | StrokeThickness        | 1px-30px       | `strokeWidth` is randomized between a minimum of 1 and a maximum of 30.
+ * | Layout                 | random         | The circle's final `(centerX, centerY)` is explicitly randomized within the canvas boundaries.
+ * | CenteredAt             | random         | The final center coordinates are determined by the random layout and are not snapped to a grid or pixel.
+ * | EdgeAlignment          | crisp          | The code calls `adjustDimensionsForCrispStrokeRendering()` to ensure sharp edges.
+ * | Orientation            | N/A            | Circles are rotationally symmetrical, so this facet is not applicable.
+ * | ArcAngleExtent         | N/A            | This facet is not applicable to circles.
+ * | RoundRectRadius        | N/A            | This facet is not applicable to circles.
+ * | ContextTranslation     | none           | The test does not use `ctx.translate()`.
+ * | ContextRotation        | none           | The test does not use `ctx.rotate()`.
+ * | ContextScaling         | none           | The test does not use `ctx.scale()`.
+ * | Clipped on shape       | none           | The test does not use clipping.
+ * | Clipped on shape count | n/a            | No clipping is used.
+ * | Clipped on shape arrangement| n/a       | No clipping is used.
+ * | Clipped on shape size  | n/a            | No clipping is used.
+ * 
+ * ---
+ * 
+ * UNCAPTURED ASPECTS IN FILENAME / FACETS ABOVE:
+ * ----------------------------------------------
+ * - The `strokeWidth` is randomized from 1px up to a maximum of 30px, but it's also capped by the `baseRadius` of the circle to prevent visual artifacts where the stroke is wider than the radius.
+ * - The final position is randomized within the canvas boundaries while respecting a 10px margin.
+ * 
+ */
+
+/**
  * @fileoverview Test definition for a single randomly positioned circle with stroke.
  */
 
