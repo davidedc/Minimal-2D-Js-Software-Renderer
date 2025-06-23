@@ -1,4 +1,45 @@
 /**
+ * TEST SUMMARY:
+ * =================
+ *
+ * Description: Tests crisp rendering of a single 1px red stroked circle, centered at a pixel center.
+ *
+ * New Filename: circle-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-cenPx-edgeCrisp-test.js
+ *
+ * ---
+ *
+ * | Facet                  | Value          | Reason
+ * |------------------------|----------------|-----------------------------------------------------------------------------------------------------
+ * | Shape category         | circles        | The test draws a circle shape.
+ * | Count                  | single         | The test draws a single shape instance in its primary visual mode.
+ * | SizeCategory           | mixed          | The radius is randomized in a range of ~[10, 74.5], spanning the 'S' and 'M' size categories.
+ * | FillStyle              | none           | The shape is not filled; only `ctx.strokeCircle()` is called.
+ * | StrokeStyle            | opaque         | The stroke color is explicitly set with a full alpha value (255).
+ * | StrokeThickness        | 1px            | The `lineWidth` parameter to `strokeCircle` is explicitly set to 1.
+ * | Layout                 | centered       | The shape is positioned at the calculated center of the canvas.
+ * | CenteredAt             | pixel          | The center coordinates are calculated as `floor(dimension / 2) + 0.5` to align with pixel centers.
+ * | EdgeAlignment          | crisp          | The test uses `adjustDimensionsForCrispStrokeRendering` to ensure the final shape edges are sharp.
+ * | Orientation            | N/A            | Not applicable for circles, which are rotationally symmetrical.
+ * | ArcAngleExtent         | N/A            | Not applicable; this facet is for 'arc' shapes only.
+ * | RoundRectRadius        | N/A            | Not applicable; this facet is for 'rounded-rect' shapes only.
+ * | ContextTranslation     | none           | `ctx.translate()` is not used.
+ * | ContextRotation        | none           | `ctx.rotate()` is not used.
+ * | ContextScaling         | none           | `ctx.scale()` is not used.
+ * | Clipped on shape       | none           | `ctx.clip()` is not used.
+ * | Clipped on shape count | n/a            | Not applicable as there is no clipping.
+ * | Clipped on shape arrangement | n/a      | Not applicable as there is no clipping.
+ * | Clipped on shape size  | n/a            | Not applicable as there is no clipping.
+ *
+ * ---
+ *
+ * UNCAPTURED ASPECTS IN FILENAME / FACETS ABOVE:
+ * ----------------------------------------------
+ * - The stroke color is a fixed, opaque red.
+ * - In performance mode, the circle's position is randomized across the canvas, unlike the centered position in the single-instance visual test.
+ *
+ */
+
+/**
  * @fileoverview Test definition for a single 1px stroked circle centered at a pixel.
  */
 
