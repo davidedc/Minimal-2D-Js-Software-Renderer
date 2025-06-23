@@ -1,4 +1,45 @@
 /**
+ * TEST SUMMARY:
+ * =================
+ *
+ * Description: Tests rendering of 12 circles with precise pixel alignment, varied strokes and fills, and random positions.
+ * Each circle has a randomized radius, position, stroke color/thickness, and fill color.
+ *
+ * New Filename: circle-m12-szMix-fSemi-sMix-sw1-4px-lytSpread-cenRand-edgeCrisp-test.js
+ *
+ * ---
+ *
+ * | Facet                  | Value          | Reason
+ * |------------------------|----------------|-----------------------------------------------------------------------------------------------------
+ * | Shape category         | circles        | The test renders circles using `ctx.fillAndStrokeCircle`.
+ * | Count                  | multi-12       | The code loops 12 times in its visual test mode (`numToDraw` is 12).
+ * | SizeCategory           | mixed          | The base radius is randomized in the range [8, 41], spanning XS, S, and M size categories.
+ * | FillStyle              | semitransparent| Fill alpha is randomized via `getRandomColor(150, 200)`, which is always semi-transparent.
+ * | StrokeStyle            | mixed          | Stroke alpha is randomized via `getRandomColor(200, 255)`, resulting in both opaque and semi-transparent strokes.
+ * | StrokeThickness        | 1px-4px        | `strokeWidth` is calculated as an integer in the range [1, 4].
+ * | Layout                 | spread         | Each circle is given a unique, randomized position within the canvas, distributing them.
+ * | CenteredAt             | random         | The final center coordinates for each circle are randomized integers, not snapped to a grid or pixel center.
+ * | EdgeAlignment          | crisp          | The code explicitly calls `adjustDimensionsForCrispStrokeRendering()` to ensure sharp edges.
+ * | Orientation            | N/A            | Circles are radially symmetric and have no orientation.
+ * | ArcAngleExtent         | N/A            | This facet only applies to `arc` shapes.
+ * | RoundRectRadius        | N/A            | This facet only applies to `rounded-rect` shapes.
+ * | ContextTranslation     | none           | The test does not call `ctx.translate()`.
+ * | ContextRotation        | none           | The test does not call `ctx.rotate()`.
+ * | ContextScaling         | none           | The test does not call `ctx.scale()`.
+ * | Clipped on shape       | none           | The test does not call `ctx.clip()`.
+ * | Clipped on shape count | n/a            | No clipping is applied.
+ * | Clipped on shape arrangement | n/a      | No clipping is applied.
+ * | Clipped on shape size  | n/a            | No clipping is applied.
+ *
+ * ---
+ *
+ * UNCAPTURED ASPECTS IN FILENAME / FACETS ABOVE:
+ * ----------------------------------------------
+ * The initial centering type (`atPixel` vs. `atGrid`) is determined randomly for each circle but is only used to set a reference point before the final, fully randomized position is calculated. This initial type does not affect the final `CenteredAt` facet, which remains `random`.
+ *
+ */
+
+/**
  * @fileoverview Test definition for multiple precise random circles with strokes and fills.
  */
 
