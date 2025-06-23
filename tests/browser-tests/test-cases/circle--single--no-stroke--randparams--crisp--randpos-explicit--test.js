@@ -1,4 +1,44 @@
 /**
+ * TEST SUMMARY:
+ * =================
+ *
+ * Description: Tests a single randomly positioned circle with no stroke, random fill, and crisp rendering. The circle's radius and position are randomized within defined constraints.
+ *
+ * New Filename: circle-sgl-szMix-fOpaq-sNone-lytRand-cenRand-edgeCrisp-test.js
+ *
+ * ---
+ *
+ * | Facet                  | Value          | Reason
+ * |------------------------|----------------|-----------------------------------------------------------------------------------------------------
+ * | Shape category         | circles        | The test calls `ctx.fillCircle()` to draw the shape.
+ * | Count                  | single         | The test logic is designed to draw one primary shape instance per iteration.
+ * | SizeCategory           | mixed          | The radius is randomized in the range [10, 225], which spans the S, M, L, and XL size categories.
+ * | FillStyle              | opaque         | `getRandomColor(100, 200)` is called for the fill, which by default returns a fully opaque color.
+ * | StrokeStyle            | none           | The `strokeWidth` variable is explicitly set to 0 and no stroke operation is performed.
+ * | StrokeThickness        | none           | Consistent with `StrokeStyle: none` as `strokeWidth` is 0.
+ * | Layout                 | random         | A single shape is placed at a random (x, y) position within calculated canvas margins.
+ * | CenteredAt             | random         | The final center coordinates (x, y) are fully randomized, not snapped to a grid or pixel center.
+ * | EdgeAlignment          | crisp          | The test explicitly calls `adjustDimensionsForCrispStrokeRendering()` to ensure sharp edges.
+ * | Orientation            | N/A            | Not applicable for circles, which are rotationally symmetrical.
+ * | ArcAngleExtent         | N/A            | Not applicable; this facet is for `arcs` only.
+ * | RoundRectRadius        | N/A            | Not applicable; this facet is for `rounded-rects` only.
+ * | ContextTranslation     | none           | The test does not call `ctx.translate()`.
+ * | ContextRotation        | none           | The test does not call `ctx.rotate()`.
+ * | ContextScaling         | none           | The test does not call `ctx.scale()`.
+ * | Clipped on shape       | none           | No clipping region is defined or applied in this test.
+ * | Clipped on shape count | n/a            | Not applicable as there is no clipping.
+ * | Clipped on shape arrangement | n/a      | Not applicable as there is no clipping.
+ * | Clipped on shape size  | n/a            | Not applicable as there is no clipping.
+ *
+ * ---
+ *
+ * UNCAPTURED ASPECTS IN FILENAME / FACETS ABOVE:
+ * ----------------------------------------------
+ * The specific randomization range for the circle's radius is [10, 225]. The fill color is also randomized. The `randpos-explicit` part of the original filename refers to the specific logic that calculates a random position within safe canvas margins to ensure the entire shape is visible.
+ *
+ */
+
+/**
  * @fileoverview Test definition for a single randomly positioned circle with no stroke.
  */
 
