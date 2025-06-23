@@ -1,4 +1,48 @@
 /**
+ * TEST SUMMARY:
+ * =================
+ *
+ * Description: Tests rendering of a single circle with no stroke, only fill. The circle has randomized
+ * parameters for its radius and fill color. Its position is centered on the canvas, with the center's
+ * alignment randomly chosen to be either on the pixel grid (integer coordinates) or on the pixel
+ * center (*.5 coordinates) to test crisp rendering in both scenarios.
+ *
+ * New Filename: circle-sgl-szMix-fOpaq-sNone-lytCenter-cenMixPG-edgeCrisp-test.js
+ *
+ * ---
+ *
+ * | Facet                        | Value              | Reason
+ * |------------------------------|--------------------|-----------------------------------------------------------------------------------------------------
+ * | Shape category               | circles            | The test draws a circle using `ctx.fillCircle`.
+ * | Count                        | single             | The test logic is designed to draw a single shape instance in its visual test mode.
+ * | SizeCategory                 | mixed              | The radius is randomized in the range [10, 225), which spans multiple size categories (S, M, L, XL).
+ * | FillStyle                    | opaque             | `getRandomColor()` is called without a specific alpha, resulting in a fully opaque fill.
+ * | StrokeStyle                  | none               | The code explicitly sets `hasStroke = false` and `strokeWidth = 0`, and no stroke operation is performed.
+ * | StrokeThickness              | none               | Follows from `StrokeStyle` being `none`; `strokeWidth` is 0.
+ * | Layout                       | centered           | The circle's center is calculated relative to the canvas center, not at a random spread position.
+ * | CenteredAt                   | mixed-pixel-grid   | The center is randomly chosen to be either on the pixel grid (e.g., (10, 20)) or on a pixel center (e.g., (10.5, 20.5)).
+ * | EdgeAlignment                | crisp              | The code calls `adjustDimensionsForCrispStrokeRendering()` to ensure edges align with pixel boundaries.
+ * | Orientation                  | N/A                | Not applicable to circles.
+ * | ArcAngleExtent               | N/A                | Not applicable to circles.
+ * | RoundRectRadius              | N/A                | Not applicable to rounded rectangles.
+ * | ContextTranslation           | none               | The code does not call `ctx.translate()`.
+ * | ContextRotation              | none               | The code does not call `ctx.rotate()`.
+ * | ContextScaling               | none               | The code does not call `ctx.scale()`.
+ * | Clipped on shape             | none               | The code does not call `ctx.clip()`.
+ * | Clipped on shape count       | n/a                | No clipping is applied.
+ * | Clipped on shape arrangement | n/a                | No clipping is applied.
+ * | Clipped on shape size        | n/a                | No clipping is applied.
+ *
+ * ---
+ *
+ * UNCAPTURED ASPECTS IN FILENAME / FACETS ABOVE:
+ * ----------------------------------------------
+ * - The specific randomization range for the radius is [10, 225).
+ * - The fill color is randomized within the RGB range of [100, 200] for each channel.
+ * - The "randpos-type" from the original filename is captured by the `CenteredAt` facet; it refers to the random choice between grid and pixel centering.
+ *
+ */
+/**
  * @fileoverview Test definition for a single circle with no stroke and only fill.
  */
 
