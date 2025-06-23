@@ -153,15 +153,14 @@ This single scale is used for all linear pixel measurements across all shape cat
 
 ### 10. `CenteredAt`
 
-*   **Description**: For shapes like circles, arcs, and rectangles, this specifies if their geometric center is aligned with a pixel center, a grid intersection, or neither.
+*   **Description**: For shapes like circles, arcs, and rectangles, this specifies if their geometric center's coordinates are aligned with a pixel center, a grid intersection, or neither. This is important to test because that's basically the key factor to get many shapes to draw crisply (or have pixel-aligned edges/bounds) in HTML5 Canvas, and there might be some non-obvious fiddling with half-points when drawing the shapes with the sw renderer.
 *   **Observed Values in v19.tsv**: `N/A`, `random`, `mixed-pixel-grid`, `pixel`, `grid`.
 *   **Criteria**:
     *   `pixel`: Center coordinates are `*.5` (e.g., `centerX = Math.floor(width/2) + 0.5`).
     *   `grid`: Center coordinates are integers (e.g., `centerX = Math.floor(width/2)`).
-    *   `mixed-pixel-grid`: One center coordinate is `*.5` and the other is an integer.
-    *   `random`: If the shape's center is determined by fully random logic (e.g., `Math.random() * canvasDimension`) without specific snapping to pixel/grid for the center point itself *before* any subsequent edge alignment/crisping.
+    *   `mixed-pixel-grid`: the center is either centered at pixel or at grid. For shapes where each dimension can be chosen independently (rectangles and rounded rectangles), this value also covers the case of one center coordinate being `*.5` and the other being an integer - this is because one can still get crisp drawings in with appropriatly chosen width/height.
+    *   `random`: If the shape's center is determined by fully random logic (e.g., `Math.random() * canvasDimension`) without specific snapping to pixel/grid for the center point itself.
     *   `N/A`: For lines (where center isn't the primary positioning anchor in this context), scenes, or when the `Layout` is `random` or `spread` such that each instance has a unique, non-grid/non-pixel-aligned center. If `crisp-pixel-pos` was in the filename for lines, this is `N/A`.
-    *   This refers to the *geometric center's* alignment characteristics *before* adjustments for crisp edge rendering are made.
 
 ---
 

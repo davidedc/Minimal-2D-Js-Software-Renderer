@@ -1,4 +1,46 @@
 /**
+ * TEST SUMMARY:
+ * =================
+ * 
+ * Description: Tests a single random circle with random params, crisp center (grid or pixel), stroke, and fill.
+ * 
+ * New Filename: circle-sgl-szMix-fOpaq-sOpaq-sw1-30px-lytCenter-cenMixPG-edgeCrisp-test.js
+ * 
+ * ---
+ * 
+ * | Facet                  | Value              | Reason
+ * |------------------------|--------------------|-----------------------------------------------------------------------------------------------------
+ * | Shape category         | circles            | The test focuses on rendering a circle.
+ * | Count                  | single             | The test draws a single circle instance in its visual verification mode.
+ * | SizeCategory           | mixed              | The radius is randomized in a range of [10, 225), which spans multiple T-shirt size categories (S, M, L, XL).
+ * | FillStyle              | opaque             | `getRandomColor()` is called for the fill, which defaults to an opaque color (alpha=1.0).
+ * | StrokeStyle            | opaque             | `getRandomColor()` is called for the stroke, which also defaults to an opaque color.
+ * | StrokeThickness        | 1px-30px           | Stroke width is randomized with `1 + floor(SR.get()*min(30, baseRadius))`, resulting in a range of 1-30px.
+ * | Layout                 | centered           | The circle's center coordinates are explicitly calculated to be at the canvas center.
+ * | CenteredAt             | mixed-pixel-grid   | A random flag (`atPixel`) determines if the center is on a pixel (`*.5`) or grid (`integer`) line.
+ * | EdgeAlignment          | crisp              | The `adjustDimensionsForCrispStrokeRendering()` function is explicitly called to ensure sharp edges.
+ * | Orientation            | N/A                | Not applicable to circles, which are rotationally symmetrical.
+ * | ArcAngleExtent         | N/A                | Not applicable to circles.
+ * | RoundRectRadius        | N/A                | Not applicable to circles.
+ * | ContextTranslation     | none               | `ctx.translate()` is not used in this test.
+ * | ContextRotation        | none               | `ctx.rotate()` is not used in this test.
+ * | ContextScaling         | none               | `ctx.scale()` is not used in this test.
+ * | Clipped on shape       | none               | No clipping path is defined or applied in this test.
+ * | Clipped on shape count | n/a                | Not applicable as there is no clipping.
+ * | Clipped on shape arrangement | n/a          | Not applicable as there is no clipping.
+ * | Clipped on shape size  | n/a                | Not applicable as there is no clipping.
+ * 
+ * ---
+ * 
+ * UNCAPTURED ASPECTS IN FILENAME / FACETS ABOVE:
+ * ----------------------------------------------
+ * - The randomization of the fill and stroke colors is not captured in the filename.
+ * - The stroke width's dependency on the circle's radius (`Math.min(30, baseRadius)`) is a nuance not fully captured by the simple `1px-30px` range.
+ * - The term "randpos-type" from the original filename referred to the random choice between grid-snapped and pixel-snapped centering, which is now captured by the `CenteredAt` facet.
+ * 
+ */
+
+/**
  * @fileoverview Test definition for a single random circle with proper pixel alignment.
  */
 
