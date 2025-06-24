@@ -1,4 +1,44 @@
 /**
+ * TEST SUMMARY:
+ * =================
+ *
+ * Description: Tests a single rounded rectangle with random stroke widths (opaque), random fills, centered at a grid crossing, with explicit logic to make it crisp.
+ *
+ * New Filename: roundrect-sgl-szMix-fSemi-sOpaq-sw1-11px-lytCenter-cenGrid-edgeCrisp-ornAxial-rrrRand-test.js
+ *
+ * ---
+ *
+ * | Facet                  | Value          | Reason
+ * |------------------------|----------------|-----------------------------------------------------------------------------------------------------
+ * | Shape category         | rounded-rects  | The test draws using `ctx.fillRoundRect()` and `ctx.strokeRoundRect()`.
+ * | Count                  | single         | The test is designed to draw one shape in its visual regression mode (`instances = null`).
+ * | SizeCategory           | mixed          | `baseRectWidth` is randomized in `[50, 50 + 0.6 * canvasWidth]`. With a typical 800px canvas, this spans M, L, and XL size categories.
+ * | FillStyle              | semitransparent| Fill color alpha is randomized in `[100, 200]` via `getRandomColor(100, 200)`.
+ * | StrokeStyle            | opaque         | Stroke color alpha is fixed at 255 via `getRandomColor(255, 255)`.
+ * | StrokeThickness        | 1px-11px       | `strokeWidth` is `Math.round(SeededRandom.getRandom() * 10 + 1)`, which results in an integer range of 1 to 11.
+ * | Layout                 | centered       | The shape's reference point is calculated at the canvas center (`Math.floor(canvasWidth / 2)`).
+ * | CenteredAt             | grid           | The center coordinates are snapped to integer values (`Math.floor`), aligning them with grid intersections.
+ * | EdgeAlignment          | crisp          | The code explicitly calls `adjustDimensionsForCrispStrokeRendering()` to ensure pixel-perfect edges.
+ * | Orientation            | square         | The test draws an axis-aligned rectangle with no rotation applied.
+ * | ArcAngleExtent         | N/A            | This facet is not applicable to rectangle shapes.
+ * | RoundRectRadius        | randomized     | The corner radius is randomized based on the rectangle's final dimensions.
+ * | ContextTranslation     | none           | The test does not use `ctx.translate()`.
+ * | ContextRotation        | none           | The test does not use `ctx.rotate()`.
+ * | ContextScaling         | none           | The test does not use `ctx.scale()`.
+ * | Clipped on shape       | none           | The test does not use `ctx.clip()`.
+ * | Clipped on shape count | n/a            | Clipping is not used.
+ * | Clipped on shape arrangement | n/a      | Clipping is not used.
+ * | Clipped on shape size  | n/a            | Clipping is not used.
+ *
+ * ---
+ *
+ * UNCAPTURED ASPECTS IN FILENAME / FACETS ABOVE:
+ * ----------------------------------------------
+ *  - In performance testing mode (`instances > 0`), the layout changes from `centered` to a random `spread`.
+ *
+ */
+
+/**
  * @fileoverview Test definition for a single centered rounded rectangle with random opaque stroke and random fill, centered at a grid point.
  */
 
