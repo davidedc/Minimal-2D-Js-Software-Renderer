@@ -1,4 +1,45 @@
 /**
+ * TEST SUMMARY:
+ * =================
+ *
+ * Description: Tests rendering of a single 1px red stroked rectangle with no fill. The rectangle is centered at a pixel
+ * center (X.5, Y.5 coordinates) and its dimensions are adjusted to ensure crisp rendering.
+ *
+ * New Filename: rect-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-cenPx-edgeCrisp-ornAxial-test.js
+ *
+ * ---
+ *
+ * | Facet                      | Value          | Reason
+ * |----------------------------|----------------|-----------------------------------------------------------------------------------------------------
+ * | Shape category             | rectangles     | The test calls `ctx.strokeRect`, which draws rectangles.
+ * | Count                      | single         | The test draws a single rectangle in its visual test mode (`instances` is null).
+ * | SizeCategory               | mixed          | Rectangle dimensions are randomized in the range `[20, 149]`, which spans S, M, and L categories.
+ * | FillStyle                  | none           | `ctx.fillStyle` is set to be fully transparent and `fillRect` is not called.
+ * | StrokeStyle                | opaque         | `ctx.strokeStyle` is set to `rgb(255,0,0)`, which is fully opaque red.
+ * | StrokeThickness            | 1px            | `ctx.lineWidth` is hardcoded to `1`.
+ * | Layout                     | centered       | The rectangle's archetype is positioned relative to the canvas center.
+ * | CenteredAt                 | pixel          | The center coordinates are calculated as `floor(dimension/2) + 0.5`, aligning them to pixel centers.
+ * | EdgeAlignment              | crisp          | The test uses a pixel-centered position and calls `adjustDimensionsForCrispStrokeRendering`.
+ * | Orientation                | square         | The test draws an axis-aligned rectangle with no rotation.
+ * | ArcAngleExtent             | N/A            | This facet only applies to `arc` shapes.
+ * | RoundRectRadius            | N/A            | This facet only applies to `rounded-rect` shapes.
+ * | ContextTranslation         | none           | The test does not call `ctx.translate()`.
+ * | ContextRotation            | none           | The test does not call `ctx.rotate()`.
+ * | ContextScaling             | none           | The test does not call `ctx.scale()`.
+ * | Clipped on shape           | none           | The test does not call `ctx.clip()`.
+ * | Clipped on shape count     | n/a            | No clipping is applied.
+ * | Clipped on shape arrangement | n/a            | No clipping is applied.
+ * | Clipped on shape size      | n/a            | No clipping is applied.
+ *
+ * ---
+ *
+ * UNCAPTURED ASPECTS IN FILENAME / FACETS ABOVE:
+ * ----------------------------------------------
+ * - The original filename suggests 'S-size', but the implementation randomizes dimensions across S, M, and L categories, so SizeCategory is correctly 'mixed'.
+ * - Stroke color is fixed to opaque red.
+ */
+
+/**
  * @fileoverview
  * Test definition for rendering a single, small-to-medium sized, 1px thick, red, opaque stroked rectangle
  * with no fill, centered at a pixel center (X.5, Y.5 coordinates), and with no rotation.
