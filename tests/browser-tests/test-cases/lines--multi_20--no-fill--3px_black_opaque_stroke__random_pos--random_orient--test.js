@@ -1,3 +1,44 @@
+/*
+ TEST SUMMARY:
+ =================
+
+ Description: Renders 20 lines with a 3px black opaque stroke. The position and orientation of each line are fully randomized.
+
+ New Filename: line-m20-szMix-fNone-sOpaq-sw3px-lytSpread-edgeNotCrisp-ornRand-test.js
+
+ ---
+
+ | Facet                  | Value          | Reason
+ |------------------------|----------------|-----------------------------------------------------------------------------------------------------
+ | Shape category         | lines          | The test draws line primitives using ctx.strokeLine().
+ | Count                  | multi-20       | The test is configured to draw 20 lines in a standard visual test run (initialCount = 20).
+ | SizeCategory           | mixed          | Line length is randomized from 0 to canvas diagonal, spanning multiple size categories (XS-XL).
+ | FillStyle              | none           | The code explicitly sets fillStyle to transparent ('rgba(0,0,0,0)') and does not call fill methods.
+ | StrokeStyle            | opaque         | The code sets strokeStyle to an opaque color ('rgb(0,0,0)').
+ | StrokeThickness        | 3px            | The code hardcodes ctx.lineWidth = 3.
+ | Layout                 | spread         | Each of the 20 lines has its start/end points randomized, spreading them across the canvas.
+ | CenteredAt             | N/A            | This facet is not applicable to lines.
+ | EdgeAlignment          | not-crisp      | Endpoints are random integers and lines are not axis-aligned; no specific crisping logic is applied.
+ | Orientation            | random         | Both start and end points of each line are chosen randomly, resulting in random orientations.
+ | ArcAngleExtent         | N/A            | This facet is not applicable to lines.
+ | RoundRectRadius        | N/A            | This facet is not applicable to lines.
+ | ContextTranslation     | none           | The code does not use ctx.translate().
+ | ContextRotation        | none           | The code does not use ctx.rotate().
+ | ContextScaling         | none           | The code does not use ctx.scale().
+ | Clipped on shape       | none           | The code does not create or apply any clipping regions.
+ | Clipped on shape count | n/a            | Not applicable as there is no clipping.
+ | Clipped on shape arrangement | n/a      | Not applicable as there is no clipping.
+ | Clipped on shape size  | n/a            | Not applicable as there is no clipping.
+
+ ---
+
+ UNCAPTURED ASPECTS IN FILENAME / FACETS ABOVE:
+ ----------------------------------------------
+ The primary uncaptured aspect is the specific randomization range for the line length. Since start and end points
+ are chosen randomly anywhere on the canvas, the length can vary from 0 up to the canvas diagonal length, which
+ is why SizeCategory is 'mixed'.
+
+*/
 /**
  * @fileoverview
  * Test definition for rendering multiple (typically 20 for visual regression,
