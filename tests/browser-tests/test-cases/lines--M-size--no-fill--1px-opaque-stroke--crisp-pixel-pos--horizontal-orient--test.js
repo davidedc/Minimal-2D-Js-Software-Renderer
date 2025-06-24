@@ -1,4 +1,44 @@
 /**
+ * TEST SUMMARY:
+ * =================
+ *
+ * Description: Tests a single, horizontal line with a 1px opaque stroke. The line's length is randomized but falls within a range spanning S, M, and L size categories. It is programmatically centered on the canvas and positioned on a half-pixel Y-coordinate to ensure it renders crisply.
+ *
+ * New Filename: line-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-edgeCrisp-ornHoriz-test.js
+ *
+ * ---
+ *
+ * | Facet                  | Value          | Reason
+ * |------------------------|----------------|-----------------------------------------------------------------------------------------------------
+ * | Shape category         | lines          | The test draws lines using `ctx.strokeLine`.
+ * | Count                  | single         | The test is designed to draw one line in its primary visual testing mode (`instances` is null).
+ * | SizeCategory           | mixed          | Line length is randomized in `[20, 149]`, spanning S (16-39), M (40-79), and L (80-159) categories.
+ * | FillStyle              | none           | No fill operation is performed.
+ * | StrokeStyle            | opaque         | Stroke is set to a fully opaque color: `rgb(255, 0, 0)`.
+ * | StrokeThickness        | 1px            | `ctx.lineWidth` is explicitly set to `1`.
+ * | Layout                 | centered       | The line's base position is calculated relative to the canvas center.
+ * | CenteredAt             | N/A            | Facet is not applicable to lines.
+ * | EdgeAlignment          | crisp          | The vertical position is set to `y + 0.5`, a key technique for crisp horizontal 1px lines.
+ * | Orientation            | horizontal     | The line is drawn with a constant Y-coordinate, making it perfectly horizontal.
+ * | ArcAngleExtent         | N/A            | Not an arc.
+ * | RoundRectRadius        | N/A            | Not a rounded rectangle.
+ * | ContextTranslation     | none           | The code does not use `ctx.translate()`.
+ * | ContextRotation        | none           | The code does not use `ctx.rotate()`.
+ * | ContextScaling         | none           | The code does not use `ctx.scale()`.
+ * | Clipped on shape       | none           | No clipping is performed.
+ * | Clipped on shape count | n/a            | No clipping.
+ * | Clipped on shape arrangement | n/a      | No clipping.
+ * | Clipped on shape size  | n/a            | No clipping.
+ *
+ * ---
+ *
+ * UNCAPTURED ASPECTS IN FILENAME / FACETS ABOVE:
+ * ----------------------------------------------
+ * - The stroke color is fixed as opaque red (`rgb(255, 0, 0)`).
+ * - For reproducibility in single-instance mode, all random values (line length, start/end point swapping) are derived from `SeededRandom`.
+ *
+ */
+/**
  * @fileoverview Test definition for rendering a medium-sized, horizontal, 1px thick,
  * opaque stroke line positioned precisely between pixels.
  *
