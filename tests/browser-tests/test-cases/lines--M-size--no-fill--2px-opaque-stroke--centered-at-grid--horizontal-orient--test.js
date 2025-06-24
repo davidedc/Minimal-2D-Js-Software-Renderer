@@ -1,4 +1,45 @@
 /**
+ * TEST SUMMARY:
+ * =================
+ *
+ * Description: Tests the crisp rendering of a single horizontal 2px line. The line has a fixed opaque red
+ * stroke, no fill, and is centered on the canvas at an integer Y-coordinate (grid line). Its length is
+ * randomized, spanning multiple t-shirt size categories (S, M, L).
+ *
+ * New Filename: line-sgl-szMix-fNone-sOpaq-sw2px-lytCenter-edgeCrisp-ornHoriz-test.js
+ *
+ * ---
+ *
+ * | Facet                  | Value          | Reason
+ * |------------------------|----------------|-----------------------------------------------------------------------------------------------------
+ * | Shape category         | line           | The test draws line primitives using `strokeLine` or `moveTo/lineTo`.
+ * | Count                  | single         | The test's primary mode draws one instance per run.
+ * | SizeCategory           | mixed          | The code `Math.floor(20 + SeededRandom.getRandom() * 130)` generates a length of [20, 149], which spans the S, M, and L size categories.
+ * | FillStyle              | none           | `fillStyle` is explicitly set to transparent and no fill operation is performed.
+ * | StrokeStyle            | opaque         | `strokeStyle` is set to `'rgb(255, 0, 0)'`, which is a fully opaque color.
+ * | StrokeThickness        | 2px            | `lineWidth` is hardcoded to `2`.
+ * | Layout                 | centered       | The line's start and end points are calculated relative to the canvas center.
+ * | CenteredAt             | N/A            | This facet is not applicable to line primitives.
+ * | EdgeAlignment          | crisp          | The combination of a horizontal orientation, an even `lineWidth` (2px), and an integer Y-coordinate for the center ensures the stroke perfectly covers two pixel rows without anti-aliasing.
+ * | Orientation            | horizontal     | The line is drawn with a constant Y-coordinate for both its start and end points.
+ * | ArcAngleExtent         | N/A            | Not an arc.
+ * | RoundRectRadius        | N/A            | Not a rounded rectangle.
+ * | ContextTranslation     | none           | No `ctx.translate()` calls are made.
+ * | ContextRotation        | none           | No `ctx.rotate()` calls are made.
+ * | ContextScaling         | none           | No `ctx.scale()` calls are made.
+ * | Clipped on shape       | none           | No `ctx.clip()` calls are made.
+ * | Clipped on shape count | n/a            | No clipping is applied.
+ * | Clipped on shape arrangement | n/a      | No clipping is applied.
+ * | Clipped on shape size  | n/a            | No clipping is applied.
+ *
+ * ---
+ *
+ * UNCAPTURED ASPECTS IN FILENAME / FACETS ABOVE:
+ * ----------------------------------------------
+ * - The stroke color is specifically fixed to opaque red (`rgb(255, 0, 0)`), which is not captured by the `sOpaq` facet alone.
+ *
+ */
+/**
  * @fileoverview Test definition for rendering a medium-sized, horizontal, 2px thick,
  * opaque stroke line centered at a grid intersection.
  *
