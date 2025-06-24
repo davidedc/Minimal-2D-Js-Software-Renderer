@@ -1,4 +1,46 @@
 /**
+ * TEST SUMMARY:
+ * =================
+ *
+ * Description: Tests rendering of 8 axis-aligned rounded rectangles. The test uses a helper function
+ * to ensure crisp rendering by adjusting dimensions and placing the shape's center on a grid or
+ * pixel-center boundary. Position, size, stroke, fill, and corner radii are all randomized.
+ *
+ * New Filename: roundrect-m8-szMix-fSemi-sMix-swMix-lytSpread-cenMixPG-edgeCrisp-ornAxial-rrrMix-test.js
+ *
+ * ---
+ *
+ * | Facet                  | Value          | Reason
+ * |------------------------|----------------|-----------------------------------------------------------------------------------------------------
+ * | Shape category         | rounded-rects  | The test draws rounded rectangles using `ctx.fillRoundRect` and `ctx.strokeRoundRect`.
+ * | Count                  | multi-8        | The test draws 8 instances when not in performance mode.
+ * | SizeCategory           | mixed          | Width/Height are randomized in a range of [50, ~530] which spans M, L, and XL size categories.
+ * | FillStyle              | semitransparent| `getRandomColor(100, 200)` is called for fill, which produces an alpha value in that range.
+ * | StrokeStyle            | mixed          | `getRandomColor(200, 255)` is called for stroke, producing alpha values that can be opaque (255) or semitransparent.
+ * | StrokeThickness        | mixed          | `strokeWidth` is randomized to a discrete set of even integers: 2, 4, 6, 8, 10, 12.
+ * | Layout                 | spread         | Positions are randomized within the canvas to distribute the shapes.
+ * | CenteredAt             | mixed-pixel-grid | The `initialCenter` has a 50% chance of being on a pixel center (+0.5) or a grid integer coordinate.
+ * | EdgeAlignment          | crisp          | The code explicitly calls `adjustDimensionsForCrispStrokeRendering()` to ensure crisp edges.
+ * | Orientation            | square         | The test draws axis-aligned rectangles with no rotation.
+ * | ArcAngleExtent         | N/A            | This facet is not applicable to rounded rectangles.
+ * | RoundRectRadius        | mixed          | The corner radius is randomized based on the rectangle's randomized dimensions.
+ * | ContextTranslation     | none           | `ctx.translate()` is not used.
+ * | ContextRotation        | none           | `ctx.rotate()` is not used.
+ * | ContextScaling         | none           | `ctx.scale()` is not used.
+ * | Clipped on shape       | none           | `ctx.clip()` is not used.
+ * | Clipped on shape count | n/a            | Clipping is not used.
+ * | Clipped on shape arrangement | n/a      | Clipping is not used.
+ * | Clipped on shape size  | n/a            | Clipping is not used.
+ *
+ * ---
+ *
+ * UNCAPTURED ASPECTS IN FILENAME / FACETS ABOVE:
+ * ----------------------------------------------
+ * - The visual test (`!isPerformanceRun`) uses a combination of pre-calculated center + random offsets, whereas the performance-mode test uses `Math.random()` for layout, which is a slightly different `spread` logic.
+ * - The stroke color alpha range of [200, 255] means strokes are either fully opaque or very close to it.
+ * - The corner radius is specifically randomized as a factor of the shape's smaller dimension (`Math.min(finalRectWidth, finalRectHeight) * 0.2`).
+ */
+/**
  * @fileoverview Test definition for multiple axis-aligned rounded rectangles with random parameters.
  */
 
