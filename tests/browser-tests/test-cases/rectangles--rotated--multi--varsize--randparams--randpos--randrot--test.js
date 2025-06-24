@@ -1,4 +1,44 @@
 /**
+ * TEST SUMMARY:
+ * =================
+ *
+ * Description: Tests rendering of multiple rotated rectangles with random positions, sizes, angles, strokes, and fills.
+ *
+ * New Filename: rect-m5-szMix-fSemi-sMix-sw1-10px-lytSpread-cenRand-edgeNotCrisp-ornRand-ctxTransRand-ctxRotRand-test.js
+ *
+ * ---
+ *
+ * | Facet                  | Value          | Reason
+ * |------------------------|----------------|-----------------------------------------------------------------------------------------------------
+ * | Shape category         | rectangles     | The test draws rectangles using `ctx.fillRect()` and `ctx.strokeRect()`.
+ * | Count                  | multi-5        | The test draws 5 instances in visual regression mode, as defined by `numToDraw`.
+ * | SizeCategory           | mixed          | The width and height are randomized in the range `[30, 130)`, which spans the S, M, and L size categories.
+ * | FillStyle              | semitransparent| Fill alpha is randomized in the range `[100, 200]` (out of 255), which is always semi-transparent.
+ * | StrokeStyle            | mixed          | Stroke alpha is randomized in the range `[200, 255]`, which includes both semi-transparent and fully opaque values.
+ * | StrokeThickness        | 1px-10px       | The stroke width is randomized in the range `[1, 11)`, resulting in integer values from 1 to 10.
+ * | Layout                 | spread         | The `getRandomPoint()` function is called for each of the 5 instances, spreading them across the canvas.
+ * | CenteredAt             | random         | The geometric center of each rectangle is placed at a fully random point on the canvas.
+ * | EdgeAlignment          | not-crisp      | The rectangles are rotated by a fully random angle, which prevents crisp edge alignment.
+ * | Orientation            | random         | `ctx.rotate()` is used with a fully random angle for each instance.
+ * | ArcAngleExtent         | N/A            | This facet is not applicable to rectangle shapes.
+ * | RoundRectRadius        | N/A            | This facet is not applicable to non-rounded rectangle shapes.
+ * | ContextTranslation     | random         | `ctx.translate()` is called with a random (x, y) point for each rectangle's center.
+ * | ContextRotation        | random         | `ctx.rotate()` is called with a random angle for each instance.
+ * | ContextScaling         | none           | The `ctx.scale()` function is not used in this test.
+ * | Clipped on shape       | none           | No clipping is applied in this test.
+ * | Clipped on shape count | n/a            | No clipping is applied in this test.
+ * | Clipped on shape arrangement | n/a      | No clipping is applied in this test.
+ * | Clipped on shape size  | n/a            | No clipping is applied in this test.
+ *
+ * ---
+ *
+ * UNCAPTURED ASPECTS IN FILENAME / FACETS ABOVE:
+ * ----------------------------------------------
+ * The test is designed to draw 5 instances in visual mode. In performance mode, it draws a variable number of instances and spreads them using `Math.random()` to avoid overdraw, which differs from the `SeededRandom`-based positioning in visual mode. The randomization ranges for colors, dimensions, and rotation are specific to this test's implementation.
+ *
+ */
+
+/**
  * @fileoverview Test definition for multiple rotated rectangles with random parameters.
  */
 
