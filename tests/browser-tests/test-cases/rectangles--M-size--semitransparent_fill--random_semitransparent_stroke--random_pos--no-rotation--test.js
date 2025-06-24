@@ -1,4 +1,44 @@
 /**
+ * TEST SUMMARY:
+ * =================
+ *
+ * Description: Tests a single axis-aligned rectangle with random dimensions, stroke width, and semi-transparent colors, mimicking original low-level logic including color generation.
+ *
+ * New Filename: rect-sgl-szMix-fSemi-sMix-swMix-lytRand-cenMixPG-edgeCrisp-ornAxial-test.js
+ *
+ * ---
+ *
+ * | Facet                  | Value              | Reason
+ * |------------------------|--------------------|-----------------------------------------------------------------------------------------------------
+ * | Shape category         | rectangles         | The code uses `fillRect` and `strokeRect` to draw rectangles.
+ * | Count                  | single             | In visual test mode, the `for` loop is explicitly broken after one iteration, drawing a single shape.
+ * | SizeCategory           | mixed              | The rectangle's dimensions are randomized in a `[20, 120]` pixel range, which spans S, M, and L categories.
+ * | FillStyle              | semitransparent    | The fill color alpha is randomized in `[100, 200]` (out of 255), which is always semi-transparent.
+ * | StrokeStyle            | mixed              | The stroke color alpha is randomized in `[200, 255]`, so it can be either semi-transparent or fully opaque.
+ * | StrokeThickness        | mixed              | The stroke width is randomized to be one of the even numbers `{2, 4, 6, 8, 10, 12}`.
+ * | Layout                 | random             | The single shape's final position is determined by applying a random offset from the canvas center.
+ * | CenteredAt             | mixed-pixel-grid   | The code explicitly randomizes the geometric center between integer (`grid`) and half-pixel (`pixel`) coordinates.
+ * | EdgeAlignment          | crisp              | The code makes an explicit call to `adjustDimensionsForCrispStrokeRendering()` to ensure sharp edges.
+ * | Orientation            | square             | The test draws an axis-aligned rectangle with no rotation.
+ * | ArcAngleExtent         | N/A                | Not applicable to rectangles.
+ * | RoundRectRadius        | N/A                | Not applicable to non-rounded rectangles.
+ * | ContextTranslation     | none               | No call to `ctx.translate()`.
+ * | ContextRotation        | none               | No call to `ctx.rotate()`.
+ * | ContextScaling         | none               | No call to `ctx.scale()`.
+ * | Clipped on shape       | none               | No clipping is performed.
+ * | Clipped on shape count | n/a                | No clipping is performed.
+ * | Clipped on shape arrangement | n/a          | No clipping is performed.
+ * | Clipped on shape size  | n/a                | No clipping is performed.
+ *
+ * ---
+ *
+ * UNCAPTURED ASPECTS IN FILENAME / FACETS ABOVE:
+ * ----------------------------------------------
+ * Fill is semi-transparent (alpha 100-200). Stroke is mixed opaque/semi (alpha 200-255). EdgeAlignment is crisp via helper function.
+ * CenteredAt is mixed-pixel-grid. strokeWidth is even numbers in [2,12]. Rect dims [20,120] span S,M,L categories.
+ * In performance mode, positions are fully random across the canvas, overriding the `random` (offset-based) layout.
+ */
+/**
  * @fileoverview
  * Test definition for rendering a single, medium-sized, axis-aligned rectangle.
  * This version aims to replicate the logic from the original low-level test's
