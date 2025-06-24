@@ -1,4 +1,46 @@
 /**
+ * TEST SUMMARY:
+ * =================
+ *
+ * Description: Tests a single rounded rectangle with random stroke widths and semi-transparent colors, centered crisply (grid or pixel).
+ *
+ * New Filename: roundrect-sgl-szMix-fSemi-sSemi-swMix-lytCenter-cenMixPG-edgeCrisp-ornAxial-rrrRand-test.js
+ *
+ * ---
+ *
+ * | Facet                  | Value               | Reason
+ * |------------------------|---------------------|----------------------------------------------------------------------------------------------------------------------------
+ * | Shape category         | `rounded-rects`     | The test renders a rounded rectangle using `ctx.fillRoundRect()` and `ctx.strokeRoundRect()`.
+ * | Count                  | `single`            | The test logic draws only one shape instance in visual test mode.
+ * | SizeCategory           | `mixed`             | The rectangle's width/height are randomized (e.g., from `50` to `~530px`), spanning M, L, and XL size categories.
+ * | FillStyle              | `semitransparent`   | Fill color is set with a random alpha between 50 and 150 (out of 255) using `getRandomColor(50, 150)`.
+ * | StrokeStyle            | `semitransparent`   | Stroke color is set with a random alpha between 50 and 150 (out of 255) using `getRandomColor(50, 150)`.
+ * | StrokeThickness        | `mixed`             | Stroke width is randomized to be an even number between 2 and 42. A discrete set of values is categorized as 'mixed'.
+ * | Layout                 | `centered`          | The shape's position is calculated relative to the canvas center.
+ * | CenteredAt             | `mixed-pixel-grid`  | The center has a 50% chance of being on a grid intersection (integer coordinates) or a pixel center (`*.5` coordinates).
+ * | EdgeAlignment          | `crisp`             | The test uses the `adjustDimensionsForCrispStrokeRendering()` helper function to ensure sharp edges.
+ * | Orientation            | `square`            | The rectangle is always drawn axis-aligned with no rotation.
+ * | ArcAngleExtent         | `N/A`               | This facet is not applicable to rectangle shapes.
+ * | RoundRectRadius        | `randomized`        | The corner radius is randomized based on a fraction of the rectangle's dimensions.
+ * | ContextTranslation     | `none`              | The test code does not contain any calls to `ctx.translate()`.
+ * | ContextRotation        | `none`              | The test code does not contain any calls to `ctx.rotate()`.
+ * | ContextScaling         | `none`              | The test code does not contain any calls to `ctx.scale()`.
+ * | Clipped on shape       | `none`              | The test code does not contain any calls to `ctx.clip()`.
+ * | Clipped on shape count | `n/a`               | Not applicable as there is no clipping.
+ * | Clipped on shape arrangement | `n/a`         | Not applicable as there is no clipping.
+ * | Clipped on shape size  | `n/a`               | Not applicable as there is no clipping.
+ *
+ * ---
+ *
+ * UNCAPTURED ASPECTS IN FILENAME / FACETS ABOVE:
+ * ----------------------------------------------
+ * - The stroke width is randomized to be an even integer in the range [2, 42].
+ * - The rectangle's dimensions are randomized to be in the approximate range of [50, ~530] pixels.
+ * - The corner radius is randomized based on the final, crisp-adjusted rectangle dimensions.
+ *
+ */
+
+/**
  * @fileoverview Test definition for a single centered rounded rectangle with semi-transparent stroke and fill.
  */
 
