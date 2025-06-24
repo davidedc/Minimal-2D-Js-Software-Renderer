@@ -1,4 +1,45 @@
 /**
+ * TEST SUMMARY:
+ * =================
+ *
+ * Description: Tests the crisp rendering of a single, 1px red-stroked rounded rectangle. The shape is
+ *              centered on a physical pixel's center coordinates to test for precise alignment.
+ *
+ * New Filename: roundrect-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-cenPx-edgeCrisp-ornAxial-rrrRand-test.js
+ *
+ * ---
+ *
+ * | Facet                  | Value          | Reason
+ * |------------------------|----------------|-----------------------------------------------------------------------------------------------------
+ * | Shape category         | rounded-rects  | The test draws and registers itself as a 'rounded-rects' test.
+ * | Count                  | single         | The test draws a single shape instance in its primary visual regression mode.
+ * | SizeCategory           | mixed          | Base rect dimensions are randomized in [20, 149], spanning size categories S, M, and L.
+ * | FillStyle              | none           | The test only calls `ctx.strokeRoundRect()` and does not apply a fill.
+ * | StrokeStyle            | opaque         | The stroke color is hardcoded to `rgba(255,0,0,1)`, which is fully opaque.
+ * | StrokeThickness        | 1px            | `ctx.lineWidth` is hardcoded to 1.
+ * | Layout                 | centered       | The shape is positioned relative to the canvas center.
+ * | CenteredAt             | pixel          | Center coordinates are calculated as `floor(dim / 2) + 0.5`.
+ * | EdgeAlignment          | crisp          | The code explicitly uses `adjustDimensionsForCrispStrokeRendering()` to ensure sharp edges.
+ * | Orientation            | square         | The rectangle is axis-aligned with no rotation.
+ * | ArcAngleExtent         | N/A            | This facet is not applicable to rectangle shapes.
+ * | RoundRectRadius        | randomized     | The corner radius is calculated using `SeededRandom.getRandom()`.
+ * | ContextTranslation     | none           | The test does not use `ctx.translate()`.
+ * | ContextRotation        | none           | The test does not use `ctx.rotate()`.
+ * | ContextScaling         | none           | The test does not use `ctx.scale()`.
+ * | Clipped on shape       | none           | The test does not involve clipping.
+ * | Clipped on shape count | n/a            | Not applicable as there is no clipping.
+ * | Clipped on shape arrangement | n/a      | Not applicable as there is no clipping.
+ * | Clipped on shape size  | n/a            | Not applicable as there is no clipping.
+ *
+ * ---
+ *
+ * UNCAPTURED ASPECTS IN FILENAME / FACETS ABOVE:
+ * ----------------------------------------------
+ * - The stroke color is not just opaque, it is specifically opaque red. This level of detail is not
+ *   captured in the filename facets.
+ */
+
+/**
  * @fileoverview Test definition for a single 1px stroked rounded rectangle centered at a pixel.
  */
 
