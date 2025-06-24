@@ -1,4 +1,46 @@
 /**
+ * TEST SUMMARY:
+ * =================
+ *
+ * Description: Tests rendering of a single, axis-aligned rectangle with a 1px opaque red stroke and no fill.
+ * The rectangle has randomized dimensions but is explicitly centered on a grid-line intersection and adjusted
+ * to ensure its edges are rendered crisply.
+ *
+ * New Filename: rect-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-cenGrid-edgeCrisp-ornAxial-test.js
+ *
+ * ---
+ *
+ * | Facet                  | Value          | Reason
+ * |------------------------|----------------|-----------------------------------------------------------------------------------------------------
+ * | Shape category         | rectangles     | The test draws a rectangle using `ctx.strokeRect()`.
+ * | Count                  | single         | The test is designed to draw one rectangle instance in its primary visual regression mode.
+ * | SizeCategory           | mixed          | The rectangle's width and height are randomized in the range `[20, 149]`, spanning S, M, and L categories.
+ * | FillStyle              | none           | No fill is applied; `fillStyle` is set to be fully transparent and `fillRect()` is not called.
+ * | StrokeStyle            | opaque         | `strokeStyle` is set to an opaque color (`rgb(255,0,0)`).
+ * | StrokeThickness        | 1px            | `lineWidth` is explicitly set to `1`.
+ * | Layout                 | centered       | The rectangle is positioned relative to the center of the canvas.
+ * | CenteredAt             | grid           | The center coordinates are calculated to be even integers, aligning with grid line intersections.
+ * | EdgeAlignment          | crisp          | The test uses the `adjustDimensionsForCrispStrokeRendering()` helper function to ensure sharp edges.
+ * | Orientation            | square         | The rectangle is axis-aligned with no rotation applied.
+ * | ArcAngleExtent         | N/A            | Not applicable for a rectangle shape.
+ * | RoundRectRadius        | N/A            | Not applicable for a non-rounded rectangle.
+ * | ContextTranslation     | none           | `ctx.translate()` is not used.
+ * | ContextRotation        | none           | `ctx.rotate()` is not used.
+ * | ContextScaling         | none           | `ctx.scale()` is not used.
+ * | Clipped on shape       | none           | No clipping path is defined or applied in the test.
+ * | Clipped on shape count | n/a            | Not applicable as there is no clipping.
+ * | Clipped on shape arrangement | n/a      | Not applicable as there is no clipping.
+ * | Clipped on shape size  | n/a            | Not applicable as there is no clipping.
+ *
+ * ---
+ *
+ * UNCAPTURED ASPECTS IN FILENAME / FACETS ABOVE:
+ * ----------------------------------------------
+ * - The test requires the canvas dimensions to be even numbers for its centering logic to work correctly.
+ * - The stroke color is fixed to an explicit, non-random opaque red.
+ *
+ */
+/**
  * @fileoverview
  * Test definition for rendering a single, small-to-medium sized, 1px thick, red, opaque stroked rectangle
  * with no fill, centered at a grid crossing, and with no rotation.
