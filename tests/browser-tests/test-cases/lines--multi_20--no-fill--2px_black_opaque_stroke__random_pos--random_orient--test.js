@@ -1,4 +1,43 @@
 /**
+ * TEST SUMMARY:
+ * =================
+ *
+ * Description: Renders 20 lines with a 2px black opaque stroke. The lines have random positions and orientations.
+ *
+ * New Filename: line-m20-szMix-fNone-sOpaq-sw2px-lytSpread-edgeNotCrisp-ornRand-test.js
+ *
+ * ---
+ *
+ * | Facet                  | Value          | Reason
+ * |------------------------|----------------|-----------------------------------------------------------------------------------------------------
+ * | Shape category         | lines          | The test draws primitives using `ctx.strokeLine()`.
+ * | Count                  | multi-20       | The test is configured to draw 20 instances in its standard visual regression mode (`initialCount = 20`).
+ * | SizeCategory           | mixed          | Line length is determined by two random points on the canvas, so it can span multiple size categories (XS-XL).
+ * | FillStyle              | none           | `ctx.fillStyle` is explicitly set to be fully transparent (`rgba(0,0,0,0)`), and only a stroke operation is performed.
+ * | StrokeStyle            | opaque         | `ctx.strokeStyle` is set to `'rgb(0,0,0)'`, which is fully opaque.
+ * | StrokeThickness        | 2px            | `ctx.lineWidth` is hardcoded to `2`.
+ * | Layout                 | spread         | Multiple lines are drawn with their start and end points chosen randomly, distributing them across the canvas.
+ * | CenteredAt             | N/A            | This facet is not applicable to lines, which are defined by start and end points, not a center.
+ * | EdgeAlignment          | not-crisp      | Lines are drawn at random (often oblique) angles, which inherently prevents crisp pixel grid alignment.
+ * | Orientation            | random         | The line's orientation is determined by its two randomly selected endpoints, resulting in a random orientation.
+ * | ArcAngleExtent         | N/A            | This facet is only applicable to arc shapes.
+ * | RoundRectRadius        | N/A            | This facet is only applicable to rounded rectangle shapes.
+ * | ContextTranslation     | none           | The test code does not contain any calls to `ctx.translate()`.
+ * | ContextRotation        | none           | The test code does not contain any calls to `ctx.rotate()`.
+ * | ContextScaling         | none           | The test code does not contain any calls to `ctx.scale()`.
+ * | Clipped on shape       | none           | The test code does not contain any calls to `ctx.clip()`.
+ * | Clipped on shape count | n/a            | Clipping is not used in this test.
+ * | Clipped on shape arrangement | n/a      | Clipping is not used in this test.
+ * | Clipped on shape size  | n/a            | Clipping is not used in this test.
+ *
+ * ---
+ *
+ * UNCAPTURED ASPECTS IN FILENAME / FACETS ABOVE:
+ * ----------------------------------------------
+ * Line length is randomized from 0 to the canvas diagonal length, spanning multiple size categories (XS-XL). Position and orientation are randomized.
+ *
+ */
+/**
  * @fileoverview
  * Test definition for rendering multiple (typically 20 for visual regression,
  * 'instances' count for performance) 2px thick, black, opaque stroke lines
