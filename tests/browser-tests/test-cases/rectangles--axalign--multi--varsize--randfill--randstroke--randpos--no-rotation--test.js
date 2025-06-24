@@ -1,4 +1,49 @@
 /**
+ * TEST SUMMARY:
+ * =================
+ *
+ * Description: Tests rendering of multiple axis-aligned rectangles with random sizes, fills (variable alpha),
+ * strokes (opaque/semi-transparent, even width), and positions. This test is designed to produce crisp edges
+ * by using helper functions to adjust geometry based on stroke width and placement. No rotation is applied.
+ *
+ * New Filename: rect-m10-szMix-fSemi-sMix-swMix-lytSpread-cenMixPG-edgeCrisp-ornAxial-test.js
+ *
+ * ---
+ *
+ * | Facet                  | Value              | Reason
+ * |------------------------|--------------------|-----------------------------------------------------------------------------------------------------
+ * | Shape category         | rectangles         | Test draws rectangles using `ctx.fillRect` and `ctx.strokeRect`.
+ * | Count                  | multi-10           | Draws 10 instances in visual regression mode (`numToDraw` defaults to 10).
+ * | SizeCategory           | mixed              | `rectWidth`/`rectHeight` are randomized in a range of `[50, ~410]`, spanning M, L, and XL categories.
+ * | FillStyle              | semitransparent    | `fillColorObj` is generated with an alpha range of `[100, 200]`, which is always semi-transparent.
+ * | StrokeStyle            | mixed              | `strokeColorObj` is generated with an alpha range of `[200, 255]`, including both semi-transparent and opaque values.
+ * | StrokeThickness        | mixed              | `strokeWidth` is randomized to an even integer in `[2, 12]`, a discrete set of values.
+ * | Layout                 | spread             | Rectangles are distributed by applying a random offset to each instance's calculated center point.
+ * | CenteredAt             | mixed-pixel-grid   | The initial placement logic in `_placeRectWithFillAndStrokeBothCrisp` centers on a grid or pixel center.
+ * | EdgeAlignment          | crisp              | The test explicitly uses the `_adjustDimensionsForCrispStrokeRendering` helper to ensure crisp edges.
+ * | Orientation            | square             | Rectangles are axis-aligned (`ornAxial` in new convention).
+ * | ArcAngleExtent         | N/A                | Not applicable to rectangles.
+ * | RoundRectRadius        | N/A                | Not applicable to standard rectangles.
+ * | ContextTranslation     | none               | No `ctx.translate()` calls are made.
+ * | ContextRotation        | none               | No `ctx.rotate()` calls are made.
+ * | ContextScaling         | none               | No `ctx.scale()` calls are made.
+ * | Clipped on shape       | none               | No clipping is applied in this test.
+ * | Clipped on shape count | n/a                | No clipping is applied in this test.
+ * | Clipped on shape arrangement | n/a          | No clipping is applied in this test.
+ * | Clipped on shape size  | n/a                | No clipping is applied in this test.
+ *
+ * ---
+ *
+ * UNCAPTURED ASPECTS IN FILENAME / FACETS ABOVE:
+ * ----------------------------------------------
+ * - The fill alpha is specifically randomized within the range `[100, 200]`.
+ * - The stroke alpha is specifically randomized within the range `[200, 255]`.
+ * - The stroke width is calculated by rounding `SR.get()*10+1` and then forcing the result to be an even number,
+ *   resulting in a discrete set of values: `{2, 4, 6, 8, 10, 12}`.
+ *
+ */
+
+/**
  * @fileoverview Test definition for multiple axis-aligned rectangles with random parameters,
  * matching the new descriptive naming convention.
  */
