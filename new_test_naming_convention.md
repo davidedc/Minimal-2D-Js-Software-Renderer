@@ -47,6 +47,7 @@ Facets are ordered from the most general to the most specific, following this se
     *   `clpCt[Count]`
     *   `clpArr[Arrangement]`
     *   `clpSz[Size]`
+    *   `clpEdge[Alignment]`
 
 ## 4. Facet Value Abbreviations
 
@@ -71,6 +72,7 @@ Facets are ordered from the most general to the most specific, following this se
 | **Clip Count** | `one`, `many` | `clpCt1`, `clpCtN` |
 | **Clip Arrange**| `centered`, `random`, `grid`, `spread` | `clpArrCenter`, `clpArrRand`, `clpArrGrid`, `clpArrSpread` |
 | **Clip Size** | `XS`...`XL`, `mixed` | `clpSzXs`...`clpSzXl`, `clpSzMix` |
+| **Clip Edge Align**| `crisp`, `not-crisp` | `clpEdgeCrisp`, `clpEdgeNotCrisp` |
 
 ## 5. Omission Rules
 

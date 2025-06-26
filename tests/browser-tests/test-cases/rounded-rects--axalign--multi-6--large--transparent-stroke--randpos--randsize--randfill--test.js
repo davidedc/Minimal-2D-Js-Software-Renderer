@@ -29,8 +29,9 @@
  * | ContextScaling         | `none`             | No `ctx.scale()` calls are made.
  * | Clipped on shape       | `none`             | No clipping is applied in this test.
  * | Clipped on shape count | `n/a`              | Not applicable as there is no clipping.
- * | Clipped on shape arrangement | `n/a`         | Not applicable as there is no clipping.
+ * | Clipped on shape arrangement | `n/a`        | Not applicable as there is no clipping.
  * | Clipped on shape size  | `n/a`              | Not applicable as there is no clipping.
+ * | Clipped on shape edge alignment | `n/a`     | Not applicable as there is no clipping.
  *
  * ---
  *

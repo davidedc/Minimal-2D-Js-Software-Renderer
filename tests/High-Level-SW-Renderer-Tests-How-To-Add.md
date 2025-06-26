@@ -22,6 +22,7 @@ Follow these steps:
         *   **If Visual Test `Count` is `multi*` (for drawn shapes):**
             *   In performance mode, the clipping region should be defined *once per frame*, before drawing the scaled set of shapes. All shapes drawn within that frame (their number/complexity scaled by `instances`) will be clipped against this single, pre-established region. `ctx.save()` and `ctx.clip()` would be called before the main drawing loop/logic for the instances, and `ctx.restore()` after.
             *   This approach measures the performance impact of rendering many shapes within an existing clip.
+            *   When defining a test with clipping, be sure to also classify the clipping shape's own facets, such as its shape, count, size, arrangement, and edge alignment (`clpEdgeCrisp`/`clpEdgeNotCrisp`), in the test naming analysis data.
     *   **Return Value for Checks:** If checks like `withExtremesCheck()` are used, calculate the required values (e.g., bounding box for the primary/first element drawn, representing *inclusive pixel coordinates*) and **return** them as an object. Note: If the returned object has a property named `checkData`, the test runner (`RenderTest`) will use the *value* of `checkData` as the input for checks; otherwise, it will use the entire returned object.
         ```javascript
         // Inside: tests/browser-tests/test-cases/my-shape--params--test.js

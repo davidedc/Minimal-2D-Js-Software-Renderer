@@ -34,6 +34,7 @@
  * | Clipped on shape count | N/A            | Not applicable as no clipping is performed.
  * | Clipped on shape arrangement | N/A      | Not applicable as no clipping is performed.
  * | Clipped on shape size  | N/A            | Not applicable as no clipping is performed.
+ * | Clipped on shape edge alignment | n/a   | Not applicable as there is no clipping.
  *
  * ---
  *

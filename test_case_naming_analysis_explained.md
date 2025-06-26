@@ -166,7 +166,7 @@ This single scale is used for all linear pixel measurements across all shape cat
 
 ### 11. `EdgeAlignment`
 
-*   **Description**: Indicates if the shape's final rendered edges (considering stroke) align with pixel boundaries to avoid anti-aliasing "feathering".
+*   **Description**: Indicates if the shape's final rendered edges (considering stroke) align with pixel boundaries. In general pixel-aligned shapes result in crisp drawing (e.g. in case of rectangles) or boundary (e.g. in case of rounded rects, arcs, circles).
 *   **Observed Values in v19.tsv**: `mixed`, `not-crisp`, `crisp`.
 *   **Criteria**:
     *   `crisp`:
@@ -300,7 +300,18 @@ This single scale is used for all linear pixel measurements across all shape cat
 
 ---
 
-### 23. `New Test Name`
+### 23. `Clipped on shape edge alignment`
+
+*   **Description**: Specifies if the edges/bounds of the geometric primitive used for clipping are themselves pixel-aligned. The values are called "crisp" / "not-crisp" because in general pixel-aligned shapes result in crisp drawing (e.g. in case of rectangles) or boundary (e.g. in case of rounded rects, arcs, circles).
+*   **Possible Values**: `n/a`, `crisp`, `not-crisp`.
+*   **Criteria**:
+    *   `n/a`: If `Clipped on shape` is `none`.
+    *   `crisp`: If the clipping shape is drawn using coordinates and dimensions that ensure its edges/bounds fall exactly on pixel boundaries (e.g., using `+/-0.5` adjustments, ensuring even dimensions for strokes centered on grid lines, etc.).
+    *   `not-crisp`: If the clipping shape's coordinates or dimensions would result in edges/bounds that are not pixel-aligned.
+
+---
+
+### 24. `New Test Name`
 
 *   **Description**: The final, proposed new filename for the test script, generated programmatically based on the preceding facet values and the rules defined in `new_test_naming_convention.md`.
 *   **Values**: A string representing the new filename, e.g., `rect-sgl-s-fNone-sOpaq-sw1px-lytCenter-cenPx-edgeCrisp-ornAxial-test.js`.

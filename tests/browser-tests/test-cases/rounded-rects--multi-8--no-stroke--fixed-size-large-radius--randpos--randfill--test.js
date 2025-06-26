@@ -31,6 +31,7 @@
  * | Clipped on shape count | n/a             | Clipping is not used in this test.
  * | Clipped on shape arrangement | n/a       | Clipping is not used in this test.
  * | Clipped on shape size  | n/a             | Clipping is not used in this test.
+ * | Clipped on shape edge alignment | n/a    | Not applicable as there is no clipping.
  *
  * ---
  *
