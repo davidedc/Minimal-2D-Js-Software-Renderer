@@ -9,8 +9,6 @@
  * rectangles, circles, arcs) to populate the canvas. It serves as a comprehensive
  * integration test for the renderer.
  *
- * New Filename: scene-multi-szMix-fMix-sMix-swMix-lytMix-edgeMix-ornMix-arcAMix-rrrMix-ctxTransFixed-ctxRotFixed-test.js
- *
  * ---
  *
  * | Facet                  | Value          | Reason
@@ -210,14 +208,14 @@ function draw_scene_all_shapes_combined(ctx, currentIterationNumber, instances =
 
 // Register the test
 registerHighLevelTest(
-    'scene--all-shapes-combined--test.js',
+    'scene-multi-szMix-fMix-sMix-swMix-lytMix-edgeMix-ornMix-arcAMix-rrrMix-ctxTransFixed-ctxRotFixed-test.js',
     draw_scene_all_shapes_combined,
     'scenes',
     {
         //compare: { swTol: 0, refTol: 0, diffTol: 0 } // Default visual comparison
     },
     {
-        displayName: 'Perf: Scene All Combined',
-        description: 'Performance of drawing a combined scene with multiple shape types.'
+        displayName: 'Scenes: All-shapes-combined',
+        description: 'A test scene combining various shapes. This test draws a large, complex scene by calling numerous individual shape-generating functions (e.g., for lines, rectangles, circles, arcs) to populate the canvas. It serves as a comprehensive integration test for the renderer.'
     }
 ); 
