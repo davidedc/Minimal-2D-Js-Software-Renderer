@@ -63,7 +63,7 @@ registerHighLevelTest(
 
 ### Step 3: Update the HTML Test Harnesses
 
-Finally, you must update the `<script>` tags in the HTML files that load the test cases. There are two primary files to check:
+You must update the `<script>` tags in the HTML files that load the test cases. There are two primary files to check:
 
 *   `tests/browser-tests/high-level-tests.html` (for visual tests)
 *   `tests/browser-tests/performance-tests.html` (for performance tests)
@@ -84,4 +84,12 @@ In `high-level-tests.html` and `performance-tests.html`:
 <script src="test-cases/scene-multi-szMix-fMix-sMix-swMix-lytMix-edgeMix-ornMix-arcAMix-rrrMix-ctxTransFixed-ctxRotFixed-test.js"></script>
 ```
 
-Once these three steps are completed, the test will be correctly renamed and fully integrated back into the testing suites. 
+Once these three steps are completed, the test will be correctly renamed and fully integrated back into the testing suites.
+
+### Step 4: Remove the "New Filename" part of the comment from the header comment
+
+i.e. in the example, remove:
+"
+ * New Filename: scene-multi-szMix-fMix-sMix-swMix-lytMix-edgeMix-ornMix-arcAMix-rrrMix-ctxTransFixed-ctxRotFixed-test.js
+ *
+"
