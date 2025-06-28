@@ -4,8 +4,6 @@
  *
  * Description: Test with 5 arcs, all parameters fully randomized.
  *
- * New Filename: arc-m5-szMix-fOpaq-sOpaq-sw1-10px-lytSpread-cenRand-edgeNotCrisp-ornRand-arcARand-test.js
- *
  * ---
  *
  * | Facet                  | Value          | Reason
@@ -115,14 +113,14 @@ function draw_arcs_multi_5_fully_random(ctx, currentIterationNumber, instances =
 
 // Register the test
 registerHighLevelTest(
-    'arcs--multi-5--fully-random--test.js',
+    'arc-m5-szMix-fOpaq-sOpaq-sw1-10px-lytSpread-cenRand-edgeNotCrisp-ornRand-arcARand-test.js',
     draw_arcs_multi_5_fully_random,
     'arcs',
     {
         //compare: { swTol: 0, refTol: 0, diffTol: 0 } // Default visual comparison
     },
     {
-        displayName: 'Perf: 5 FullyRandom Arcs',
-        description: '5 fully random arcs.'
+        displayName: 'Arcs: 5 fully random',
+        description: 'Test with 5 arcs, all parameters fully randomized.'
     }
 ); 
