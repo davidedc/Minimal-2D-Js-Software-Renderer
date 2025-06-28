@@ -146,7 +146,7 @@ echo "  Added: tests/browser-tests/test-utils/test-registration-utils.js"
 # 8. Individual High-Level Test Files (Define tests)
 TEST_FILES_DIR="$PROJECT_ROOT/tests/browser-tests/test-cases"
 echo "[Build Script] Adding High-Level Test Files from: $TEST_FILES_DIR"
-for file in "$TEST_FILES_DIR/"*--test.js; do
+for file in "$TEST_FILES_DIR/"*-test.js; do
   if [ -f "$file" ]; then # Check if it's a file
     echo "    Concatenating: tests/browser-tests/test-cases/$(basename "$file")" # Log before cat
     cat "$file" >> "$OUTPUT_FILE"
