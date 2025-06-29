@@ -4,8 +4,6 @@
  *
  * Description: Test with 12 arcs, each at 90 degrees, using fixed parameters and a grid layout.
  *
- * New Filename: arc-m12-szMix-fNone-sOpaq-swMix-lytGrid-cenGrid-edgeNotCrisp-ornHoriz-arcADeg90-test.js
- *
  * ---
  *
  * | Facet                  | Value          | Reason
@@ -133,7 +131,7 @@ function draw_arcs_multi_12_90_deg_fixed_params_grid_layout(ctx, currentIteratio
 
 // Register the test
 registerHighLevelTest(
-    'arcs--multi-12--90-deg--fixed-params--grid-layout--test.js',
+    'arc-m12-szMix-fNone-sOpaq-swMix-lytGrid-cenGrid-edgeNotCrisp-ornHoriz-arcADeg90-test.js',
     draw_arcs_multi_12_90_deg_fixed_params_grid_layout,
     'arcs',
     {
