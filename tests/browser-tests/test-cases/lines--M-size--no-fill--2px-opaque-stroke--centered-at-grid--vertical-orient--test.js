@@ -1,42 +1,42 @@
-/*
- TEST SUMMARY:
- =================
-
- Description: Tests crisp rendering of a single, vertical, 2px-thick opaque line centered on a grid line.
-
- New Filename: line-sgl-szMix-fNone-sOpaq-sw2px-lytCenter-edgeCrisp-ornVert-test.js
-
- ---
-
- | Facet                  | Value          | Reason
- |------------------------|----------------|-----------------------------------------------------------------------------------------------------
- | Shape category         | lines          | The code draws lines using `ctx.strokeLine`.
- | Count                  | single         | The default test case draws a single line instance.
- | SizeCategory           | mixed          | The line length is randomized in `[20, 149]`, which spans S (`16-39`), M (`40-79`), and L (`80-159`) size categories.
- | FillStyle              | none           | No fill is applied to the line.
- | StrokeStyle            | opaque         | The stroke is a solid, opaque red color (`rgb(255, 0, 0)`).
- | StrokeThickness        | 2px            | `ctx.lineWidth` is explicitly set to `2`.
- | Layout                 | centered       | The line is positioned relative to the canvas center.
- | CenteredAt             | N/A            | This facet is not applicable to lines as per the project's convention.
- | EdgeAlignment          | crisp          | The line has a 2px (even) width and is drawn on an integer x-coordinate, ensuring its edges align with pixel boundaries.
- | Orientation            | vertical       | The line is drawn with identical start and end x-coordinates.
- | ArcAngleExtent         | N/A            | Not an arc.
- | RoundRectRadius        | N/A            | Not a rounded rectangle.
- | ContextTranslation     | none           | `ctx.translate()` is not used.
- | ContextRotation        | none           | `ctx.rotate()` is not used.
- | ContextScaling         | none           | `ctx.scale()` is not used.
- | Clipped on shape       | none           | `ctx.clip()` is not used.
- | Clipped on shape count | n/a            | No clipping.
- | Clipped on shape arrangement | n/a      | No clipping.
- | Clipped on shape size  | n/a            | No clipping.
- | Clipped on shape edge alignment | n/a   | Not applicable as there is no clipping.
-
- ---
-
- UNCAPTURED ASPECTS IN FILENAME / FACETS ABOVE:
- ----------------------------------------------
- The stroke color is a fixed opaque red.
-
+/**
+* TEST SUMMARY:
+* =================
+*
+* Description: Tests crisp rendering of a single, vertical, 2px-thick opaque line centered on a grid line.
+*
+* New Filename: line-sgl-szMix-fNone-sOpaq-sw2px-lytCenter-edgeCrisp-ornVert-test.js
+*
+* ---
+*
+* | Facet                  | Value          | Reason
+* |------------------------|----------------|-----------------------------------------------------------------------------------------------------
+* | Shape category         | lines          | The code draws lines using `ctx.strokeLine`.
+* | Count                  | single         | The default test case draws a single line instance.
+* | SizeCategory           | mixed          | The line length is randomized in `[20, 149]`, which spans S (`16-39`), M (`40-79`), and L (`80-159`) size categories.
+* | FillStyle              | none           | No fill is applied to the line.
+* | StrokeStyle            | opaque         | The stroke is a solid, opaque red color (`rgb(255, 0, 0)`).
+* | StrokeThickness        | 2px            | `ctx.lineWidth` is explicitly set to `2`.
+* | Layout                 | centered       | The line is positioned relative to the canvas center.
+* | CenteredAt             | N/A            | This facet is not applicable to lines as per the project's convention.
+* | EdgeAlignment          | crisp          | The line has a 2px (even) width and is drawn on an integer x-coordinate, ensuring its edges align with pixel boundaries.
+* | Orientation            | vertical       | The line is drawn with identical start and end x-coordinates.
+* | ArcAngleExtent         | N/A            | Not an arc.
+* | RoundRectRadius        | N/A            | Not a rounded rectangle.
+* | ContextTranslation     | none           | `ctx.translate()` is not used.
+* | ContextRotation        | none           | `ctx.rotate()` is not used.
+* | ContextScaling         | none           | `ctx.scale()` is not used.
+* | Clipped on shape       | none           | `ctx.clip()` is not used.
+* | Clipped on shape count | n/a            | No clipping.
+* | Clipped on shape arrangement | n/a      | No clipping.
+* | Clipped on shape size  | n/a            | No clipping.
+* | Clipped on shape edge alignment | n/a   | Not applicable as there is no clipping.
+*
+* ---
+*
+* UNCAPTURED ASPECTS IN FILENAME / FACETS ABOVE:
+* ----------------------------------------------
+* The stroke color is a fixed opaque red.
+*
 */
 /**
  * @fileoverview Test definition for rendering a medium-sized, vertical, 2px thick,
