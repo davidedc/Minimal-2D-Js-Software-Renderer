@@ -2,9 +2,7 @@
  * TEST SUMMARY:
  * =================
  *
- * Description: Tests rendering of multiple axis-aligned rectangles with random sizes, fills (variable alpha),
- * strokes (opaque/semi-transparent, even width), and positions. This test is designed to produce crisp edges
- * by using helper functions to adjust geometry based on stroke width and placement. No rotation is applied.
+ * Description: Tests rendering of multiple axis-aligned rectangles with random sizes, fills (variable alpha), strokes (opaque/semi-transparent, even width), and positions. This test is designed to produce crisp edges by using helper functions to adjust geometry based on stroke width and placement. No rotation is applied.
  *
  * New Filename: rect-m10-szMix-fSemi-sMix-swMix-lytSpread-cenMixPG-edgeCrisp-ornAxial-test.js
  *

@@ -2,8 +2,7 @@
  * TEST SUMMARY:
  * =================
  *
- * Description: Tests rendering of a single 1px red stroked rectangle with no fill. The rectangle is centered at a pixel
- * center (X.5, Y.5 coordinates) and its dimensions are adjusted to ensure crisp rendering.
+ * Description: Tests rendering of a single 1px red stroked rectangle with no fill. The rectangle is centered at a pixel center (X.5, Y.5 coordinates) and its dimensions are adjusted to ensure crisp rendering.
  *
  * New Filename: rect-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-cenPx-edgeCrisp-ornAxial-test.js
  *

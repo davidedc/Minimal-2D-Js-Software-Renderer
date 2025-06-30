@@ -2,9 +2,7 @@
  * TEST SUMMARY:
  * =================
  *
- * Description: Tests rendering of 8 rounded rectangles with no stroke, only fill. The shapes have a fixed
- * size (200x200px) and a large, fixed corner radius (40px). Their positions are randomized but their
- * centers are snapped to the integer grid, and their fills are semi-transparent.
+ * Description: Tests rendering of 8 rounded rectangles with no stroke, only fill. The shapes have a fixed size (200x200px) and a large, fixed corner radius (40px). Their positions are randomized but their centers are snapped to the integer grid, and their fills are semi-transparent.
  *
  * New Filename: roundrect-m8-xl-fSemi-sNone-lytSpread-cenGrid-edgeCrisp-ornAxial-rrrLrg-test.js
  *

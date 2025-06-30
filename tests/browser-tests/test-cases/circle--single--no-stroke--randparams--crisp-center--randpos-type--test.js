@@ -2,10 +2,7 @@
  * TEST SUMMARY:
  * =================
  *
- * Description: Tests rendering of a single circle with no stroke, only fill. The circle has randomized
- * parameters for its radius and fill color. Its position is centered on the canvas, with the center's
- * alignment randomly chosen to be either on the pixel grid (integer coordinates) or on the pixel
- * center (*.5 coordinates) to test crisp rendering in both scenarios.
+ * Description: Tests rendering of a single circle with no stroke, only fill. The circle has randomized parameters for its radius and fill color. Its position is centered on the canvas, with the center's alignment randomly chosen to be either on the pixel grid (integer coordinates) or on the pixel center (*.5 coordinates) to test crisp rendering in both scenarios.
  *
  * New Filename: circle-sgl-szMix-fOpaq-sNone-lytCenter-cenMixPG-edgeCrisp-test.js
  *

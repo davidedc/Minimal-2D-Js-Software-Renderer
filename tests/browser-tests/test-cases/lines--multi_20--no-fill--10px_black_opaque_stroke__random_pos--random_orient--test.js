@@ -2,12 +2,9 @@
  * TEST SUMMARY:
  * =================
  * 
- * Description: 
- * Renders 20 lines with 10px black opaque strokes at random positions and orientations. 
- * This test is used for both visual regression and performance measurement.
+ * Description: Renders 20 lines with 10px black opaque strokes at random positions and orientations. This test is used for both visual regression and performance measurement.
  * 
- * New Filename: 
- * line-m20-szMix-fNone-sOpaq-sw10px-lytSpread-edgeNotCrisp-ornRand-test.js
+ * New Filename: line-m20-szMix-fNone-sOpaq-sw10px-lytSpread-edgeNotCrisp-ornRand-test.js
  * 
  * ---
  * 

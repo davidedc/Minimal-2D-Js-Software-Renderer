@@ -2,8 +2,7 @@
  * TEST SUMMARY:
  * =================
  *
- * Description: Tests the crisp rendering of a single, 1px red-stroked rounded rectangle. The shape is
- *              centered on a physical pixel's center coordinates to test for precise alignment.
+ * Description: Tests the crisp rendering of a single, 1px red-stroked rounded rectangle. The shape is centered on a physical pixel's center coordinates to test for precise alignment.
  *
  * New Filename: roundrect-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-cenPx-edgeCrisp-ornAxial-rrrRand-test.js
  *

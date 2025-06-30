@@ -2,8 +2,7 @@
  * TEST SUMMARY:
  * =================
  *
- * Description: Tests rendering of 12 circles with precise pixel alignment, varied strokes and fills, and random positions.
- * Each circle has a randomized radius, position, stroke color/thickness, and fill color.
+ * Description: Tests rendering of 12 circles with precise pixel alignment, varied strokes and fills, and random positions. Each circle has a randomized radius, position, stroke color/thickness, and fill color.
  *
  * New Filename: circle-m12-szMix-fSemi-sMix-sw1-4px-lytSpread-cenRand-edgeCrisp-test.js
  *

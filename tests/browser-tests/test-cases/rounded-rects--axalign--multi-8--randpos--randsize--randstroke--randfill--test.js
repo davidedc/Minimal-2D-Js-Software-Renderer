@@ -2,9 +2,7 @@
  * TEST SUMMARY:
  * =================
  *
- * Description: Tests rendering of 8 axis-aligned rounded rectangles. The test uses a helper function
- * to ensure crisp rendering by adjusting dimensions and placing the shape's center on a grid or
- * pixel-center boundary. Position, size, stroke, fill, and corner radii are all randomized.
+ * Description: Tests rendering of 8 axis-aligned rounded rectangles. The test uses a helper function to ensure crisp rendering by adjusting dimensions and placing the shape's center on a grid or pixel-center boundary. Position, size, stroke, fill, and corner radii are all randomized.
  *
  * New Filename: roundrect-m8-szMix-fSemi-sMix-swMix-lytSpread-cenMixPG-edgeCrisp-ornAxial-rrrMix-test.js
  *
