@@ -4,7 +4,6 @@
  *
  * Description: Tests crisp rendering of a single 1px red stroked circle, centered at a grid crossing.
  *
- * New Filename: circle-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-cenGrid-edgeCrisp-test.js
  *
  * ---
  *
