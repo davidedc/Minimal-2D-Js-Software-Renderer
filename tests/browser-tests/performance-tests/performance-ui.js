@@ -26,7 +26,7 @@ function generateTestButtons() {
   // Create test list containers if there are tests for them
   const linesList = window.PERFORMANCE_TESTS_REGISTRY.some(t => t.category === 'lines') ? createTestList('Lines Tests', lineTestsContainer) : null;
   const rectanglesList = window.PERFORMANCE_TESTS_REGISTRY.some(t => t.category === 'rectangles') ? createTestList('Rectangle Tests', rectangleTestsContainer) : null;
-  const roundedRectanglesList = window.PERFORMANCE_TESTS_REGISTRY.some(t => t.category === 'rounded-rectangles') ? createTestList('Rounded Rectangle Tests', roundedRectangleTestsContainer) : null;
+  const roundedRectanglesList = window.PERFORMANCE_TESTS_REGISTRY.some(t => t.category === 'rounded-rects') ? createTestList('Rounded Rectangle Tests', roundedRectangleTestsContainer) : null;
   const circlesList = window.PERFORMANCE_TESTS_REGISTRY.some(t => t.category === 'circles') ? createTestList('Circle Tests', circleTestsContainer) : null;
   const arcsList = window.PERFORMANCE_TESTS_REGISTRY.some(t => t.category === 'arcs') ? createTestList('Arc Tests', arcTestsContainer) : null;
   const scenesList = window.PERFORMANCE_TESTS_REGISTRY.some(t => t.category === 'scenes') ? createTestList('Scene Tests', sceneTestsContainer) : null;
@@ -40,7 +40,7 @@ function generateTestButtons() {
       targetListElement = linesList;
     } else if (test.category === 'rectangles') {
       targetListElement = rectanglesList;
-    } else if (test.category === 'rounded-rectangles') {
+    } else if (test.category === 'rounded-rects') {
       targetListElement = roundedRectanglesList;
     } else if (test.category === 'circles') {
       targetListElement = circlesList;
@@ -53,7 +53,7 @@ function generateTestButtons() {
     if (targetListElement) { // targetListElement is now the div.test-list or null
       createTestEntry(test, targetListElement); 
     } else {
-      if (test && test.category && !['lines', 'rectangles', 'circles', 'rounded-rectangles', 'arcs', 'scenes'].includes(test.category)) {
+      if (test && test.category && !['lines', 'rectangles', 'circles', 'rounded-rects', 'arcs', 'scenes'].includes(test.category)) {
         console.warn(`[UI] Test "${test.displayName}" has unhandled category: ${test.category}`);
       }
     }
