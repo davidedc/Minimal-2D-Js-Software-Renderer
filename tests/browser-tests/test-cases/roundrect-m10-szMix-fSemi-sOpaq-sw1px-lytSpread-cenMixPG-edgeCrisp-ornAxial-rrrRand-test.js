@@ -4,7 +4,6 @@
  *
  * Description: Tests rendering of 10 rounded rectangles with 1px opaque strokes, random semi-transparent fills, and crisp center adjustment to ensure pixel-aligned edges.
  *
- * New Filename: roundrect-m10-szMix-fSemi-sOpaq-sw1px-lytSpread-cenMixPG-edgeCrisp-ornAxial-rrrRand-test.js
  *
  * ---
  *
