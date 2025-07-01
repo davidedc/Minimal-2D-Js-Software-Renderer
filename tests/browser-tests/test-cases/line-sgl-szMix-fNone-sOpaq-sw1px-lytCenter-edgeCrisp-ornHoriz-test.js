@@ -4,7 +4,6 @@
  *
  * Description: Tests a single, horizontal line with a 1px opaque stroke. The line's length is randomized but falls within a range spanning S, M, and L size categories. It is programmatically centered on the canvas and positioned on a half-pixel Y-coordinate to ensure it renders crisply.
  *
- * New Filename: line-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-edgeCrisp-ornHoriz-test.js
  *
  * ---
  *
