@@ -4,7 +4,6 @@
  *
  * Description: Tests rendering of 20 black, 1px-thick lines. Each line has a randomly chosen start and end point, resulting in random positions, lengths, and orientations.
  *
- * New Filename: line-m20-szMix-fNone-sOpaq-sw1px-lytSpread-edgeNotCrisp-ornRand-test.js
  *
  * ---
  *
