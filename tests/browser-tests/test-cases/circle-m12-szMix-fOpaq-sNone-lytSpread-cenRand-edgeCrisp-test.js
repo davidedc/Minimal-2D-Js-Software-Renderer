@@ -4,7 +4,6 @@
  *
  * Description: Tests rendering of 12 circles with no strokes, only fills, precise alignment, and random parameters/positions.
  *
- * New Filename: circle-m12-szMix-fOpaq-sNone-lytSpread-cenRand-edgeCrisp-test.js
  *
  * ---
  *
