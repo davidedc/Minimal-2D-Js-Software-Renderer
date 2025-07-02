@@ -4,7 +4,6 @@
  *
  * Description: Tests a single rounded rectangle with random stroke widths (opaque), random fills, centered at a grid crossing, with explicit logic to make it crisp.
  *
- * New Filename: roundrect-sgl-szMix-fSemi-sOpaq-sw1-11px-lytCenter-cenGrid-edgeCrisp-ornAxial-rrrRand-test.js
  *
  * ---
  *
