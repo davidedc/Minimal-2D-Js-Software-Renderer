@@ -4,7 +4,6 @@
  * 
  * Description: Tests a single random circle with random params, crisp center (grid or pixel), stroke, and fill.
  * 
- * New Filename: circle-sgl-szMix-fOpaq-sOpaq-sw1-30px-lytCenter-cenMixPG-edgeCrisp-test.js
  * 
  * ---
  * 
