@@ -4,7 +4,6 @@
  *
  * Description: Tests rendering of a single, axis-aligned rectangle with a 1px opaque red stroke and no fill. The rectangle has randomized dimensions but is explicitly centered on a grid-line intersection and adjusted to ensure its edges are rendered crisply.
  *
- * New Filename: rect-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-cenGrid-edgeCrisp-ornAxial-test.js
  *
  * ---
  *
