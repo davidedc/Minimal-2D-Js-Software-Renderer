@@ -4,7 +4,6 @@
 *
 * Description: Renders 20 lines with a 3px black opaque stroke. The position and orientation of each line are fully randomized.
 *
-* New Filename: line-m20-szMix-fNone-sOpaq-sw3px-lytSpread-edgeNotCrisp-ornRand-test.js
 *
 * ---
 *
