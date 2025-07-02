@@ -4,7 +4,6 @@
  * 
  * Description: Tests a single circle with fully randomized parameters for position, size, fill, and stroke. The final rendering is adjusted to ensure the circle's edges are crisp (pixel-aligned).
  * 
- * New Filename: circle-sgl-szMix-fOpaq-sOpaq-sw1-30px-lytRand-cenRand-edgeCrisp-test.js
  * 
  * ---
  * 
