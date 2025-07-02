@@ -4,7 +4,6 @@
 *
 * Description: Test with 8 circles, all parameters fully randomized.
 *
-* New Filename: circle-m8-szMix-fOpaq-sOpaq-sw1-10px-lytSpread-cenRand-edgeNotCrisp-test.js
 *
 * ---
 *
