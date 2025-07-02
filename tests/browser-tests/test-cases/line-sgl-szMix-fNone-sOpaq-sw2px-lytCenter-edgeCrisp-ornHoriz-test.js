@@ -4,7 +4,6 @@
  *
  * Description: Tests the crisp rendering of a single horizontal 2px line. The line has a fixed opaque red stroke, no fill, and is centered on the canvas at an integer Y-coordinate (grid line). Its length is randomized, spanning multiple t-shirt size categories (S, M, L).
  *
- * New Filename: line-sgl-szMix-fNone-sOpaq-sw2px-lytCenter-edgeCrisp-ornHoriz-test.js
  *
  * ---
  *
