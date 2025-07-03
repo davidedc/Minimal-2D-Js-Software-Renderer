@@ -4,7 +4,6 @@
  *
  * Description: Tests the crisp rendering of a single, 1px red-stroked rounded rectangle. The shape is centered on a physical pixel's center coordinates to test for precise alignment.
  *
- * New Filename: roundrect-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-cenPx-edgeCrisp-ornAxial-rrrRand-test.js
  *
  * ---
  *
@@ -141,7 +140,7 @@ function draw_rounded_rect_single_1px_stroke_crisp_center_pixel(ctx, currentIter
 
 // Register the test
 registerHighLevelTest(
-    'rounded-rect--single--1px-stroke--crisp--center-pixel--test.js',
+    'roundrect-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-cenPx-edgeCrisp-ornAxial-rrrRand-test.js',
     draw_rounded_rect_single_1px_stroke_crisp_center_pixel,
     'rounded-rects',
     {
