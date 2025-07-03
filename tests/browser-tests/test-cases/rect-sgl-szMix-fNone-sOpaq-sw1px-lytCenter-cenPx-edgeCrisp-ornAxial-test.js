@@ -4,7 +4,6 @@
  *
  * Description: Tests rendering of a single 1px red stroked rectangle with no fill. The rectangle is centered at a pixel center (X.5, Y.5 coordinates) and its dimensions are adjusted to ensure crisp rendering.
  *
- * New Filename: rect-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-cenPx-edgeCrisp-ornAxial-test.js
  *
  * ---
  *
@@ -138,7 +137,7 @@ function draw_rectangles__S_size__no_fill__1px_red_opaque_stroke__centered_at_pi
 
 // Register the test
 registerHighLevelTest(
-    'rectangles--S-size--no-fill--1px_red_opaque_stroke--centered_at_pixel--no-rotation--test.js',
+    'rect-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-cenPx-edgeCrisp-ornAxial-test.js',
     draw_rectangles__S_size__no_fill__1px_red_opaque_stroke__centered_at_pixel__no_rotation,
     'rectangles',
     {
