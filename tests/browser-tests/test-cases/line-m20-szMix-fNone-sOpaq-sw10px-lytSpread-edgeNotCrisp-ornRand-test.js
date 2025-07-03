@@ -4,7 +4,6 @@
  * 
  * Description: Renders 20 lines with 10px black opaque strokes at random positions and orientations. This test is used for both visual regression and performance measurement.
  * 
- * New Filename: line-m20-szMix-fNone-sOpaq-sw10px-lytSpread-edgeNotCrisp-ornRand-test.js
  * 
  * ---
  * 
@@ -126,7 +125,7 @@ function draw_lines__multi_20__no_fill__10px_black_opaque_stroke__random_pos__ra
 
 // Register the test
 registerHighLevelTest(
-    'lines--multi_20--no-fill--10px_black_opaque_stroke__random_pos--random_orient--test.js',
+    'line-m20-szMix-fNone-sOpaq-sw10px-lytSpread-edgeNotCrisp-ornRand-test.js',
     draw_lines__multi_20__no_fill__10px_black_opaque_stroke__random_pos__random_orient,
     'lines',
     {
