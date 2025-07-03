@@ -4,7 +4,6 @@
  *
  * Description: Tests rendering of multiple axis-aligned rectangles with random sizes, fills (variable alpha), strokes (opaque/semi-transparent, even width), and positions. This test is designed to produce crisp edges by using helper functions to adjust geometry based on stroke width and placement. No rotation is applied.
  *
- * New Filename: rect-m10-szMix-fSemi-sMix-swMix-lytSpread-cenMixPG-edgeCrisp-ornAxial-test.js
  *
  * ---
  *
@@ -253,7 +252,7 @@ function draw_rectangles_axalign_multi_varsize_randfill_randstroke_randpos_no_ro
 
 // Register the test
 registerHighLevelTest(
-    'rectangles--axalign--multi--varsize--randfill--randstroke--randpos--no-rotation--test.js',
+    'rect-m10-szMix-fSemi-sMix-swMix-lytSpread-cenMixPG-edgeCrisp-ornAxial-test.js',
     draw_rectangles_axalign_multi_varsize_randfill_randstroke_randpos_no_rotation,
     'rectangles',
     {
