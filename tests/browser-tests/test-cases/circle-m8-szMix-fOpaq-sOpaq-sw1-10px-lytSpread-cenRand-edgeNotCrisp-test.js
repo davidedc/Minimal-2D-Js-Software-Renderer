@@ -113,7 +113,7 @@ function draw_circles_multi_8_fully_random(ctx, currentIterationNumber, instance
 
 // Register the test
 registerHighLevelTest(
-    'circles--multi-8--fully-random--test.js',
+    'circle-m8-szMix-fOpaq-sOpaq-sw1-10px-lytSpread-cenRand-edgeNotCrisp-test.js',
     draw_circles_multi_8_fully_random,
     'circles',
     {
