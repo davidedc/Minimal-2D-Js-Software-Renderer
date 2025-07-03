@@ -4,7 +4,6 @@
  *
  * Description: Tests crisp rendering of a single 1px red stroked rounded rectangle, centered at a grid crossing.
  *
- * New Filename: roundrect-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-cenGrid-edgeCrisp-ornAxial-rrrRand-test.js
  *
  * ---
  *
@@ -167,7 +166,7 @@ function draw_rounded_rect_single_1px_stroke_crisp_center_grid(ctx, currentItera
 
 // Register the test
 registerHighLevelTest(
-    'rounded-rect--single--1px-stroke--crisp--center-grid--test.js',
+    'roundrect-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-cenGrid-edgeCrisp-ornAxial-rrrRand-test.js',
     draw_rounded_rect_single_1px_stroke_crisp_center_grid,
     'rounded-rects',
     {
