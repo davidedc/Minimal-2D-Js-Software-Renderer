@@ -168,7 +168,7 @@ function draw_circle_single_randparams_crisp_center_randpos_type(ctx, currentIte
 
 // Register the test
 registerHighLevelTest(
-    'circle--single--randparams--crisp-center--randpos-type--test.js',
+    'circle-sgl-szMix-fOpaq-sOpaq-sw1-30px-lytCenter-cenMixPG-edgeCrisp-test.js',
     draw_circle_single_randparams_crisp_center_randpos_type,
     'circles',
     {

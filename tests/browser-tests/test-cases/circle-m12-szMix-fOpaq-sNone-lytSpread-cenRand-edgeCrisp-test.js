@@ -162,7 +162,7 @@ function draw_circles_multi_12_precise_no_stroke_randparams_randpos(ctx, current
 
 // Register the test
 registerHighLevelTest(
-    'circles--multi-12--precise--no-stroke--randparams--randpos--test.js',
+    'circle-m12-szMix-fOpaq-sNone-lytSpread-cenRand-edgeCrisp-test.js',
     draw_circles_multi_12_precise_no_stroke_randparams_randpos,
     'circles',
     {

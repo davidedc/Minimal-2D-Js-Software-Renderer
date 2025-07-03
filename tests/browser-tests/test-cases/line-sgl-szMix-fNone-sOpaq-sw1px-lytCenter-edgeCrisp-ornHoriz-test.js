@@ -159,7 +159,7 @@ function draw_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__horizo
 
 // Register the test
 registerHighLevelTest(
-    'lines--M-size--no-fill--1px-opaque-stroke--crisp-pixel-pos--horizontal-orient--test.js',
+    'line-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-edgeCrisp-ornHoriz-test.js',
     draw_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__horizontal_orient,
     'lines',
     {

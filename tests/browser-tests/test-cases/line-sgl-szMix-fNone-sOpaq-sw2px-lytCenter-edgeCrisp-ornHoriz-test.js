@@ -165,7 +165,7 @@ function draw_lines__M_size__no_fill__2px_opaque_stroke__centered_at_grid__horiz
 
 // Register the test
 registerHighLevelTest(
-    'lines--M-size--no-fill--2px-opaque-stroke--centered-at-grid--horizontal-orient--test.js',
+    'line-sgl-szMix-fNone-sOpaq-sw2px-lytCenter-edgeCrisp-ornHoriz-test.js',
     draw_lines__M_size__no_fill__2px_opaque_stroke__centered_at_grid__horizontal_orient,
     'lines',
     {

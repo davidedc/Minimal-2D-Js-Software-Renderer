@@ -137,7 +137,7 @@ function draw_rounded_rect_single_rand_opaque_stroke_center_grid_rand_fill(ctx, 
 
 // Register the test
 registerHighLevelTest(
-    'rounded-rect--single--rand-opaque-stroke--center-grid--rand-fill--test.js',
+    'roundrect-sgl-szMix-fSemi-sOpaq-sw1-11px-lytCenter-cenGrid-edgeCrisp-ornAxial-rrrRand-test.js',
     draw_rounded_rect_single_rand_opaque_stroke_center_grid_rand_fill,
     'rounded-rects',
     {

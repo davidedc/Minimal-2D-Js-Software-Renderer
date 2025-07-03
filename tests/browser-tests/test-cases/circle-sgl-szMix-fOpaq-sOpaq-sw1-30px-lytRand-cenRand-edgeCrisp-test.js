@@ -193,7 +193,7 @@ function draw_circle_single_randparams_crisp_randpos_explicit(ctx, currentIterat
 
 // Register the test
 registerHighLevelTest(
-    'circle--single--randparams--crisp--randpos-explicit--test.js',
+    'circle-sgl-szMix-fOpaq-sOpaq-sw1-30px-lytRand-cenRand-edgeCrisp-test.js',
     draw_circle_single_randparams_crisp_randpos_explicit,
     'circles',
     {
