@@ -4,7 +4,6 @@
  *
  * Description: Tests crisp rendering of a single 1px red stroked circle, centered at a pixel center.
  *
- * New Filename: circle-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-cenPx-edgeCrisp-test.js
  *
  * ---
  *
@@ -127,7 +126,7 @@ function draw_circle_single_1px_stroke_crisp_center_pixel(ctx, currentIterationN
 
 // Register the test
 registerHighLevelTest(
-    'circle--single--1px-stroke--crisp--center-pixel--test.js',
+    'circle-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-cenPx-edgeCrisp-test.js',
     draw_circle_single_1px_stroke_crisp_center_pixel,
     'circles',
     {
