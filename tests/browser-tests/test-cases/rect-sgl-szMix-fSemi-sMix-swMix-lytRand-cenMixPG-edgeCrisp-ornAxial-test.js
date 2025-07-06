@@ -4,7 +4,6 @@
  *
  * Description: Tests a single axis-aligned rectangle with random dimensions, stroke width, and semi-transparent colors, mimicking original low-level logic including color generation.
  *
- * New Filename: rect-sgl-szMix-fSemi-sMix-swMix-lytRand-cenMixPG-edgeCrisp-ornAxial-test.js
  *
  * ---
  *
@@ -161,7 +160,7 @@ function draw_rectangles__M_size__semitransparent_fill__random_semitransparent_s
 
 // Register the test
 registerHighLevelTest(
-    'rectangles--M-size--semitransparent_fill--random_semitransparent_stroke--random_pos--no-rotation--test.js',
+    'rect-sgl-szMix-fSemi-sMix-swMix-lytRand-cenMixPG-edgeCrisp-ornAxial-test.js',
     draw_rectangles__M_size__semitransparent_fill__random_semitransparent_stroke__random_pos__no_rotation,
     'rectangles',
     {
