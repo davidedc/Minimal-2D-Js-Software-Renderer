@@ -4,7 +4,6 @@
  *
  * Description: Tests rendering of 6 axis-aligned rounded rectangles. Rectangles have a fixed large corner radius, random semi-transparent fills, and fixed semi-transparent strokes. Their size and position are randomized, but dimensions are adjusted to ensure crisp rendering.
  *
- * New Filename: roundrect-m6-szMix-fSemi-sSemi-swMix-lytSpread-cenMixPG-edgeCrisp-ornAxial-rrrLrg-test.js
  *
  * ---
  *
@@ -159,7 +158,7 @@ function draw_rounded_rects_axalign_multi_6_large_transparent_stroke_randpos_ran
 
 // Register the test
 registerHighLevelTest(
-    'rounded-rects--axalign--multi-6--large--transparent-stroke--randpos--randsize--randfill--test.js',
+    'roundrect-m6-szMix-fSemi-sSemi-swMix-lytSpread-cenMixPG-edgeCrisp-ornAxial-rrrLrg-test.js',
     draw_rounded_rects_axalign_multi_6_large_transparent_stroke_randpos_randsize_randfill,
     'rounded-rects',
     {
