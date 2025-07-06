@@ -4,7 +4,6 @@
  * 
  * Description: Test with a single circle, all parameters fully randomized.
  * 
- * New Filename: circle-sgl-szMix-fOpaq-sOpaq-sw1-10px-lytRand-cenRand-edgeNotCrisp-test.js
  * 
  * ---
  * 
@@ -108,7 +107,7 @@ function draw_circle_single_fully_random(ctx, currentIterationNumber, instances 
 
 // Register the test
 registerHighLevelTest(
-    'circle--single--fully-random--test.js',
+    'circle-sgl-szMix-fOpaq-sOpaq-sw1-10px-lytRand-cenRand-edgeNotCrisp-test.js',
     draw_circle_single_fully_random,
     'circles',
     {
