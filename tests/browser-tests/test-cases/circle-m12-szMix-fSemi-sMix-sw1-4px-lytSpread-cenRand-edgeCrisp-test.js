@@ -4,7 +4,6 @@
  *
  * Description: Tests rendering of 12 circles with precise pixel alignment, varied strokes and fills, and random positions. Each circle has a randomized radius, position, stroke color/thickness, and fill color.
  *
- * New Filename: circle-m12-szMix-fSemi-sMix-sw1-4px-lytSpread-cenRand-edgeCrisp-test.js
  *
  * ---
  *
@@ -178,7 +177,7 @@ function draw_circles_multi_12_precise_randparams_randpos(ctx, currentIterationN
 
 // Register the test
 registerHighLevelTest(
-    'circles--multi-12--precise--randparams--randpos--test.js',
+    'circle-m12-szMix-fSemi-sMix-sw1-4px-lytSpread-cenRand-edgeCrisp-test.js',
     draw_circles_multi_12_precise_randparams_randpos,
     'circles',
     {
