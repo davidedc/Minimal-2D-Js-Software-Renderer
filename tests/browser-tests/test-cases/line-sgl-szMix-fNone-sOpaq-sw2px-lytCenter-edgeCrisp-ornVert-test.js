@@ -4,7 +4,6 @@
 *
 * Description: Tests crisp rendering of a single, vertical, 2px-thick opaque line centered on a grid line.
 *
-* New Filename: line-sgl-szMix-fNone-sOpaq-sw2px-lytCenter-edgeCrisp-ornVert-test.js
 *
 * ---
 *
@@ -166,7 +165,7 @@ function draw_lines__M_size__no_fill__2px_opaque_stroke__centered_at_grid__verti
 
 // Register the test
 registerHighLevelTest(
-    'lines--M-size--no-fill--2px-opaque-stroke--centered-at-grid--vertical-orient--test.js',
+    'line-sgl-szMix-fNone-sOpaq-sw2px-lytCenter-edgeCrisp-ornVert-test.js',
     draw_lines__M_size__no_fill__2px_opaque_stroke__centered_at_grid__vertical_orient,
     'lines',
     {
