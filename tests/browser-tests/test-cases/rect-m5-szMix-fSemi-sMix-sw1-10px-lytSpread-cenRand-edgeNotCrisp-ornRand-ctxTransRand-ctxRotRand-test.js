@@ -4,7 +4,6 @@
  *
  * Description: Tests rendering of multiple rotated rectangles with random positions, sizes, angles, strokes, and fills.
  *
- * New Filename: rect-m5-szMix-fSemi-sMix-sw1-10px-lytSpread-cenRand-edgeNotCrisp-ornRand-ctxTransRand-ctxRotRand-test.js
  *
  * ---
  *
@@ -143,7 +142,7 @@ function draw_rectangles_rotated_multi_varsize_randparams_randpos_randrot(ctx, c
 
 // Register the test
 registerHighLevelTest(
-    'rectangles--rotated--multi--varsize--randparams--randpos--randrot--test.js',
+    'rect-m5-szMix-fSemi-sMix-sw1-10px-lytSpread-cenRand-edgeNotCrisp-ornRand-ctxTransRand-ctxRotRand-test.js',
     draw_rectangles_rotated_multi_varsize_randparams_randpos_randrot,
     'rectangles',
     {
