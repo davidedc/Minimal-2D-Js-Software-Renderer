@@ -4,7 +4,6 @@
  *
  * Description: 15 lines, no fill, random stroke, random positions, random orientations.
  *
- * New Filename: line-m15-szMix-fNone-sMix-sw1-10px-lytSpread-edgeNotCrisp-ornRand-test.js
  *
  * ---
  *
@@ -134,7 +133,7 @@ function draw_lines__multi_15__no_fill__random_stroke__random_pos__random_orient
 
 // Register the test
 registerHighLevelTest(
-    'lines--multi_15--no-fill--random-stroke__random_pos--random_orient--test.js',
+    'line-m15-szMix-fNone-sMix-sw1-10px-lytSpread-edgeNotCrisp-ornRand-test.js',
     draw_lines__multi_15__no_fill__random_stroke__random_pos__random_orient,
     'lines',
     {
