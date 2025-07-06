@@ -4,7 +4,6 @@
  *
  * Description: Renders 20 lines with a 5px black opaque stroke at random positions and with random orientations.
  *
- * New Filename: line-m20-szMix-fNone-sOpaq-sw5px-lytSpread-edgeNotCrisp-ornRand-test.js
  *
  * ---
  *
@@ -127,7 +126,7 @@ function draw_lines__multi_20__no_fill__5px_black_opaque_stroke__random_pos__ran
 
 // Register the test
 registerHighLevelTest(
-    'lines--multi_20--no-fill--5px_black_opaque_stroke__random_pos--random_orient--test.js',
+    'line-m20-szMix-fNone-sOpaq-sw5px-lytSpread-edgeNotCrisp-ornRand-test.js',
     draw_lines__multi_20__no_fill__5px_black_opaque_stroke__random_pos__random_orient,
     'lines',
     {
