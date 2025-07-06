@@ -4,7 +4,6 @@
  *
  * Description: Tests rendering of 8 axis-aligned rounded rectangles. The test uses a helper function to ensure crisp rendering by adjusting dimensions and placing the shape's center on a grid or pixel-center boundary. Position, size, stroke, fill, and corner radii are all randomized.
  *
- * New Filename: roundrect-m8-szMix-fSemi-sMix-swMix-lytSpread-cenMixPG-edgeCrisp-ornAxial-rrrMix-test.js
  *
  * ---
  *
@@ -164,7 +163,7 @@ function draw_rounded_rects_axalign_multi_8_randpos_randsize_randstroke_randfill
 
 // Register the test
 registerHighLevelTest(
-    'rounded-rects--axalign--multi-8--randpos--randsize--randstroke--randfill--test.js',
+    'roundrect-m8-szMix-fSemi-sMix-swMix-lytSpread-cenMixPG-edgeCrisp-ornAxial-rrrMix-test.js',
     draw_rounded_rects_axalign_multi_8_randpos_randsize_randstroke_randfill,
     'rounded-rects',
     {
