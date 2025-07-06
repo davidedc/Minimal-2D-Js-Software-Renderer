@@ -4,7 +4,6 @@
  *
  * Description: Tests the crisp rendering of a single, vertical 1px opaque red line. The line is centered on the canvas, and its length is randomized across S, M, and L size categories. Its horizontal position is set between pixels to test for correct pixel snapping.
  *
- * New Filename: line-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-edgeCrisp-ornVert-test.js
  *
  * ---
  *
@@ -174,7 +173,7 @@ function draw_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__vertic
 
 // Register the test
 registerHighLevelTest(
-    'lines--M-size--no-fill--1px_opaque_stroke--crisp_pixel_pos--vertical_orient--test.js',
+    'line-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-edgeCrisp-ornVert-test.js',
     draw_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__vertical_orient,
     'lines',
     {
