@@ -4,7 +4,6 @@
  *
  * Description: Tests a single randomly positioned circle with no stroke, random fill, and crisp rendering. The circle's radius and position are randomized within defined constraints.
  *
- * New Filename: circle-sgl-szMix-fOpaq-sNone-lytRand-cenRand-edgeCrisp-test.js
  *
  * ---
  *
@@ -182,7 +181,7 @@ function draw_circle_single_no_stroke_randparams_crisp_randpos_explicit(ctx, cur
 
 // Register the test
 registerHighLevelTest(
-    'circle--single--no-stroke--randparams--crisp--randpos-explicit--test.js',
+    'circle-sgl-szMix-fOpaq-sNone-lytRand-cenRand-edgeCrisp-test.js',
     draw_circle_single_no_stroke_randparams_crisp_randpos_explicit,
     'circles',
     {
