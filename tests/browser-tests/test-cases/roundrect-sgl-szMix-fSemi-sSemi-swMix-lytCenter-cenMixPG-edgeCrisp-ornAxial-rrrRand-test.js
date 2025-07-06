@@ -4,7 +4,6 @@
  *
  * Description: Tests a single rounded rectangle with random stroke widths and semi-transparent colors, centered crisply (grid or pixel).
  *
- * New Filename: roundrect-sgl-szMix-fSemi-sSemi-swMix-lytCenter-cenMixPG-edgeCrisp-ornAxial-rrrRand-test.js
  *
  * ---
  *
@@ -158,7 +157,7 @@ function draw_rounded_rect_single_rand_semitrans_stroke_fill_crisp_center(ctx, c
 
 // Register the test
 registerHighLevelTest(
-    'rounded-rect--single--rand-semitrans-stroke-fill--crisp-center--test.js',
+    'roundrect-sgl-szMix-fSemi-sSemi-swMix-lytCenter-cenMixPG-edgeCrisp-ornAxial-rrrRand-test.js',
     draw_rounded_rect_single_rand_semitrans_stroke_fill_crisp_center,
     'rounded-rects',
     {
