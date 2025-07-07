@@ -117,6 +117,7 @@ registerHighLevelTest(
         noGapsInStrokeEdges: true
     },
     {
+        title: 'Circle: fully random',
         displayName: 'Perf: Circle FullyRandom',
         description: 'Performance of a single fully random circle.'
     }

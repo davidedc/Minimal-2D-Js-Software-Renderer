@@ -120,6 +120,7 @@ registerHighLevelTest(
         //compare: { swTol: 0, refTol: 0, diffTol: 0 } // Default visual comparison
     },
     {
+        title: 'Arcs: 5 fully random',
         displayName: 'Arcs: 5 fully random',
         description: 'Test with 5 arcs, all parameters fully randomized.'
     }

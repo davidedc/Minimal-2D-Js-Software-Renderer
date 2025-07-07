@@ -120,6 +120,7 @@ registerHighLevelTest(
         //compare: { swTol: 0, refTol: 0, diffTol: 0 } // Default visual comparison
     },
     {
+        title: 'Circle: 8 fully random',
         displayName: 'Perf: 8 FullyRandom Circles',
         description: 'Performance of 8 fully random circles.'
     }

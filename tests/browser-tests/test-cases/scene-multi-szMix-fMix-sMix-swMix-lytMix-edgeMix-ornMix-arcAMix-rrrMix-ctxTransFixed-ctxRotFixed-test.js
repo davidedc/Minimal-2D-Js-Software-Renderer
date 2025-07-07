@@ -215,6 +215,7 @@ registerHighLevelTest(
         //compare: { swTol: 0, refTol: 0, diffTol: 0 } // Default visual comparison
     },
     {
+        title: 'Scenes: All-shapes-combined',
         displayName: 'Scenes: All-shapes-combined',
         description: 'A test scene combining various shapes. This test draws a large, complex scene by calling numerous individual shape-generating functions (e.g., for lines, rectangles, circles, arcs) to populate the canvas. It serves as a comprehensive integration test for the renderer.'
     }
