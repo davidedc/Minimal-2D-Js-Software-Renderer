@@ -40,6 +40,14 @@ echo "
 echo "Running simple-node-example.js..."
 node examples/simple-node-example.js
 
+# --- Test Metadata Validation ---
+echo "
+---> Running Test Metadata Validation..."
+
+echo "
+[Validation] Checking test metadata and filename parsing..."
+node "$PROJECT_ROOT/build-scripts/check-test-metadata.js"
+
 # --- Test Scripts (Optional - uncomment to run) ---
 echo "
 ---> Running Test Scripts..."
