@@ -111,13 +111,22 @@ class TestNameParser {
   }
   
   parseTestName(filename) {
+    const errors = [];
+    
     // Remove .js extension and split by dashes
     const nameWithoutExt = filename.replace(/\.js$/, '');
     const parts = nameWithoutExt.split('-');
     
+    // Validate basic structure
+    if (parts.length < 2) {
+      errors.push(`Filename too short - needs at least shape and count: ${filename}`);
+    }
+    
     // Remove 'test' from the end
     if (parts[parts.length - 1] === 'test') {
       parts.pop();
+    } else {
+      errors.push(`Filename must end with '-test.js': ${filename}`);
     }
     
     const facets = {};
@@ -147,7 +156,13 @@ class TestNameParser {
     
     // Parse in expected order
     if (i < parts.length) {
-      facets['Shape'] = this.mapValue(parts[i++]);
+      const shapePart = parts[i++];
+      if (!this.isValidShape(shapePart)) {
+        errors.push(`Invalid shape '${shapePart}' - expected: line, circle, rect, roundrect, arc, scene, mixshape`);
+      }
+      facets['Shape'] = this.mapValue(shapePart);
+    } else {
+      errors.push('Missing required shape facet (position 1)');
     }
     
     if (i < parts.length) {
@@ -155,30 +170,59 @@ class TestNameParser {
       const countPart = parts[i++];
       if (countPart.startsWith('m') && /^\d+$/.test(countPart.substring(1))) {
         facets['Count'] = `Multi-${countPart.substring(1)}`;
+      } else if (this.isValidCount(countPart)) {
+        facets['Count'] = this.mapValue(countPart);
       } else {
+        errors.push(`Invalid count '${countPart}' - expected: sgl, multi, or m[number]`);
         facets['Count'] = this.mapValue(countPart);
       }
+    } else {
+      errors.push('Missing required count facet (position 2)');
     }
     
     if (i < parts.length) {
-      facets['Size'] = this.mapValue(parts[i++]);
+      const sizePart = parts[i++];
+      if (!this.isValidSize(sizePart)) {
+        errors.push(`Invalid size '${sizePart}' - expected: xs, s, m, l, xl, szMix`);
+      }
+      facets['Size'] = this.mapValue(sizePart);
+    } else {
+      errors.push('Missing required size facet (position 3)');
     }
     
     if (i < parts.length && parts[i].startsWith('f')) {
-      facets['Fill Style'] = this.mapValue(parts[i++]);
+      const fillPart = parts[i++];
+      if (!this.isValidFillStyle(fillPart)) {
+        errors.push(`Invalid fill style '${fillPart}' - expected: fNone, fOpaq, fSemi, fMix`);
+      }
+      facets['Fill Style'] = this.mapValue(fillPart);
     }
     
     if (i < parts.length && parts[i].startsWith('s')) {
-      facets['Stroke Style'] = this.mapValue(parts[i++]);
+      const strokePart = parts[i++];
+      if (!this.isValidStrokeStyle(strokePart)) {
+        errors.push(`Invalid stroke style '${strokePart}' - expected: sNone, sOpaq, sSemi, sMix`);
+      }
+      facets['Stroke Style'] = this.mapValue(strokePart);
     }
     
     if (i < parts.length && parts[i].startsWith('sw')) {
-      const strokePart = parts[i++];
+      let strokeThicknessPart = parts[i++];
+      
+      // Check if this is a range that got split (sw1-10px becomes sw1, 10px)
+      if (i < parts.length && strokeThicknessPart.match(/^sw\d+$/) && parts[i].match(/^\d+px$/)) {
+        strokeThicknessPart = strokeThicknessPart + '-' + parts[i++];
+      }
+      
+      if (!this.isValidStrokeThickness(strokeThicknessPart)) {
+        errors.push(`Invalid stroke thickness '${strokeThicknessPart}' - expected: swMix or sw[N]px or sw[N]-[M]px`);
+      }
+      
       // Handle stroke thickness (sw1px, sw1-10px, swMix)
-      if (strokePart === 'swMix') {
+      if (strokeThicknessPart === 'swMix') {
         facets['Stroke Thickness'] = 'Mixed Thickness';
       } else {
-        facets['Stroke Thickness'] = strokePart.replace('sw', '') + (strokePart.includes('px') ? '' : ' pixels');
+        facets['Stroke Thickness'] = strokeThicknessPart.replace('sw', '') + (strokeThicknessPart.includes('px') ? '' : ' pixels');
       }
     }
     
@@ -222,14 +266,69 @@ class TestNameParser {
       }
     }
     
-    return facets;
+    // Check for any unexpected parts that weren't parsed
+    if (i < parts.length) {
+      const remainingParts = parts.slice(i);
+      remainingParts.forEach(part => {
+        if (!this.isKnownPrefix(part)) {
+          errors.push(`Unknown facet part '${part}' - check naming convention`);
+        }
+      });
+    }
+    
+    return {
+      facets: facets,
+      errors: errors,
+      isValid: errors.length === 0
+    };
   }
   
   mapValue(value) {
     return this.facetMappings[value] || value;
   }
   
-  formatFacets(facets) {
+  // Validation helper methods
+  isValidShape(value) {
+    return ['line', 'circle', 'rect', 'roundrect', 'arc', 'scene', 'mixshape'].includes(value);
+  }
+  
+  isValidCount(value) {
+    return ['sgl', 'multi'].includes(value) || (value.startsWith('m') && /^\d+$/.test(value.substring(1)));
+  }
+  
+  isValidSize(value) {
+    return ['xs', 's', 'm', 'l', 'xl', 'szMix'].includes(value);
+  }
+  
+  isValidFillStyle(value) {
+    return ['fNone', 'fOpaq', 'fSemi', 'fMix'].includes(value);
+  }
+  
+  isValidStrokeStyle(value) {
+    return ['sNone', 'sOpaq', 'sSemi', 'sMix'].includes(value);
+  }
+  
+  isValidStrokeThickness(value) {
+    if (value === 'swMix') return true;
+    if (value.match(/^sw\d+px$/)) return true; // sw1px, sw10px, etc.
+    if (value.match(/^sw\d+-\d+px$/)) return true; // sw1-10px, etc.
+    return false;
+  }
+  
+  isKnownPrefix(value) {
+    const knownPrefixes = [
+      'lyt', 'cen', 'edge', 'orn', 'arcA', 'rrr', 
+      'ctxTrans', 'ctxRot', 'ctxScale',
+      'clpOn', 'clpCt', 'clpArr', 'clpSz', 'clpEdge'
+    ];
+    return knownPrefixes.some(prefix => value.startsWith(prefix)) || 
+           this.isValidShape(value) || this.isValidCount(value) || this.isValidSize(value) ||
+           this.isValidFillStyle(value) || this.isValidStrokeStyle(value) || this.isValidStrokeThickness(value);
+  }
+  
+  formatFacets(parseResult) {
+    // Handle both old API (direct facets object) and new API (result object)
+    const facets = parseResult.facets || parseResult;
     const themes = {
       'Basic': ['Shape', 'Count', 'Size', 'Orientation'],
       'Fill & Stroke': ['Fill Style', 'Stroke Style', 'Stroke Thickness'],

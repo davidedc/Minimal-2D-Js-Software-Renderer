@@ -6,6 +6,10 @@
 - `sh build-scripts/build-node-high-level-test-runner-simple-concat.sh` - Build test runner
 - `sh run-all-scripts.sh` - Run all build scripts and examples
 
+## Validation Commands
+- `node build-scripts/check-test-metadata.js` - Check test metadata and filename parsing
+- `sh build-scripts/check-test-metadata.sh` - Legacy shell version of metadata checker
+
 ## Test Commands
 - `node build/node-high-level-test-runner.js --list` - List available tests
 - `node build/node-high-level-test-runner.js --test` - Run all tests (one iteration each)
