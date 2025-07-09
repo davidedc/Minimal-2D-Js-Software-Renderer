@@ -238,4 +238,9 @@ if (require.main === module) {
   main();
 }
 
-module.exports = { main, validateFilenameParsing, validateRegisterMetadata, validateHeaderDescription }; 
+module.exports = { 
+  main, 
+  validateFilenameParsing, 
+  validateRegisterMetadata, // includes filename parameter validation
+  validateHeaderDescription 
+}; 
