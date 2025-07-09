@@ -8,7 +8,8 @@
  *
  * For all test files:
  * 3. Validates registerHighLevelTest metadata has title, description, and displayName properties
- * 4. Validates filename is parsable according to the naming convention
+ * 4. Validates the filename parameter in registerHighLevelTest matches the actual file
+ * 5. Validates filename is parsable according to the naming convention
  *
  * This is a read-only script and does not modify any files.
  *
@@ -109,6 +110,7 @@ function validateHeaderDescription(filePath) {
 function validateRegisterMetadata(filePath) {
   const content = fs.readFileSync(filePath, 'utf8');
   const errors = [];
+  const actualFilename = path.basename(filePath);
   
   // Check for registerHighLevelTest call
   if (!content.includes('registerHighLevelTest')) {
@@ -140,6 +142,17 @@ function validateRegisterMetadata(filePath) {
       errors.push(`Metadata '${propName}': Missing`);
     }
   });
+  
+  // Extract and validate the filename parameter
+  const filenameMatch = content.match(/registerHighLevelTest\s*\(\s*['"`]([^'"`]+)['"`]/);
+  if (filenameMatch) {
+    const declaredFilename = filenameMatch[1];
+    if (declaredFilename !== actualFilename) {
+      errors.push(`Filename Mismatch: Declared '${declaredFilename}' but actual file is '${actualFilename}'`);
+    }
+  } else {
+    errors.push('RegisterHighLevelTest: Cannot extract filename parameter');
+  }
   
   return errors;
 }
@@ -198,6 +211,7 @@ function main() {
       console.log('   ✅ Metadata \'title\': Present');
       console.log('   ✅ Metadata \'description\': Present');
       console.log('   ✅ Metadata \'displayName\': Present');
+      console.log('   ✅ Filename Parameter: Matches actual filename');
     }
     
     // Validate filename parsing (for all files)
@@ -225,7 +239,7 @@ function main() {
   console.log(`Check complete. Scanned ${filesChecked} file(s).`);
   
   if (errorsFound === 0) {
-    console.log('✅ All test files have valid metadata (header comments + registerHighLevelTest properties + parsable filenames).');
+    console.log('✅ All test files have valid metadata (header comments + registerHighLevelTest properties + filename parameters + parsable filenames).');
     process.exit(0);
   } else {
     console.log(`❌ Found ${errorsFound} file(s) with metadata issues.`);
