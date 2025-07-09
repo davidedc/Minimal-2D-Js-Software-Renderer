@@ -46,7 +46,11 @@ echo "
 
 echo "
 [Validation] Checking test metadata and filename parsing..."
-node "$PROJECT_ROOT/build-scripts/check-test-metadata.js"
+if ! node "$PROJECT_ROOT/build-scripts/check-test-metadata.js"; then
+    echo "❌ Test metadata validation failed. Please fix the issues above before continuing."
+    exit 1
+fi
+echo "✅ Test metadata validation passed."
 
 # --- Test Scripts (Optional - uncomment to run) ---
 echo "
