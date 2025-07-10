@@ -133,7 +133,7 @@ function draw_lines__multi_15__no_fill__random_stroke__random_pos__random_orient
 
 // Register the test
 registerHighLevelTest(
-    'line-m15-szMix-fNone-sMix-sw1-10px-lytSpread-edgeNotCrisp-ornRand-test.js',
+    'line-m15-szMix-fNone-sMix-sw1-10px-lytSpread-edgeNotCrisp-ornRand-test',
     draw_lines__multi_15__no_fill__random_stroke__random_pos__random_orient,
     'lines',
     {

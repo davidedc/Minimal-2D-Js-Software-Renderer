@@ -158,7 +158,7 @@ function draw_rounded_rects_axalign_multi_6_large_transparent_stroke_randpos_ran
 
 // Register the test
 registerHighLevelTest(
-    'roundrect-m6-szMix-fSemi-sSemi-swMix-lytSpread-cenMixPG-edgeCrisp-ornAxial-rrrLrg-test.js',
+    'roundrect-m6-szMix-fSemi-sSemi-swMix-lytSpread-cenMixPG-edgeCrisp-ornAxial-rrrLrg-test',
     draw_rounded_rects_axalign_multi_6_large_transparent_stroke_randpos_randsize_randfill,
     'rounded-rects',
     {

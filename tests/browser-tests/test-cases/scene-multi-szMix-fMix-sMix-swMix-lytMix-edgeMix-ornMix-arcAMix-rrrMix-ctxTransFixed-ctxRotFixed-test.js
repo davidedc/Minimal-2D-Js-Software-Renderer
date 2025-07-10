@@ -208,7 +208,7 @@ function draw_scene_all_shapes_combined(ctx, currentIterationNumber, instances =
 
 // Register the test
 registerHighLevelTest(
-    'scene-multi-szMix-fMix-sMix-swMix-lytMix-edgeMix-ornMix-arcAMix-rrrMix-ctxTransFixed-ctxRotFixed-test.js',
+    'scene-multi-szMix-fMix-sMix-swMix-lytMix-edgeMix-ornMix-arcAMix-rrrMix-ctxTransFixed-ctxRotFixed-test',
     draw_scene_all_shapes_combined,
     'scenes',
     {

@@ -137,7 +137,7 @@ function draw_rectangles__S_size__no_fill__1px_red_opaque_stroke__centered_at_pi
 
 // Register the test
 registerHighLevelTest(
-    'rect-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-cenPx-edgeCrisp-ornAxial-test.js',
+    'rect-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-cenPx-edgeCrisp-ornAxial-test',
     draw_rectangles__S_size__no_fill__1px_red_opaque_stroke__centered_at_pixel__no_rotation,
     'rectangles',
     {

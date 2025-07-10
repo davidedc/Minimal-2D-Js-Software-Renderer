@@ -142,7 +142,7 @@ function draw_rectangles_rotated_multi_varsize_randparams_randpos_randrot(ctx, c
 
 // Register the test
 registerHighLevelTest(
-    'rect-m5-szMix-fSemi-sMix-sw1-10px-lytSpread-cenRand-edgeNotCrisp-ornRand-ctxTransRand-ctxRotRand-test.js',
+    'rect-m5-szMix-fSemi-sMix-sw1-10px-lytSpread-cenRand-edgeNotCrisp-ornRand-ctxTransRand-ctxRotRand-test',
     draw_rectangles_rotated_multi_varsize_randparams_randpos_randrot,
     'rectangles',
     {

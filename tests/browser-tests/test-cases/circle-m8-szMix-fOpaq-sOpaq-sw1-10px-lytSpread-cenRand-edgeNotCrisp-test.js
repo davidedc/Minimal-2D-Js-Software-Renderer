@@ -113,7 +113,7 @@ function draw_circles_multi_8_fully_random(ctx, currentIterationNumber, instance
 
 // Register the test
 registerHighLevelTest(
-    'circle-m8-szMix-fOpaq-sOpaq-sw1-10px-lytSpread-cenRand-edgeNotCrisp-test.js',
+    'circle-m8-szMix-fOpaq-sOpaq-sw1-10px-lytSpread-cenRand-edgeNotCrisp-test',
     draw_circles_multi_8_fully_random,
     'circles',
     {

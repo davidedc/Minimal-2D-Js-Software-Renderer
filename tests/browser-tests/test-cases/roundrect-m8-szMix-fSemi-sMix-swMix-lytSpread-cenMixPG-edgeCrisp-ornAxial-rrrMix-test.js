@@ -163,7 +163,7 @@ function draw_rounded_rects_axalign_multi_8_randpos_randsize_randstroke_randfill
 
 // Register the test
 registerHighLevelTest(
-    'roundrect-m8-szMix-fSemi-sMix-swMix-lytSpread-cenMixPG-edgeCrisp-ornAxial-rrrMix-test.js',
+    'roundrect-m8-szMix-fSemi-sMix-swMix-lytSpread-cenMixPG-edgeCrisp-ornAxial-rrrMix-test',
     draw_rounded_rects_axalign_multi_8_randpos_randsize_randstroke_randfill,
     'rounded-rects',
     {

@@ -124,7 +124,7 @@ function draw_circle_single_1px_stroke_crisp_center_grid(ctx, currentIterationNu
 
 // Register the test
 registerHighLevelTest(
-    'circle-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-cenGrid-edgeCrisp-test.js',
+    'circle-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-cenGrid-edgeCrisp-test',
     draw_circle_single_1px_stroke_crisp_center_grid,
     'circles',
     {

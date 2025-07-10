@@ -120,7 +120,7 @@ function draw_rounded_rects_multi_8_no_stroke_fixed_size_large_radius_randpos_ra
 
 // Register the test
 registerHighLevelTest(
-    'roundrect-m8-xl-fSemi-sNone-lytSpread-cenGrid-edgeCrisp-ornAxial-rrrLrg-test.js',
+    'roundrect-m8-xl-fSemi-sNone-lytSpread-cenGrid-edgeCrisp-ornAxial-rrrLrg-test',
     draw_rounded_rects_multi_8_no_stroke_fixed_size_large_radius_randpos_randfill,
     'rounded-rects',
     {

@@ -252,7 +252,7 @@ function draw_rectangles_axalign_multi_varsize_randfill_randstroke_randpos_no_ro
 
 // Register the test
 registerHighLevelTest(
-    'rect-m10-szMix-fSemi-sMix-swMix-lytSpread-cenMixPG-edgeCrisp-ornAxial-test.js',
+    'rect-m10-szMix-fSemi-sMix-swMix-lytSpread-cenMixPG-edgeCrisp-ornAxial-test',
     draw_rectangles_axalign_multi_varsize_randfill_randstroke_randpos_no_rotation,
     'rectangles',
     {

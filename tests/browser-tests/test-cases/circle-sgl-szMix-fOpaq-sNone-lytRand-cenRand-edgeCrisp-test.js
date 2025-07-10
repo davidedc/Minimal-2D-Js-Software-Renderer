@@ -181,7 +181,7 @@ function draw_circle_single_no_stroke_randparams_crisp_randpos_explicit(ctx, cur
 
 // Register the test
 registerHighLevelTest(
-    'circle-sgl-szMix-fOpaq-sNone-lytRand-cenRand-edgeCrisp-test.js',
+    'circle-sgl-szMix-fOpaq-sNone-lytRand-cenRand-edgeCrisp-test',
     draw_circle_single_no_stroke_randparams_crisp_randpos_explicit,
     'circles',
     {

@@ -177,7 +177,7 @@ function draw_circles_multi_12_precise_randparams_randpos(ctx, currentIterationN
 
 // Register the test
 registerHighLevelTest(
-    'circle-m12-szMix-fSemi-sMix-sw1-4px-lytSpread-cenRand-edgeCrisp-test.js',
+    'circle-m12-szMix-fSemi-sMix-sw1-4px-lytSpread-cenRand-edgeCrisp-test',
     draw_circles_multi_12_precise_randparams_randpos,
     'circles',
     {

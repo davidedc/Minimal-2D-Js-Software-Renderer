@@ -160,7 +160,7 @@ function draw_rectangles__M_size__semitransparent_fill__random_semitransparent_s
 
 // Register the test
 registerHighLevelTest(
-    'rect-sgl-szMix-fSemi-sMix-swMix-lytRand-cenMixPG-edgeCrisp-ornAxial-test.js',
+    'rect-sgl-szMix-fSemi-sMix-swMix-lytRand-cenMixPG-edgeCrisp-ornAxial-test',
     draw_rectangles__M_size__semitransparent_fill__random_semitransparent_stroke__random_pos__no_rotation,
     'rectangles',
     {

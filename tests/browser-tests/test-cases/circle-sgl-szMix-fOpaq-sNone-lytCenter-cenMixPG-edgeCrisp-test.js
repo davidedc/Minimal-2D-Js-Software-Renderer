@@ -155,7 +155,7 @@ function draw_circle_single_no_stroke_randparams_crisp_center_randpos_type(ctx, 
 
 // Register the test
 registerHighLevelTest(
-    'circle-sgl-szMix-fOpaq-sNone-lytCenter-cenMixPG-edgeCrisp-test.js',
+    'circle-sgl-szMix-fOpaq-sNone-lytCenter-cenMixPG-edgeCrisp-test',
     draw_circle_single_no_stroke_randparams_crisp_center_randpos_type,
     'circles',
     {

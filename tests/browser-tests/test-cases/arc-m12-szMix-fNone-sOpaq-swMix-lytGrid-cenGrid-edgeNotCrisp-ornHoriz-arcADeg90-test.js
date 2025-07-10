@@ -131,7 +131,7 @@ function draw_arcs_multi_12_90_deg_fixed_params_grid_layout(ctx, currentIteratio
 
 // Register the test
 registerHighLevelTest(
-    'arc-m12-szMix-fNone-sOpaq-swMix-lytGrid-cenGrid-edgeNotCrisp-ornHoriz-arcADeg90-test.js',
+    'arc-m12-szMix-fNone-sOpaq-swMix-lytGrid-cenGrid-edgeNotCrisp-ornHoriz-arcADeg90-test',
     draw_arcs_multi_12_90_deg_fixed_params_grid_layout,
     'arcs',
     {

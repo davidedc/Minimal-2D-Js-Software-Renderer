@@ -113,7 +113,7 @@ function draw_arcs_multi_5_fully_random(ctx, currentIterationNumber, instances =
 
 // Register the test
 registerHighLevelTest(
-    'arc-m5-szMix-fOpaq-sOpaq-sw1-10px-lytSpread-cenRand-edgeNotCrisp-ornRand-arcARand-test.js',
+    'arc-m5-szMix-fOpaq-sOpaq-sw1-10px-lytSpread-cenRand-edgeNotCrisp-ornRand-arcARand-test',
     draw_arcs_multi_5_fully_random,
     'arcs',
     {

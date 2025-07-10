@@ -140,7 +140,7 @@ function draw_rounded_rect_single_1px_stroke_crisp_center_pixel(ctx, currentIter
 
 // Register the test
 registerHighLevelTest(
-    'roundrect-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-cenPx-edgeCrisp-ornAxial-rrrRand-test.js',
+    'roundrect-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-cenPx-edgeCrisp-ornAxial-rrrRand-test',
     draw_rounded_rect_single_1px_stroke_crisp_center_pixel,
     'rounded-rects',
     {

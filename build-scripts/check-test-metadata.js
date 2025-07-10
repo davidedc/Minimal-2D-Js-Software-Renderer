@@ -147,7 +147,8 @@ function validateRegisterMetadata(filePath) {
   const filenameMatch = content.match(/registerHighLevelTest\s*\(\s*['"`]([^'"`]+)['"`]/);
   if (filenameMatch) {
     const declaredFilename = filenameMatch[1];
-    if (declaredFilename !== actualFilename) {
+    const actualFilenameWithoutExt = actualFilename.replace(/\.js$/, '');
+    if (declaredFilename !== actualFilename && declaredFilename !== actualFilenameWithoutExt) {
       errors.push(`Filename Mismatch: Declared '${declaredFilename}' but actual file is '${actualFilename}'`);
     }
   } else {

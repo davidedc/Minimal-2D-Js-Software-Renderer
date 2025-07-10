@@ -126,7 +126,7 @@ function draw_lines__multi_20__no_fill__5px_black_opaque_stroke__random_pos__ran
 
 // Register the test
 registerHighLevelTest(
-    'line-m20-szMix-fNone-sOpaq-sw5px-lytSpread-edgeNotCrisp-ornRand-test.js',
+    'line-m20-szMix-fNone-sOpaq-sw5px-lytSpread-edgeNotCrisp-ornRand-test',
     draw_lines__multi_20__no_fill__5px_black_opaque_stroke__random_pos__random_orient,
     'lines',
     {

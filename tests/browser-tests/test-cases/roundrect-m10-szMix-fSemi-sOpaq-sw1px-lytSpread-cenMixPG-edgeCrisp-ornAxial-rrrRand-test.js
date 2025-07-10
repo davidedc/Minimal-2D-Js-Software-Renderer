@@ -133,7 +133,7 @@ function draw_rounded_rects_multi_10_1px_opaque_stroke_rand_fill_crisp_center_ad
 
 // Register the test
 registerHighLevelTest(
-    'roundrect-m10-szMix-fSemi-sOpaq-sw1px-lytSpread-cenMixPG-edgeCrisp-ornAxial-rrrRand-test.js',
+    'roundrect-m10-szMix-fSemi-sOpaq-sw1px-lytSpread-cenMixPG-edgeCrisp-ornAxial-rrrRand-test',
     draw_rounded_rects_multi_10_1px_opaque_stroke_rand_fill_crisp_center_adj,
     'rounded-rects',
     {

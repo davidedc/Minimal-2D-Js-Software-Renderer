@@ -165,7 +165,7 @@ function draw_lines__M_size__no_fill__2px_opaque_stroke__centered_at_grid__verti
 
 // Register the test
 registerHighLevelTest(
-    'line-sgl-szMix-fNone-sOpaq-sw2px-lytCenter-edgeCrisp-ornVert-test.js',
+    'line-sgl-szMix-fNone-sOpaq-sw2px-lytCenter-edgeCrisp-ornVert-test',
     draw_lines__M_size__no_fill__2px_opaque_stroke__centered_at_grid__vertical_orient,
     'lines',
     {

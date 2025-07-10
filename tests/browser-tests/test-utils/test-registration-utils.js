@@ -12,7 +12,8 @@
  */
 function registerHighLevelTest(filename, drawFunction, category, checkConfiguration, performanceTestConfig = {}) {
     // --- 1. Derive common properties from filename ---
-    const baseId = filename.replace(/--test\.js$/, '');
+    // Handle both formats: with .js extension and without
+    const baseId = filename.replace(/--test(\.js)?$/, '');
     const parts = baseId.split('--');
     const categoryFromFile = parts[0]; // Category can also be explicitly passed, which is preferred.
     const featureParts = parts.slice(1);
