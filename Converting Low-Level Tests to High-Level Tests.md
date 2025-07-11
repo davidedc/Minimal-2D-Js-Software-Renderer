@@ -1,4 +1,22 @@
-# Guide: Converting Low-Level Tests to High-Level Tests
+# ⚠️ LEGACY DOCUMENT: Guide: Converting Low-Level Tests to High-Level Tests
+
+> **⚠️ THIS DOCUMENT IS LEGACY AND OUTDATED**
+> 
+> This document describes an **outdated conversion process** from low-level tests to an intermediate `RenderTestBuilder`/`define_*` pattern that is **no longer used**.
+>
+> **Current high-level tests** use:
+> - Uniform function name: `function drawTest(ctx, currentIterationNumber, instances = null)`
+> - Direct registration: `registerHighLevelTest(id, drawTest, category, config, metadata)`
+>
+> **For current documentation**, see:
+> - `tests/High-Level-SW-Renderer-Tests-How-To-Add.md` - How to add new tests
+> - `tests/High-Level-SW-Renderer-Tests-Overview.md` - How the system works
+>
+> This document is preserved for historical reference only.
+
+---
+
+# Guide: Converting Low-Level Tests to High-Level Tests (LEGACY)
 
 This guide details the process of converting existing "low-level" rendering tests into the new "high-level" test format. These new high-level tests serve a dual purpose:
 1.  **Visual Regression Testing**: Using `RenderTestBuilder` to define and run tests, comparing software renderer output against canvas output.

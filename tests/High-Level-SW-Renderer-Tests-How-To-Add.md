@@ -1,19 +1,18 @@
 ## How to Add a New High-Level Test
 
-Adding a new test to the "High-Level Tests" suite involves creating a self-contained test file that defines the drawing logic and configures the test using `RenderTestBuilder`.
+Adding a new test to the "High-Level Tests" suite involves creating a self-contained test file that defines the drawing logic and registers the test using `registerHighLevelTest()`.
 
 Follow these steps:
 
 1.  **Create Test File and Define Drawing Logic:**
     *   Create a new file inside the `tests/browser-tests/test-cases/` directory.
     *   Name the file according to the test parameters using `--` separators and ending with `--test.js` (e.g., `rectangles--S-size--filled--semitransparent-fill--crisp-pixel-pos-and-size--no-rotation--test.js`).
-    *   Inside this file, create a JavaScript function for the drawing logic. Follow the established naming convention (e.g., `draw_rectangles__S_size__...`).
-    *   **Signature:** The function should accept the rendering context, current iteration number, and optionally an `instances` parameter for potential performance testing compatibility:
-        `function myDrawingFunction(ctx, currentIterationNumber /*, ...any extra args, */, instances = null)`
+    *   Inside this file, create a JavaScript function for the drawing logic. Use the uniform function name `drawTest`.
+    *   **Signature:** The function must use the exact signature:
+        `function drawTest(ctx, currentIterationNumber, instances = null)`
         *   `ctx`: Will be either a `CrispSwContext` or a `CanvasRenderingContext2D`. Use Canvas API methods compatible with both (or check `typeof ctx.strokeLine === 'function'` etc. if needed to differentiate).
         *   `currentIterationNumber`: Available if needed for the visual test logic (e.g., passed to helpers that might use it, though `SeededRandom` is usually sufficient directly).
-        *   `any extra args`: If you pass static arguments via `RenderTestBuilder.runCanvasCode(..., arg1, arg2)`, they will appear here before `instances`.
-        *   `instances`: Typically `null` when run via `high-level-tests.html`. Included for easier adaptation if the test is later used in the performance suite (`performance-tests.html`), where it would indicate the number of shapes to draw. Your drawing function for high-level visual tests can usually ignore this parameter or draw 1 instance if it's `null`.
+        *   `instances`: Typically `null` when run via `high-level-tests.html`. When not null, indicates the number of shapes to draw for performance testing. Your drawing function should handle both visual testing (instances = null) and performance testing (instances = positive number) modes.
     *   **Randomness:** Use `SeededRandom.getRandom()` *inside* the function for reproducible randomness. Do not call `SeededRandom.seedWithInteger()`; `RenderTest` handles seeding before calling your drawing function.
     *   **Handling Clipping in Performance Mode:** If your test involves clipping, the drawing function must implement specific logic when running in performance mode (i.e., when `instances` is not `null` and greater than 0). The strategy depends on whether your visual test is designed to draw a single primary shape/composition (its `Count` facet is `single`) or multiple shapes (its `Count` facet is `multi*`):
         *   **If Visual Test `Count` is `single` (for drawn shapes):**
@@ -27,7 +26,7 @@ Follow these steps:
         ```javascript
         // Inside: tests/browser-tests/test-cases/my-shape--params--test.js
 
-        function draw_my_shape(ctx, currentIterationNumber, instances = null) {
+        function drawTest(ctx, currentIterationNumber, instances = null) {
           // instances can be ignored for basic high-level tests, or used to draw 1 shape if null.
           // ... setup, random values ...
           const x = 10, y = 20, width = 50, height = 30;
@@ -51,74 +50,58 @@ Follow these steps:
         }
         ```
 
-2.  **Define Test Configuration (in the same file):**
-    *   In the *same test file* (`...--test.js`), create a function to define the test configuration using the corresponding nomenclature (e.g., `define_rectangles__S_size__...`).
-    *   Inside this function, instantiate and configure `RenderTestBuilder`:
+2.  **Register the Test (in the same file):**
+    *   In the *same test file* (`...--test.js`), register the test using `registerHighLevelTest`:
         ```javascript
         // Inside: tests/browser-tests/test-cases/my-shape--params--test.js
         // (Continued from Step 1)
 
-        function define_my_shape_test() {
-          return new RenderTestBuilder()
-            // ID should match drawing/definition function names (using '--' separators)
-            .withId('my-shape--params')
-            // Descriptive title following the convention
-            .withTitle('MyShape: Params Description')
-            // More detailed description
-            .withDescription('Tests rendering of MyShape with specific parameters using canvas code.')
-            // Link to the drawing function from Step 1
-            .runCanvasCode(draw_my_shape /*, any extra args for drawing fn */)
-            // Add checks. withExtremesCheck uses the return value from draw_my_shape
-            // (specifically, the value stored in test.builderReturnValue, potentially from a checkData property)
-            .withExtremesCheck()
-            // Add other relevant checks
-            .withColorCheckMiddleRow({ expectedUniqueColors: 2 }) // Example
-            .compareWithThreshold(0, 0) // Example: pixel-perfect comparison
-            // Finalize and register the test
-            .build();
-        }
+        // Register the test
+        registerHighLevelTest(
+            'my-shape--params--test', // ID should match the filename
+            drawTest, // Reference to the drawing function from Step 1
+            'shapes', // Category for grouping (e.g., 'lines', 'rectangles', 'circles', etc.)
+            {
+                extremes: true, // Enable extremes checking if your drawTest returns bounding box data
+                compare: { swTol: 0, refTol: 0, diffTol: 0 } // Pixel-perfect comparison
+            },
+            {
+                title: 'MyShape: Params Description',
+                description: 'Tests rendering of MyShape with specific parameters using canvas code.',
+                displayName: 'Perf: MyShape Params Test'
+            }
+        );
         ```
-    *   Choose appropriate checks. `withExtremesCheck` and similar checks automatically use the object returned by the *first call* to the drawing function (the one using the software renderer context), which is captured internally by the test runner (potentially extracting a `checkData` property as described above).
-    *   **Crucially**, at the very end of the file, *call* the definition function to register the test when the script loads:
-        ```javascript
-        // Inside: tests/browser-tests/test-cases/my-shape--params--test.js
-        // (End of file)
-
-        // Define and register the test immediately when this script is loaded.
-        define_my_shape_test();
-        ```
+    *   **Configuration Options:**
+        *   `extremes: true` - Enable extremes checking if your `drawTest` function returns bounding box data
+        *   `compare` - Set tolerance levels for pixel comparison
+        *   `drawFunctionArgs` - Pass additional arguments to `drawTest` if needed (though this should be rare with the uniform pattern)
+    *   **Metadata:**
+        *   `title` - Descriptive title for the visual test interface
+        *   `description` - Detailed description of what the test does
+        *   `displayName` - Short name for performance test interface
 
 3.  **Include the Test File in HTML:**
     *   Open `tests/browser-tests/high-level-tests.html`.
     *   Add a new `<script>` tag pointing to your test file, alongside the other test file includes:
         ```html
-        <!-- Test Framework Core -->
-        <script src="../../src/RenderChecks.js"></script>
-        <script src="../../src/RenderTest.js"></script>
-        <script src="../../src/RenderTestBuilder.js"></script>
-
         <!-- Load Individual High-Level Test Files -->
-        <script src="test-cases/lines--M-size--...--test.js"></script>
+        <script src="test-cases/line-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-edgeCrisp-ornVert-test.js"></script>
         <!-- Add your new test file here -->
         <script src="test-cases/my-shape--params--test.js"></script>
         <!-- Add more <script> tags here for other test files -->
-
-        <!-- Script to Load Tests and Init Page -->
-        <script>
-          document.addEventListener('DOMContentLoaded', () => {
-            RenderTest.createNavigation("High-Level Tests");
-          });
-        </script>
         ```
-    *   Registration happens automatically when the script file is loaded by the browser.
+    *   Registration happens automatically when the script file is loaded by the browser via the `registerHighLevelTest()` call.
 
-4.  **Implement Renderer Logic (If Testing New Primitives):**
-    *   This step is **usually not required** unless adding a *new drawing capability* to `CrispSwContext` itself (e.g., adding `ctx.drawStar(...)`).
-    *   If needed, modify `CrispSwContext.js` and the relevant `SWRenderer*` classes.
-
-5.  **Verify:**
+4.  **Verify:**
     *   Ensure you are running a local web server.
     *   Open `http://localhost:PORT/tests/browser-tests/high-level-tests.html`.
     *   Your new test should appear in the list and navigation.
     *   Check rendering, logs, checks, and errors.
     *   Run multiple iterations and use mouse inspection.
+
+## Notes
+
+*   **Implementing New Renderer Logic:** This is usually not required unless adding a *new drawing capability* to `CrispSwContext` itself (e.g., adding `ctx.drawStar(...)`). If needed, modify `CrispSwContext.js` and the relevant `SWRenderer*` classes.
+*   **Function Signature:** The `drawTest` function signature must be exactly `function drawTest(ctx, currentIterationNumber, instances = null)` for consistency and proper Node.js concatenation.
+*   **Performance Integration:** Tests registered with `registerHighLevelTest` automatically work in both visual testing (`high-level-tests.html`) and performance testing (`performance-tests.html`) modes.
