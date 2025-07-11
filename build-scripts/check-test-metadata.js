@@ -10,6 +10,7 @@
  * 3. Validates registerHighLevelTest metadata has title, description, and displayName properties
  * 4. Validates the filename parameter in registerHighLevelTest matches the actual file
  * 5. Validates filename is parsable according to the naming convention
+ * 6. Validates drawTest function has the exact required signature: function drawTest(ctx, currentIterationNumber, instances = null) {
  *
  * This is a read-only script and does not modify any files.
  *
@@ -169,6 +170,30 @@ function validateFilenameParsing(filename, parser) {
 }
 
 /**
+ * Validate drawTest function signature
+ */
+function validateDrawTestSignature(filePath) {
+  const content = fs.readFileSync(filePath, 'utf8');
+  const errors = [];
+  
+  // The exact required signature
+  const requiredSignature = 'function drawTest(ctx, currentIterationNumber, instances = null) {';
+  
+  // Check if the exact signature exists
+  if (!content.includes(requiredSignature)) {
+    errors.push("DrawTest Function: Missing or incorrect signature. Expected exactly 'function drawTest(ctx, currentIterationNumber, instances = null) {'");
+    
+    // Try to find any drawTest function for better error reporting
+    const drawTestMatch = content.match(/function\s+drawTest\s*\([^)]*\)/);
+    if (drawTestMatch) {
+      errors.push(`DrawTest Function: Found '${drawTestMatch[0]}' but signature must be exactly '${requiredSignature.slice(0, -2)})'`);
+    }
+  }
+  
+  return errors;
+}
+
+/**
  * Main function
  */
 function main() {
@@ -215,6 +240,14 @@ function main() {
       console.log('   ✅ Filename Parameter: Matches actual filename');
     }
     
+    // Validate drawTest function signature (for all files)
+    const drawTestErrors = validateDrawTestSignature(filePath);
+    if (drawTestErrors.length > 0) {
+      fileErrors.push(...drawTestErrors.map(err => `   ❌ ${err}`));
+    } else {
+      console.log('   ✅ DrawTest Function: Correct signature found');
+    }
+    
     // Validate filename parsing (for all files)
     const parsingErrors = validateFilenameParsing(filename, parser);
     if (parsingErrors.length > 0) {
@@ -240,7 +273,7 @@ function main() {
   console.log(`Check complete. Scanned ${filesChecked} file(s).`);
   
   if (errorsFound === 0) {
-    console.log('✅ All test files have valid metadata (header comments + registerHighLevelTest properties + filename parameters + parsable filenames).');
+    console.log('✅ All test files have valid metadata (header comments + registerHighLevelTest properties + filename parameters + parsable filenames + drawTest function signature).');
     process.exit(0);
   } else {
     console.log(`❌ Found ${errorsFound} file(s) with metadata issues.`);
@@ -257,5 +290,6 @@ module.exports = {
   main, 
   validateFilenameParsing, 
   validateRegisterMetadata, // includes filename parameter validation
-  validateHeaderDescription 
+  validateHeaderDescription,
+  validateDrawTestSignature
 }; 
