@@ -59,7 +59,7 @@
  * @returns {?{ logs: string[], checkData: {leftX: number, rightX: number, topY: number, bottomY: number} }} 
  *          Log entries and expected pixel extremes, or null if in multi-instance mode.
  */
-function draw_rectangles__S_size__no_fill__1px_red_opaque_stroke__centered_at_pixel__no_rotation(ctx, currentIterationNumber, instances = null) {
+function drawTest(ctx, currentIterationNumber, instances = null) {
     const canvasWidth = ctx.canvas.width;
     const canvasHeight = ctx.canvas.height;
 
@@ -138,7 +138,7 @@ function draw_rectangles__S_size__no_fill__1px_red_opaque_stroke__centered_at_pi
 // Register the test
 registerHighLevelTest(
     'rect-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-cenPx-edgeCrisp-ornAxial-test',
-    draw_rectangles__S_size__no_fill__1px_red_opaque_stroke__centered_at_pixel__no_rotation,
+    drawTest,
     'rectangles',
     {
         extremes: true,

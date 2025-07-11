@@ -119,7 +119,7 @@ function _calculateMultiplePreciseRandomCirclesParams(canvasWidth, canvasHeight)
  * @param {?number} instances Optional: Number of instances to draw. For visual regression (instances is null/0), 12 circles are drawn.
  * @returns {?{logs: string[]}} Logs for single-instance mode, or null for performance mode.
  */
-function draw_circles_multi_12_precise_randparams_randpos(ctx, currentIterationNumber, instances = null) {
+function drawTest(ctx, currentIterationNumber, instances = null) {
     const isPerformanceRun = instances !== null && instances > 0;
     const numToDraw = isPerformanceRun ? instances : 12; // Original test draws 12
 
@@ -178,7 +178,7 @@ function draw_circles_multi_12_precise_randparams_randpos(ctx, currentIterationN
 // Register the test
 registerHighLevelTest(
     'circle-m12-szMix-fSemi-sMix-sw1-4px-lytSpread-cenRand-edgeCrisp-test',
-    draw_circles_multi_12_precise_randparams_randpos,
+    drawTest,
     'circles',
     {
         //compare: { swTol: 0, refTol: 0, diffTol: 0 } // Default visual comparison

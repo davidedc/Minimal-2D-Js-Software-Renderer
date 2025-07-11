@@ -51,7 +51,7 @@
  * @param {?number} instances Optional: Number of instances to draw. For visual regression (instances is null/0), 8 circles are drawn.
  * @returns {?{logs: string[]}} Logs for single-instance mode, or null for performance mode.
  */
-function draw_circles_multi_8_fully_random(ctx, currentIterationNumber, instances = null) {
+function drawTest(ctx, currentIterationNumber, instances = null) {
     const isPerformanceRun = instances !== null && instances > 0;
     const numToDraw = isPerformanceRun ? instances : 8; // Original test draws 8
 
@@ -114,7 +114,7 @@ function draw_circles_multi_8_fully_random(ctx, currentIterationNumber, instance
 // Register the test
 registerHighLevelTest(
     'circle-m8-szMix-fOpaq-sOpaq-sw1-10px-lytSpread-cenRand-edgeNotCrisp-test',
-    draw_circles_multi_8_fully_random,
+    drawTest,
     'circles',
     {
         //compare: { swTol: 0, refTol: 0, diffTol: 0 } // Default visual comparison

@@ -51,7 +51,7 @@
  * @param {?number} instances Optional: Number of instances to draw.
  * @returns {?{logs: string[]}} Logs for single-instance mode, or null for performance mode.
  */
-function draw_circle_single_fully_random(ctx, currentIterationNumber, instances = null) {
+function drawTest(ctx, currentIterationNumber, instances = null) {
     const isPerformanceRun = instances !== null && instances > 0;
     const numToDraw = isPerformanceRun ? instances : 1;
 
@@ -108,7 +108,7 @@ function draw_circle_single_fully_random(ctx, currentIterationNumber, instances 
 // Register the test
 registerHighLevelTest(
     'circle-sgl-szMix-fOpaq-sOpaq-sw1-10px-lytRand-cenRand-edgeNotCrisp-test',
-    draw_circle_single_fully_random,
+    drawTest,
     'circles',
     {
         //compare: { swTol: 0, refTol: 0, diffTol: 0 }, // Default visual comparison

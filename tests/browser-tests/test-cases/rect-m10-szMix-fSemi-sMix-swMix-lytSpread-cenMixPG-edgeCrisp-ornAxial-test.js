@@ -46,50 +46,7 @@
  * matching the new descriptive naming convention.
  */
 
-/**
- * Adjusts width and height to ensure crisp rendering based on stroke width and center position.
- * Adapted from src/scene-creation/scene-creation-utils.js
- * @param {number} width - Original width.
- * @param {number} height - Original height.
- * @param {number} strokeWidth - Width of the stroke.
- * @param {{x: number, y: number}} center - Center coordinates {x, y}.
- * @returns {{width: number, height: number}} Adjusted width and height.
- */
-function _adjustDimensionsForCrispStrokeRendering(width, height, strokeWidth, center) {
-    let adjustedWidth = Math.floor(width);
-    let adjustedHeight = Math.floor(height);
-
-    // FIXING THE WIDTH
-    if (Number.isInteger(center.x)) { // Center x is on grid
-        if (strokeWidth % 2 !== 0) { // Odd stroke
-            if (adjustedWidth % 2 === 0) adjustedWidth++; // Width must be odd
-        } else { // Even stroke
-            if (adjustedWidth % 2 !== 0) adjustedWidth++; // Width must be even
-        }
-    } else if (center.x % 1 === 0.5) { // Center x is on pixel center
-        if (strokeWidth % 2 !== 0) { // Odd stroke
-            if (adjustedWidth % 2 !== 0) adjustedWidth++; // Width must be even
-        } else { // Even stroke
-            if (adjustedWidth % 2 === 0) adjustedWidth++; // Width must be odd
-        }
-    }
-
-    // FIXING THE HEIGHT
-    if (Number.isInteger(center.y)) { // Center y is on grid
-        if (strokeWidth % 2 !== 0) { // Odd stroke
-            if (adjustedHeight % 2 === 0) adjustedHeight++; // Height must be odd
-        } else { // Even stroke
-            if (adjustedHeight % 2 !== 0) adjustedHeight++; // Height must be even
-        }
-    } else if (center.y % 1 === 0.5) { // Center y is on pixel center
-        if (strokeWidth % 2 !== 0) { // Odd stroke
-            if (adjustedHeight % 2 !== 0) adjustedHeight++; // Height must be even
-        } else { // Even stroke
-            if (adjustedHeight % 2 === 0) adjustedHeight++; // Height must be odd
-        }
-    }
-    return { width: adjustedWidth, height: adjustedHeight };
-}
+// _adjustDimensionsForCrispStrokeRendering is now available globally from test-helper-functions.js
 
 /**
  * Calculates parameters for a rectangle aiming for crisp fill and stroke.
@@ -127,16 +84,7 @@ function _placeRectWithFillAndStrokeBothCrisp(canvasWidth, canvasHeight, maxStro
     return { center: initialCenter, adjustedDimensions, strokeWidth };
 }
 
-/**
- * Converts a color object to an rgba string.
- * @param {{r: number, g: number, b: number, a: number}} colorObj Color object.
- * @returns {string} CSS rgba string.
- */
-function _colorObjectToString(colorObj) {
-    if (!colorObj) return 'rgba(0,0,0,0)';
-    const alpha = (typeof colorObj.a === 'number') ? (colorObj.a / 255).toFixed(3) : 1;
-    return `rgba(${colorObj.r},${colorObj.g},${colorObj.b},${alpha})`;
-}
+// _colorObjectToString is now available globally from test-helper-functions.js
 
 /**
  * Draws multiple axis-aligned rectangles with random parameters.
@@ -149,7 +97,7 @@ function _colorObjectToString(colorObj) {
  * @returns {?{logs: string[], checkData: object}} Logs and data for checks for single-instance
  *                  mode, or null for performance mode.
  */
-function draw_rectangles_axalign_multi_varsize_randfill_randstroke_randpos_no_rotation(ctx, currentIterationNumber, instances = null) {
+function drawTest(ctx, currentIterationNumber, instances = null) {
     const isPerformanceRun = instances !== null && instances > 0;
     const numToDraw = isPerformanceRun ? instances : 10; // Original test draws 10
 
@@ -253,7 +201,7 @@ function draw_rectangles_axalign_multi_varsize_randfill_randstroke_randpos_no_ro
 // Register the test
 registerHighLevelTest(
     'rect-m10-szMix-fSemi-sMix-swMix-lytSpread-cenMixPG-edgeCrisp-ornAxial-test',
-    draw_rectangles_axalign_multi_varsize_randfill_randstroke_randpos_no_rotation,
+    drawTest,
     'rectangles',
     {
         extremes: true,

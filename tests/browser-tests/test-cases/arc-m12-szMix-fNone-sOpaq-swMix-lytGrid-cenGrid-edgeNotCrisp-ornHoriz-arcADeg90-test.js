@@ -56,7 +56,7 @@
  *                  the predefined set of 12 arcs for visual regression. For performance, it draws `instances` arcs.
  * @returns {?{logs: string[]}} Logs for the visual regression run.
  */
-function draw_arcs_multi_12_90_deg_fixed_params_grid_layout(ctx, currentIterationNumber, instances = null) {
+function drawTest(ctx, currentIterationNumber, instances = null) {
     const isPerformanceRun = instances !== null && instances > 0;
     const numToDrawForPerf = isPerformanceRun ? instances : 0;
     let logs = [];
@@ -132,7 +132,7 @@ function draw_arcs_multi_12_90_deg_fixed_params_grid_layout(ctx, currentIteratio
 // Register the test
 registerHighLevelTest(
     'arc-m12-szMix-fNone-sOpaq-swMix-lytGrid-cenGrid-edgeNotCrisp-ornHoriz-arcADeg90-test',
-    draw_arcs_multi_12_90_deg_fixed_params_grid_layout,
+    drawTest,
     'arcs',
     {
         //compare: { swTol: 0, refTol: 0, diffTol: 0 } // Default visual comparison

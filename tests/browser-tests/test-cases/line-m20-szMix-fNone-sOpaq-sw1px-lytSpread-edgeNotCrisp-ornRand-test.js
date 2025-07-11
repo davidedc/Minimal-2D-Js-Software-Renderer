@@ -69,7 +69,7 @@
  *                              If 0 or negative, 1 line is drawn with logging.
  * @returns {?{ logs: string[] }} Log entries if not in multi-instance mode (instances > 0), otherwise null.
  */
-function draw_lines__multi_20__no_fill__1px_black_opaque_stroke__random_pos__random_orient(ctx, currentIterationNumber, instances = null) {
+function drawTest(ctx, currentIterationNumber, instances = null) {
     const currentCanvasWidth = ctx.canvas.width;
     const currentCanvasHeight = ctx.canvas.height;
 
@@ -139,7 +139,7 @@ function draw_lines__multi_20__no_fill__1px_black_opaque_stroke__random_pos__ran
 // Register the test
 registerHighLevelTest(
     'line-m20-szMix-fNone-sOpaq-sw1px-lytSpread-edgeNotCrisp-ornRand-test',
-    draw_lines__multi_20__no_fill__1px_black_opaque_stroke__random_pos__random_orient,
+    drawTest,
     'lines',
     {
         //compare: { swTol: 0, refTol: 0, diffTol: 0 } // Default visual comparison

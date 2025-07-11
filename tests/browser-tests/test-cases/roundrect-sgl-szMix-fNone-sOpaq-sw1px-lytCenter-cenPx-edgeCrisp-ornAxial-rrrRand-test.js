@@ -59,7 +59,7 @@
  * @returns {?{logs: string[], checkData: object}} Logs and data for checks for single-instance
  *                  mode, or null for performance mode.
  */
-function draw_rounded_rect_single_1px_stroke_crisp_center_pixel(ctx, currentIterationNumber, instances = null) {
+function drawTest(ctx, currentIterationNumber, instances = null) {
     const isPerformanceRun = instances !== null && instances > 0;
     const numToDraw = isPerformanceRun ? instances : 1;
 
@@ -141,7 +141,7 @@ function draw_rounded_rect_single_1px_stroke_crisp_center_pixel(ctx, currentIter
 // Register the test
 registerHighLevelTest(
     'roundrect-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-cenPx-edgeCrisp-ornAxial-rrrRand-test',
-    draw_rounded_rect_single_1px_stroke_crisp_center_pixel,
+    drawTest,
     'rounded-rects',
     {
         extremes: true,

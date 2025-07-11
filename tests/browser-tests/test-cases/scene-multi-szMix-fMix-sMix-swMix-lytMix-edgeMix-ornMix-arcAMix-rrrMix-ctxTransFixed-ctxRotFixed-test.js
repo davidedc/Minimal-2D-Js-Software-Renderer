@@ -58,7 +58,7 @@
  *                  In performance mode, `instances` full scenes are drawn.
  * @returns {?{logs: string[]}} Logs for the visual regression run.
  */
-function draw_scene_all_shapes_combined(ctx, currentIterationNumber, instances = null) {
+function drawTest(ctx, currentIterationNumber, instances = null) {
     const isPerformanceRun = instances !== null && instances > 0;
     const numScenesToDraw = isPerformanceRun ? instances : 1;
 
@@ -209,7 +209,7 @@ function draw_scene_all_shapes_combined(ctx, currentIterationNumber, instances =
 // Register the test
 registerHighLevelTest(
     'scene-multi-szMix-fMix-sMix-swMix-lytMix-edgeMix-ornMix-arcAMix-rrrMix-ctxTransFixed-ctxRotFixed-test',
-    draw_scene_all_shapes_combined,
+    drawTest,
     'scenes',
     {
         //compare: { swTol: 0, refTol: 0, diffTol: 0 } // Default visual comparison

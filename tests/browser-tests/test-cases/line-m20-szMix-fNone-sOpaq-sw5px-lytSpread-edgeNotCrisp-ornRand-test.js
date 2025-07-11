@@ -76,11 +76,11 @@
  *
  * @param {CanvasRenderingContext2D | CrispSwContext} ctx - The rendering context.
  * @param {number} currentIterationNumber - The current test iteration (used by RenderTest for seeding).
- * @param {number} initialCount - The number of lines to draw for a standard (non-performance) run.
  * @param {?number} instances - Optional. If provided and > 0, this many lines are drawn for performance testing.
  * @returns {?{ logs: string[] }} An object with logs, or null (especially in performance mode).
  */
-function draw_lines__multi_20__no_fill__5px_black_opaque_stroke__random_pos__random_orient(ctx, currentIterationNumber, initialCount = 20, instances = null) {
+function drawTest(ctx, currentIterationNumber, instances = null) {
+    const initialCount = 20; // number of lines to draw for visual regression mode (i.e. not in performance mode)
     const isPerformanceRun = instances !== null && instances > 0;
     const lineCount = isPerformanceRun ? instances : initialCount;
 
@@ -127,11 +127,10 @@ function draw_lines__multi_20__no_fill__5px_black_opaque_stroke__random_pos__ran
 // Register the test
 registerHighLevelTest(
     'line-m20-szMix-fNone-sOpaq-sw5px-lytSpread-edgeNotCrisp-ornRand-test',
-    draw_lines__multi_20__no_fill__5px_black_opaque_stroke__random_pos__random_orient,
+    drawTest,
     'lines',
     {
         //compare: { swTol: 0, refTol: 0, diffTol: 0 }, // Default visual comparison
-        drawFunctionArgs: [20] // initialCount for the draw function
     },
     {
         title: 'Lines: Multi-20 No-Fill 5px-Black-Opaque-Stroke Random-Pos Random-Orient',

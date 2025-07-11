@@ -91,7 +91,7 @@ function _placeRectForTransparentTest(canvasWidth, canvasHeight) {
  *                  testing harness.
  * @returns {?{logs: string[]}} Logs for single-instance mode, or null for performance mode.
  */
-function draw_rounded_rect_single_rand_semitrans_stroke_fill_crisp_center(ctx, currentIterationNumber, instances = null) {
+function drawTest(ctx, currentIterationNumber, instances = null) {
     const isPerformanceRun = instances !== null && instances > 0;
     const numToDraw = isPerformanceRun ? instances : 1;
 
@@ -158,7 +158,7 @@ function draw_rounded_rect_single_rand_semitrans_stroke_fill_crisp_center(ctx, c
 // Register the test
 registerHighLevelTest(
     'roundrect-sgl-szMix-fSemi-sSemi-swMix-lytCenter-cenMixPG-edgeCrisp-ornAxial-rrrRand-test',
-    draw_rounded_rect_single_rand_semitrans_stroke_fill_crisp_center,
+    drawTest,
     'rounded-rects',
     {
         //compare: { swTol: 0, refTol: 0, diffTol: 0 },

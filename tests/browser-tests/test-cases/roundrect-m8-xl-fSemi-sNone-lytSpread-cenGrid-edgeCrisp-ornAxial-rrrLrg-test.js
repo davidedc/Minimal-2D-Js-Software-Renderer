@@ -64,7 +64,7 @@ function _roundPoint(point) {
  *                  testing harness. For visual regression (instances is null/0), 8 rectangles are drawn.
  * @returns {?{logs: string[]}} Logs for single-instance mode, or null for performance mode.
  */
-function draw_rounded_rects_multi_8_no_stroke_fixed_size_large_radius_randpos_randfill(ctx, currentIterationNumber, instances = null) {
+function drawTest(ctx, currentIterationNumber, instances = null) {
     const isPerformanceRun = instances !== null && instances > 0;
     const numToDraw = isPerformanceRun ? instances : 8; // Original test draws 8
 
@@ -121,7 +121,7 @@ function draw_rounded_rects_multi_8_no_stroke_fixed_size_large_radius_randpos_ra
 // Register the test
 registerHighLevelTest(
     'roundrect-m8-xl-fSemi-sNone-lytSpread-cenGrid-edgeCrisp-ornAxial-rrrLrg-test',
-    draw_rounded_rects_multi_8_no_stroke_fixed_size_large_radius_randpos_randfill,
+    drawTest,
     'rounded-rects',
     {
         //compare: { swTol: 0, refTol: 0, diffTol: 0 } // Default visual comparison

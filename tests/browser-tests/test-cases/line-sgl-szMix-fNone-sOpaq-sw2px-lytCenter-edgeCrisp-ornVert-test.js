@@ -70,7 +70,7 @@
  * @param {?number} instances - Number of instances to draw (optional). If > 0, draw multiple instances.
  * @returns {?{ logs: string[], checkData: {topY: number, bottomY: number, leftX: number, rightX: number} }} Log entries and expected pixel extremes, or null if drawing multiple instances.
  */
-function draw_lines__M_size__no_fill__2px_opaque_stroke__centered_at_grid__vertical_orient(ctx, currentIterationNumber, instances = null) {
+function drawTest(ctx, currentIterationNumber, instances = null) {
     const currentCanvasWidth = ctx.canvas.width;
     const currentCanvasHeight = ctx.canvas.height;
 
@@ -166,7 +166,7 @@ function draw_lines__M_size__no_fill__2px_opaque_stroke__centered_at_grid__verti
 // Register the test
 registerHighLevelTest(
     'line-sgl-szMix-fNone-sOpaq-sw2px-lytCenter-edgeCrisp-ornVert-test',
-    draw_lines__M_size__no_fill__2px_opaque_stroke__centered_at_grid__vertical_orient,
+    drawTest,
     'lines',
     {
         //compare: { swTol: 0, refTol: 0, diffTol: 0 }, // Default visual comparison

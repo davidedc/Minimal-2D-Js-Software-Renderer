@@ -67,7 +67,7 @@
  * @returns {?{logs: string[]}} Logs for single-instance mode, or null for performance mode.
  *                   (No checkData as original test had no withExtremesCheck).
  */
-function draw_rectangles_rotated_multi_varsize_randparams_randpos_randrot(ctx, currentIterationNumber, instances = null) {
+function drawTest(ctx, currentIterationNumber, instances = null) {
     const isPerformanceRun = instances !== null && instances > 0;
     const numToDraw = isPerformanceRun ? instances : 5; // Original test draws 5
 
@@ -143,7 +143,7 @@ function draw_rectangles_rotated_multi_varsize_randparams_randpos_randrot(ctx, c
 // Register the test
 registerHighLevelTest(
     'rect-m5-szMix-fSemi-sMix-sw1-10px-lytSpread-cenRand-edgeNotCrisp-ornRand-ctxTransRand-ctxRotRand-test',
-    draw_rectangles_rotated_multi_varsize_randparams_randpos_randrot,
+    drawTest,
     'rectangles',
     {
         //compare: { swTol: 0, refTol: 0, diffTol: 0 } // Default visual comparison

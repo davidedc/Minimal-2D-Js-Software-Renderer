@@ -143,13 +143,27 @@ echo "[Build Script] Finished Test Framework Core."
 cat "$PROJECT_ROOT/tests/browser-tests/test-utils/test-registration-utils.js" >> "$OUTPUT_FILE"
 echo "  Added: tests/browser-tests/test-utils/test-registration-utils.js"
 
+# 7.5. Test helper functions (must be global for all test files)
+echo "[Build Script] Adding Test Helper Functions..."
+cat "$PROJECT_ROOT/tests/browser-tests/test-utils/test-helper-functions.js" >> "$OUTPUT_FILE"
+echo "  Added: tests/browser-tests/test-utils/test-helper-functions.js"
+
 # 8. Individual High-Level Test Files (Define tests)
 TEST_FILES_DIR="$PROJECT_ROOT/tests/browser-tests/test-cases"
 echo "[Build Script] Adding High-Level Test Files from: $TEST_FILES_DIR"
+echo "[Build Script] Wrapping each test file in IIFE to prevent function name collisions..."
+echo "// Note: Each test file is wrapped in an IIFE (Immediately Invoked Function Expression)" >> "$OUTPUT_FILE"
+echo "// to prevent function name collisions. All test files use 'drawTest' as the function name," >> "$OUTPUT_FILE"
+echo "// which would overwrite each other in a simple concatenation. IIFEs create separate scopes." >> "$OUTPUT_FILE"
+echo "// This avoids the need for unique function names, which would be cumbersome and redundant." >> "$OUTPUT_FILE"
+echo "" >> "$OUTPUT_FILE"
 for file in "$TEST_FILES_DIR/"*-test.js; do
   if [ -f "$file" ]; then # Check if it's a file
     echo "    Concatenating: tests/browser-tests/test-cases/$(basename "$file")" # Log before cat
+    echo "(function() {" >> "$OUTPUT_FILE"
     cat "$file" >> "$OUTPUT_FILE"
+    echo "})();" >> "$OUTPUT_FILE"
+    echo "" >> "$OUTPUT_FILE"  # Add blank line between test files for readability
     echo "    Added: tests/browser-tests/test-cases/$(basename "$file")"
   fi
 done

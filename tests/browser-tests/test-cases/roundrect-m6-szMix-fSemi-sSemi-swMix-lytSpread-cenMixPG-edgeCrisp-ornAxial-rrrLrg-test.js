@@ -91,7 +91,7 @@ function _placeRectForLargeTransparentTest(canvasWidth, canvasHeight) {
  *                  testing harness. For visual regression (instances is null/0), 6 rectangles are drawn.
  * @returns {?{logs: string[]}} Logs for single-instance mode, or null for performance mode.
  */
-function draw_rounded_rects_axalign_multi_6_large_transparent_stroke_randpos_randsize_randfill(ctx, currentIterationNumber, instances = null) {
+function drawTest(ctx, currentIterationNumber, instances = null) {
     const isPerformanceRun = instances !== null && instances > 0;
     const numToDraw = isPerformanceRun ? instances : 6; // Original test draws 6
 
@@ -159,7 +159,7 @@ function draw_rounded_rects_axalign_multi_6_large_transparent_stroke_randpos_ran
 // Register the test
 registerHighLevelTest(
     'roundrect-m6-szMix-fSemi-sSemi-swMix-lytSpread-cenMixPG-edgeCrisp-ornAxial-rrrLrg-test',
-    draw_rounded_rects_axalign_multi_6_large_transparent_stroke_randpos_randsize_randfill,
+    drawTest,
     'rounded-rects',
     {
         //compare: { swTol: 0, refTol: 0, diffTol: 0 } // Default visual comparison

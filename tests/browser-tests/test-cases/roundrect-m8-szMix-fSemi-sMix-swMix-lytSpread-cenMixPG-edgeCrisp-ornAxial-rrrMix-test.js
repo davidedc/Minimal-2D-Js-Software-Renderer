@@ -88,7 +88,7 @@ function _placeRectForAxisAlignedTest(canvasWidth, canvasHeight) {
  *                  testing harness. For visual regression (instances is null/0), 8 rectangles are drawn.
  * @returns {?{logs: string[]}} Logs for single-instance mode, or null for performance mode.
  */
-function draw_rounded_rects_axalign_multi_8_randpos_randsize_randstroke_randfill(ctx, currentIterationNumber, instances = null) {
+function drawTest(ctx, currentIterationNumber, instances = null) {
     const isPerformanceRun = instances !== null && instances > 0;
     const numToDraw = isPerformanceRun ? instances : 8; // Original test draws 8
 
@@ -164,7 +164,7 @@ function draw_rounded_rects_axalign_multi_8_randpos_randsize_randstroke_randfill
 // Register the test
 registerHighLevelTest(
     'roundrect-m8-szMix-fSemi-sMix-swMix-lytSpread-cenMixPG-edgeCrisp-ornAxial-rrrMix-test',
-    draw_rounded_rects_axalign_multi_8_randpos_randsize_randstroke_randfill,
+    drawTest,
     'rounded-rects',
     {
         //compare: { swTol: 0, refTol: 0, diffTol: 0 } // Default visual comparison

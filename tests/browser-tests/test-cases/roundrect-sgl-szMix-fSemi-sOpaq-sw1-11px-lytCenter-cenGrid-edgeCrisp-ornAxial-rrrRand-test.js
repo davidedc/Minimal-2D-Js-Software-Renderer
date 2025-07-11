@@ -56,7 +56,7 @@
  *                  regression, and `instances` count for performance, each with unique properties based on SeededRandom.
  * @returns {?{logs: string[]}} Logs for single-instance mode, or null for performance mode.
  */
-function draw_rounded_rect_single_rand_opaque_stroke_center_grid_rand_fill(ctx, currentIterationNumber, instances = null) {
+function drawTest(ctx, currentIterationNumber, instances = null) {
     const isPerformanceRun = instances !== null && instances > 0;
     const numToDraw = isPerformanceRun ? instances : 1;
 
@@ -138,7 +138,7 @@ function draw_rounded_rect_single_rand_opaque_stroke_center_grid_rand_fill(ctx, 
 // Register the test
 registerHighLevelTest(
     'roundrect-sgl-szMix-fSemi-sOpaq-sw1-11px-lytCenter-cenGrid-edgeCrisp-ornAxial-rrrRand-test',
-    draw_rounded_rect_single_rand_opaque_stroke_center_grid_rand_fill,
+    drawTest,
     'rounded-rects',
     {
         //compare: { swTol: 0, refTol: 0, diffTol: 0 }, // Default visual comparison
