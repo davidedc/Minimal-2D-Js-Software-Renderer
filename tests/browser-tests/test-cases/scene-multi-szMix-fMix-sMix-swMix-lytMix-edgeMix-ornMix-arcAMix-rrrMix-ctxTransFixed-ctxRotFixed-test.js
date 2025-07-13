@@ -68,8 +68,8 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
     // Helper to draw shapes from the array populated by original add... functions
     function drawShapesFromArray(shapesArray, context) {
         shapesArray.forEach(shape => {
-            const fillColorStr = shape.fillColor ? _colorObjectToString(shape.fillColor) : 'rgba(0,0,0,0)';
-            const strokeColorStr = shape.strokeColor ? _colorObjectToString(shape.strokeColor) : 'rgba(0,0,0,0)';
+            const fillColorStr = shape.fillColor ? colorToString(shape.fillColor) : 'rgba(0,0,0,0)'    ;
+            const strokeColorStr = shape.strokeColor ? colorToString(shape.strokeColor) : 'rgba(0,0,0,0)'    ;
             context.fillStyle = fillColorStr;
             context.strokeStyle = strokeColorStr;
             context.lineWidth = shape.strokeWidth || (shape.thickness || 0); // Use thickness for lines

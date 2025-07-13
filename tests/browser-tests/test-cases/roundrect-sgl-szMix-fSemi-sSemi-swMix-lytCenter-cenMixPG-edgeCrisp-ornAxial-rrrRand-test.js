@@ -121,8 +121,8 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
         // SeededRandom Call 7: radius
         const radius = Math.round(SeededRandom.getRandom() * Math.min(finalRectWidth, finalRectHeight) * 0.2);
 
-        const strokeColorStr = _colorObjectToString(strokeColorObj);
-        const fillColorStr = _colorObjectToString(fillColorObj);
+        const strokeColorStr = strokeColorObj ? colorToString(strokeColorObj) : 'rgba(0,0,0,0)';
+        const fillColorStr = fillColorObj ? colorToString(fillColorObj) : 'rgba(0,0,0,0)';
 
         let geomX = center.x - finalRectWidth / 2;
         let geomY = center.y - finalRectHeight / 2;

@@ -84,7 +84,7 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
 
         // SeededRandom Call 3: fillColor (can be semi-transparent)
         const fillColorObj = getRandomColor(100, 200);
-        const fillColorStr = _colorObjectToString(fillColorObj);
+        const fillColorStr = fillColorObj ? colorToString(fillColorObj) : 'rgba(0,0,0,0)';
 
         let geomX = center.x - fixedWidth / 2;
         let geomY = center.y - fixedHeight / 2;

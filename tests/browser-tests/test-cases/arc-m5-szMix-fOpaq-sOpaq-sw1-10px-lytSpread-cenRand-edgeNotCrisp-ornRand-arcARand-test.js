@@ -90,8 +90,8 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
         // The getRandomPoint already randomizes position for each arc.
         // No additional Math.random() offset needed for performance mode spreading for this test.
         
-        ctx.fillStyle = _colorObjectToString(fillColorForRender); // Set for fillAndOuterStrokeArc
-        ctx.strokeStyle = _colorObjectToString(strokeColorForRender); // Set for fillAndOuterStrokeArc
+        ctx.fillStyle = fillColorForRender ? colorToString(fillColorForRender) : 'rgba(0,0,0,0)'; // Set for fillAndOuterStrokeArc
+        ctx.strokeStyle = strokeColorForRender ? colorToString(strokeColorForRender) : 'rgba(0,0,0,0)'; // Set for fillAndOuterStrokeArc
         ctx.lineWidth = strokeWidth;
 
         // Use fillAndOuterStrokeArc as both fill and stroke are defined with random colors

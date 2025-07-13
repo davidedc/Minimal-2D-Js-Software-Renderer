@@ -4,16 +4,6 @@
  * issues when tests are concatenated with IIFE wrapping for Node.js builds.
  */
 
-/**
- * Converts a color object to an rgba string.
- * @param {{r: number, g: number, b: number, a: number}} colorObj Color object.
- * @returns {string} CSS rgba string.
- */
-function _colorObjectToString(colorObj) {
-    if (!colorObj) return 'rgba(0,0,0,0)';
-    const alpha = (typeof colorObj.a === 'number') ? (colorObj.a / 255).toFixed(3) : 1;
-    return `rgba(${colorObj.r},${colorObj.g},${colorObj.b},${alpha})`;
-}
 
 /**
  * Adjusts width and height to ensure crisp rendering based on stroke width and center position.

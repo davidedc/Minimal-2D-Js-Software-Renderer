@@ -132,8 +132,8 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
         // Call 8: fillColor (getRandomColor uses SeededRandom internally)
         const fillColorObj = getRandomColor(100, 200);   // Semi-transparent fill possible
 
-        const strokeColorStr = _colorObjectToString(strokeColorObj);
-        const fillColorStr = _colorObjectToString(fillColorObj);
+        const strokeColorStr = strokeColorObj ? colorToString(strokeColorObj) : 'rgba(0,0,0,0)';
+        const fillColorStr = fillColorObj ? colorToString(fillColorObj) : 'rgba(0,0,0,0)';
 
         let geomX = finalDrawCenterX - rectWidth / 2;
         let geomY = finalDrawCenterY - rectHeight / 2;
