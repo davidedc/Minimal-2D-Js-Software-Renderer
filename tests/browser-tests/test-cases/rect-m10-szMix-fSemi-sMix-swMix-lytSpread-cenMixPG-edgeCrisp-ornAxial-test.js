@@ -17,7 +17,7 @@
  * | StrokeThickness        | mixed              | `strokeWidth` is randomized to an even integer in `[2, 12]`, a discrete set of values.
  * | Layout                 | spread             | Rectangles are distributed by applying a random offset to each instance's calculated center point.
  * | CenteredAt             | mixed-pixel-grid   | The initial placement logic in `_placeRectWithFillAndStrokeBothCrisp` centers on a grid or pixel center.
- * | EdgeAlignment          | crisp              | The test explicitly uses the `_adjustDimensionsForCrispStrokeRendering` helper to ensure crisp edges.
+ * | EdgeAlignment          | crisp              | The test explicitly uses the `adjustDimensionsForCrispStrokeRendering` helper to ensure crisp edges.
  * | Orientation            | square             | Rectangles are axis-aligned (`ornAxial` in new convention).
  * | ArcAngleExtent         | N/A                | Not applicable to rectangles.
  * | RoundRectRadius        | N/A                | Not applicable to standard rectangles.
@@ -46,7 +46,7 @@
  * matching the new descriptive naming convention.
  */
 
-// _adjustDimensionsForCrispStrokeRendering is now available globally from test-helper-functions.js
+// adjustDimensionsForCrispStrokeRendering is now available globally from test-helper-functions.js
 
 /**
  * Calculates parameters for a rectangle aiming for crisp fill and stroke.
@@ -80,7 +80,7 @@ function _placeRectWithFillAndStrokeBothCrisp(canvasWidth, canvasHeight, maxStro
     // 4. rectHeight base
     let rectHeight = Math.round(50 + SeededRandom.getRandom() * maxAllowedContentHeight);
 
-    const adjustedDimensions = _adjustDimensionsForCrispStrokeRendering(rectWidth, rectHeight, strokeWidth, initialCenter);
+    const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(rectWidth, rectHeight, strokeWidth, initialCenter);
     return { center: initialCenter, adjustedDimensions, strokeWidth };
 }
 

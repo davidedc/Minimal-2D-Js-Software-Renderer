@@ -6,70 +6,130 @@
 
 
 /**
- * Adjusts width and height to ensure crisp rendering based on stroke width and center position.
- * Adapted from src/scene-creation/scene-creation-utils.js
- * @param {number} width - Original width.
- * @param {number} height - Original height.
- * @param {number} strokeWidth - Width of the stroke.
- * @param {{x: number, y: number}} center - Center coordinates {x, y}.
- * @returns {{width: number, height: number}} Adjusted width and height.
+ * Adjusts width and height to ensure crisp rendering based on stroke width and center position
+ * @param {number} width - Original width
+ * @param {number} height - Original height
+ * @param {number} strokeWidth - Width of the stroke
+ * @param {Object} center - Center coordinates {x, y}
+ * @returns {Object} Adjusted width and height
  */
-function _adjustDimensionsForCrispStrokeRendering(width, height, strokeWidth, center) {
+function adjustDimensionsForCrispStrokeRendering(width, height, strokeWidth, center) {
+
+    // Dimensions should be integers, because non-integer dimensions
+    // always produce a non-crisp (i.e. non-grid-aligned) stroke/fill.
     let adjustedWidth = Math.floor(width);
     let adjustedHeight = Math.floor(height);
-
-    // FIXING THE WIDTH
-    if (Number.isInteger(center.x)) { // Center x is on grid
-        if (strokeWidth % 2 !== 0) { // Odd stroke
-            if (adjustedWidth % 2 === 0) adjustedWidth++; // Width must be odd
-        } else { // Even stroke
-            if (adjustedWidth % 2 !== 0) adjustedWidth++; // Width must be even
-        }
-    } else if (center.x % 1 === 0.5) { // Center x is on pixel center
-        if (strokeWidth % 2 !== 0) { // Odd stroke
-            if (adjustedWidth % 2 !== 0) adjustedWidth++; // Width must be even
-        } else { // Even stroke
-            if (adjustedWidth % 2 === 0) adjustedWidth++; // Width must be odd
-        }
+  
+    // FIXING THE WIDTH /////////////////////////////////
+  
+    // For center's x coordinate at grid points (integer coordinates)
+    if (Number.isInteger(center.x)) {
+      // For odd strokeWidth, width should be odd
+      if (strokeWidth % 2 !== 0) {
+        if (adjustedWidth % 2 === 0) adjustedWidth++;
+      }
+      // For even strokeWidth, width should be even
+      else {
+        if (adjustedWidth % 2 !== 0) adjustedWidth++;
+      }
     }
-
-    // FIXING THE HEIGHT
-    if (Number.isInteger(center.y)) { // Center y is on grid
-        if (strokeWidth % 2 !== 0) { // Odd stroke
-            if (adjustedHeight % 2 === 0) adjustedHeight++; // Height must be odd
-        } else { // Even stroke
-            if (adjustedHeight % 2 !== 0) adjustedHeight++; // Height must be even
-        }
-    } else if (center.y % 1 === 0.5) { // Center y is on pixel center
-        if (strokeWidth % 2 !== 0) { // Odd stroke
-            if (adjustedHeight % 2 !== 0) adjustedHeight++; // Height must be even
-        } else { // Even stroke
-            if (adjustedHeight % 2 === 0) adjustedHeight++; // Height must be odd
-        }
+    // For center's x coordinate at pixels (i.e. *.5 coordinates)
+    else if (center.x % 1 === 0.5) {
+      // For odd strokeWidth, width should be even
+      if (strokeWidth % 2 !== 0) {
+        if (adjustedWidth % 2 !== 0) adjustedWidth++;
+      }
+      // For even strokeWidth, width should be odd
+      else {
+        if (adjustedWidth % 2 === 0) adjustedWidth++;
+      }
     }
-    return { width: adjustedWidth, height: adjustedHeight };
-}
-
-/**
- * Adjusts center coordinates for crisp stroke rendering based on stroke width.
- * @param {number} centerX - Original center X coordinate.
- * @param {number} centerY - Original center Y coordinate. 
- * @param {number} strokeWidth - Width of the stroke.
- * @returns {{x: number, y: number}} Adjusted center coordinates.
- */
-function _adjustCenterForCrispStrokeRendering(centerX, centerY, strokeWidth) {
-    let adjustedCenterX = centerX;
-    let adjustedCenterY = centerY;
+  
+    // FIXING THE HEIGHT /////////////////////////////////
+  
+    // For center's y coordinate at grid points (integer coordinates)
+    if (Number.isInteger(center.y)) {
+      // For odd strokeWidth, height should be odd
+      if (strokeWidth % 2 !== 0) {
+        if (adjustedHeight % 2 === 0) adjustedHeight++;
+      }
+      // For even strokeWidth, height should be even
+      else {
+        if (adjustedHeight % 2 !== 0) adjustedHeight++;
+      }
+    }
+    // For center's y coordinate at pixels (i.e. *.5 coordinates)
+    else if (center.y % 1 === 0.5) {
+      // For odd strokeWidth, height should be even
+      if (strokeWidth % 2 !== 0) {
+        if (adjustedHeight % 2 !== 0) adjustedHeight++;
+      }
+      // For even strokeWidth, height should be odd
+      else {
+        if (adjustedHeight % 2 === 0) adjustedHeight++;
+      }
+    }
+  
+    return {
+      width: adjustedWidth,
+      height: adjustedHeight
+    };
+  }
+  
+  /**
+   * Adjusts center coordinates to ensure crisp rendering based on stroke width and dimensions
+   * @param {number} centerX - Original center X coordinate
+   * @param {number} centerY - Original center Y coordinate
+   * @param {number} width - Shape width
+   * @param {number} height - Shape height
+   * @param {number} strokeWidth - Width of the stroke
+   * @returns {Object} Adjusted center coordinates
+   */
+  function adjustCenterForCrispStrokeRendering(centerX, centerY, width, height, strokeWidth) {
     
-    if (strokeWidth % 2 !== 0) { // Odd stroke width
-        // For odd stroke width, center should be on grid intersections (integers)
-        adjustedCenterX = Math.round(centerX);
-        adjustedCenterY = Math.round(centerY);
-    } else { // Even stroke width
-        // For even stroke width, center should be on pixel centers (half-integers)
-        adjustedCenterX = Math.floor(centerX) + 0.5;
-        adjustedCenterY = Math.floor(centerY) + 0.5;
+    let adjustedX = centerX;
+    let adjustedY = centerY;
+  
+    // For odd strokeWidth
+    //   if width/height are even, then the center x/y should be in the middle of the pixel i.e. *.5
+    //   if width/height are odd, then the center x/y should be at the grid point i.e. integer
+  
+    // For even strokeWidth
+    //   if width/height are even, then the center x/y should be at the grid point i.e. integer
+    //   if width/height are odd, then the center x/y should be in the middle of the pixel i.e. *.5
+  
+    if (strokeWidth % 2 !== 0) {
+      if (width % 2 === 0) {
+        adjustedX = Math.floor(centerX) + 0.5;
+      } else {
+        adjustedX = Math.round(centerX);
+      }
+  
+      if (height % 2 === 0) {
+        adjustedY = Math.floor(centerY) + 0.5;
+      } else {
+        adjustedY = Math.round(centerY);
+      }
     }
-    
-    return { x: adjustedCenterX, y: adjustedCenterY };
-} 
+    else {
+      if (width % 2 === 0) {
+        adjustedX = Math.round(centerX);
+      } else {
+        adjustedX = Math.floor(centerX) + 0.5;
+      }
+  
+      if (height % 2 === 0) {
+        adjustedY = Math.round(centerY);
+      } else {
+        adjustedY = Math.floor(centerY) + 0.5;
+      }
+    }
+  
+  
+  
+    return {
+      x: adjustedX,
+      y: adjustedY
+    };
+  }
+  
