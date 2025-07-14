@@ -43,7 +43,7 @@
  */
 
 // Helper functions getRandomColor, adjustDimensionsForCrispStrokeRendering, 
-// calculateMultiplePreciseNoStrokeCirclesParams are available from test-helper-functions.js
+// calculateCircleTestParameters are available from test-helper-functions.js
 
 
 /**
@@ -69,8 +69,17 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
     }
 
     for (let i = 0; i < numToDraw; i++) {
-        // SR calls 1-4 happen inside calculateMultiplePreciseNoStrokeCirclesParams
-        const params = calculateMultiplePreciseNoStrokeCirclesParams(canvasWidth, canvasHeight);
+        // SR calls 1-4 happen inside calculateCircleTestParameters
+        const params = calculateCircleTestParameters({
+            canvasWidth,
+            canvasHeight,
+            minRadius: 8,
+            maxRadius: 42,
+            hasStroke: false,        // No stroke
+            randomPosition: true,    // Enable random positioning
+            marginX: 60,
+            marginY: 60
+        });
         let { centerX, centerY, radius, finalDiameter, atPixel } = params;
         
         // SR Call 5: fillColor (opaque, original used palette indexing)
