@@ -133,3 +133,156 @@ function adjustDimensionsForCrispStrokeRendering(width, height, strokeWidth, cen
     };
   }
   
+  // ============================================================================
+  // CIRCLES SECTION
+  // ============================================================================
+  
+  /**
+   * Places a center point at pixel boundary (*.5 coordinates) relative to canvas center
+   * @param {number} width - Canvas width
+   * @param {number} height - Canvas height
+   * @returns {Object} Center coordinates
+   */
+  function placeCloseToCenterAtPixel(width, height) {
+    return {
+      centerX: Math.floor(width / 2) + 0.5,
+      centerY: Math.floor(height / 2) + 0.5
+    };
+  }
+  
+  /**
+   * Places a center point at grid intersection (integer coordinates) relative to canvas center
+   * @param {number} width - Canvas width
+   * @param {number} height - Canvas height
+   * @returns {Object} Center coordinates
+   */
+  function placeCloseToCenterAtGrid(width, height) {
+    return {
+      centerX: Math.floor(width / 2),
+      centerY: Math.floor(height / 2)
+    };
+  }
+  
+  /**
+   * Calculates circle parameters with proper positioning and dimensions.
+   * This is a refactored version that uses the elegant logic from calculateCircleParameters
+   * but adapted for the test context.
+   * 
+   * @param {Object} options - Configuration options for circle creation
+   * @param {number} options.canvasWidth - Canvas width (replaces global renderTestWidth)
+   * @param {number} options.canvasHeight - Canvas height (replaces global renderTestHeight)
+   * @param {number} options.minRadius - Minimum radius for the circle
+   * @param {number} options.maxRadius - Maximum radius for the circle
+   * @param {boolean} options.hasStroke - Whether the circle has a stroke
+   * @param {number} options.minStrokeWidth - Minimum stroke width (if hasStroke is true)
+   * @param {number} options.maxStrokeWidth - Maximum stroke width (if hasStroke is true)
+   * @param {boolean} options.randomPosition - Whether to use random positioning
+   * @param {number} options.marginX - Horizontal margin from canvas edges
+   * @param {number} options.marginY - Vertical margin from canvas edges
+   * @returns {Object} Calculated circle parameters: {centerX, centerY, radius, strokeWidth, finalDiameter, atPixel}
+   */
+  function calculateCircleTestParameters(options) {
+    const {
+      canvasWidth,
+      canvasHeight,
+      minRadius = 8,
+      maxRadius = 42,
+      hasStroke = false,
+      minStrokeWidth = 1,
+      maxStrokeWidth = 4,
+      randomPosition = true,
+      marginX = 60,
+      marginY = 60
+    } = options;
+  
+    // Randomly choose between grid-centered and pixel-centered
+    const atPixel = SeededRandom.getRandom() < 0.5;
+    
+    // Get initial center point
+    let {centerX, centerY} = atPixel
+      ? placeCloseToCenterAtPixel(canvasWidth, canvasHeight)
+      : placeCloseToCenterAtGrid(canvasWidth, canvasHeight);
+    
+    // Calculate base diameter
+    const diameter = Math.floor(minRadius * 2 + SeededRandom.getRandom() * (maxRadius * 2 - minRadius * 2));
+    const baseRadius = diameter / 2;
+    
+    // Calculate stroke width
+    const maxAllowedStrokeWidth = Math.floor(baseRadius / 1);
+    const strokeWidth = hasStroke 
+      ? (minStrokeWidth + Math.floor(SeededRandom.getRandom() * Math.min(maxStrokeWidth - minStrokeWidth + 1, maxAllowedStrokeWidth)))
+      : 0;
+    
+    // Handle random positioning if requested
+    if (randomPosition) {
+      const totalRadius = baseRadius + (strokeWidth / 2);
+      
+      // Calculate safe bounds
+      const minX = Math.ceil(totalRadius + marginX);
+      const maxX = Math.floor(canvasWidth - totalRadius - marginX);
+      const minY = Math.ceil(totalRadius + marginY);
+      const maxY = Math.floor(canvasHeight - totalRadius - marginY);
+      
+      // Adjust diameter if circle is too large
+      let adjustedDiameter = diameter;
+      if (maxX <= minX || maxY <= minY) {
+        // Circle is too large, reduce diameter to 1/4 of canvas size
+        adjustedDiameter = Math.min(
+          Math.floor(canvasWidth / 4),
+          Math.floor(canvasHeight / 4)
+        );
+        
+        // Recalculate bounds with reduced diameter
+        const newTotalRadius = (adjustedDiameter / 2) + (strokeWidth / 2);
+        const newMinX = Math.ceil(newTotalRadius + marginX);
+        const newMaxX = Math.floor(canvasWidth - newTotalRadius - marginX);
+        const newMinY = Math.ceil(newTotalRadius + marginY);
+        const newMaxY = Math.floor(canvasHeight - newTotalRadius - marginY);
+        
+        // Generate random position within new safe bounds
+        centerX = newMinX + Math.floor(SeededRandom.getRandom() * (newMaxX - newMinX + 1));
+        centerY = newMinY + Math.floor(SeededRandom.getRandom() * (newMaxY - newMinY + 1));
+      } else {
+        // Generate random position within original safe bounds
+        centerX = minX + Math.floor(SeededRandom.getRandom() * (maxX - minX + 1));
+        centerY = minY + Math.floor(SeededRandom.getRandom() * (maxY - minY + 1));
+      }
+    }
+    
+    // Adjust dimensions for crisp rendering
+    const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(
+      diameter, diameter, strokeWidth, { x: centerX, y: centerY }
+    );
+    const finalDiameter = adjustedDimensions.width;
+    const radius = finalDiameter / 2;
+    
+    return {
+      centerX,
+      centerY,
+      radius,
+      strokeWidth,
+      finalDiameter,
+      atPixel
+    };
+  }
+  
+  /**
+   * Calculates parameters for multiple precise, fill-only (no stroke) random circles.
+   * 
+   * @param {number} canvasWidth - The width of the canvas
+   * @param {number} canvasHeight - The height of the canvas
+   * @returns {Object} An object containing centerX, centerY, radius, finalDiameter, and atPixel
+   */
+  function calculateMultiplePreciseNoStrokeCirclesParams(canvasWidth, canvasHeight) {
+    return calculateCircleTestParameters({
+      canvasWidth,
+      canvasHeight,
+      minRadius: 8,
+      maxRadius: 42,
+      hasStroke: false,        // No stroke
+      randomPosition: true,    // Enable random positioning
+      marginX: 60,
+      marginY: 60
+    });
+  }
+  
