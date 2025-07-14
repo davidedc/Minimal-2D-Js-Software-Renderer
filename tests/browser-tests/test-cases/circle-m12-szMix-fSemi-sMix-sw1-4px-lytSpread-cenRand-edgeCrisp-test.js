@@ -42,73 +42,8 @@
  * @fileoverview Test definition for multiple precise random circles with strokes and fills.
  */
 
-// Helper functions _colorObjectToString, getRandomColor, adjustDimensionsForCrispStrokeRendering, 
-// placeCloseToCenterAtPixel, placeCloseToCenterAtGrid are assumed globally available.
-
-/**
- * Adapts the logic from calculateCircleParameters for multiple precise random circles.
- * @param {number} canvasWidth The width of the canvas.
- * @param {number} canvasHeight The height of the canvas.
- * @returns {object} An object containing centerX, centerY, radius, strokeWidth, finalDiameter, and atPixel (initial alignment type).
- */
-function _calculateMultiplePreciseRandomCirclesParams(canvasWidth, canvasHeight) {
-    const minRadius = 8;
-    const maxRadius = 42;
-    const hasStroke = true;
-    const minStrokeWidth = 1;
-    const maxStrokeWidth = 4;
-    const marginX = 60; 
-    const marginY = 60;
-
-    // SeededRandom Call 1: atPixel determination
-    const atPixel = SeededRandom.getRandom() < 0.5;
-  
-    let initialCenterX, initialCenterY; // Base for positioning logic, not necessarily the drawn center's type
-    if (atPixel) {
-        initialCenterX = Math.floor(canvasWidth / 2) + 0.5;
-        initialCenterY = Math.floor(canvasHeight / 2) + 0.5;
-    } else {
-        initialCenterX = Math.floor(canvasWidth / 2);
-        initialCenterY = Math.floor(canvasHeight / 2);
-    }
-  
-    // SeededRandom Call 2: base diameter
-    const diameter = Math.floor(minRadius * 2 + SeededRandom.getRandom() * (maxRadius * 2 - minRadius * 2));
-    const baseRadius = diameter / 2;
-  
-    // SeededRandom Call 3: strokeWidth
-    const maxAllowedStrokeByRadius = Math.max(1, baseRadius);
-    const strokeWidth = minStrokeWidth + Math.floor(SeededRandom.getRandom() * Math.min(maxStrokeWidth - minStrokeWidth + 1, maxAllowedStrokeByRadius));
-  
-    // Random Positioning Logic (SR calls 4 & 5 if used)
-    let finalCenterX, finalCenterY;
-    const totalRadiusForBounds = baseRadius + (strokeWidth / 2);
-    const minX = Math.ceil(totalRadiusForBounds + marginX);
-    const maxX = Math.floor(canvasWidth - totalRadiusForBounds - marginX);
-    const minY = Math.ceil(totalRadiusForBounds + marginY);
-    const maxY = Math.floor(canvasHeight - totalRadiusForBounds - marginY);
-    
-    let currentDiameterForPositioning = diameter;
-    if (maxX <= minX || maxY <= minY) { 
-        currentDiameterForPositioning = Math.min(Math.floor(canvasWidth / 4), Math.floor(canvasHeight / 4));
-        const newTotalRadius = (currentDiameterForPositioning / 2) + (strokeWidth / 2);
-        const newMinX = Math.ceil(newTotalRadius + marginX);
-        const newMaxX = Math.floor(canvasWidth - newTotalRadius - marginX);
-        const newMinY = Math.ceil(newTotalRadius + marginY);
-        const newMaxY = Math.floor(canvasHeight - newTotalRadius - marginY);
-        finalCenterX = newMinX + Math.floor(SeededRandom.getRandom() * (newMaxX - newMinX + 1));
-        finalCenterY = newMinY + Math.floor(SeededRandom.getRandom() * (newMaxY - newMinY + 1));
-    } else {
-        finalCenterX = minX + Math.floor(SeededRandom.getRandom() * (maxX - minX + 1));
-        finalCenterY = minY + Math.floor(SeededRandom.getRandom() * (maxY - minY + 1));
-    }
-
-    const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(diameter, diameter, strokeWidth, { x: finalCenterX, y: finalCenterY });
-    const finalDiameter = adjustedDimensions.width;
-    const radius = finalDiameter / 2;
-  
-    return { centerX: finalCenterX, centerY: finalCenterY, radius, strokeWidth, finalDiameter, atPixel };
-}
+// Helper functions getRandomColor, adjustDimensionsForCrispStrokeRendering, 
+// calculateMultiplePreciseRandomCirclesParams are available from test-helper-functions.js
 
 
 /**
@@ -134,8 +69,8 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
     }
 
     for (let i = 0; i < numToDraw; i++) {
-        // SR calls 1-5 happen inside _calculateMultiplePreciseRandomCirclesParams
-        const params = _calculateMultiplePreciseRandomCirclesParams(canvasWidth, canvasHeight);
+        // SR calls 1-5 happen inside calculateMultiplePreciseRandomCirclesParams
+        const params = calculateMultiplePreciseRandomCirclesParams(canvasWidth, canvasHeight);
         let { centerX, centerY, radius, strokeWidth, finalDiameter, atPixel } = params;
         
         // SR Call 6: strokeColor (opaque)

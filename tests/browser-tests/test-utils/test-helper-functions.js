@@ -268,6 +268,8 @@ function adjustDimensionsForCrispStrokeRendering(width, height, strokeWidth, cen
   
   /**
    * Calculates parameters for multiple precise, fill-only (no stroke) random circles.
+   * This replaces _calculateMultiplePreciseNoStrokeCirclesParams with the more elegant 
+   * calculateCircleParameters logic.
    * 
    * @param {number} canvasWidth - The width of the canvas
    * @param {number} canvasHeight - The height of the canvas
@@ -280,6 +282,29 @@ function adjustDimensionsForCrispStrokeRendering(width, height, strokeWidth, cen
       minRadius: 8,
       maxRadius: 42,
       hasStroke: false,        // No stroke
+      randomPosition: true,    // Enable random positioning
+      marginX: 60,
+      marginY: 60
+    });
+  }
+  
+  /**
+   * Calculates parameters for multiple precise random circles WITH stroke.
+   * calculateCircleParameters logic.
+   * 
+   * @param {number} canvasWidth - The width of the canvas
+   * @param {number} canvasHeight - The height of the canvas
+   * @returns {Object} An object containing centerX, centerY, radius, strokeWidth, finalDiameter, and atPixel
+   */
+  function calculateMultiplePreciseRandomCirclesParams(canvasWidth, canvasHeight) {
+    return calculateCircleTestParameters({
+      canvasWidth,
+      canvasHeight,
+      minRadius: 8,
+      maxRadius: 42,
+      hasStroke: true,         // Has stroke
+      minStrokeWidth: 1,
+      maxStrokeWidth: 4,
       randomPosition: true,    // Enable random positioning
       marginX: 60,
       marginY: 60
