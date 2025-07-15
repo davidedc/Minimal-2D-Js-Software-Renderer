@@ -42,74 +42,8 @@
  * @fileoverview Test definition for a single randomly positioned circle with no stroke.
  */
 
-// Helper functions _colorObjectToString, getRandomColor, adjustDimensionsForCrispStrokeRendering, 
-// placeCloseToCenterAtPixel, placeCloseToCenterAtGrid are assumed globally available.
-
-/**
- * Adapts the logic from calculateCircleParameters for a randomly positioned circle with no stroke.
- * @param {number} canvasWidth The width of the canvas.
- * @param {number} canvasHeight The height of the canvas.
- * @returns {object} An object containing centerX, centerY, radius, finalDiameter, and atPixel (initial alignment type).
- */
-function _calculateRandomPositionNoStrokeCircleParams(canvasWidth, canvasHeight) {
-    const minRadius = 10;
-    const maxRadius = 225;
-    const strokeWidth = 0;   // No stroke
-    const marginX = 10;
-    const marginY = 10;
-
-    // SeededRandom Call 1: atPixel determination (influences initial centering before random positioning)
-    const atPixel = SeededRandom.getRandom() < 0.5;
-  
-    // This initial centerX/Y is just for the first step of determining random position range,
-    // it does not mean the final circle is centered at grid/pixel in the same way as non-randomly-positioned tests.
-    let tempCenterX, tempCenterY; // Temporary, not the final center
-    if (atPixel) {
-        tempCenterX = Math.floor(canvasWidth / 2) + 0.5;
-        tempCenterY = Math.floor(canvasHeight / 2) + 0.5;
-    } else {
-        tempCenterX = Math.floor(canvasWidth / 2);
-        tempCenterY = Math.floor(canvasHeight / 2);
-    }
-  
-    // SeededRandom Call 2: base diameter
-    const diameter = Math.floor(minRadius * 2 + SeededRandom.getRandom() * (maxRadius * 2 - minRadius * 2));
-    const baseRadius = diameter / 2;
-  
-    // No SeededRandom call for strokeWidth calculation as hasStroke is false.
-  
-    // Random Positioning Logic (SR calls 3 & 4 if used, or different SR path if not)
-    let finalCenterX, finalCenterY;
-    const totalRadiusForBounds = baseRadius; // Since strokeWidth is 0
-    const minX = Math.ceil(totalRadiusForBounds + marginX);
-    const maxX = Math.floor(canvasWidth - totalRadiusForBounds - marginX);
-    const minY = Math.ceil(totalRadiusForBounds + marginY);
-    const maxY = Math.floor(canvasHeight - totalRadiusForBounds - marginY);
-    
-    let currentDiameterForPositioning = diameter;
-    if (maxX <= minX || maxY <= minY) { 
-        currentDiameterForPositioning = Math.min(Math.floor(canvasWidth / 4), Math.floor(canvasHeight / 4));
-        const newTotalRadius = (currentDiameterForPositioning / 2); // No strokeWidth
-        const newMinX = Math.ceil(newTotalRadius + marginX);
-        const newMaxX = Math.floor(canvasWidth - newTotalRadius - marginX);
-        const newMinY = Math.ceil(newTotalRadius + marginY);
-        const newMaxY = Math.floor(canvasHeight - newTotalRadius - marginY);
-        // SeededRandom Call 3 & 4 (for position within new tighter bounds)
-        finalCenterX = newMinX + Math.floor(SeededRandom.getRandom() * (newMaxX - newMinX + 1));
-        finalCenterY = newMinY + Math.floor(SeededRandom.getRandom() * (newMaxY - newMinY + 1));
-    } else {
-        // SeededRandom Call 3 & 4 (for position within original safe bounds)
-        finalCenterX = minX + Math.floor(SeededRandom.getRandom() * (maxX - minX + 1));
-        finalCenterY = minY + Math.floor(SeededRandom.getRandom() * (maxY - minY + 1));
-    }
-
-    // Adjust dimensions for crisp rendering based on the *final* random center
-    const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(diameter, diameter, strokeWidth, { x: finalCenterX, y: finalCenterY });
-    const finalDiameter = adjustedDimensions.width;
-    const radius = finalDiameter / 2;
-  
-    return { centerX: finalCenterX, centerY: finalCenterY, radius, finalDiameter, atPixel };
-}
+// Helper functions getRandomColor, adjustDimensionsForCrispStrokeRendering, 
+// calculateCircleTestParameters are available from test-helper-functions.js
 
 
 /**
@@ -136,8 +70,17 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
     }
 
     for (let i = 0; i < numToDraw; i++) {
-        // SR calls 1-4 happen inside _calculateRandomPositionNoStrokeCircleParams
-        const params = _calculateRandomPositionNoStrokeCircleParams(canvasWidth, canvasHeight);
+        // SR calls 1-4 happen inside calculateCircleTestParameters
+        const params = calculateCircleTestParameters({
+            canvasWidth,
+            canvasHeight,
+            minRadius: 10,
+            maxRadius: 225,
+            hasStroke: false,        // No stroke
+            randomPosition: true,    // Enable random positioning
+            marginX: 10,
+            marginY: 10
+        });
         let { centerX, centerY, radius, finalDiameter, atPixel } = params;
         
         // SR Call 5: fillColor 
