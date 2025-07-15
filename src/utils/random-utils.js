@@ -1,5 +1,4 @@
-function getRandomPoint(decimalPlaces = null, canvasWidth = null, canvasHeight = null) {
-  const margin = 100;
+function getRandomPoint(decimalPlaces = null, canvasWidth = null, canvasHeight = null, margin = 100) {
   const width = canvasWidth || renderTestWidth;
   const height = canvasHeight || renderTestHeight;
   const x = margin + SeededRandom.getRandom() * (width - 2 * margin);

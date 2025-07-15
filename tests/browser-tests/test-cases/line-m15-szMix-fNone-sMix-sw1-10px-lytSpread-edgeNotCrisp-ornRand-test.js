@@ -82,11 +82,7 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
     const canvasWidth = ctx.canvas.width;
     const canvasHeight = ctx.canvas.height;
 
-    // Helper to get a random point within canvas boundaries
-    const getRandomPoint = () => ({
-        x: SeededRandom.getRandom() * canvasWidth,
-        y: SeededRandom.getRandom() * canvasHeight
-    });
+    // Use the existing getRandomPoint function with no margin to get points anywhere within canvas boundaries
 
     // Helper to get a random color string (rgba)
     // Original used getRandomColor(150, 255) where alpha is generated first.
@@ -104,8 +100,8 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
     };
 
     for (let i = 0; i < lineCount; i++) {
-        const start = getRandomPoint();
-        const end = getRandomPoint();
+        const start = getRandomPoint(null, canvasWidth, canvasHeight, 0);
+        const end = getRandomPoint(null, canvasWidth, canvasHeight, 0);
         const thickness = Math.floor(SeededRandom.getRandom() * 10) + 1; // Thickness 1 to 10
         const colorStr = getRandomColorString();
 
