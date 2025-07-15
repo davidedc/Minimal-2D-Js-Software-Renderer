@@ -51,11 +51,7 @@
  * - Performance: Draws multiple instances at random positions in performance mode.
  */
 
-// Helper to convert color object from getRandomColor to CSS rgba string
-function _testHelper_colorObjectToRgbaCss(colorObj) {
-    if (!colorObj || typeof colorObj.r === 'undefined') return 'rgba(0,0,0,0)'; // Basic check
-    return `rgba(${colorObj.r},${colorObj.g},${colorObj.b},${(colorObj.a / 255).toFixed(3)})`;
-}
+// Helper function colorToString is already available from color-utils.js
 
 /**
  * Draws a single axis-aligned rectangle based on original low-level test logic, or multiple for performance.
@@ -107,8 +103,8 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
 
         const fillObj = getRandomColor(100, 200);
         const strokeObj = getRandomColor(200, 255);
-        const currentFillColor = _testHelper_colorObjectToRgbaCss(fillObj);
-        const currentStrokeColor = _testHelper_colorObjectToRgbaCss(strokeObj);
+        const currentFillColor = colorToString(fillObj);
+        const currentStrokeColor = colorToString(strokeObj);
         // --- End property generation for this instance ---
 
         let finalDrawX = currentCenter.x - currentDrawWidth / 2;
