@@ -292,7 +292,7 @@ function adjustDimensionsForCrispStrokeRendering(width, height, strokeWidth, cen
    * @param {number} options.maxOffsetY - Maximum random Y offset (if randomPosition is true)
    * @returns {Object} Calculated rectangle parameters: {center, adjustedDimensions, strokeWidth}
    */
-  function calculateCrispFillAndStrokeRectParams(options) {
+    function calculateCrispFillAndStrokeRectParams(options) {
     const {
       canvasWidth,
       canvasHeight,
@@ -306,29 +306,29 @@ function adjustDimensionsForCrispStrokeRendering(width, height, strokeWidth, cen
       maxOffsetX = 100,
       maxOffsetY = 100
     } = options;
-  
+
     // 1. Generate stroke width
     let strokeWidth = Math.round(SeededRandom.getRandom() * maxStrokeWidth + 1);
     if (ensureEvenStroke) {
       strokeWidth = strokeWidth % 2 === 0 ? strokeWidth : strokeWidth + 1;
     }
-  
+
     // 2. Set initial center to canvas center
     let center = { x: canvasWidth / 2, y: canvasHeight / 2 };
-  
+
     // 3. Randomly choose between grid-centered and pixel-centered
     if (SeededRandom.getRandom() < 0.5) {
       center = { x: center.x + 0.5, y: center.y + 0.5 };
     }
-  
+
     // 4. Generate rectangle dimensions
     const rectWidth = Math.round(minWidth + SeededRandom.getRandom() * (maxWidth - minWidth));
     const rectHeight = Math.round(minHeight + SeededRandom.getRandom() * (maxHeight - minHeight));
-  
+
     // 5. Adjust dimensions for crisp rendering
     const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(rectWidth, rectHeight, strokeWidth, center);
-  
-    // 6. Apply random positioning offset (integer amounts preserve crispness)
+
+    // 6. Apply random positioning offset if requested (integer amounts preserve crispness)
     if (randomPosition) {
       const xOffset = Math.floor(SeededRandom.getRandom() * maxOffsetX) - Math.floor(maxOffsetX / 2);
       const yOffset = Math.floor(SeededRandom.getRandom() * maxOffsetY) - Math.floor(maxOffsetY / 2);
@@ -337,7 +337,7 @@ function adjustDimensionsForCrispStrokeRendering(width, height, strokeWidth, cen
         y: center.y + yOffset
       };
     }
-  
+
     return { center, adjustedDimensions, strokeWidth };
   }
   
