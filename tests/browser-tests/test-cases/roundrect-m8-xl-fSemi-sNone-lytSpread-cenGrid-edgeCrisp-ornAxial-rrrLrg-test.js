@@ -44,16 +44,7 @@
  * @fileoverview Test definition for 8 rounded rectangles with no stroke and fixed size/radius.
  */
 
-// Helper functions _colorObjectToString, getRandomColor, getRandomPoint are assumed globally available.
-
-/**
- * Rounds the x and y coordinates of a point object.
- * @param {{x: number, y: number}} point The point to round.
- * @returns {{x: number, y: number}} The point with rounded coordinates.
- */
-function _roundPoint(point) {
-    return { x: Math.round(point.x), y: Math.round(point.y) };
-}
+// Helper functions getRandomColor, getRandomPoint, roundPoint are available from scene-creation-utils.js
 
 /**
  * Draws 8 rounded rectangles with no stroke.
@@ -80,7 +71,7 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
     for (let i = 0; i < numToDraw; i++) {
         // SeededRandom Call 1 & 2 (approx, inside getRandomPoint)
         const randomCenter = getRandomPoint(1, canvasWidth, canvasHeight); 
-        const center = _roundPoint(randomCenter); // Ensures integer coords for grid alignment
+        const center = roundPoint(randomCenter); // Ensures integer coords for grid alignment
 
         // SeededRandom Call 3: fillColor (semi-transparent)
         const fillColorObj = getRandomColor(100, 200);

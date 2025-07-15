@@ -42,17 +42,8 @@
  * @fileoverview Test definition for 10 thin, opaque-stroked rounded rectangles with 1px line width.
  */
 
-// Helper functions _colorObjectToString, getRandomColor, getRandomPoint, adjustCenterForCrispStrokeRendering 
-// are assumed globally available and use SeededRandom internally as needed.
-
-/**
- * Rounds the x and y coordinates of a point object.
- * @param {{x: number, y: number}} point The point to round.
- * @returns {{x: number, y: number}} The point with rounded coordinates.
- */
-function _roundPoint(point) {
-    return { x: Math.round(point.x), y: Math.round(point.y) };
-}
+// Helper functions getRandomColor, getRandomPoint, roundPoint, adjustCenterForCrispStrokeRendering 
+// are available from scene-creation-utils.js and test-helper-functions.js
 
 /**
  * Draws 10 thin, opaque-stroked rounded rectangles.
@@ -81,7 +72,7 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
         // SeededRandom Call 3 & 4 (approx, inside getRandomPoint)
         // The starting initialisation of center is a random point, then rounded for grid crossing.
         const randomCenter = getRandomPoint(1, canvasWidth, canvasHeight); // Assuming decimalPlaces=1, then pass canvas W/H
-        const centerGrid = _roundPoint(randomCenter); // Ensures integer coords for grid alignment before adjustment
+        const centerGrid = roundPoint(randomCenter); // Ensures integer coords for grid alignment before adjustment
 
         // adjustCenterForCrispStrokeRendering is for a 1px stroke.
         const adjustedCenter = adjustCenterForCrispStrokeRendering(centerGrid.x, centerGrid.y, width, height, 1);
