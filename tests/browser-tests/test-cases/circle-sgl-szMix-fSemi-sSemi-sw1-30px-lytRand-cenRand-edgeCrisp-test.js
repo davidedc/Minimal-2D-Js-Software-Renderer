@@ -12,8 +12,8 @@
  * | Shape category         | circles        | The test draws circles using `ctx.fillAndStrokeCircle()`.
  * | Count                  | single         | The test is designed to draw a single circle instance in its primary visual test mode.
  * | SizeCategory           | mixed          | The `baseRadius` is randomized in a range of [10, 224], spanning multiple size categories (XS-XL).
- * | FillStyle              | opaque         | `getRandomColor()` is called for the fill without a specific alpha, defaulting to opaque.
- * | StrokeStyle            | opaque         | `getRandomColor()` is called for the stroke without a specific alpha, defaulting to opaque.
+ * | FillStyle              | semitransparent | `getRandomColor()` is called for the fill with an alpha bracket of [100, 200].
+ * | StrokeStyle            | semitransparent | `getRandomColor()` is called for the stroke with an alpha bracket of [150, 230].
  * | StrokeThickness        | 1px-30px       | `strokeWidth` is randomized between a minimum of 1 and a maximum of 30.
  * | Layout                 | random         | The circle's final `(centerX, centerY)` is explicitly randomized within the canvas boundaries.
  * | CenteredAt             | random         | The final center coordinates are determined by the random layout and are not snapped to a grid or pixel.
@@ -136,7 +136,7 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
 
 // Register the test
 registerHighLevelTest(
-    'circle-sgl-szMix-fOpaq-sOpaq-sw1-30px-lytRand-cenRand-edgeCrisp-test',
+    'circle-sgl-szMix-fSemi-sSemi-sw1-30px-lytRand-cenRand-edgeCrisp-test',
     drawTest,
     'circles',
     {
