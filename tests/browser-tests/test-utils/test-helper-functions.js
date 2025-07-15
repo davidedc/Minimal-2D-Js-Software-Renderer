@@ -266,5 +266,80 @@ function adjustDimensionsForCrispStrokeRendering(width, height, strokeWidth, cen
     };
   }
   
+  // ============================================================================
+  // RECTANGLES SECTION
+  // ============================================================================
+  
+  /**
+   * Calculates rectangle parameters for crisp fill AND stroke rendering.
+   * This function ALWAYS generates a stroke width > 0 (minimum 1px, or 2px if ensureEvenStroke is true).
+   * 
+   * IMPORTANT: This is NOT a generic rectangle function. It's specifically designed for rectangles
+   * that have both fill and stroke, which requires consistent center alignment (both coordinates
+   * either pixel-centered or grid-centered) to ensure crispness.
+   * 
+   * @param {Object} options - Configuration options for rectangle creation
+   * @param {number} options.canvasWidth - Canvas width
+   * @param {number} options.canvasHeight - Canvas height  
+   * @param {number} options.minWidth - Minimum width for the rectangle
+   * @param {number} options.maxWidth - Maximum width for the rectangle
+   * @param {number} options.minHeight - Minimum height for the rectangle
+   * @param {number} options.maxHeight - Maximum height for the rectangle
+   * @param {number} options.maxStrokeWidth - Maximum stroke width (minimum result will be 1px)
+   * @param {boolean} options.ensureEvenStroke - Whether to ensure stroke width is even (minimum becomes 2px)
+   * @param {boolean} options.randomPosition - Whether to apply random positioning offset
+   * @param {number} options.maxOffsetX - Maximum random X offset (if randomPosition is true)
+   * @param {number} options.maxOffsetY - Maximum random Y offset (if randomPosition is true)
+   * @returns {Object} Calculated rectangle parameters: {center, adjustedDimensions, strokeWidth}
+   */
+  function calculateCrispFillAndStrokeRectParams(options) {
+    const {
+      canvasWidth,
+      canvasHeight,
+      minWidth = 50,
+      maxWidth = canvasWidth * 0.6,
+      minHeight = 50, 
+      maxHeight = canvasHeight * 0.6,
+      maxStrokeWidth = 10,
+      ensureEvenStroke = true,
+      randomPosition = false,
+      maxOffsetX = 100,
+      maxOffsetY = 100
+    } = options;
+  
+    // 1. Generate stroke width
+    let strokeWidth = Math.round(SeededRandom.getRandom() * maxStrokeWidth + 1);
+    if (ensureEvenStroke) {
+      strokeWidth = strokeWidth % 2 === 0 ? strokeWidth : strokeWidth + 1;
+    }
+  
+    // 2. Set initial center to canvas center
+    let center = { x: canvasWidth / 2, y: canvasHeight / 2 };
+  
+    // 3. Randomly choose between grid-centered and pixel-centered
+    if (SeededRandom.getRandom() < 0.5) {
+      center = { x: center.x + 0.5, y: center.y + 0.5 };
+    }
+  
+    // 4. Generate rectangle dimensions
+    const rectWidth = Math.round(minWidth + SeededRandom.getRandom() * (maxWidth - minWidth));
+    const rectHeight = Math.round(minHeight + SeededRandom.getRandom() * (maxHeight - minHeight));
+  
+    // 5. Adjust dimensions for crisp rendering
+    const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(rectWidth, rectHeight, strokeWidth, center);
+  
+    // 6. Apply random positioning offset (integer amounts preserve crispness)
+    if (randomPosition) {
+      const xOffset = Math.floor(SeededRandom.getRandom() * maxOffsetX) - Math.floor(maxOffsetX / 2);
+      const yOffset = Math.floor(SeededRandom.getRandom() * maxOffsetY) - Math.floor(maxOffsetY / 2);
+      center = {
+        x: center.x + xOffset,
+        y: center.y + yOffset
+      };
+    }
+  
+    return { center, adjustedDimensions, strokeWidth };
+  }
+  
 
   

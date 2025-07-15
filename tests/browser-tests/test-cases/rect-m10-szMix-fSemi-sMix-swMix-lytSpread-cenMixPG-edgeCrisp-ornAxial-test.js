@@ -16,7 +16,7 @@
  * | StrokeStyle            | mixed              | `strokeColorObj` is generated with an alpha range of `[200, 255]`, including both semi-transparent and opaque values.
  * | StrokeThickness        | mixed              | `strokeWidth` is randomized to an even integer in `[2, 12]`, a discrete set of values.
  * | Layout                 | spread             | Rectangles are distributed by applying a random offset to each instance's calculated center point.
- * | CenteredAt             | mixed-pixel-grid   | The initial placement logic in `_placeRectWithFillAndStrokeBothCrisp` centers on a grid or pixel center.
+ * | CenteredAt             | mixed-pixel-grid   | The initial placement logic in `calculateCrispFillAndStrokeRectParams` centers on a grid or pixel center.
  * | EdgeAlignment          | crisp              | The test explicitly uses the `adjustDimensionsForCrispStrokeRendering` helper to ensure crisp edges.
  * | Orientation            | square             | Rectangles are axis-aligned (`ornAxial` in new convention).
  * | ArcAngleExtent         | N/A                | Not applicable to rectangles.
@@ -46,43 +46,8 @@
  * matching the new descriptive naming convention.
  */
 
-// adjustDimensionsForCrispStrokeRendering is now available globally from test-helper-functions.js
-
-/**
- * Calculates parameters for a rectangle aiming for crisp fill and stroke.
- * Adapted from placeRoundedRectWithFillAndStrokeBothCrisp in src/scene-creation/scene-creation-rounded-rects.js
- * (Note: The "rounded" part of the original name is a misnomer for this specific usage,
- * as the original addAxisAlignedRectangles test pushes a non-rounded 'rect' type).
- * @param {number} canvasWidth The width of the canvas.
- * @param {number} canvasHeight The height of the canvas.
- * @param {number} maxStrokeWidth Maximum stroke width to generate.
- * @returns {{center: {x: number, y: number}, adjustedDimensions: {width: number, height: number}, strokeWidth: number}}
- */
-function _placeRectWithFillAndStrokeBothCrisp(canvasWidth, canvasHeight, maxStrokeWidth = 10) {
-    const maxAllowedContentWidth = canvasWidth * 0.6;
-    const maxAllowedContentHeight = canvasHeight * 0.6;
-
-    // Order of SeededRandom calls must be preserved:
-    // 1. strokeWidth base
-    let strokeWidth = Math.round(SeededRandom.getRandom() * maxStrokeWidth + 1);
-    // Ensure strokeWidth is even for this placement strategy
-    strokeWidth = strokeWidth % 2 === 0 ? strokeWidth : strokeWidth + 1;
-
-    let initialCenter = { x: canvasWidth / 2, y: canvasHeight / 2 };
-
-    // 2. Center offset
-    if (SeededRandom.getRandom() < 0.5) {
-        initialCenter = { x: initialCenter.x + 0.5, y: initialCenter.y + 0.5 };
-    }
-
-    // 3. rectWidth base
-    let rectWidth = Math.round(50 + SeededRandom.getRandom() * maxAllowedContentWidth);
-    // 4. rectHeight base
-    let rectHeight = Math.round(50 + SeededRandom.getRandom() * maxAllowedContentHeight);
-
-    const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(rectWidth, rectHeight, strokeWidth, initialCenter);
-    return { center: initialCenter, adjustedDimensions, strokeWidth };
-}
+// Helper functions adjustDimensionsForCrispStrokeRendering, calculateCrispFillAndStrokeRectParams 
+// are available from test-helper-functions.js
 
 // _colorObjectToString is now available globally from test-helper-functions.js
 
@@ -112,8 +77,18 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
 
     for (let i = 0; i < numToDraw; i++) {
         // Preserve SeededRandom sequence from original test functions:
-        // Calls 1-4 happen inside _placeRectWithFillAndStrokeBothCrisp
-        const placement = _placeRectWithFillAndStrokeBothCrisp(canvasWidth, canvasHeight, 10); // maxStrokeWidth=10 as in original
+        // Calls 1-4 happen inside calculateCrispFillAndStrokeRectParams
+        const placement = calculateCrispFillAndStrokeRectParams({
+            canvasWidth,
+            canvasHeight,
+            minWidth: 50,
+            maxWidth: canvasWidth * 0.6,
+            minHeight: 50,
+            maxHeight: canvasHeight * 0.6,
+            maxStrokeWidth: 10,
+            ensureEvenStroke: true,
+            randomPosition: false  // This test applies positioning separately
+        });
         let rectCenter = placement.center;
         const rectWidth = placement.adjustedDimensions.width;
         const rectHeight = placement.adjustedDimensions.height;
