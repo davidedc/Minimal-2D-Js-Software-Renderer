@@ -82,7 +82,7 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
         const randomCenter = getRandomPoint(1, canvasWidth, canvasHeight); 
         const center = _roundPoint(randomCenter); // Ensures integer coords for grid alignment
 
-        // SeededRandom Call 3: fillColor (can be semi-transparent)
+        // SeededRandom Call 3: fillColor (semi-transparent)
         const fillColorObj = getRandomColor(100, 200);
         const fillColorStr = fillColorObj ? colorToString(fillColorObj) : 'rgba(0,0,0,0)';
 

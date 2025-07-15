@@ -95,9 +95,9 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
 
         // SeededRandom Call 7: radius
         const radius = Math.round(SeededRandom.getRandom() * Math.min(finalRectWidth, finalRectHeight) * 0.2);
-        // SeededRandom Call 8: strokeColor (opaque)
+        // SeededRandom Call 8: strokeColor (semi-transparent or also opaque)
         const strokeColorObj = getRandomColor(200, 255); 
-        // SeededRandom Call 9: fillColor (can be semi-transparent)
+        // SeededRandom Call 9: fillColor (semi-transparent)
         const fillColorObj = getRandomColor(100, 200);
 
         const strokeColorStr = strokeColorObj ? colorToString(strokeColorObj) : 'rgba(0,0,0,0)';

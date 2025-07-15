@@ -103,9 +103,9 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
         let finalDrawCenterY = rectCenter.y + yOffset;
 
         // Call 7: strokeColor (getRandomColor uses SeededRandom internally)
-        const strokeColorObj = getRandomColor(200, 255); // Opaque stroke
+        const strokeColorObj = getRandomColor(200, 255); // Opaque or semi-transparent stroke
         // Call 8: fillColor (getRandomColor uses SeededRandom internally)
-        const fillColorObj = getRandomColor(100, 200);   // Semi-transparent fill possible
+        const fillColorObj = getRandomColor(100, 200);   // Semi-transparent fill
 
         const strokeColorStr = strokeColorObj ? colorToString(strokeColorObj) : 'rgba(0,0,0,0)';
         const fillColorStr = fillColorObj ? colorToString(fillColorObj) : 'rgba(0,0,0,0)';

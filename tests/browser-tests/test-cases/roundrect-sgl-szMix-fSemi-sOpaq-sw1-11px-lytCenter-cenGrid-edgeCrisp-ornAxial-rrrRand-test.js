@@ -95,7 +95,7 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
         
         // SeededRandom Call 5 (potentially multiple inside getRandomColor): strokeColor (opaque)
         const strokeColorObj = getRandomColor(255, 255); 
-        // SeededRandom Call 6 (potentially multiple inside getRandomColor): fillColor (can be semi-transparent)
+        // SeededRandom Call 6 (potentially multiple inside getRandomColor): fillColor (semi-transparent)
         const fillColorObj = getRandomColor(100, 200);
 
         const strokeColorStr = strokeColorObj ? colorToString(strokeColorObj) : 'rgba(0,0,0,0)';

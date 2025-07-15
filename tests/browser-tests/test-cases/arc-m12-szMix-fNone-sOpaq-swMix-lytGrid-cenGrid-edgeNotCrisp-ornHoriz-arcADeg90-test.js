@@ -106,7 +106,7 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
             const startAngleRad = quadrants[Math.floor(SeededRandom.getRandom() * 4)];
             const endAngleRad = startAngleRad + Math.PI / 2;
 
-            const strokeColorObj = getRandomColor(200, 255); // Opaque random color
+            const strokeColorObj = getRandomColor(200, 255); // Opaque or semi-transparent random color
             const strokeColorStr = strokeColorObj ? colorToString(strokeColorObj) : 'rgba(0,0,0,0)';
 
             // Base position from SeededRandom

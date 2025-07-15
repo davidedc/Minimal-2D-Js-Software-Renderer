@@ -44,42 +44,8 @@
  * @fileoverview Test definition for a single centered rounded rectangle with semi-transparent stroke and fill.
  */
 
-// Helper functions _colorObjectToString, getRandomColor, adjustDimensionsForCrispStrokeRendering 
-// are assumed globally available.
-
-/**
- * Adapted from placeRoundedRectWithFillAndStrokeBothCrisp in src/scene-creation/scene-creation-rounded-rects.js
- * Calculates parameters for a rectangle aiming for crisp fill and stroke.
- * This version is specific to the needs of the transparent strokes test (e.g. maxStrokeWidth = 40).
- * @param {number} canvasWidth The width of the canvas.
- * @param {number} canvasHeight The height of the canvas.
- * @returns {{center: {x: number, y: number}, adjustedDimensions: {width: number, height: number}, strokeWidth: number}}
- */
-function _placeRectForTransparentTest(canvasWidth, canvasHeight) {
-    const maxAllowedContentWidth = canvasWidth * 0.6;
-    const maxAllowedContentHeight = canvasHeight * 0.6;
-    const maxStrokeWidth = 40; // As used in the original addCenteredRoundedRectTransparentStrokesRandomStrokeWidth
-
-    // SeededRandom Call 1: base strokeWidth
-    let strokeWidth = Math.round(SeededRandom.getRandom() * maxStrokeWidth + 1);
-    // Ensure strokeWidth is even for this placement strategy for crisp fill and stroke with one path
-    strokeWidth = strokeWidth % 2 === 0 ? strokeWidth : strokeWidth + 1;
-
-    let initialCenter = { x: canvasWidth / 2, y: canvasHeight / 2 }; // Base center on grid
-
-    // SeededRandom Call 2: Center offset (50% chance to be on pixel center)
-    if (SeededRandom.getRandom() < 0.5) {
-        initialCenter = { x: initialCenter.x + 0.5, y: initialCenter.y + 0.5 };
-    }
-
-    // SeededRandom Call 3: base rectWidth
-    let rectWidth = Math.round(50 + SeededRandom.getRandom() * maxAllowedContentWidth);
-    // SeededRandom Call 4: base rectHeight
-    let rectHeight = Math.round(50 + SeededRandom.getRandom() * maxAllowedContentHeight);
-
-    const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(rectWidth, rectHeight, strokeWidth, initialCenter);
-    return { center: initialCenter, adjustedDimensions, strokeWidth };
-}
+// Helper functions getRandomColor, adjustDimensionsForCrispStrokeRendering, 
+// calculateCrispFillAndStrokeRectParams are available from test-helper-functions.js
 
 
 /**
@@ -107,8 +73,18 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
     }
 
     for (let i = 0; i < numToDraw; i++) {
-        // Calls 1-4 for SeededRandom happen inside _placeRectForTransparentTest
-        const placement = _placeRectForTransparentTest(canvasWidth, canvasHeight);
+        // Calls 1-4 for SeededRandom happen inside calculateCrispFillAndStrokeRectParams
+        const placement = calculateCrispFillAndStrokeRectParams({
+            canvasWidth,
+            canvasHeight,
+            minWidth: 50,
+            maxWidth: canvasWidth * 0.6,
+            minHeight: 50,
+            maxHeight: canvasHeight * 0.6,
+            maxStrokeWidth: 40,        // Higher max stroke width for this test
+            ensureEvenStroke: true,
+            randomPosition: false      // Centered positioning
+        });
         const center = placement.center;
         const finalRectWidth = placement.adjustedDimensions.width;
         const finalRectHeight = placement.adjustedDimensions.height;
