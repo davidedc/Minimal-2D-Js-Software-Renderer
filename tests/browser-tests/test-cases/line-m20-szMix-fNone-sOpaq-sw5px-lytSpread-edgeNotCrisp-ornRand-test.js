@@ -94,16 +94,10 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
     const canvasWidth = ctx.canvas.width;
     const canvasHeight = ctx.canvas.height;
 
-    // Helper to get a random point within canvas boundaries (integer for simplicity here)
-    // SeededRandom.getRandom() is expected to be seeded by RenderTest per iteration.
-    const getRandomPoint = () => ({
-        x: Math.floor(SeededRandom.getRandom() * canvasWidth),
-        y: Math.floor(SeededRandom.getRandom() * canvasHeight)
-    });
-
     for (let i = 0; i < lineCount; i++) {
-        const start = getRandomPoint();
-        const end = getRandomPoint();
+        // Use the existing getRandomPoint function with no margin and integer precision to get points anywhere within canvas boundaries
+        const start = getRandomPoint(0, canvasWidth, canvasHeight, 0);
+        const end = getRandomPoint(0, canvasWidth, canvasHeight, 0);
 
         // --- Single Drawing Block ---
         // Using strokeLine as it's common in these tests.
