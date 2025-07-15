@@ -44,51 +44,8 @@
  * @fileoverview Test definition for a single random circle with proper pixel alignment.
  */
 
-// Helper functions _colorObjectToString, getRandomColor, adjustDimensionsForCrispStrokeRendering, 
-// placeCloseToCenterAtPixel, placeCloseToCenterAtGrid are assumed globally available.
-
-/**
- * Adapts the logic from calculateCircleParameters to generate circle properties.
- * @param {number} canvasWidth The width of the canvas.
- * @param {number} canvasHeight The height of the canvas.
- * @returns {object} An object containing centerX, centerY, radius, strokeWidth, and atPixel.
- */
-function _calculateSingleRandomCircleParams(canvasWidth, canvasHeight) {
-    const minRadius = 10;
-    const maxRadius = 225; // Max radius from original options
-    const minStrokeWidth = 1;
-    const maxStrokeWidth = 30; // Max stroke width from original options
-
-    // SeededRandom Call 1: atPixel determination
-    const atPixel = SeededRandom.getRandom() < 0.5;
-  
-    let centerX, centerY;
-    if (atPixel) {
-        centerX = Math.floor(canvasWidth / 2) + 0.5;
-        centerY = Math.floor(canvasHeight / 2) + 0.5;
-    } else {
-        centerX = Math.floor(canvasWidth / 2);
-        centerY = Math.floor(canvasHeight / 2);
-    }
-  
-    // SeededRandom Call 2: base diameter
-    const diameter = Math.floor(minRadius * 2 + SeededRandom.getRandom() * (maxRadius * 2 - minRadius * 2));
-    const baseRadius = diameter / 2;
-  
-    // SeededRandom Call 3: strokeWidth
-    // Max allowed stroke is also limited by radius size (original had baseRadius/1 but that seems too large for thinner circles)
-    // Let's use a simpler constraint like ensuring stroke is not more than radius itself for very small circles.
-    const maxAllowedStrokeByRadius = Math.max(1, baseRadius); 
-    const strokeWidth = minStrokeWidth + Math.floor(SeededRandom.getRandom() * Math.min(maxStrokeWidth - minStrokeWidth + 1, maxAllowedStrokeByRadius));
-  
-    // Note: Original calculateCircleParameters had logic for randomPosition, which is false for this specific test case.
-
-    const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(diameter, diameter, strokeWidth, { x: centerX, y: centerY });
-    const finalDiameter = adjustedDimensions.width;
-    const radius = finalDiameter / 2;
-  
-    return { centerX, centerY, radius, strokeWidth, finalDiameter, atPixel };
-}
+// Helper functions getRandomColor, adjustDimensionsForCrispStrokeRendering, 
+// calculateCircleTestParameters are available from test-helper-functions.js
 
 
 /**
@@ -115,8 +72,19 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
     }
 
     for (let i = 0; i < numToDraw; i++) {
-        // SR calls 1-3 happen inside _calculateSingleRandomCircleParams
-        const params = _calculateSingleRandomCircleParams(canvasWidth, canvasHeight);
+        // SR calls 1-3 happen inside calculateCircleTestParameters
+        const params = calculateCircleTestParameters({
+            canvasWidth,
+            canvasHeight,
+            minRadius: 10,
+            maxRadius: 225,
+            hasStroke: true,         // Has stroke
+            minStrokeWidth: 1,
+            maxStrokeWidth: 30,
+            randomPosition: false,   // Centered, not randomly positioned
+            marginX: 10,             // Default margins (not used since randomPosition=false)
+            marginY: 10
+        });
         let { centerX, centerY, radius, strokeWidth, finalDiameter, atPixel } = params;
         
         // SR Call 4: strokeColor
