@@ -43,44 +43,8 @@
  * @fileoverview Test definition for a single circle with no stroke and only fill.
  */
 
-// Helper functions _colorObjectToString, getRandomColor, adjustDimensionsForCrispStrokeRendering, 
-// placeCloseToCenterAtPixel, placeCloseToCenterAtGrid are assumed globally available.
-
-/**
- * Adapts the logic from calculateCircleParameters for a no-stroke circle.
- * @param {number} canvasWidth The width of the canvas.
- * @param {number} canvasHeight The height of the canvas.
- * @returns {object} An object containing centerX, centerY, radius, and atPixel.
- */
-function _calculateSingleNoStrokeCircleParams(canvasWidth, canvasHeight) {
-    const minRadius = 10;
-    const maxRadius = 225;
-    const hasStroke = false; // Key difference for this test
-    const strokeWidth = 0;   // Effectively 0
-
-    // SeededRandom Call 1: atPixel determination
-    const atPixel = SeededRandom.getRandom() < 0.5;
-  
-    let centerX, centerY;
-    if (atPixel) {
-        centerX = Math.floor(canvasWidth / 2) + 0.5;
-        centerY = Math.floor(canvasHeight / 2) + 0.5;
-    } else {
-        centerX = Math.floor(canvasWidth / 2);
-        centerY = Math.floor(canvasHeight / 2);
-    }
-  
-    // SeededRandom Call 2: base diameter
-    const diameter = Math.floor(minRadius * 2 + SeededRandom.getRandom() * (maxRadius * 2 - minRadius * 2));
-  
-    // No SeededRandom call for strokeWidth as hasStroke is false.
-
-    const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(diameter, diameter, strokeWidth, { x: centerX, y: centerY });
-    const finalDiameter = adjustedDimensions.width;
-    const radius = finalDiameter / 2;
-  
-    return { centerX, centerY, radius, finalDiameter, atPixel }; // strokeWidth is implicitly 0
-}
+// Helper functions getRandomColor, adjustDimensionsForCrispStrokeRendering, 
+// calculateCircleTestParameters are available from test-helper-functions.js
 
 
 /**
@@ -107,8 +71,15 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
     }
 
     for (let i = 0; i < numToDraw; i++) {
-        // SR calls 1-2 happen inside _calculateSingleNoStrokeCircleParams
-        const params = _calculateSingleNoStrokeCircleParams(canvasWidth, canvasHeight);
+        // SR calls 1-2 happen inside calculateCircleTestParameters
+        const params = calculateCircleTestParameters({
+            canvasWidth,
+            canvasHeight,
+            minRadius: 10,
+            maxRadius: 225,
+            hasStroke: false,        // No stroke
+            randomPosition: false    // Centered, not random positioning
+        });
         let { centerX, centerY, radius, finalDiameter, atPixel } = params;
         
         // SR Call 3: fillColor 
