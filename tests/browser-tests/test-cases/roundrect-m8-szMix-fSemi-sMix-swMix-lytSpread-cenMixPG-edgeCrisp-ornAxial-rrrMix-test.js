@@ -42,41 +42,8 @@
  * @fileoverview Test definition for multiple axis-aligned rounded rectangles with random parameters.
  */
 
-// Helper functions _colorObjectToString, getRandomColor, adjustDimensionsForCrispStrokeRendering 
-// are assumed globally available.
-
-/**
- * Adapted from placeRoundedRectWithFillAndStrokeBothCrisp in src/scene-creation/scene-creation-rounded-rects.js
- * Calculates parameters for a rectangle aiming for crisp fill and stroke.
- * This version is specific to the needs of the axis-aligned rounded rectangles test (e.g. maxStrokeWidth = 10).
- * @param {number} canvasWidth The width of the canvas.
- * @param {number} canvasHeight The height of the canvas.
- * @returns {{initialCenter: {x: number, y: number}, adjustedDimensions: {width: number, height: number}, strokeWidth: number}}
- */
-function _placeRectForAxisAlignedTest(canvasWidth, canvasHeight) {
-    const maxAllowedContentWidth = canvasWidth * 0.6;
-    const maxAllowedContentHeight = canvasHeight * 0.6;
-    const maxStrokeWidth = 10; // As used in the original addAxisAlignedRoundedRectangles -> placeRoundedRectWithFillAndStrokeBothCrisp(10)
-
-    // SeededRandom Call 1: base strokeWidth
-    let strokeWidth = Math.round(SeededRandom.getRandom() * maxStrokeWidth + 1);
-    strokeWidth = strokeWidth % 2 === 0 ? strokeWidth : strokeWidth + 1; // Ensure even
-
-    let initialCenter = { x: canvasWidth / 2, y: canvasHeight / 2 }; // Base center on grid
-
-    // SeededRandom Call 2: Center offset (50% chance to be on pixel center)
-    if (SeededRandom.getRandom() < 0.5) {
-        initialCenter = { x: initialCenter.x + 0.5, y: initialCenter.y + 0.5 };
-    }
-
-    // SeededRandom Call 3: base rectWidth
-    let rectWidth = Math.round(50 + SeededRandom.getRandom() * maxAllowedContentWidth);
-    // SeededRandom Call 4: base rectHeight
-    let rectHeight = Math.round(50 + SeededRandom.getRandom() * maxAllowedContentHeight);
-
-    const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(rectWidth, rectHeight, strokeWidth, initialCenter);
-    return { initialCenter, adjustedDimensions, strokeWidth }; // Return initialCenter before random offset
-}
+// Helper functions getRandomColor, adjustDimensionsForCrispStrokeRendering, 
+// calculateCrispFillAndStrokeRectParams are available from test-helper-functions.js
 
 
 /**
@@ -98,9 +65,19 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
     const canvasHeight = ctx.canvas.height;
 
     for (let i = 0; i < numToDraw; i++) {
-        // Calls 1-4 for SeededRandom happen inside _placeRectForAxisAlignedTest
-        const placement = _placeRectForAxisAlignedTest(canvasWidth, canvasHeight);
-        let currentCenter = placement.initialCenter; // This is the center *before* the per-instance random offset
+        // Calls 1-4 for SeededRandom happen inside calculateCrispFillAndStrokeRectParams
+        const placement = calculateCrispFillAndStrokeRectParams({
+            canvasWidth,
+            canvasHeight,
+            minWidth: 50,
+            maxWidth: canvasWidth * 0.6,
+            minHeight: 50,
+            maxHeight: canvasHeight * 0.6,
+            maxStrokeWidth: 10,
+            ensureEvenStroke: true,
+            randomPosition: false  // We'll apply our own offset below
+        });
+        let currentCenter = placement.center; // This is the center *before* the per-instance random offset
         const finalRectWidth = placement.adjustedDimensions.width;
         const finalRectHeight = placement.adjustedDimensions.height;
         const strokeWidth = placement.strokeWidth;
