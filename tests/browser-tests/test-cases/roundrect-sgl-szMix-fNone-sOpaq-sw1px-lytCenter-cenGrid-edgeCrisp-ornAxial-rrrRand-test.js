@@ -47,29 +47,6 @@
 // and use SeededRandom internally as needed.
 
 /**
- * Creates a path for a rounded rectangle.
- * @param {CanvasRenderingContext2D | CrispSwContext} ctx The rendering context.
- * @param {number} x The x-coordinate of the top-left corner.
- * @param {number} y The y-coordinate of the top-left corner.
- * @param {number} width The width of the rectangle.
- * @param {number} height The height of the rectangle.
- * @param {number} radius The corner radius.
- */
-/*
-function _roundedRectPath(ctx, x, y, width, height, radius) {
-    if (width < 2 * radius) radius = width / 2;
-    if (height < 2 * radius) radius = height / 2;
-    ctx.beginPath();
-    ctx.moveTo(x + radius, y);
-    ctx.arcTo(x + width, y, x + width, y + height, radius);
-    ctx.arcTo(x + width, y + height, x, y + height, radius);
-    ctx.arcTo(x, y + height, x, y + radius, radius);
-    ctx.arcTo(x, y, x + radius, y, radius);
-    ctx.closePath();
-}
-*/
-
-/**
  * Draws a single 1px stroked rounded rectangle, centered at a grid point.
  *
  * @param {CanvasRenderingContext2D | CrispSwContext} ctx The rendering context.
