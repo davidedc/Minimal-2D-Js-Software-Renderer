@@ -75,9 +75,6 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
     const canvasWidth = ctx.canvas.width;
     const canvasHeight = ctx.canvas.height;
 
-    // getRandomColor is assumed to be globally available from random-utils.js or similar and use SeededRandom
-    // const getRandomColor = (minAlpha, maxAlpha) => ({ r: Math.floor(SeededRandom.getRandom()*256), g: Math.floor(SeededRandom.getRandom()*256), b: Math.floor(SeededRandom.getRandom()*256), a: Math.floor(SeededRandom.getRandom()*(maxAlpha-minAlpha+1)+minAlpha) });
-
     for (let i = 0; i < numToDraw; i++) {
         // Preserve SeededRandom sequence from original addRotatedRectangles:
         // 1. center (via getRandomPoint which uses SeededRandom)
