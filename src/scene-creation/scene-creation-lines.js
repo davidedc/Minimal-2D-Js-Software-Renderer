@@ -20,7 +20,7 @@ function addRandomLines(shapes, log, currentIterationNumber, count = 15) {
     const start = getRandomPoint(1);
     const end = getRandomPoint(1);
     const thickness = Math.floor(SeededRandom.getRandom() * 10) + 1;
-    const color = getRandomColor(150, 255);
+    const color = getRandomColor("mixed");
     shapes.push({
       type: 'line',
       start,

@@ -89,7 +89,7 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
         // SR Call 6: strokeColor
         const strokeColorObj = getRandomColor(150, 230);
         // SR Call 7: fillColor 
-        const fillColorObj = getRandomColor(100, 200);
+        const fillColorObj = getRandomColor("semitransparent");
 
         const strokeColorForRender = { r: strokeColorObj.r, g: strokeColorObj.g, b: strokeColorObj.b, a: strokeColorObj.a };
         const fillColorForRender = { r: fillColorObj.r, g: fillColorObj.g, b: fillColorObj.b, a: fillColorObj.a };

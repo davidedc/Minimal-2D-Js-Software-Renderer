@@ -167,7 +167,7 @@ function createTestCircle(currentIterationNumber, hasStroke = true, randomPositi
     radius,
     strokeWidth,
     strokeColor: hasStroke ? getRandomColor(150, 230) : { r: 0, g: 0, b: 0, a: 0 },
-    fillColor: getRandomColor(100, 200),
+    fillColor: getRandomColor("semitransparent"),
     startAngle: 0,
     endAngle: 360
   };
@@ -297,7 +297,7 @@ function generateMultiplePreciseCircles(shapes, log, currentIterationNumber, cou
       strokeWidth,
       // If not including strokes, use transparent stroke color
       strokeColor: includeStrokes ? 
-                  getRandomColor(200, 255, i, count) : 
+                  getRandomColor("mixed", i, count) : 
                   { r: 0, g: 0, b: 0, a: 0 },
       // Use more opaque fills if no stroke to make them more visible
       fillColor: getRandomColor(includeStrokes ? 150 : 200, 

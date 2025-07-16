@@ -69,9 +69,9 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
         // SeededRandom Call 6: strokeWidth
         const strokeWidth = SeededRandom.getRandom() * 10 + 1;
         // SeededRandom Call 7: strokeColor 
-        const strokeColorObj = getRandomColor(100, 200); 
+        const strokeColorObj = getRandomColor("semitransparent"); 
         // SeededRandom Call 8: fillColor
-        const fillColorObj = getRandomColor(100, 200);
+        const fillColorObj = getRandomColor("semitransparent");
 
         const strokeColorForRender = { r: strokeColorObj.r, g: strokeColorObj.g, b: strokeColorObj.b, a: strokeColorObj.a };
         const fillColorForRender = { r: fillColorObj.r, g: fillColorObj.g, b: fillColorObj.b, a: fillColorObj.a };

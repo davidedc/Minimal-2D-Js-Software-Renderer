@@ -12,8 +12,8 @@
  * | Shape category         | circles        | The test renders circles using `ctx.fillAndStrokeCircle`.
  * | Count                  | multi-12       | The code loops 12 times in its visual test mode (`numToDraw` is 12).
  * | SizeCategory           | mixed          | The base radius is randomized in the range [8, 41], spanning XS, S, and M size categories.
- * | FillStyle              | semitransparent| Fill alpha is randomized via `getRandomColor(150, 200)`, which is always semi-transparent.
- * | StrokeStyle            | mixed          | Stroke alpha is randomized via `getRandomColor(200, 255)`, resulting in both opaque and semi-transparent strokes.
+ * | FillStyle              | semitransparent| Fill alpha is randomized via `getRandomColor("semitransparent")`, which is always semi-transparent.
+ * | StrokeStyle            | mixed          | Stroke alpha is randomized via `getRandomColor("mixed")`, resulting in both opaque and semi-transparent strokes.
  * | StrokeThickness        | 1px-4px        | `strokeWidth` is calculated as an integer in the range [1, 4].
  * | Layout                 | spread         | Each circle is given a unique, randomized position within the canvas, distributing them.
  * | CenteredAt             | random         | The final center coordinates for each circle are randomized integers, not snapped to a grid or pixel center.
@@ -87,9 +87,9 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
         // SR Call 6: strokeColor (opaque)
         // The original used palette indexing (i, count) for getRandomColor. 
         // Using simpler version here; adjust if color checks (if any were added) fail.
-        const strokeColorObj = getRandomColor(200, 255);
+        const strokeColorObj = getRandomColor("mixed");
         // SR Call 7: fillColor (semi-transparent)
-        const fillColorObj = getRandomColor(150, 200); 
+        const fillColorObj = getRandomColor("semitransparent"); 
 
         const strokeColorForRender = { r: strokeColorObj.r, g: strokeColorObj.g, b: strokeColorObj.b, a: strokeColorObj.a };
         const fillColorForRender = { r: fillColorObj.r, g: fillColorObj.g, b: fillColorObj.b, a: fillColorObj.a };

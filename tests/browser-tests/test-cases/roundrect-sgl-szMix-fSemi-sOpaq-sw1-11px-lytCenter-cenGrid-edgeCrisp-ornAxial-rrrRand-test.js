@@ -12,8 +12,8 @@
  * | Shape category         | rounded-rects  | The test draws using `ctx.fillRoundRect()` and `ctx.strokeRoundRect()`.
  * | Count                  | single         | The test is designed to draw one shape in its visual regression mode (`instances = null`).
  * | SizeCategory           | mixed          | `baseRectWidth` is randomized in `[50, 50 + 0.6 * canvasWidth]`. With a typical 800px canvas, this spans M, L, and XL size categories.
- * | FillStyle              | semitransparent| Fill color alpha is randomized in `[100, 200]` via `getRandomColor(100, 200)`.
- * | StrokeStyle            | opaque         | Stroke color alpha is fixed at 255 via `getRandomColor(255, 255)`.
+ * | FillStyle              | semitransparent| Fill color alpha is randomized in `[100, 200]` via `getRandomColor("semitransparent")`.
+ * | StrokeStyle            | opaque         | Stroke color alpha is fixed at 255 via `getRandomColor("opaque")`.
  * | StrokeThickness        | 1px-11px       | `strokeWidth` is `Math.round(SeededRandom.getRandom() * 10 + 1)`, which results in an integer range of 1 to 11.
  * | Layout                 | centered       | The shape's reference point is calculated at the canvas center (`Math.floor(canvasWidth / 2)`).
  * | CenteredAt             | grid           | The center coordinates are snapped to integer values (`Math.floor`), aligning them with grid intersections.
@@ -94,9 +94,9 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
         const radius = Math.round(SeededRandom.getRandom() * Math.min(finalRectWidth, finalRectHeight) * 0.2);
         
         // SeededRandom Call 5 (potentially multiple inside getRandomColor): strokeColor (opaque)
-        const strokeColorObj = getRandomColor(255, 255); 
+        const strokeColorObj = getRandomColor("opaque"); 
         // SeededRandom Call 6 (potentially multiple inside getRandomColor): fillColor (semi-transparent)
-        const fillColorObj = getRandomColor(100, 200);
+        const fillColorObj = getRandomColor("semitransparent");
 
         const strokeColorStr = strokeColorObj ? colorToString(strokeColorObj) : 'rgba(0,0,0,0)';
         const fillColorStr = fillColorObj ? colorToString(fillColorObj) : 'rgba(0,0,0,0)';

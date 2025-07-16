@@ -39,14 +39,34 @@ function getBitsPerChannel(numberOfPartitions) {
 //
 // Note that whichPartition is 0-indexed. E.g. if numberOfPartitions is 4, whichPartition
 // should be in the range [0, 3].
-function getRandomColor(minAlpha = 0, maxAlpha = 255, whichPartition = null, numberOfPartitions = null) {
-  // Clamp alpha values to valid range
-  minAlpha = Math.max(0, Math.min(255, minAlpha));
-  maxAlpha = Math.max(0, Math.min(255, maxAlpha));
-
-  // Ensure minAlpha <= maxAlpha
-  if (minAlpha > maxAlpha) {
-      [minAlpha, maxAlpha] = [maxAlpha, minAlpha];
+//
+// alphaMode: "opaque" (255), "semitransparent" (100-200), or "mixed" (50% opaque, 50% semitransparent)
+function getRandomColor(alphaMode, whichPartition = null, numberOfPartitions = null) {
+  // Validate alphaMode
+  const validModes = ["opaque", "semitransparent", "mixed"];
+  if (!validModes.includes(alphaMode)) {
+    throw new Error(`Invalid alpha mode: ${alphaMode}. Valid modes: ${validModes.join(", ")}`);
+  }
+  
+  let minAlpha, maxAlpha;
+  
+  switch(alphaMode) {
+    case "opaque":
+      minAlpha = maxAlpha = 255;
+      break;
+    case "semitransparent": 
+      minAlpha = 100; 
+      maxAlpha = 200;
+      break;
+    case "mixed":
+      // 50% chance opaque, 50% chance semitransparent
+      if (SeededRandom.getRandom() < 0.5) {
+        minAlpha = maxAlpha = 255;
+      } else {
+        minAlpha = 100; 
+        maxAlpha = 200;
+      }
+      break;
   }
 
   // Generate random alpha value between minAlpha and maxAlpha (inclusive)

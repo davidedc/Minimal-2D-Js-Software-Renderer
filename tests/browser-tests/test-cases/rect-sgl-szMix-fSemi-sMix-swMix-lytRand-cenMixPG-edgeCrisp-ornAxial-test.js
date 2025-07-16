@@ -101,8 +101,8 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
         currentCenter.x += xOffset;
         currentCenter.y += yOffset;
 
-        const fillObj = getRandomColor(100, 200);
-        const strokeObj = getRandomColor(200, 255);
+        const fillObj = getRandomColor("semitransparent");
+        const strokeObj = getRandomColor("mixed");
         const currentFillColor = colorToString(fillObj);
         const currentStrokeColor = colorToString(strokeObj);
         // --- End property generation for this instance ---

@@ -90,7 +90,7 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
         const start = getRandomPoint(null, canvasWidth, canvasHeight, 0);
         const end = getRandomPoint(null, canvasWidth, canvasHeight, 0);
         const thickness = Math.floor(SeededRandom.getRandom() * 10) + 1; // Thickness 1 to 10
-        const colorStr = colorToString(getRandomColor(150, 255));
+        const colorStr = colorToString(getRandomColor("mixed"));
 
         ctx.lineWidth = thickness;
         ctx.strokeStyle = colorStr;

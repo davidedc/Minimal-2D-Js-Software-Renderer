@@ -11,8 +11,8 @@ function addAxisAlignedRectangles(shapes, log, currentIterationNumber, count = 5
       y: center.y + yOffset
     };
     
-    const strokeColor = getRandomColor(200, 255);
-    const fillColor = getRandomColor(100, 200);
+    const strokeColor = getRandomColor("mixed");
+    const fillColor = getRandomColor("semitransparent");
 
     shapes.push({
       type: 'rect',
@@ -37,8 +37,8 @@ function addRotatedRectangles(shapes, log, currentIterationNumber, count = 5) {
     const height = 30 + SeededRandom.getRandom() * 100;
     const rotation = SeededRandom.getRandom() * Math.PI * 2;
     const strokeWidth = SeededRandom.getRandom() * 10 + 1;
-    const strokeColor = getRandomColor(200, 255);
-    const fillColor = getRandomColor(100, 200);
+    const strokeColor = getRandomColor("mixed");
+    const fillColor = getRandomColor("semitransparent");
 
     shapes.push({
       type: 'rect',

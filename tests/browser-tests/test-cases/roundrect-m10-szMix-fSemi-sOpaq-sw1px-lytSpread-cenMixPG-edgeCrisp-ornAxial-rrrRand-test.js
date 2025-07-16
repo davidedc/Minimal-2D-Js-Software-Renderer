@@ -12,8 +12,8 @@
  * | Shape category         | rounded-rects  | The test draws rounded rectangles using `ctx.fillRoundRect` and `ctx.strokeRoundRect`.
  * | Count                  | multi-10       | The test draws 10 instances in a loop for visual regression.
  * | SizeCategory           | mixed          | `width` and `height` are randomized in `[50, 150]`, which spans 'M' (40-79px) and 'L' (80-159px) size categories.
- * | FillStyle              | semitransparent| `fillColorObj` is created via `getRandomColor(100, 200)`, resulting in an alpha channel between 100-200.
- * | StrokeStyle            | opaque         | `strokeColorObj` is created via `getRandomColor(255, 255)`, resulting in a fixed alpha of 255.
+ * | FillStyle              | semitransparent| `fillColorObj` is created via `getRandomColor("semitransparent")`, resulting in an alpha channel between 100-200.
+ * | StrokeStyle            | opaque         | `strokeColorObj` is created via `getRandomColor("opaque")`, resulting in a fixed alpha of 255.
  * | StrokeThickness        | 1px            | `ctx.lineWidth` is hardcoded to `1`.
  * | Layout                 | spread         | The 10 shapes are positioned independently at randomized locations, distributing them across the canvas.
  * | CenteredAt             | mixed-pixel-grid| The center is first rounded to an integer grid, then adjusted by `adjustCenterForCrispStrokeRendering` to a pixel center (`*.5`).
@@ -81,9 +81,9 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
         const radius = Math.round(SeededRandom.getRandom() * Math.min(width, height) * 0.2);
         
         // SeededRandom Call 6: strokeColor (opaque)
-        const strokeColorObj = getRandomColor(255, 255); 
+        const strokeColorObj = getRandomColor("opaque"); 
         // SeededRandom Call 7: fillColor (semi-transparent)
-        const fillColorObj = getRandomColor(100, 200);
+        const fillColorObj = getRandomColor("semitransparent");
 
         const strokeColorStr = strokeColorObj ? colorToString(strokeColorObj) : 'rgba(0,0,0,0)';
         const fillColorStr = fillColorObj ? colorToString(fillColorObj) : 'rgba(0,0,0,0)';

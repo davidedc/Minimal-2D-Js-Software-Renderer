@@ -83,7 +83,7 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
         let { centerX, centerY, radius, finalDiameter, atPixel } = params;
         
         // SR Call 5: fillColor (opaque or semi-transparent, original used palette indexing)
-        const fillColorObj = getRandomColor(200, 255); 
+        const fillColorObj = getRandomColor("mixed"); 
 
         const fillColorForRender = { r: fillColorObj.r, g: fillColorObj.g, b: fillColorObj.b, a: fillColorObj.a };
 

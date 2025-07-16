@@ -4,8 +4,8 @@ function getRandomArc() {
   const startAngle = SeededRandom.getRandom() * 360;
   const endAngle = startAngle + SeededRandom.getRandom() * 270 + 90;
   const strokeWidth = SeededRandom.getRandom() * 10 + 1;
-  const strokeColor = getRandomColor(200, 255);
-  const fillColor = getRandomColor(100, 200);
+  const strokeColor = getRandomColor("mixed");
+  const fillColor = getRandomColor("semitransparent");
   
   return {
       type: 'arc',

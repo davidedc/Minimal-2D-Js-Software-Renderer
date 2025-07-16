@@ -83,7 +83,7 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
         let { centerX, centerY, radius, finalDiameter, atPixel } = params;
         
         // SR Call 3: fillColor 
-        const fillColorObj = getRandomColor(100, 200);
+        const fillColorObj = getRandomColor("semitransparent");
         const fillColorForRender = { r: fillColorObj.r, g: fillColorObj.g, b: fillColorObj.b, a: fillColorObj.a };
 
         let drawCenterX = centerX;
