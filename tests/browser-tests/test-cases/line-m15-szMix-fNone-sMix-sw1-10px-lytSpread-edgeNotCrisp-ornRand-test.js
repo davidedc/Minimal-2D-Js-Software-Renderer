@@ -84,26 +84,13 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
 
     // Use the existing getRandomPoint function with no margin to get points anywhere within canvas boundaries
 
-    // Helper to get a random color string (rgba)
-    // Original used getRandomColor(150, 255) where alpha is generated first.
-    const getRandomColorString = () => {
-        // Match order of SeededRandom.getRandom() calls in global getRandomColor: Alpha, then R, G, B
-        const minAlphaForThisTest = 150;
-        const maxAlphaForThisTest = 255;
-        const a_byte = Math.floor(minAlphaForThisTest + SeededRandom.getRandom() * (maxAlphaForThisTest - minAlphaForThisTest + 1));
-        
-        const r = Math.floor(SeededRandom.getRandom() * 256);
-        const g = Math.floor(SeededRandom.getRandom() * 256);
-        const b = Math.floor(SeededRandom.getRandom() * 256);
-        
-        return `rgba(${r},${g},${b},${(a_byte / 255).toFixed(3)})`;
-    };
+    // Use existing getRandomColor and colorToString functions instead of duplicate code
 
     for (let i = 0; i < lineCount; i++) {
         const start = getRandomPoint(null, canvasWidth, canvasHeight, 0);
         const end = getRandomPoint(null, canvasWidth, canvasHeight, 0);
         const thickness = Math.floor(SeededRandom.getRandom() * 10) + 1; // Thickness 1 to 10
-        const colorStr = getRandomColorString();
+        const colorStr = colorToString(getRandomColor(150, 255));
 
         ctx.lineWidth = thickness;
         ctx.strokeStyle = colorStr;
