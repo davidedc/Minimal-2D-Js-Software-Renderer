@@ -12,8 +12,8 @@
  * | Shape category         | `rounded-rects`     | The test renders a rounded rectangle using `ctx.fillRoundRect()` and `ctx.strokeRoundRect()`.
  * | Count                  | `single`            | The test logic draws only one shape instance in visual test mode.
  * | SizeCategory           | `mixed`             | The rectangle's width/height are randomized (e.g., from `50` to `~530px`), spanning M, L, and XL size categories.
- * | FillStyle              | `semitransparent`   | Fill color is set with a random alpha between 50 and 150 (out of 255) using `getRandomColor(50, 150)`.
- * | StrokeStyle            | `semitransparent`   | Stroke color is set with a random alpha between 50 and 150 (out of 255) using `getRandomColor(50, 150)`.
+ * | FillStyle              | `semitransparent`   | Fill color is set with a random alpha between 50 and 150 (out of 255) using `getRandomColor("semitransparent-light")`.
+ * | StrokeStyle            | `semitransparent`   | Stroke color is set with a random alpha between 50 and 150 (out of 255) using `getRandomColor("semitransparent-light")`.
  * | StrokeThickness        | `mixed`             | Stroke width is randomized to be an even number between 2 and 42. A discrete set of values is categorized as 'mixed'.
  * | Layout                 | `centered`          | The shape's position is calculated relative to the canvas center.
  * | CenteredAt             | `mixed-pixel-grid`  | The center has a 50% chance of being on a grid intersection (integer coordinates) or a pixel center (`*.5` coordinates).
@@ -91,9 +91,9 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
         const strokeWidth = placement.strokeWidth;
 
         // SeededRandom Call 5: strokeColor (semi-transparent)
-        const strokeColorObj = getRandomColor(50, 150); 
+        const strokeColorObj = getRandomColor("semitransparent-light"); 
         // SeededRandom Call 6: fillColor (semi-transparent)
-        const fillColorObj = getRandomColor(50, 150);
+        const fillColorObj = getRandomColor("semitransparent-light");
         // SeededRandom Call 7: radius
         const radius = Math.round(SeededRandom.getRandom() * Math.min(finalRectWidth, finalRectHeight) * 0.2);
 

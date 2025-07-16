@@ -185,8 +185,8 @@ function addCenteredRoundedRectTransparentStrokesRandomStrokeWidth(shapes, log, 
 
   var { center, adjustedDimensions, strokeWidth } = placeRoundedRectWithFillAndStrokeBothCrisp(40);
 
-  const strokeColor = getRandomColor(50, 150);
-  const fillColor = getRandomColor(50, 150);
+  const strokeColor = getRandomColor("semitransparent-light");
+  const fillColor = getRandomColor("semitransparent-light");
   const radius = Math.round(SeededRandom.getRandom() * Math.min(adjustedDimensions.width , adjustedDimensions.height) * 0.2);
   
   shapes.push({

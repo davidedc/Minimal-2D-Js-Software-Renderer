@@ -40,10 +40,10 @@ function getBitsPerChannel(numberOfPartitions) {
 // Note that whichPartition is 0-indexed. E.g. if numberOfPartitions is 4, whichPartition
 // should be in the range [0, 3].
 //
-// alphaMode: "opaque" (255), "semitransparent" (100-200), or "mixed" (50% opaque, 50% semitransparent)
+// alphaMode: "opaque" (255), "semitransparent" (100-200), "semitransparent-light" (50-150), or "mixed" (50% opaque, 50% semitransparent)
 function getRandomColor(alphaMode, whichPartition = null, numberOfPartitions = null) {
   // Validate alphaMode
-  const validModes = ["opaque", "semitransparent", "mixed"];
+  const validModes = ["opaque", "semitransparent", "semitransparent-light", "mixed"];
   if (!validModes.includes(alphaMode)) {
     throw new Error(`Invalid alpha mode: ${alphaMode}. Valid modes: ${validModes.join(", ")}`);
   }
@@ -57,6 +57,10 @@ function getRandomColor(alphaMode, whichPartition = null, numberOfPartitions = n
     case "semitransparent": 
       minAlpha = 100; 
       maxAlpha = 200;
+      break;
+    case "semitransparent-light":
+      minAlpha = 50;
+      maxAlpha = 150;
       break;
     case "mixed":
       // 50% chance opaque, 50% chance semitransparent

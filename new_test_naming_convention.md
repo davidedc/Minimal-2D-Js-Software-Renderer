@@ -56,8 +56,8 @@ Facets are ordered from the most general to the most specific, following this se
 | **Shape** | `lines`, `circles`, `rectangles`, `rounded-rects`, `arcs`, `scene`, `mixed` | `line`, `circle`, `rect`, `roundrect`, `arc`, `scene`, `mixshape` |
 | **Count** | `single`, `multi`, `multi-[N]` | `sgl`, `multi`, `m[N]` (e.g., `m5`) |
 | **SizeCategory** | `XS`...`XL`, `mixed` | `xs`, `s`, `m`, `l`, `xl`, `szMix` |
-| **FillStyle** | `none`, `opaque`, `semitransparent`, `mixed` | `fNone`, `fOpaq`, `fSemi`, `fMix` |
-| **StrokeStyle** | `none`, `opaque`, `semitransparent`, `mixed` | `sNone`, `sOpaq`, `sSemi`, `sMix` |
+| **FillStyle** | `none`, `opaque`, `semitransparent`, `semitransparent-light`, `mixed` | `fNone`, `fOpaq`, `fSemi`, `fSemiLight`, `fMix` |
+| **StrokeStyle** | `none`, `opaque`, `semitransparent`, `semitransparent-light`, `mixed` | `sNone`, `sOpaq`, `sSemi`, `sSemiLight`, `sMix` |
 | **StrokeThickness**| `[N]px`, `[N]-[M]px`, `mixed` | `sw[N]px`, `sw[N]-[M]px`, `swMix` |
 | **Layout** | `spread`, `grid`, `random`, `centered`, `mixed` | `lytSpread`, `lytGrid`, `lytRand`, `lytCenter`, `lytMix` |
 | **CenteredAt** | `pixel`, `grid`, `mixed-pixel-grid`, `random` | `cenPx`, `cenGrid`, `cenMixPG`, `cenRand` |
@@ -74,7 +74,26 @@ Facets are ordered from the most general to the most specific, following this se
 | **Clip Size** | `XS`...`XL`, `mixed` | `clpSzXs`...`clpSzXl`, `clpSzMix` |
 | **Clip Edge Align**| `crisp`, `not-crisp` | `clpEdgeCrisp`, `clpEdgeNotCrisp` |
 
-## 5. Omission Rules
+## 5. Facet Value Criteria
+
+### FillStyle and StrokeStyle Transparency Levels
+
+The transparency modes provide a clear hierarchy from fully opaque to increasingly transparent:
+
+- **`none`**: No fill/stroke applied (alpha = 0 or no operation)
+- **`opaque`**: Full opacity (alpha = 255)
+- **`semitransparent`**: Medium transparency (alpha 100-200) - standard semitransparent range
+- **`semitransparent-light`**: Light transparency (alpha 50-150) - more see-through than standard semitransparent
+- **`mixed`**: Randomized across multiple transparency categories
+
+### Usage Guidelines
+
+- Use `semitransparent-light` for cases requiring lighter, more subtle transparency effects
+- Use `semitransparent` for standard medium transparency
+- Use `mixed` when the test randomly selects between different transparency levels
+- The naming provides a clear progression: `opaque` → `semitransparent` → `semitransparent-light`
+
+## 6. Omission Rules
 
 To prevent excessively long filenames, the following components should be omitted:
 
@@ -83,7 +102,7 @@ To prevent excessively long filenames, the following components should be omitte
 3.  **Clipping:** If `Clipped on shape` is `none`, the entire clipping block (all `clp...` facets) is omitted.
 4.  **StrokeThickness:** It is recommended to omit `StrokeThickness` if `StrokeStyle` is `sNone`.
 
-## 6. Examples
+## 7. Examples
 
 #### Example 1: A complex rounded rectangle test
 
@@ -132,4 +151,20 @@ To prevent excessively long filenames, the following components should be omitte
     *   Layout: `lytRand`
     *   Edge: `edgeCrisp`
     *   Orientation: `ornHoriz`
-*   **New Name:** `line-sgl-m-fNone-sOpaq-sw1px-lytRand-edgeCrisp-ornHoriz-test.js` 
+*   **New Name:** `line-sgl-m-fNone-sOpaq-sw1px-lytRand-edgeCrisp-ornHoriz-test.js`
+
+#### Example 4: Light transparency test
+
+*   **Test Description:** A rounded rectangle test using light transparency for both fill and stroke
+*   **Analysis:**
+    *   Shape: `roundrect`
+    *   Count: `sgl`
+    *   Size: `szMix`
+    *   Fill: `fSemiLight`
+    *   Stroke: `sSemiLight`
+    *   StrokeWidth: `swMix`
+    *   Layout: `lytCenter`
+    *   CenteredAt: `cenMixPG`
+    *   Edge: `edgeCrisp`
+    *   RoundRectRadius: `rrrRand`
+*   **New Name:** `roundrect-sgl-szMix-fSemiLight-sSemiLight-swMix-lytCenter-cenMixPG-edgeCrisp-rrrRand-test.js` 

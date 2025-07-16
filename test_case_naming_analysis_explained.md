@@ -95,11 +95,12 @@ This single scale is used for all linear pixel measurements across all shape cat
 ### 6. `FillStyle`
 
 *   **Description**: Indicates the nature of the shape's fill, focusing on its presence and opacity.
-*   **Observed Values in v19.tsv**: `N/A`, `mixed`, `opaque`, `none`, `semitransparent`.
+*   **Observed Values in v19.tsv**: `N/A`, `mixed`, `opaque`, `none`, `semitransparent`, `semitransparent-light`.
 *   **Criteria**:
     *   `none`: No fill is applied (e.g., lines by default, or if `fillStyle` alpha is 0, or no fill operation is called for a shape). Filenames with `--no-fill--` also map to this.
     *   `opaque`: A fill is applied with full opacity (alpha = 1.0 or 255). This is often the default for `getRandomColor()` if alpha isn't specified.
-    *   `semitransparent`: A fill is applied with partial opacity (alpha between 0 and 1, exclusive). Filenames with "semitransparent_fill" or "transparent_fill" (if fill is present but alpha is <1) lead to this.
+    *   `semitransparent`: A fill is applied with medium transparency (alpha 100-200). This is the standard semitransparent range using `getRandomColor("semitransparent")`.
+    *   `semitransparent-light`: A fill is applied with light transparency (alpha 50-150). This provides more subtle, see-through effects using `getRandomColor("semitransparent-light")`.
     *   `mixed`: If different shapes in the test have different fill styles (e.g., some opaque, some none), or if the fill opacity itself is randomized across these categories. The `scene--all-shapes-combined--test.js` is a prime example.
     *   `N/A`: For the main scene test, as fills are per-component.
     *   Determined by analyzing `ctx.fillStyle` assignments, alpha values in color objects, and calls to fill methods (`fillRect`, `fillCircle`, `fillAndOuterStrokeArc`, etc.) in the test scripts. Parenthesized comments were removed.
@@ -109,11 +110,12 @@ This single scale is used for all linear pixel measurements across all shape cat
 ### 7. `StrokeStyle`
 
 *   **Description**: Indicates the nature of the shape's stroke, focusing on its presence and opacity.
-*   **Observed Values in v19.tsv**: `N/A`, `mixed`, `opaque`, `none`, `semitransparent`.
+*   **Observed Values in v19.tsv**: `N/A`, `mixed`, `opaque`, `none`, `semitransparent`, `semitransparent-light`.
 *   **Criteria**:
     *   `none`: No stroke is applied (e.g., `strokeWidth` is 0, no stroke operation, or filename explicitly states `--no-stroke--` or `--no-NA-stroke--`).
     *   `opaque`: A stroke is applied with full opacity. This is common if `strokeStyle` is set by `getRandomColor()` without specific alpha manipulation, or if color is a fixed opaque color. Filenames with "opaque_stroke" also map here.
-    *   `semitransparent`: A stroke is applied with partial opacity. Filenames with "semitransparent_stroke" or "semi-stroke" or "transparent_stroke" lead to this.
+    *   `semitransparent`: A stroke is applied with medium transparency (alpha 100-200). This is the standard semitransparent range using `getRandomColor("semitransparent")`.
+    *   `semitransparent-light`: A stroke is applied with light transparency (alpha 50-150). This provides more subtle, see-through stroke effects using `getRandomColor("semitransparent-light")`.
     *   `mixed`: If different shapes in the test have different stroke styles, or if stroke opacity is randomized across opaque/semitransparent/none categories. The `scene--all-shapes-combined--test.js` is an example.
     *   `N/A`: For the main scene test, as strokes are per-component.
     *   Determined by analyzing `ctx.strokeStyle`, `ctx.lineWidth`, alpha values in stroke color objects, and calls to stroke methods (`strokeRect`, `strokeCircle`, `fillAndOuterStrokeArc`, etc.) in the test scripts. Parenthesized comments were removed.
