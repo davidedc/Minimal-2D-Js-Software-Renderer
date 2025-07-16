@@ -12,7 +12,7 @@
  * | Shape category         | circles        | The test calls `ctx.fillCircle()` to draw the shape.
  * | Count                  | single         | The test logic is designed to draw one primary shape instance per iteration.
  * | SizeCategory           | mixed          | The radius is randomized in the range [10, 225], which spans the S, M, L, and XL size categories.
- * | FillStyle              | opaque         | `getRandomColor(100, 200)` is called for the fill, which by default returns a fully opaque color.
+ * | FillStyle              | semitransparent| `getRandomColor("semitransparent")` is called for the fill, which returns a semitransparent color.
  * | StrokeStyle            | none           | The `strokeWidth` variable is explicitly set to 0 and no stroke operation is performed.
  * | StrokeThickness        | none           | Consistent with `StrokeStyle: none` as `strokeWidth` is 0.
  * | Layout                 | random         | A single shape is placed at a random (x, y) position within calculated canvas margins.

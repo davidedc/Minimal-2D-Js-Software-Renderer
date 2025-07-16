@@ -87,7 +87,7 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
         let { centerX, centerY, radius, strokeWidth, finalDiameter, atPixel } = params;
         
         // SR Call 6: strokeColor
-        const strokeColorObj = getRandomColor(150, 230);
+        const strokeColorObj = getRandomColor("semitransparent");
         // SR Call 7: fillColor 
         const fillColorObj = getRandomColor("semitransparent");
 
