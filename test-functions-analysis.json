@@ -1,0 +1,795 @@
+{
+  "summary": {
+    "totalFiles": 36,
+    "totalFunctions": 37,
+    "uniqueFunctionNames": 2,
+    "totalRegistrations": 36
+  },
+  "functionPatterns": {
+    "drawTest": 36,
+    "helpers": 0,
+    "utilities": 0,
+    "calculators": 0,
+    "others": 1
+  },
+  "functions": [
+    {
+      "name": "drawTest",
+      "type": "function declaration",
+      "file": "arc-m12-szMix-fNone-sOpaq-swMix-lytGrid-cenGrid-edgeNotCrisp-ornHoriz-arcADeg90-test.js",
+      "line": 59,
+      "context": "of 12 arcs for visual regression. For performance, it draws `instances` arcs. * @returns {?{logs: string[]}} Logs for the visual regression run. */ function drawTest(ctx, currentIterationNumber, instances = null) { const isPerformanceRun = instances !== null && instances > 0; const numToDrawForPerf = isPerformanceRun ? instances : 0; let logs = []; const canvasWidth = ctx.canvas.width; const canvasHeight = ctx.canvas.height"
+    },
+    {
+      "name": "drawTest",
+      "type": "function declaration",
+      "file": "arc-m5-szMix-fOpaq-sOpaq-sw1-10px-lytSpread-cenRand-edgeNotCrisp-ornRand-arcARand-test.js",
+      "line": 54,
+      "context": "regression (instances is null/0), 5 arcs are drawn. * @returns {?{logs: string[]}} Logs for single-instance mode, or null for performance mode. */ function drawTest(ctx, currentIterationNumber, instances = null) { const isPerformanceRun = instances !== null && instances > 0; const numToDraw = isPerformanceRun ? instances : 5; // Original test draws 5 let logs = []; const canvasWidth = ctx.canvas.width; const canvasHeight"
+    },
+    {
+      "name": "drawTest",
+      "type": "function declaration",
+      "file": "circle-m12-szMix-fOpaq-sNone-lytSpread-cenRand-edgeCrisp-test.js",
+      "line": 57,
+      "context": "ression (instances is null/0), 12 circles are drawn. * @returns {?{logs: string[]}} Logs for single-instance mode, or null for performance mode. */ function drawTest(ctx, currentIterationNumber, instances = null) { const isPerformanceRun = instances !== null && instances > 0; const numToDraw = isPerformanceRun ? instances : 12; // Original test draws 12 let logs = []; const canvasWidth = ctx.canvas.width; const canvasHeigh"
+    },
+    {
+      "name": "drawTest",
+      "type": "function declaration",
+      "file": "circle-m12-szMix-fSemi-sMix-sw1-4px-lytSpread-cenRand-edgeCrisp-test.js",
+      "line": 57,
+      "context": "ression (instances is null/0), 12 circles are drawn. * @returns {?{logs: string[]}} Logs for single-instance mode, or null for performance mode. */ function drawTest(ctx, currentIterationNumber, instances = null) { const isPerformanceRun = instances !== null && instances > 0; const numToDraw = isPerformanceRun ? instances : 12; // Original test draws 12 let logs = []; const canvasWidth = ctx.canvas.width; const canvasHeigh"
+    },
+    {
+      "name": "drawTest",
+      "type": "function declaration",
+      "file": "circle-m8-szMix-fOpaq-sOpaq-sw1-10px-lytSpread-cenRand-edgeNotCrisp-test.js",
+      "line": 54,
+      "context": "gression (instances is null/0), 8 circles are drawn. * @returns {?{logs: string[]}} Logs for single-instance mode, or null for performance mode. */ function drawTest(ctx, currentIterationNumber, instances = null) { const isPerformanceRun = instances !== null && instances > 0; const numToDraw = isPerformanceRun ? instances : 8; // Original test draws 8 let logs = []; const canvasWidth = ctx.canvas.width; const canvasHeight"
+    },
+    {
+      "name": "drawTest",
+      "type": "function declaration",
+      "file": "circle-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-cenGrid-edgeCrisp-test.js",
+      "line": 60,
+      "context": "turns {?{logs: string[], checkData: object}} Logs and data for checks for single-instance * mode, or null for performance mode. */ function drawTest(ctx, currentIterationNumber, instances = null) { const isPerformanceRun = instances !== null && instances > 0; const numToDraw = isPerformanceRun ? instances : 1; let logs = []; let checkData = null; const canvasWidth = ctx.canvas.width; const canvasHeigh"
+    },
+    {
+      "name": "drawTest",
+      "type": "function declaration",
+      "file": "circle-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-cenPx-edgeCrisp-test.js",
+      "line": 59,
+      "context": "turns {?{logs: string[], checkData: object}} Logs and data for checks for single-instance * mode, or null for performance mode. */ function drawTest(ctx, currentIterationNumber, instances = null) { const isPerformanceRun = instances !== null && instances > 0; const numToDraw = isPerformanceRun ? instances : 1; let logs = []; let checkData = null; const canvasWidth = ctx.canvas.width; const canvasHeigh"
+    },
+    {
+      "name": "drawTest",
+      "type": "function declaration",
+      "file": "circle-sgl-szMix-fOpaq-sNone-lytCenter-cenMixPG-edgeCrisp-test.js",
+      "line": 58,
+      "context": "onal: Number of instances to draw. * @returns {?{logs: string[], checkData: object}} Logs and data for checks for single-instance mode, or null. */ function drawTest(ctx, currentIterationNumber, instances = null) { const isPerformanceRun = instances !== null && instances > 0; const numToDraw = isPerformanceRun ? instances : 1; let logs = []; let checkData = null; const canvasWidth = ctx.canvas.width; const canvasHeigh"
+    },
+    {
+      "name": "drawTest",
+      "type": "function declaration",
+      "file": "circle-sgl-szMix-fOpaq-sNone-lytRand-cenRand-edgeCrisp-test.js",
+      "line": 57,
+      "context": "onal: Number of instances to draw. * @returns {?{logs: string[], checkData: object}} Logs and data for checks for single-instance mode, or null. */ function drawTest(ctx, currentIterationNumber, instances = null) { const isPerformanceRun = instances !== null && instances > 0; const numToDraw = isPerformanceRun ? instances : 1; let logs = []; let checkData = null; const canvasWidth = ctx.canvas.width; const canvasHeigh"
+    },
+    {
+      "name": "drawTest",
+      "type": "function declaration",
+      "file": "circle-sgl-szMix-fOpaq-sOpaq-sw1-10px-lytRand-cenRand-edgeNotCrisp-test.js",
+      "line": 54,
+      "context": "er} instances Optional: Number of instances to draw. * @returns {?{logs: string[]}} Logs for single-instance mode, or null for performance mode. */ function drawTest(ctx, currentIterationNumber, instances = null) { const isPerformanceRun = instances !== null && instances > 0; const numToDraw = isPerformanceRun ? instances : 1; let logs = []; const canvasWidth = ctx.canvas.width; const canvasHeight = ctx.canvas.height;"
+    },
+    {
+      "name": "drawTest",
+      "type": "function declaration",
+      "file": "circle-sgl-szMix-fOpaq-sOpaq-sw1-30px-lytCenter-cenMixPG-edgeCrisp-test.js",
+      "line": 59,
+      "context": "onal: Number of instances to draw. * @returns {?{logs: string[], checkData: object}} Logs and data for checks for single-instance mode, or null. */ function drawTest(ctx, currentIterationNumber, instances = null) { const isPerformanceRun = instances !== null && instances > 0; const numToDraw = isPerformanceRun ? instances : 1; let logs = []; let checkData = null; const canvasWidth = ctx.canvas.width; const canvasHeigh"
+    },
+    {
+      "name": "drawTest",
+      "type": "function declaration",
+      "file": "circle-sgl-szMix-fSemi-sSemi-sw1-30px-lytRand-cenRand-edgeCrisp-test.js",
+      "line": 58,
+      "context": "onal: Number of instances to draw. * @returns {?{logs: string[], checkData: object}} Logs and data for checks for single-instance mode, or null. */ function drawTest(ctx, currentIterationNumber, instances = null) { const isPerformanceRun = instances !== null && instances > 0; const numToDraw = isPerformanceRun ? instances : 1; let logs = []; let checkData = null; const canvasWidth = ctx.canvas.width; const canvasHeigh"
+    },
+    {
+      "name": "drawTest",
+      "type": "function declaration",
+      "file": "line-m15-szMix-fNone-sMix-sw1-10px-lytSpread-edgeNotCrisp-ornRand-test.js",
+      "line": 75,
+      "context": "is many lines are drawn for performance testing. * @returns {?{ logs: string[] }} An object with logs, or null (especially in performance mode). */ function drawTest(ctx, currentIterationNumber, instances = null) { const initialCount = 15; // number of lines to draw for visual regression mode (i.e. not in performance mode) const isPerformanceRun = instances !== null && instances > 0; const lineCount = isPerformanceRun ? instances :"
+    },
+    {
+      "name": "drawTest",
+      "type": "function declaration",
+      "file": "line-m20-szMix-fNone-sOpaq-sw10px-lytSpread-edgeNotCrisp-ornRand-test.js",
+      "line": 81,
+      "context": "is many lines are drawn for performance testing. * @returns {?{ logs: string[] }} An object with logs, or null (especially in performance mode). */ function drawTest(ctx, currentIterationNumber, instances = null) { const initialCount = 20; // number of lines to draw for visual regression mode (i.e. not in performance mode) const isPerformanceRun = instances !== null && instances > 0; const lineCount = isPerformanceRun ? instances :"
+    },
+    {
+      "name": "drawTest",
+      "type": "function declaration",
+      "file": "line-m20-szMix-fNone-sOpaq-sw1px-lytSpread-edgeNotCrisp-ornRand-test.js",
+      "line": 72,
+      "context": "ative, 1 line is drawn with logging. * @returns {?{ logs: string[] }} Log entries if not in multi-instance mode (instances > 0), otherwise null. */ function drawTest(ctx, currentIterationNumber, instances = null) { const currentCanvasWidth = ctx.canvas.width; const currentCanvasHeight = ctx.canvas.height; if (currentCanvasWidth % 2 !== 0 || currentCanvasHeight % 2 !== 0) { throw new Error(\"Canvas width and height must be ev"
+    },
+    {
+      "name": "drawTest",
+      "type": "function declaration",
+      "file": "line-m20-szMix-fNone-sOpaq-sw2px-lytSpread-edgeNotCrisp-ornRand-test.js",
+      "line": 81,
+      "context": "is many lines are drawn for performance testing. * @returns {?{ logs: string[] }} An object with logs, or null (especially in performance mode). */ function drawTest(ctx, currentIterationNumber, instances = null) { const initialCount = 20; // number of lines to draw for visual regression mode (i.e. not in performance mode) const isPerformanceRun = instances !== null && instances > 0; const lineCount = isPerformanceRun ? instances :"
+    },
+    {
+      "name": "drawTest",
+      "type": "function declaration",
+      "file": "line-m20-szMix-fNone-sOpaq-sw3px-lytSpread-edgeNotCrisp-ornRand-test.js",
+      "line": 84,
+      "context": "is many lines are drawn for performance testing. * @returns {?{ logs: string[] }} An object with logs, or null (especially in performance mode). */ function drawTest(ctx, currentIterationNumber, instances = null) { const initialCount = 20; // number of lines to draw for visual regression mode (i.e. not in performance mode) const isPerformanceRun = instances !== null && instances > 0; const lineCount = isPerformanceRun ? instances :"
+    },
+    {
+      "name": "drawTest",
+      "type": "function declaration",
+      "file": "line-m20-szMix-fNone-sOpaq-sw5px-lytSpread-edgeNotCrisp-ornRand-test.js",
+      "line": 82,
+      "context": "is many lines are drawn for performance testing. * @returns {?{ logs: string[] }} An object with logs, or null (especially in performance mode). */ function drawTest(ctx, currentIterationNumber, instances = null) { const initialCount = 20; // number of lines to draw for visual regression mode (i.e. not in performance mode) const isPerformanceRun = instances !== null && instances > 0; const lineCount = isPerformanceRun ? instances :"
+    },
+    {
+      "name": "drawTest",
+      "type": "function declaration",
+      "file": "line-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-edgeCrisp-ornHoriz-test.js",
+      "line": 73,
+      "context": "{topY: number, bottomY: number, leftX: number, rightX: number} }} Log entries and expected pixel extremes, or null if drawing multiple instances. */ function drawTest(ctx, currentIterationNumber, instances = null) { const currentCanvasWidth = ctx.canvas.width; const currentCanvasHeight = ctx.canvas.height; if (currentCanvasWidth % 2 !== 0 || currentCanvasHeight % 2 !== 0) { throw new Error(\"Canvas width and height must be ev"
+    },
+    {
+      "name": "drawTest",
+      "type": "function declaration",
+      "file": "line-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-edgeCrisp-ornVert-test.js",
+      "line": 73,
+      "context": "{topY: number, bottomY: number, leftX: number, rightX: number} }} Log entries and expected pixel extremes, or null if drawing multiple instances. */ function drawTest(ctx, currentIterationNumber, instances = null) { const currentCanvasWidth = ctx.canvas.width; const currentCanvasHeight = ctx.canvas.height; if (currentCanvasWidth % 2 !== 0 || currentCanvasHeight % 2 !== 0) { throw new Error(\"Canvas width and height must be ev"
+    },
+    {
+      "name": "drawTest",
+      "type": "function declaration",
+      "file": "line-sgl-szMix-fNone-sOpaq-sw2px-lytCenter-edgeCrisp-ornHoriz-test.js",
+      "line": 73,
+      "context": "{topY: number, bottomY: number, leftX: number, rightX: number} }} Log entries and expected pixel extremes, or null if drawing multiple instances. */ function drawTest(ctx, currentIterationNumber, instances = null) { const currentCanvasWidth = ctx.canvas.width; const currentCanvasHeight = ctx.canvas.height; if (currentCanvasWidth % 2 !== 0 || currentCanvasHeight % 2 !== 0) { throw new Error(\"Canvas width and height must be ev"
+    },
+    {
+      "name": "drawTest",
+      "type": "function declaration",
+      "file": "line-sgl-szMix-fNone-sOpaq-sw2px-lytCenter-edgeCrisp-ornVert-test.js",
+      "line": 73,
+      "context": "{topY: number, bottomY: number, leftX: number, rightX: number} }} Log entries and expected pixel extremes, or null if drawing multiple instances. */ function drawTest(ctx, currentIterationNumber, instances = null) { const currentCanvasWidth = ctx.canvas.width; const currentCanvasHeight = ctx.canvas.height; if (currentCanvasWidth % 2 !== 0 || currentCanvasHeight % 2 !== 0) { throw new Error(\"Canvas width and height must be ev"
+    },
+    {
+      "name": "drawTest",
+      "type": "function declaration",
+      "file": "rect-m10-szMix-fSemi-sMix-swMix-lytSpread-cenMixPG-edgeCrisp-ornAxial-test.js",
+      "line": 65,
+      "context": "turns {?{logs: string[], checkData: object}} Logs and data for checks for single-instance * mode, or null for performance mode. */ function drawTest(ctx, currentIterationNumber, instances = null) { const isPerformanceRun = instances !== null && instances > 0; const numToDraw = isPerformanceRun ? instances : 10; // Original test draws 10 const logs = []; let overallMinLeftX = Infinity; let overallMaxRightX ="
+    },
+    {
+      "name": "drawTest",
+      "type": "function declaration",
+      "file": "rect-m5-szMix-fSemi-sMix-sw1-10px-lytSpread-cenRand-edgeNotCrisp-ornRand-ctxTransRand-ctxRotRand-test.js",
+      "line": 70,
+      "context": "g[]}} Logs for single-instance mode, or null for performance mode. * (No checkData as original test had no withExtremesCheck). */ function drawTest(ctx, currentIterationNumber, instances = null) { const isPerformanceRun = instances !== null && instances > 0; const numToDraw = isPerformanceRun ? instances : 5; // Original test draws 5 const logs = []; const canvasWidth = ctx.canvas.width; const canvasHeight"
+    },
+    {
+      "name": "drawTest",
+      "type": "function declaration",
+      "file": "rect-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-cenGrid-edgeCrisp-ornAxial-test.js",
+      "line": 62,
+      "context": "umber, rightX: number, topY: number, bottomY: number} }} * Log entries and expected pixel extremes, or null if in multi-instance mode. */ function drawTest(ctx, currentIterationNumber, instances = null) { const canvasWidth = ctx.canvas.width; const canvasHeight = ctx.canvas.height; if (canvasWidth % 2 !== 0 || canvasHeight % 2 !== 0) { throw new Error(\"Canvas width and height must be even for this test (required b"
+    },
+    {
+      "name": "drawTest",
+      "type": "function declaration",
+      "file": "rect-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-cenPx-edgeCrisp-ornAxial-test.js",
+      "line": 62,
+      "context": "umber, rightX: number, topY: number, bottomY: number} }} * Log entries and expected pixel extremes, or null if in multi-instance mode. */ function drawTest(ctx, currentIterationNumber, instances = null) { const canvasWidth = ctx.canvas.width; const canvasHeight = ctx.canvas.height; if (canvasWidth % 2 !== 0 || canvasHeight % 2 !== 0) { throw new Error(\"Canvas width and height must be even for this test (original t"
+    },
+    {
+      "name": "drawTest",
+      "type": "function declaration",
+      "file": "rect-sgl-szMix-fSemi-sMix-swMix-lytRand-cenMixPG-edgeCrisp-ornAxial-test.js",
+      "line": 65,
+      "context": "erformance. * @returns {?{ logs: string[], checkData: object }} * Log entries and data for checks, or null if in multi-instance mode. */ function drawTest(ctx, currentIterationNumber, instances = null) { const canvasWidth = ctx.canvas.width; const canvasHeight = ctx.canvas.height; const isPerformanceRun = instances !== null && instances > 0; const numToDraw = isPerformanceRun ? instances : 1; let logs = isPerfor"
+    },
+    {
+      "name": "drawTest",
+      "type": "function declaration",
+      "file": "roundrect-m10-szMix-fSemi-sOpaq-sw1px-lytSpread-cenMixPG-edgeCrisp-ornAxial-rrrRand-test.js",
+      "line": 57,
+      "context": "sion (instances is null/0), 10 rectangles are drawn. * @returns {?{logs: string[]}} Logs for single-instance mode, or null for performance mode. */ function drawTest(ctx, currentIterationNumber, instances = null) { const isPerformanceRun = instances !== null && instances > 0; const numToDraw = isPerformanceRun ? instances : 10; // Original test draws 10 let logs = []; const canvasWidth = ctx.canvas.width; const canvasHeigh"
+    },
+    {
+      "name": "drawTest",
+      "type": "function declaration",
+      "file": "roundrect-m6-szMix-fSemi-sSemi-swMix-lytSpread-cenMixPG-edgeCrisp-ornAxial-rrrLrg-test.js",
+      "line": 61,
+      "context": "ssion (instances is null/0), 6 rectangles are drawn. * @returns {?{logs: string[]}} Logs for single-instance mode, or null for performance mode. */ function drawTest(ctx, currentIterationNumber, instances = null) { const isPerformanceRun = instances !== null && instances > 0; const numToDraw = isPerformanceRun ? instances : 6; // Original test draws 6 let logs = []; const canvasWidth = ctx.canvas.width; const canvasHeight"
+    },
+    {
+      "name": "drawTest",
+      "type": "function declaration",
+      "file": "roundrect-m8-szMix-fSemi-sMix-swMix-lytSpread-cenMixPG-edgeCrisp-ornAxial-rrrMix-test.js",
+      "line": 58,
+      "context": "ssion (instances is null/0), 8 rectangles are drawn. * @returns {?{logs: string[]}} Logs for single-instance mode, or null for performance mode. */ function drawTest(ctx, currentIterationNumber, instances = null) { const isPerformanceRun = instances !== null && instances > 0; const numToDraw = isPerformanceRun ? instances : 8; // Original test draws 8 let logs = []; const canvasWidth = ctx.canvas.width; const canvasHeight"
+    },
+    {
+      "name": "drawTest",
+      "type": "function declaration",
+      "file": "roundrect-m8-xl-fSemi-sNone-lytSpread-cenGrid-edgeCrisp-ornAxial-rrrLrg-test.js",
+      "line": 58,
+      "context": "ssion (instances is null/0), 8 rectangles are drawn. * @returns {?{logs: string[]}} Logs for single-instance mode, or null for performance mode. */ function drawTest(ctx, currentIterationNumber, instances = null) { const isPerformanceRun = instances !== null && instances > 0; const numToDraw = isPerformanceRun ? instances : 8; // Original test draws 8 let logs = []; const canvasWidth = ctx.canvas.width; const canvasHeight"
+    },
+    {
+      "name": "drawTest",
+      "type": "function declaration",
+      "file": "roundrect-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-cenGrid-edgeCrisp-ornAxial-rrrRand-test.js",
+      "line": 60,
+      "context": "turns {?{logs: string[], checkData: object}} Logs and data for checks for single-instance * mode, or null for performance mode. */ function drawTest(ctx, currentIterationNumber, instances = null) { const isPerformanceRun = instances !== null && instances > 0; const numToDraw = isPerformanceRun ? instances : 1; let logs = []; let checkData = null; const canvasWidth = ctx.canvas.width; const canvasHeigh"
+    },
+    {
+      "name": "drawTest",
+      "type": "function declaration",
+      "file": "roundrect-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-cenPx-edgeCrisp-ornAxial-rrrRand-test.js",
+      "line": 62,
+      "context": "turns {?{logs: string[], checkData: object}} Logs and data for checks for single-instance * mode, or null for performance mode. */ function drawTest(ctx, currentIterationNumber, instances = null) { const isPerformanceRun = instances !== null && instances > 0; const numToDraw = isPerformanceRun ? instances : 1; let logs = []; let checkData = null; const canvasWidth = ctx.canvas.width; const canvasHeigh"
+    },
+    {
+      "name": "drawTest",
+      "type": "function declaration",
+      "file": "roundrect-sgl-szMix-fSemi-sOpaq-sw1-11px-lytCenter-cenGrid-edgeCrisp-ornAxial-rrrRand-test.js",
+      "line": 59,
+      "context": ", each with unique properties based on SeededRandom. * @returns {?{logs: string[]}} Logs for single-instance mode, or null for performance mode. */ function drawTest(ctx, currentIterationNumber, instances = null) { const isPerformanceRun = instances !== null && instances > 0; const numToDraw = isPerformanceRun ? instances : 1; let logs = []; const canvasWidth = ctx.canvas.width; const canvasHeight = ctx.canvas.height;"
+    },
+    {
+      "name": "drawTest",
+      "type": "function declaration",
+      "file": "roundrect-sgl-szMix-fSemi-sSemi-swMix-lytCenter-cenMixPG-edgeCrisp-ornAxial-rrrRand-test.js",
+      "line": 60,
+      "context": "the performance * testing harness. * @returns {?{logs: string[]}} Logs for single-instance mode, or null for performance mode. */ function drawTest(ctx, currentIterationNumber, instances = null) { const isPerformanceRun = instances !== null && instances > 0; const numToDraw = isPerformanceRun ? instances : 1; let logs = []; const canvasWidth = ctx.canvas.width; const canvasHeight = ctx.canvas.height;"
+    },
+    {
+      "name": "drawTest",
+      "type": "function declaration",
+      "file": "scene-multi-szMix-fMix-sMix-swMix-lytMix-edgeMix-ornMix-arcAMix-rrrMix-ctxTransFixed-ctxRotFixed-test.js",
+      "line": 61,
+      "context": ". * In performance mode, `instances` full scenes are drawn. * @returns {?{logs: string[]}} Logs for the visual regression run. */ function drawTest(ctx, currentIterationNumber, instances = null) { const isPerformanceRun = instances !== null && instances > 0; const numScenesToDraw = isPerformanceRun ? instances : 1; let logs = []; const dummyLog = { innerHTML: '' }; // Original functions write to log.innerHTML"
+    },
+    {
+      "name": "drawShapesFromArray",
+      "type": "function declaration",
+      "file": "scene-multi-szMix-fMix-sMix-swMix-lytMix-edgeMix-ornMix-arcAMix-rrrMix-ctxTransFixed-ctxRotFixed-test.js",
+      "line": 69,
+      "context": "innerHTML: '' }; // Original functions write to log.innerHTML // Helper to draw shapes from the array populated by original add... functions function drawShapesFromArray(shapesArray, context) { shapesArray.forEach(shape => { const fillColorStr = shape.fillColor ? colorToString(shape.fillColor) : 'rgba(0,0,0,0)' ; const strokeColorStr = shape.strokeColor ? colorToString(shape.strokeColor) : 'rgba(0,0,0,0"
+    }
+  ],
+  "registrations": [
+    {
+      "testId": "arc-m12-szMix-fNone-sOpaq-swMix-lytGrid-cenGrid-edgeNotCrisp-ornHoriz-arcADeg90-test",
+      "file": "arc-m12-szMix-fNone-sOpaq-swMix-lytGrid-cenGrid-edgeNotCrisp-ornHoriz-arcADeg90-test.js",
+      "line": 133
+    },
+    {
+      "testId": "arc-m5-szMix-fOpaq-sOpaq-sw1-10px-lytSpread-cenRand-edgeNotCrisp-ornRand-arcARand-test",
+      "file": "arc-m5-szMix-fOpaq-sOpaq-sw1-10px-lytSpread-cenRand-edgeNotCrisp-ornRand-arcARand-test.js",
+      "line": 115
+    },
+    {
+      "testId": "circle-m12-szMix-fOpaq-sNone-lytSpread-cenRand-edgeCrisp-test",
+      "file": "circle-m12-szMix-fOpaq-sNone-lytSpread-cenRand-edgeCrisp-test.js",
+      "line": 112
+    },
+    {
+      "testId": "circle-m12-szMix-fSemi-sMix-sw1-4px-lytSpread-cenRand-edgeCrisp-test",
+      "file": "circle-m12-szMix-fSemi-sMix-sw1-4px-lytSpread-cenRand-edgeCrisp-test.js",
+      "line": 125
+    },
+    {
+      "testId": "circle-m8-szMix-fOpaq-sOpaq-sw1-10px-lytSpread-cenRand-edgeNotCrisp-test",
+      "file": "circle-m8-szMix-fOpaq-sOpaq-sw1-10px-lytSpread-cenRand-edgeNotCrisp-test.js",
+      "line": 115
+    },
+    {
+      "testId": "circle-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-cenGrid-edgeCrisp-test",
+      "file": "circle-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-cenGrid-edgeCrisp-test.js",
+      "line": 126
+    },
+    {
+      "testId": "circle-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-cenPx-edgeCrisp-test",
+      "file": "circle-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-cenPx-edgeCrisp-test.js",
+      "line": 128
+    },
+    {
+      "testId": "circle-sgl-szMix-fOpaq-sNone-lytCenter-cenMixPG-edgeCrisp-test",
+      "file": "circle-sgl-szMix-fOpaq-sNone-lytCenter-cenMixPG-edgeCrisp-test.js",
+      "line": 128
+    },
+    {
+      "testId": "circle-sgl-szMix-fOpaq-sNone-lytRand-cenRand-edgeCrisp-test",
+      "file": "circle-sgl-szMix-fOpaq-sNone-lytRand-cenRand-edgeCrisp-test.js",
+      "line": 126
+    },
+    {
+      "testId": "circle-sgl-szMix-fOpaq-sOpaq-sw1-10px-lytRand-cenRand-edgeNotCrisp-test",
+      "file": "circle-sgl-szMix-fOpaq-sOpaq-sw1-10px-lytRand-cenRand-edgeNotCrisp-test.js",
+      "line": 109
+    },
+    {
+      "testId": "circle-sgl-szMix-fOpaq-sOpaq-sw1-30px-lytCenter-cenMixPG-edgeCrisp-test",
+      "file": "circle-sgl-szMix-fOpaq-sOpaq-sw1-30px-lytCenter-cenMixPG-edgeCrisp-test.js",
+      "line": 138
+    },
+    {
+      "testId": "circle-sgl-szMix-fSemi-sSemi-sw1-30px-lytRand-cenRand-edgeCrisp-test",
+      "file": "circle-sgl-szMix-fSemi-sSemi-sw1-30px-lytRand-cenRand-edgeCrisp-test.js",
+      "line": 138
+    },
+    {
+      "testId": "line-m15-szMix-fNone-sMix-sw1-10px-lytSpread-edgeNotCrisp-ornRand-test",
+      "file": "line-m15-szMix-fNone-sMix-sw1-10px-lytSpread-edgeNotCrisp-ornRand-test.js",
+      "line": 118
+    },
+    {
+      "testId": "line-m20-szMix-fNone-sOpaq-sw10px-lytSpread-edgeNotCrisp-ornRand-test",
+      "file": "line-m20-szMix-fNone-sOpaq-sw10px-lytSpread-edgeNotCrisp-ornRand-test.js",
+      "line": 121
+    },
+    {
+      "testId": "line-m20-szMix-fNone-sOpaq-sw1px-lytSpread-edgeNotCrisp-ornRand-test",
+      "file": "line-m20-szMix-fNone-sOpaq-sw1px-lytSpread-edgeNotCrisp-ornRand-test.js",
+      "line": 140
+    },
+    {
+      "testId": "line-m20-szMix-fNone-sOpaq-sw2px-lytSpread-edgeNotCrisp-ornRand-test",
+      "file": "line-m20-szMix-fNone-sOpaq-sw2px-lytSpread-edgeNotCrisp-ornRand-test.js",
+      "line": 121
+    },
+    {
+      "testId": "line-m20-szMix-fNone-sOpaq-sw3px-lytSpread-edgeNotCrisp-ornRand-test",
+      "file": "line-m20-szMix-fNone-sOpaq-sw3px-lytSpread-edgeNotCrisp-ornRand-test.js",
+      "line": 124
+    },
+    {
+      "testId": "line-m20-szMix-fNone-sOpaq-sw5px-lytSpread-edgeNotCrisp-ornRand-test",
+      "file": "line-m20-szMix-fNone-sOpaq-sw5px-lytSpread-edgeNotCrisp-ornRand-test.js",
+      "line": 122
+    },
+    {
+      "testId": "line-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-edgeCrisp-ornHoriz-test",
+      "file": "line-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-edgeCrisp-ornHoriz-test.js",
+      "line": 161
+    },
+    {
+      "testId": "line-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-edgeCrisp-ornVert-test",
+      "file": "line-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-edgeCrisp-ornVert-test.js",
+      "line": 175
+    },
+    {
+      "testId": "line-sgl-szMix-fNone-sOpaq-sw2px-lytCenter-edgeCrisp-ornHoriz-test",
+      "file": "line-sgl-szMix-fNone-sOpaq-sw2px-lytCenter-edgeCrisp-ornHoriz-test.js",
+      "line": 167
+    },
+    {
+      "testId": "line-sgl-szMix-fNone-sOpaq-sw2px-lytCenter-edgeCrisp-ornVert-test",
+      "file": "line-sgl-szMix-fNone-sOpaq-sw2px-lytCenter-edgeCrisp-ornVert-test.js",
+      "line": 167
+    },
+    {
+      "testId": "rect-m10-szMix-fSemi-sMix-swMix-lytSpread-cenMixPG-edgeCrisp-ornAxial-test",
+      "file": "rect-m10-szMix-fSemi-sMix-swMix-lytSpread-cenMixPG-edgeCrisp-ornAxial-test.js",
+      "line": 177
+    },
+    {
+      "testId": "rect-m5-szMix-fSemi-sMix-sw1-10px-lytSpread-cenRand-edgeNotCrisp-ornRand-ctxTransRand-ctxRotRand-test",
+      "file": "rect-m5-szMix-fSemi-sMix-sw1-10px-lytSpread-cenRand-edgeNotCrisp-ornRand-ctxTransRand-ctxRotRand-test.js",
+      "line": 141
+    },
+    {
+      "testId": "rect-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-cenGrid-edgeCrisp-ornAxial-test",
+      "file": "rect-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-cenGrid-edgeCrisp-ornAxial-test.js",
+      "line": 151
+    },
+    {
+      "testId": "rect-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-cenPx-edgeCrisp-ornAxial-test",
+      "file": "rect-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-cenPx-edgeCrisp-ornAxial-test.js",
+      "line": 139
+    },
+    {
+      "testId": "rect-sgl-szMix-fSemi-sMix-swMix-lytRand-cenMixPG-edgeCrisp-ornAxial-test",
+      "file": "rect-sgl-szMix-fSemi-sMix-swMix-lytRand-cenMixPG-edgeCrisp-ornAxial-test.js",
+      "line": 158
+    },
+    {
+      "testId": "roundrect-m10-szMix-fSemi-sOpaq-sw1px-lytSpread-cenMixPG-edgeCrisp-ornAxial-rrrRand-test",
+      "file": "roundrect-m10-szMix-fSemi-sOpaq-sw1px-lytSpread-cenMixPG-edgeCrisp-ornAxial-rrrRand-test.js",
+      "line": 126
+    },
+    {
+      "testId": "roundrect-m6-szMix-fSemi-sSemi-swMix-lytSpread-cenMixPG-edgeCrisp-ornAxial-rrrLrg-test",
+      "file": "roundrect-m6-szMix-fSemi-sSemi-swMix-lytSpread-cenMixPG-edgeCrisp-ornAxial-rrrLrg-test.js",
+      "line": 137
+    },
+    {
+      "testId": "roundrect-m8-szMix-fSemi-sMix-swMix-lytSpread-cenMixPG-edgeCrisp-ornAxial-rrrMix-test",
+      "file": "roundrect-m8-szMix-fSemi-sMix-swMix-lytSpread-cenMixPG-edgeCrisp-ornAxial-rrrMix-test.js",
+      "line": 142
+    },
+    {
+      "testId": "roundrect-m8-xl-fSemi-sNone-lytSpread-cenGrid-edgeCrisp-ornAxial-rrrLrg-test",
+      "file": "roundrect-m8-xl-fSemi-sNone-lytSpread-cenGrid-edgeCrisp-ornAxial-rrrLrg-test.js",
+      "line": 113
+    },
+    {
+      "testId": "roundrect-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-cenGrid-edgeCrisp-ornAxial-rrrRand-test",
+      "file": "roundrect-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-cenGrid-edgeCrisp-ornAxial-rrrRand-test.js",
+      "line": 145
+    },
+    {
+      "testId": "roundrect-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-cenPx-edgeCrisp-ornAxial-rrrRand-test",
+      "file": "roundrect-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-cenPx-edgeCrisp-ornAxial-rrrRand-test.js",
+      "line": 142
+    },
+    {
+      "testId": "roundrect-sgl-szMix-fSemi-sOpaq-sw1-11px-lytCenter-cenGrid-edgeCrisp-ornAxial-rrrRand-test",
+      "file": "roundrect-sgl-szMix-fSemi-sOpaq-sw1-11px-lytCenter-cenGrid-edgeCrisp-ornAxial-rrrRand-test.js",
+      "line": 139
+    },
+    {
+      "testId": "roundrect-sgl-szMix-fSemi-sSemi-swMix-lytCenter-cenMixPG-edgeCrisp-ornAxial-rrrRand-test",
+      "file": "roundrect-sgl-szMix-fSemi-sSemi-swMix-lytCenter-cenMixPG-edgeCrisp-ornAxial-rrrRand-test.js",
+      "line": 135
+    },
+    {
+      "testId": "scene-multi-szMix-fMix-sMix-swMix-lytMix-edgeMix-ornMix-arcAMix-rrrMix-ctxTransFixed-ctxRotFixed-test",
+      "file": "scene-multi-szMix-fMix-sMix-swMix-lytMix-edgeMix-ornMix-arcAMix-rrrMix-ctxTransFixed-ctxRotFixed-test.js",
+      "line": 210
+    }
+  ],
+  "uniqueFunctionNames": [
+    "drawShapesFromArray",
+    "drawTest"
+  ],
+  "functionsByFile": {
+    "arc-m12-szMix-fNone-sOpaq-swMix-lytGrid-cenGrid-edgeNotCrisp-ornHoriz-arcADeg90-test.js": [
+      {
+        "name": "drawTest",
+        "type": "function declaration",
+        "file": "arc-m12-szMix-fNone-sOpaq-swMix-lytGrid-cenGrid-edgeNotCrisp-ornHoriz-arcADeg90-test.js",
+        "line": 59,
+        "context": "of 12 arcs for visual regression. For performance, it draws `instances` arcs. * @returns {?{logs: string[]}} Logs for the visual regression run. */ function drawTest(ctx, currentIterationNumber, instances = null) { const isPerformanceRun = instances !== null && instances > 0; const numToDrawForPerf = isPerformanceRun ? instances : 0; let logs = []; const canvasWidth = ctx.canvas.width; const canvasHeight = ctx.canvas.height"
+      }
+    ],
+    "arc-m5-szMix-fOpaq-sOpaq-sw1-10px-lytSpread-cenRand-edgeNotCrisp-ornRand-arcARand-test.js": [
+      {
+        "name": "drawTest",
+        "type": "function declaration",
+        "file": "arc-m5-szMix-fOpaq-sOpaq-sw1-10px-lytSpread-cenRand-edgeNotCrisp-ornRand-arcARand-test.js",
+        "line": 54,
+        "context": "regression (instances is null/0), 5 arcs are drawn. * @returns {?{logs: string[]}} Logs for single-instance mode, or null for performance mode. */ function drawTest(ctx, currentIterationNumber, instances = null) { const isPerformanceRun = instances !== null && instances > 0; const numToDraw = isPerformanceRun ? instances : 5; // Original test draws 5 let logs = []; const canvasWidth = ctx.canvas.width; const canvasHeight"
+      }
+    ],
+    "circle-m12-szMix-fOpaq-sNone-lytSpread-cenRand-edgeCrisp-test.js": [
+      {
+        "name": "drawTest",
+        "type": "function declaration",
+        "file": "circle-m12-szMix-fOpaq-sNone-lytSpread-cenRand-edgeCrisp-test.js",
+        "line": 57,
+        "context": "ression (instances is null/0), 12 circles are drawn. * @returns {?{logs: string[]}} Logs for single-instance mode, or null for performance mode. */ function drawTest(ctx, currentIterationNumber, instances = null) { const isPerformanceRun = instances !== null && instances > 0; const numToDraw = isPerformanceRun ? instances : 12; // Original test draws 12 let logs = []; const canvasWidth = ctx.canvas.width; const canvasHeigh"
+      }
+    ],
+    "circle-m12-szMix-fSemi-sMix-sw1-4px-lytSpread-cenRand-edgeCrisp-test.js": [
+      {
+        "name": "drawTest",
+        "type": "function declaration",
+        "file": "circle-m12-szMix-fSemi-sMix-sw1-4px-lytSpread-cenRand-edgeCrisp-test.js",
+        "line": 57,
+        "context": "ression (instances is null/0), 12 circles are drawn. * @returns {?{logs: string[]}} Logs for single-instance mode, or null for performance mode. */ function drawTest(ctx, currentIterationNumber, instances = null) { const isPerformanceRun = instances !== null && instances > 0; const numToDraw = isPerformanceRun ? instances : 12; // Original test draws 12 let logs = []; const canvasWidth = ctx.canvas.width; const canvasHeigh"
+      }
+    ],
+    "circle-m8-szMix-fOpaq-sOpaq-sw1-10px-lytSpread-cenRand-edgeNotCrisp-test.js": [
+      {
+        "name": "drawTest",
+        "type": "function declaration",
+        "file": "circle-m8-szMix-fOpaq-sOpaq-sw1-10px-lytSpread-cenRand-edgeNotCrisp-test.js",
+        "line": 54,
+        "context": "gression (instances is null/0), 8 circles are drawn. * @returns {?{logs: string[]}} Logs for single-instance mode, or null for performance mode. */ function drawTest(ctx, currentIterationNumber, instances = null) { const isPerformanceRun = instances !== null && instances > 0; const numToDraw = isPerformanceRun ? instances : 8; // Original test draws 8 let logs = []; const canvasWidth = ctx.canvas.width; const canvasHeight"
+      }
+    ],
+    "circle-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-cenGrid-edgeCrisp-test.js": [
+      {
+        "name": "drawTest",
+        "type": "function declaration",
+        "file": "circle-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-cenGrid-edgeCrisp-test.js",
+        "line": 60,
+        "context": "turns {?{logs: string[], checkData: object}} Logs and data for checks for single-instance * mode, or null for performance mode. */ function drawTest(ctx, currentIterationNumber, instances = null) { const isPerformanceRun = instances !== null && instances > 0; const numToDraw = isPerformanceRun ? instances : 1; let logs = []; let checkData = null; const canvasWidth = ctx.canvas.width; const canvasHeigh"
+      }
+    ],
+    "circle-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-cenPx-edgeCrisp-test.js": [
+      {
+        "name": "drawTest",
+        "type": "function declaration",
+        "file": "circle-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-cenPx-edgeCrisp-test.js",
+        "line": 59,
+        "context": "turns {?{logs: string[], checkData: object}} Logs and data for checks for single-instance * mode, or null for performance mode. */ function drawTest(ctx, currentIterationNumber, instances = null) { const isPerformanceRun = instances !== null && instances > 0; const numToDraw = isPerformanceRun ? instances : 1; let logs = []; let checkData = null; const canvasWidth = ctx.canvas.width; const canvasHeigh"
+      }
+    ],
+    "circle-sgl-szMix-fOpaq-sNone-lytCenter-cenMixPG-edgeCrisp-test.js": [
+      {
+        "name": "drawTest",
+        "type": "function declaration",
+        "file": "circle-sgl-szMix-fOpaq-sNone-lytCenter-cenMixPG-edgeCrisp-test.js",
+        "line": 58,
+        "context": "onal: Number of instances to draw. * @returns {?{logs: string[], checkData: object}} Logs and data for checks for single-instance mode, or null. */ function drawTest(ctx, currentIterationNumber, instances = null) { const isPerformanceRun = instances !== null && instances > 0; const numToDraw = isPerformanceRun ? instances : 1; let logs = []; let checkData = null; const canvasWidth = ctx.canvas.width; const canvasHeigh"
+      }
+    ],
+    "circle-sgl-szMix-fOpaq-sNone-lytRand-cenRand-edgeCrisp-test.js": [
+      {
+        "name": "drawTest",
+        "type": "function declaration",
+        "file": "circle-sgl-szMix-fOpaq-sNone-lytRand-cenRand-edgeCrisp-test.js",
+        "line": 57,
+        "context": "onal: Number of instances to draw. * @returns {?{logs: string[], checkData: object}} Logs and data for checks for single-instance mode, or null. */ function drawTest(ctx, currentIterationNumber, instances = null) { const isPerformanceRun = instances !== null && instances > 0; const numToDraw = isPerformanceRun ? instances : 1; let logs = []; let checkData = null; const canvasWidth = ctx.canvas.width; const canvasHeigh"
+      }
+    ],
+    "circle-sgl-szMix-fOpaq-sOpaq-sw1-10px-lytRand-cenRand-edgeNotCrisp-test.js": [
+      {
+        "name": "drawTest",
+        "type": "function declaration",
+        "file": "circle-sgl-szMix-fOpaq-sOpaq-sw1-10px-lytRand-cenRand-edgeNotCrisp-test.js",
+        "line": 54,
+        "context": "er} instances Optional: Number of instances to draw. * @returns {?{logs: string[]}} Logs for single-instance mode, or null for performance mode. */ function drawTest(ctx, currentIterationNumber, instances = null) { const isPerformanceRun = instances !== null && instances > 0; const numToDraw = isPerformanceRun ? instances : 1; let logs = []; const canvasWidth = ctx.canvas.width; const canvasHeight = ctx.canvas.height;"
+      }
+    ],
+    "circle-sgl-szMix-fOpaq-sOpaq-sw1-30px-lytCenter-cenMixPG-edgeCrisp-test.js": [
+      {
+        "name": "drawTest",
+        "type": "function declaration",
+        "file": "circle-sgl-szMix-fOpaq-sOpaq-sw1-30px-lytCenter-cenMixPG-edgeCrisp-test.js",
+        "line": 59,
+        "context": "onal: Number of instances to draw. * @returns {?{logs: string[], checkData: object}} Logs and data for checks for single-instance mode, or null. */ function drawTest(ctx, currentIterationNumber, instances = null) { const isPerformanceRun = instances !== null && instances > 0; const numToDraw = isPerformanceRun ? instances : 1; let logs = []; let checkData = null; const canvasWidth = ctx.canvas.width; const canvasHeigh"
+      }
+    ],
+    "circle-sgl-szMix-fSemi-sSemi-sw1-30px-lytRand-cenRand-edgeCrisp-test.js": [
+      {
+        "name": "drawTest",
+        "type": "function declaration",
+        "file": "circle-sgl-szMix-fSemi-sSemi-sw1-30px-lytRand-cenRand-edgeCrisp-test.js",
+        "line": 58,
+        "context": "onal: Number of instances to draw. * @returns {?{logs: string[], checkData: object}} Logs and data for checks for single-instance mode, or null. */ function drawTest(ctx, currentIterationNumber, instances = null) { const isPerformanceRun = instances !== null && instances > 0; const numToDraw = isPerformanceRun ? instances : 1; let logs = []; let checkData = null; const canvasWidth = ctx.canvas.width; const canvasHeigh"
+      }
+    ],
+    "line-m15-szMix-fNone-sMix-sw1-10px-lytSpread-edgeNotCrisp-ornRand-test.js": [
+      {
+        "name": "drawTest",
+        "type": "function declaration",
+        "file": "line-m15-szMix-fNone-sMix-sw1-10px-lytSpread-edgeNotCrisp-ornRand-test.js",
+        "line": 75,
+        "context": "is many lines are drawn for performance testing. * @returns {?{ logs: string[] }} An object with logs, or null (especially in performance mode). */ function drawTest(ctx, currentIterationNumber, instances = null) { const initialCount = 15; // number of lines to draw for visual regression mode (i.e. not in performance mode) const isPerformanceRun = instances !== null && instances > 0; const lineCount = isPerformanceRun ? instances :"
+      }
+    ],
+    "line-m20-szMix-fNone-sOpaq-sw10px-lytSpread-edgeNotCrisp-ornRand-test.js": [
+      {
+        "name": "drawTest",
+        "type": "function declaration",
+        "file": "line-m20-szMix-fNone-sOpaq-sw10px-lytSpread-edgeNotCrisp-ornRand-test.js",
+        "line": 81,
+        "context": "is many lines are drawn for performance testing. * @returns {?{ logs: string[] }} An object with logs, or null (especially in performance mode). */ function drawTest(ctx, currentIterationNumber, instances = null) { const initialCount = 20; // number of lines to draw for visual regression mode (i.e. not in performance mode) const isPerformanceRun = instances !== null && instances > 0; const lineCount = isPerformanceRun ? instances :"
+      }
+    ],
+    "line-m20-szMix-fNone-sOpaq-sw1px-lytSpread-edgeNotCrisp-ornRand-test.js": [
+      {
+        "name": "drawTest",
+        "type": "function declaration",
+        "file": "line-m20-szMix-fNone-sOpaq-sw1px-lytSpread-edgeNotCrisp-ornRand-test.js",
+        "line": 72,
+        "context": "ative, 1 line is drawn with logging. * @returns {?{ logs: string[] }} Log entries if not in multi-instance mode (instances > 0), otherwise null. */ function drawTest(ctx, currentIterationNumber, instances = null) { const currentCanvasWidth = ctx.canvas.width; const currentCanvasHeight = ctx.canvas.height; if (currentCanvasWidth % 2 !== 0 || currentCanvasHeight % 2 !== 0) { throw new Error(\"Canvas width and height must be ev"
+      }
+    ],
+    "line-m20-szMix-fNone-sOpaq-sw2px-lytSpread-edgeNotCrisp-ornRand-test.js": [
+      {
+        "name": "drawTest",
+        "type": "function declaration",
+        "file": "line-m20-szMix-fNone-sOpaq-sw2px-lytSpread-edgeNotCrisp-ornRand-test.js",
+        "line": 81,
+        "context": "is many lines are drawn for performance testing. * @returns {?{ logs: string[] }} An object with logs, or null (especially in performance mode). */ function drawTest(ctx, currentIterationNumber, instances = null) { const initialCount = 20; // number of lines to draw for visual regression mode (i.e. not in performance mode) const isPerformanceRun = instances !== null && instances > 0; const lineCount = isPerformanceRun ? instances :"
+      }
+    ],
+    "line-m20-szMix-fNone-sOpaq-sw3px-lytSpread-edgeNotCrisp-ornRand-test.js": [
+      {
+        "name": "drawTest",
+        "type": "function declaration",
+        "file": "line-m20-szMix-fNone-sOpaq-sw3px-lytSpread-edgeNotCrisp-ornRand-test.js",
+        "line": 84,
+        "context": "is many lines are drawn for performance testing. * @returns {?{ logs: string[] }} An object with logs, or null (especially in performance mode). */ function drawTest(ctx, currentIterationNumber, instances = null) { const initialCount = 20; // number of lines to draw for visual regression mode (i.e. not in performance mode) const isPerformanceRun = instances !== null && instances > 0; const lineCount = isPerformanceRun ? instances :"
+      }
+    ],
+    "line-m20-szMix-fNone-sOpaq-sw5px-lytSpread-edgeNotCrisp-ornRand-test.js": [
+      {
+        "name": "drawTest",
+        "type": "function declaration",
+        "file": "line-m20-szMix-fNone-sOpaq-sw5px-lytSpread-edgeNotCrisp-ornRand-test.js",
+        "line": 82,
+        "context": "is many lines are drawn for performance testing. * @returns {?{ logs: string[] }} An object with logs, or null (especially in performance mode). */ function drawTest(ctx, currentIterationNumber, instances = null) { const initialCount = 20; // number of lines to draw for visual regression mode (i.e. not in performance mode) const isPerformanceRun = instances !== null && instances > 0; const lineCount = isPerformanceRun ? instances :"
+      }
+    ],
+    "line-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-edgeCrisp-ornHoriz-test.js": [
+      {
+        "name": "drawTest",
+        "type": "function declaration",
+        "file": "line-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-edgeCrisp-ornHoriz-test.js",
+        "line": 73,
+        "context": "{topY: number, bottomY: number, leftX: number, rightX: number} }} Log entries and expected pixel extremes, or null if drawing multiple instances. */ function drawTest(ctx, currentIterationNumber, instances = null) { const currentCanvasWidth = ctx.canvas.width; const currentCanvasHeight = ctx.canvas.height; if (currentCanvasWidth % 2 !== 0 || currentCanvasHeight % 2 !== 0) { throw new Error(\"Canvas width and height must be ev"
+      }
+    ],
+    "line-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-edgeCrisp-ornVert-test.js": [
+      {
+        "name": "drawTest",
+        "type": "function declaration",
+        "file": "line-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-edgeCrisp-ornVert-test.js",
+        "line": 73,
+        "context": "{topY: number, bottomY: number, leftX: number, rightX: number} }} Log entries and expected pixel extremes, or null if drawing multiple instances. */ function drawTest(ctx, currentIterationNumber, instances = null) { const currentCanvasWidth = ctx.canvas.width; const currentCanvasHeight = ctx.canvas.height; if (currentCanvasWidth % 2 !== 0 || currentCanvasHeight % 2 !== 0) { throw new Error(\"Canvas width and height must be ev"
+      }
+    ],
+    "line-sgl-szMix-fNone-sOpaq-sw2px-lytCenter-edgeCrisp-ornHoriz-test.js": [
+      {
+        "name": "drawTest",
+        "type": "function declaration",
+        "file": "line-sgl-szMix-fNone-sOpaq-sw2px-lytCenter-edgeCrisp-ornHoriz-test.js",
+        "line": 73,
+        "context": "{topY: number, bottomY: number, leftX: number, rightX: number} }} Log entries and expected pixel extremes, or null if drawing multiple instances. */ function drawTest(ctx, currentIterationNumber, instances = null) { const currentCanvasWidth = ctx.canvas.width; const currentCanvasHeight = ctx.canvas.height; if (currentCanvasWidth % 2 !== 0 || currentCanvasHeight % 2 !== 0) { throw new Error(\"Canvas width and height must be ev"
+      }
+    ],
+    "line-sgl-szMix-fNone-sOpaq-sw2px-lytCenter-edgeCrisp-ornVert-test.js": [
+      {
+        "name": "drawTest",
+        "type": "function declaration",
+        "file": "line-sgl-szMix-fNone-sOpaq-sw2px-lytCenter-edgeCrisp-ornVert-test.js",
+        "line": 73,
+        "context": "{topY: number, bottomY: number, leftX: number, rightX: number} }} Log entries and expected pixel extremes, or null if drawing multiple instances. */ function drawTest(ctx, currentIterationNumber, instances = null) { const currentCanvasWidth = ctx.canvas.width; const currentCanvasHeight = ctx.canvas.height; if (currentCanvasWidth % 2 !== 0 || currentCanvasHeight % 2 !== 0) { throw new Error(\"Canvas width and height must be ev"
+      }
+    ],
+    "rect-m10-szMix-fSemi-sMix-swMix-lytSpread-cenMixPG-edgeCrisp-ornAxial-test.js": [
+      {
+        "name": "drawTest",
+        "type": "function declaration",
+        "file": "rect-m10-szMix-fSemi-sMix-swMix-lytSpread-cenMixPG-edgeCrisp-ornAxial-test.js",
+        "line": 65,
+        "context": "turns {?{logs: string[], checkData: object}} Logs and data for checks for single-instance * mode, or null for performance mode. */ function drawTest(ctx, currentIterationNumber, instances = null) { const isPerformanceRun = instances !== null && instances > 0; const numToDraw = isPerformanceRun ? instances : 10; // Original test draws 10 const logs = []; let overallMinLeftX = Infinity; let overallMaxRightX ="
+      }
+    ],
+    "rect-m5-szMix-fSemi-sMix-sw1-10px-lytSpread-cenRand-edgeNotCrisp-ornRand-ctxTransRand-ctxRotRand-test.js": [
+      {
+        "name": "drawTest",
+        "type": "function declaration",
+        "file": "rect-m5-szMix-fSemi-sMix-sw1-10px-lytSpread-cenRand-edgeNotCrisp-ornRand-ctxTransRand-ctxRotRand-test.js",
+        "line": 70,
+        "context": "g[]}} Logs for single-instance mode, or null for performance mode. * (No checkData as original test had no withExtremesCheck). */ function drawTest(ctx, currentIterationNumber, instances = null) { const isPerformanceRun = instances !== null && instances > 0; const numToDraw = isPerformanceRun ? instances : 5; // Original test draws 5 const logs = []; const canvasWidth = ctx.canvas.width; const canvasHeight"
+      }
+    ],
+    "rect-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-cenGrid-edgeCrisp-ornAxial-test.js": [
+      {
+        "name": "drawTest",
+        "type": "function declaration",
+        "file": "rect-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-cenGrid-edgeCrisp-ornAxial-test.js",
+        "line": 62,
+        "context": "umber, rightX: number, topY: number, bottomY: number} }} * Log entries and expected pixel extremes, or null if in multi-instance mode. */ function drawTest(ctx, currentIterationNumber, instances = null) { const canvasWidth = ctx.canvas.width; const canvasHeight = ctx.canvas.height; if (canvasWidth % 2 !== 0 || canvasHeight % 2 !== 0) { throw new Error(\"Canvas width and height must be even for this test (required b"
+      }
+    ],
+    "rect-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-cenPx-edgeCrisp-ornAxial-test.js": [
+      {
+        "name": "drawTest",
+        "type": "function declaration",
+        "file": "rect-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-cenPx-edgeCrisp-ornAxial-test.js",
+        "line": 62,
+        "context": "umber, rightX: number, topY: number, bottomY: number} }} * Log entries and expected pixel extremes, or null if in multi-instance mode. */ function drawTest(ctx, currentIterationNumber, instances = null) { const canvasWidth = ctx.canvas.width; const canvasHeight = ctx.canvas.height; if (canvasWidth % 2 !== 0 || canvasHeight % 2 !== 0) { throw new Error(\"Canvas width and height must be even for this test (original t"
+      }
+    ],
+    "rect-sgl-szMix-fSemi-sMix-swMix-lytRand-cenMixPG-edgeCrisp-ornAxial-test.js": [
+      {
+        "name": "drawTest",
+        "type": "function declaration",
+        "file": "rect-sgl-szMix-fSemi-sMix-swMix-lytRand-cenMixPG-edgeCrisp-ornAxial-test.js",
+        "line": 65,
+        "context": "erformance. * @returns {?{ logs: string[], checkData: object }} * Log entries and data for checks, or null if in multi-instance mode. */ function drawTest(ctx, currentIterationNumber, instances = null) { const canvasWidth = ctx.canvas.width; const canvasHeight = ctx.canvas.height; const isPerformanceRun = instances !== null && instances > 0; const numToDraw = isPerformanceRun ? instances : 1; let logs = isPerfor"
+      }
+    ],
+    "roundrect-m10-szMix-fSemi-sOpaq-sw1px-lytSpread-cenMixPG-edgeCrisp-ornAxial-rrrRand-test.js": [
+      {
+        "name": "drawTest",
+        "type": "function declaration",
+        "file": "roundrect-m10-szMix-fSemi-sOpaq-sw1px-lytSpread-cenMixPG-edgeCrisp-ornAxial-rrrRand-test.js",
+        "line": 57,
+        "context": "sion (instances is null/0), 10 rectangles are drawn. * @returns {?{logs: string[]}} Logs for single-instance mode, or null for performance mode. */ function drawTest(ctx, currentIterationNumber, instances = null) { const isPerformanceRun = instances !== null && instances > 0; const numToDraw = isPerformanceRun ? instances : 10; // Original test draws 10 let logs = []; const canvasWidth = ctx.canvas.width; const canvasHeigh"
+      }
+    ],
+    "roundrect-m6-szMix-fSemi-sSemi-swMix-lytSpread-cenMixPG-edgeCrisp-ornAxial-rrrLrg-test.js": [
+      {
+        "name": "drawTest",
+        "type": "function declaration",
+        "file": "roundrect-m6-szMix-fSemi-sSemi-swMix-lytSpread-cenMixPG-edgeCrisp-ornAxial-rrrLrg-test.js",
+        "line": 61,
+        "context": "ssion (instances is null/0), 6 rectangles are drawn. * @returns {?{logs: string[]}} Logs for single-instance mode, or null for performance mode. */ function drawTest(ctx, currentIterationNumber, instances = null) { const isPerformanceRun = instances !== null && instances > 0; const numToDraw = isPerformanceRun ? instances : 6; // Original test draws 6 let logs = []; const canvasWidth = ctx.canvas.width; const canvasHeight"
+      }
+    ],
+    "roundrect-m8-szMix-fSemi-sMix-swMix-lytSpread-cenMixPG-edgeCrisp-ornAxial-rrrMix-test.js": [
+      {
+        "name": "drawTest",
+        "type": "function declaration",
+        "file": "roundrect-m8-szMix-fSemi-sMix-swMix-lytSpread-cenMixPG-edgeCrisp-ornAxial-rrrMix-test.js",
+        "line": 58,
+        "context": "ssion (instances is null/0), 8 rectangles are drawn. * @returns {?{logs: string[]}} Logs for single-instance mode, or null for performance mode. */ function drawTest(ctx, currentIterationNumber, instances = null) { const isPerformanceRun = instances !== null && instances > 0; const numToDraw = isPerformanceRun ? instances : 8; // Original test draws 8 let logs = []; const canvasWidth = ctx.canvas.width; const canvasHeight"
+      }
+    ],
+    "roundrect-m8-xl-fSemi-sNone-lytSpread-cenGrid-edgeCrisp-ornAxial-rrrLrg-test.js": [
+      {
+        "name": "drawTest",
+        "type": "function declaration",
+        "file": "roundrect-m8-xl-fSemi-sNone-lytSpread-cenGrid-edgeCrisp-ornAxial-rrrLrg-test.js",
+        "line": 58,
+        "context": "ssion (instances is null/0), 8 rectangles are drawn. * @returns {?{logs: string[]}} Logs for single-instance mode, or null for performance mode. */ function drawTest(ctx, currentIterationNumber, instances = null) { const isPerformanceRun = instances !== null && instances > 0; const numToDraw = isPerformanceRun ? instances : 8; // Original test draws 8 let logs = []; const canvasWidth = ctx.canvas.width; const canvasHeight"
+      }
+    ],
+    "roundrect-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-cenGrid-edgeCrisp-ornAxial-rrrRand-test.js": [
+      {
+        "name": "drawTest",
+        "type": "function declaration",
+        "file": "roundrect-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-cenGrid-edgeCrisp-ornAxial-rrrRand-test.js",
+        "line": 60,
+        "context": "turns {?{logs: string[], checkData: object}} Logs and data for checks for single-instance * mode, or null for performance mode. */ function drawTest(ctx, currentIterationNumber, instances = null) { const isPerformanceRun = instances !== null && instances > 0; const numToDraw = isPerformanceRun ? instances : 1; let logs = []; let checkData = null; const canvasWidth = ctx.canvas.width; const canvasHeigh"
+      }
+    ],
+    "roundrect-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-cenPx-edgeCrisp-ornAxial-rrrRand-test.js": [
+      {
+        "name": "drawTest",
+        "type": "function declaration",
+        "file": "roundrect-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-cenPx-edgeCrisp-ornAxial-rrrRand-test.js",
+        "line": 62,
+        "context": "turns {?{logs: string[], checkData: object}} Logs and data for checks for single-instance * mode, or null for performance mode. */ function drawTest(ctx, currentIterationNumber, instances = null) { const isPerformanceRun = instances !== null && instances > 0; const numToDraw = isPerformanceRun ? instances : 1; let logs = []; let checkData = null; const canvasWidth = ctx.canvas.width; const canvasHeigh"
+      }
+    ],
+    "roundrect-sgl-szMix-fSemi-sOpaq-sw1-11px-lytCenter-cenGrid-edgeCrisp-ornAxial-rrrRand-test.js": [
+      {
+        "name": "drawTest",
+        "type": "function declaration",
+        "file": "roundrect-sgl-szMix-fSemi-sOpaq-sw1-11px-lytCenter-cenGrid-edgeCrisp-ornAxial-rrrRand-test.js",
+        "line": 59,
+        "context": ", each with unique properties based on SeededRandom. * @returns {?{logs: string[]}} Logs for single-instance mode, or null for performance mode. */ function drawTest(ctx, currentIterationNumber, instances = null) { const isPerformanceRun = instances !== null && instances > 0; const numToDraw = isPerformanceRun ? instances : 1; let logs = []; const canvasWidth = ctx.canvas.width; const canvasHeight = ctx.canvas.height;"
+      }
+    ],
+    "roundrect-sgl-szMix-fSemi-sSemi-swMix-lytCenter-cenMixPG-edgeCrisp-ornAxial-rrrRand-test.js": [
+      {
+        "name": "drawTest",
+        "type": "function declaration",
+        "file": "roundrect-sgl-szMix-fSemi-sSemi-swMix-lytCenter-cenMixPG-edgeCrisp-ornAxial-rrrRand-test.js",
+        "line": 60,
+        "context": "the performance * testing harness. * @returns {?{logs: string[]}} Logs for single-instance mode, or null for performance mode. */ function drawTest(ctx, currentIterationNumber, instances = null) { const isPerformanceRun = instances !== null && instances > 0; const numToDraw = isPerformanceRun ? instances : 1; let logs = []; const canvasWidth = ctx.canvas.width; const canvasHeight = ctx.canvas.height;"
+      }
+    ],
+    "scene-multi-szMix-fMix-sMix-swMix-lytMix-edgeMix-ornMix-arcAMix-rrrMix-ctxTransFixed-ctxRotFixed-test.js": [
+      {
+        "name": "drawTest",
+        "type": "function declaration",
+        "file": "scene-multi-szMix-fMix-sMix-swMix-lytMix-edgeMix-ornMix-arcAMix-rrrMix-ctxTransFixed-ctxRotFixed-test.js",
+        "line": 61,
+        "context": ". * In performance mode, `instances` full scenes are drawn. * @returns {?{logs: string[]}} Logs for the visual regression run. */ function drawTest(ctx, currentIterationNumber, instances = null) { const isPerformanceRun = instances !== null && instances > 0; const numScenesToDraw = isPerformanceRun ? instances : 1; let logs = []; const dummyLog = { innerHTML: '' }; // Original functions write to log.innerHTML"
+      },
+      {
+        "name": "drawShapesFromArray",
+        "type": "function declaration",
+        "file": "scene-multi-szMix-fMix-sMix-swMix-lytMix-edgeMix-ornMix-arcAMix-rrrMix-ctxTransFixed-ctxRotFixed-test.js",
+        "line": 69,
+        "context": "innerHTML: '' }; // Original functions write to log.innerHTML // Helper to draw shapes from the array populated by original add... functions function drawShapesFromArray(shapesArray, context) { shapesArray.forEach(shape => { const fillColorStr = shape.fillColor ? colorToString(shape.fillColor) : 'rgba(0,0,0,0)' ; const strokeColorStr = shape.strokeColor ? colorToString(shape.strokeColor) : 'rgba(0,0,0,0"
+      }
+    ]
+  }
+}

@@ -1208,134 +1208,6 @@ function roundPoint({x, y}) {
   };
 }
 
-/**
- * Adjusts width and height to ensure crisp rendering based on stroke width and center position
- * @param {number} width - Original width
- * @param {number} height - Original height
- * @param {number} strokeWidth - Width of the stroke
- * @param {Object} center - Center coordinates {x, y}
- * @returns {Object} Adjusted width and height
- */
-function adjustDimensionsForCrispStrokeRendering(width, height, strokeWidth, center) {
-
-  // Dimensions should be integers, because non-integer dimensions
-  // always produce a non-crisp (i.e. non-grid-aligned) stroke/fill.
-  let adjustedWidth = Math.floor(width);
-  let adjustedHeight = Math.floor(height);
-
-  // FIXING THE WIDTH /////////////////////////////////
-
-  // For center's x coordinate at grid points (integer coordinates)
-  if (Number.isInteger(center.x)) {
-    // For odd strokeWidth, width should be odd
-    if (strokeWidth % 2 !== 0) {
-      if (adjustedWidth % 2 === 0) adjustedWidth++;
-    }
-    // For even strokeWidth, width should be even
-    else {
-      if (adjustedWidth % 2 !== 0) adjustedWidth++;
-    }
-  }
-  // For center's x coordinate at pixels (i.e. *.5 coordinates)
-  else if (center.x % 1 === 0.5) {
-    // For odd strokeWidth, width should be even
-    if (strokeWidth % 2 !== 0) {
-      if (adjustedWidth % 2 !== 0) adjustedWidth++;
-    }
-    // For even strokeWidth, width should be odd
-    else {
-      if (adjustedWidth % 2 === 0) adjustedWidth++;
-    }
-  }
-
-  // FIXING THE HEIGHT /////////////////////////////////
-
-  // For center's y coordinate at grid points (integer coordinates)
-  if (Number.isInteger(center.y)) {
-    // For odd strokeWidth, height should be odd
-    if (strokeWidth % 2 !== 0) {
-      if (adjustedHeight % 2 === 0) adjustedHeight++;
-    }
-    // For even strokeWidth, height should be even
-    else {
-      if (adjustedHeight % 2 !== 0) adjustedHeight++;
-    }
-  }
-  // For center's y coordinate at pixels (i.e. *.5 coordinates)
-  else if (center.y % 1 === 0.5) {
-    // For odd strokeWidth, height should be even
-    if (strokeWidth % 2 !== 0) {
-      if (adjustedHeight % 2 !== 0) adjustedHeight++;
-    }
-    // For even strokeWidth, height should be odd
-    else {
-      if (adjustedHeight % 2 === 0) adjustedHeight++;
-    }
-  }
-
-  return {
-    width: adjustedWidth,
-    height: adjustedHeight
-  };
-}
-
-/**
- * Adjusts center coordinates to ensure crisp rendering based on stroke width and dimensions
- * @param {number} centerX - Original center X coordinate
- * @param {number} centerY - Original center Y coordinate
- * @param {number} width - Shape width
- * @param {number} height - Shape height
- * @param {number} strokeWidth - Width of the stroke
- * @returns {Object} Adjusted center coordinates
- */
-function adjustCenterForCrispStrokeRendering(centerX, centerY, width, height, strokeWidth) {
-  
-  let adjustedX = centerX;
-  let adjustedY = centerY;
-
-  // For odd strokeWidth
-  //   if width/height are even, then the center x/y should be in the middle of the pixel i.e. *.5
-  //   if width/height are odd, then the center x/y should be at the grid point i.e. integer
-
-  // For even strokeWidth
-  //   if width/height are even, then the center x/y should be at the grid point i.e. integer
-  //   if width/height are odd, then the center x/y should be in the middle of the pixel i.e. *.5
-
-  if (strokeWidth % 2 !== 0) {
-    if (width % 2 === 0) {
-      adjustedX = Math.floor(centerX) + 0.5;
-    } else {
-      adjustedX = Math.round(centerX);
-    }
-
-    if (height % 2 === 0) {
-      adjustedY = Math.floor(centerY) + 0.5;
-    } else {
-      adjustedY = Math.round(centerY);
-    }
-  }
-  else {
-    if (width % 2 === 0) {
-      adjustedX = Math.round(centerX);
-    } else {
-      adjustedX = Math.floor(centerX) + 0.5;
-    }
-
-    if (height % 2 === 0) {
-      adjustedY = Math.round(centerY);
-    } else {
-      adjustedY = Math.floor(centerY) + 0.5;
-    }
-  }
-
-
-
-  return {
-    x: adjustedX,
-    y: adjustedY
-  };
-}
-
 function placeCloseToCenterAtPixel(width, height) {
   return {
     centerX: Math.floor(width / 2) + 0.5,
@@ -1531,8 +1403,7 @@ function checkBasicConditionsForCrispRendering(centerX, centerY, width, height, 
     console.warn("Center Y must be an integer or *.5 for crisp rendering ");
   }
 }
-function getRandomPoint(decimalPlaces = null, canvasWidth = null, canvasHeight = null) {
-  const margin = 100;
+function getRandomPoint(decimalPlaces = null, canvasWidth = null, canvasHeight = null, margin = 100) {
   const width = canvasWidth || renderTestWidth;
   const height = canvasHeight || renderTestHeight;
   const x = margin + SeededRandom.getRandom() * (width - 2 * margin);
@@ -9101,7 +8972,8 @@ class RenderTest {
  */
 function registerHighLevelTest(filename, drawFunction, category, checkConfiguration, performanceTestConfig = {}) {
     // --- 1. Derive common properties from filename ---
-    const baseId = filename.replace(/--test\.js$/, '');
+    // Handle both formats: with .js extension and without
+    const baseId = filename.replace(/--test(\.js)?$/, '');
     const parts = baseId.split('--');
     const categoryFromFile = parts[0]; // Category can also be explicitly passed, which is preferred.
     const featureParts = parts.slice(1);
@@ -9232,6 +9104,397 @@ function registerHighLevelTest(filename, drawFunction, category, checkConfigurat
         }
     }
 } /**
+ * @fileoverview Common helper functions used across multiple high-level test cases.
+ * These functions were previously defined individually in test files, causing scope
+ * issues when tests are concatenated with IIFE wrapping for Node.js builds.
+ */
+
+
+/**
+ * Adjusts width and height to ensure crisp rendering based on stroke width and center position
+ * @param {number} width - Original width
+ * @param {number} height - Original height
+ * @param {number} strokeWidth - Width of the stroke
+ * @param {Object} center - Center coordinates {x, y}
+ * @returns {Object} Adjusted width and height
+ */
+function adjustDimensionsForCrispStrokeRendering(width, height, strokeWidth, center) {
+
+    // Dimensions should be integers, because non-integer dimensions
+    // always produce a non-crisp (i.e. non-grid-aligned) stroke/fill.
+    let adjustedWidth = Math.floor(width);
+    let adjustedHeight = Math.floor(height);
+  
+    // FIXING THE WIDTH /////////////////////////////////
+  
+    // For center's x coordinate at grid points (integer coordinates)
+    if (Number.isInteger(center.x)) {
+      // For odd strokeWidth, width should be odd
+      if (strokeWidth % 2 !== 0) {
+        if (adjustedWidth % 2 === 0) adjustedWidth++;
+      }
+      // For even strokeWidth, width should be even
+      else {
+        if (adjustedWidth % 2 !== 0) adjustedWidth++;
+      }
+    }
+    // For center's x coordinate at pixels (i.e. *.5 coordinates)
+    else if (center.x % 1 === 0.5) {
+      // For odd strokeWidth, width should be even
+      if (strokeWidth % 2 !== 0) {
+        if (adjustedWidth % 2 !== 0) adjustedWidth++;
+      }
+      // For even strokeWidth, width should be odd
+      else {
+        if (adjustedWidth % 2 === 0) adjustedWidth++;
+      }
+    }
+  
+    // FIXING THE HEIGHT /////////////////////////////////
+  
+    // For center's y coordinate at grid points (integer coordinates)
+    if (Number.isInteger(center.y)) {
+      // For odd strokeWidth, height should be odd
+      if (strokeWidth % 2 !== 0) {
+        if (adjustedHeight % 2 === 0) adjustedHeight++;
+      }
+      // For even strokeWidth, height should be even
+      else {
+        if (adjustedHeight % 2 !== 0) adjustedHeight++;
+      }
+    }
+    // For center's y coordinate at pixels (i.e. *.5 coordinates)
+    else if (center.y % 1 === 0.5) {
+      // For odd strokeWidth, height should be even
+      if (strokeWidth % 2 !== 0) {
+        if (adjustedHeight % 2 !== 0) adjustedHeight++;
+      }
+      // For even strokeWidth, height should be odd
+      else {
+        if (adjustedHeight % 2 === 0) adjustedHeight++;
+      }
+    }
+  
+    return {
+      width: adjustedWidth,
+      height: adjustedHeight
+    };
+  }
+  
+  /**
+   * Adjusts center coordinates to ensure crisp rendering based on stroke width and dimensions
+   * @param {number} centerX - Original center X coordinate
+   * @param {number} centerY - Original center Y coordinate
+   * @param {number} width - Shape width
+   * @param {number} height - Shape height
+   * @param {number} strokeWidth - Width of the stroke
+   * @returns {Object} Adjusted center coordinates
+   */
+  function adjustCenterForCrispStrokeRendering(centerX, centerY, width, height, strokeWidth) {
+    
+    let adjustedX = centerX;
+    let adjustedY = centerY;
+  
+    // For odd strokeWidth
+    //   if width/height are even, then the center x/y should be in the middle of the pixel i.e. *.5
+    //   if width/height are odd, then the center x/y should be at the grid point i.e. integer
+  
+    // For even strokeWidth
+    //   if width/height are even, then the center x/y should be at the grid point i.e. integer
+    //   if width/height are odd, then the center x/y should be in the middle of the pixel i.e. *.5
+  
+    if (strokeWidth % 2 !== 0) {
+      if (width % 2 === 0) {
+        adjustedX = Math.floor(centerX) + 0.5;
+      } else {
+        adjustedX = Math.round(centerX);
+      }
+  
+      if (height % 2 === 0) {
+        adjustedY = Math.floor(centerY) + 0.5;
+      } else {
+        adjustedY = Math.round(centerY);
+      }
+    }
+    else {
+      if (width % 2 === 0) {
+        adjustedX = Math.round(centerX);
+      } else {
+        adjustedX = Math.floor(centerX) + 0.5;
+      }
+  
+      if (height % 2 === 0) {
+        adjustedY = Math.round(centerY);
+      } else {
+        adjustedY = Math.floor(centerY) + 0.5;
+      }
+    }
+  
+  
+  
+    return {
+      x: adjustedX,
+      y: adjustedY
+    };
+  }
+  
+  // ============================================================================
+  // CIRCLES SECTION
+  // ============================================================================
+  
+  /**
+   * Places a center point at pixel boundary (*.5 coordinates) relative to canvas center
+   * @param {number} width - Canvas width
+   * @param {number} height - Canvas height
+   * @returns {Object} Center coordinates
+   */
+  function placeCloseToCenterAtPixel(width, height) {
+    return {
+      centerX: Math.floor(width / 2) + 0.5,
+      centerY: Math.floor(height / 2) + 0.5
+    };
+  }
+  
+  /**
+   * Places a center point at grid intersection (integer coordinates) relative to canvas center
+   * @param {number} width - Canvas width
+   * @param {number} height - Canvas height
+   * @returns {Object} Center coordinates
+   */
+  function placeCloseToCenterAtGrid(width, height) {
+    return {
+      centerX: Math.floor(width / 2),
+      centerY: Math.floor(height / 2)
+    };
+  }
+  
+  /**
+   * Calculates circle parameters with proper positioning and dimensions.
+   * This is a refactored version that uses the elegant logic from calculateCircleParameters
+   * but adapted for the test context.
+   * 
+   * @param {Object} options - Configuration options for circle creation
+   * @param {number} options.canvasWidth - Canvas width (replaces global renderTestWidth)
+   * @param {number} options.canvasHeight - Canvas height (replaces global renderTestHeight)
+   * @param {number} options.minRadius - Minimum radius for the circle
+   * @param {number} options.maxRadius - Maximum radius for the circle
+   * @param {boolean} options.hasStroke - Whether the circle has a stroke
+   * @param {number} options.minStrokeWidth - Minimum stroke width (if hasStroke is true)
+   * @param {number} options.maxStrokeWidth - Maximum stroke width (if hasStroke is true)
+   * @param {boolean} options.randomPosition - Whether to use random positioning
+   * @param {number} options.marginX - Horizontal margin from canvas edges
+   * @param {number} options.marginY - Vertical margin from canvas edges
+   * @returns {Object} Calculated circle parameters: {centerX, centerY, radius, strokeWidth, finalDiameter, atPixel}
+   */
+  function calculateCircleTestParameters(options) {
+    const {
+      canvasWidth,
+      canvasHeight,
+      minRadius = 8,
+      maxRadius = 42,
+      hasStroke = false,
+      minStrokeWidth = 1,
+      maxStrokeWidth = 4,
+      randomPosition = true,
+      marginX = 60,
+      marginY = 60
+    } = options;
+  
+    // Randomly choose between grid-centered and pixel-centered
+    const atPixel = SeededRandom.getRandom() < 0.5;
+    
+    // Get initial center point
+    let {centerX, centerY} = atPixel
+      ? placeCloseToCenterAtPixel(canvasWidth, canvasHeight)
+      : placeCloseToCenterAtGrid(canvasWidth, canvasHeight);
+    
+    // Calculate base diameter
+    const diameter = Math.floor(minRadius * 2 + SeededRandom.getRandom() * (maxRadius * 2 - minRadius * 2));
+    const baseRadius = diameter / 2;
+    
+    // Calculate stroke width
+    const maxAllowedStrokeWidth = Math.floor(baseRadius / 1);
+    const strokeWidth = hasStroke 
+      ? (minStrokeWidth + Math.floor(SeededRandom.getRandom() * Math.min(maxStrokeWidth - minStrokeWidth + 1, maxAllowedStrokeWidth)))
+      : 0;
+    
+    // Handle random positioning if requested
+    if (randomPosition) {
+      const totalRadius = baseRadius + (strokeWidth / 2);
+      
+      // Calculate safe bounds
+      const minX = Math.ceil(totalRadius + marginX);
+      const maxX = Math.floor(canvasWidth - totalRadius - marginX);
+      const minY = Math.ceil(totalRadius + marginY);
+      const maxY = Math.floor(canvasHeight - totalRadius - marginY);
+      
+      // Adjust diameter if circle is too large
+      let adjustedDiameter = diameter;
+      if (maxX <= minX || maxY <= minY) {
+        // Circle is too large, reduce diameter to 1/4 of canvas size
+        adjustedDiameter = Math.min(
+          Math.floor(canvasWidth / 4),
+          Math.floor(canvasHeight / 4)
+        );
+        
+        // Recalculate bounds with reduced diameter
+        const newTotalRadius = (adjustedDiameter / 2) + (strokeWidth / 2);
+        const newMinX = Math.ceil(newTotalRadius + marginX);
+        const newMaxX = Math.floor(canvasWidth - newTotalRadius - marginX);
+        const newMinY = Math.ceil(newTotalRadius + marginY);
+        const newMaxY = Math.floor(canvasHeight - newTotalRadius - marginY);
+        
+        // Generate random position within new safe bounds
+        centerX = newMinX + Math.floor(SeededRandom.getRandom() * (newMaxX - newMinX + 1));
+        centerY = newMinY + Math.floor(SeededRandom.getRandom() * (newMaxY - newMinY + 1));
+      } else {
+        // Generate random position within original safe bounds
+        centerX = minX + Math.floor(SeededRandom.getRandom() * (maxX - minX + 1));
+        centerY = minY + Math.floor(SeededRandom.getRandom() * (maxY - minY + 1));
+      }
+    }
+    
+    // Adjust dimensions for crisp rendering
+    const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(
+      diameter, diameter, strokeWidth, { x: centerX, y: centerY }
+    );
+    const finalDiameter = adjustedDimensions.width;
+    const radius = finalDiameter / 2;
+    
+    return {
+      centerX,
+      centerY,
+      radius,
+      strokeWidth,
+      finalDiameter,
+      atPixel
+    };
+  }
+  
+  // ============================================================================
+  // RECTANGLES SECTION
+  // ============================================================================
+  
+  /**
+   * Calculates rectangle parameters for crisp fill AND stroke rendering.
+   * This function ALWAYS generates a stroke width > 0 (minimum 1px, or 2px if ensureEvenStroke is true).
+   * 
+   * IMPORTANT: This is NOT a generic rectangle function. It's specifically designed for rectangles
+   * that have both fill and stroke, which requires consistent center alignment (both coordinates
+   * either pixel-centered or grid-centered) to ensure crispness.
+   * 
+   * @param {Object} options - Configuration options for rectangle creation
+   * @param {number} options.canvasWidth - Canvas width
+   * @param {number} options.canvasHeight - Canvas height  
+   * @param {number} options.minWidth - Minimum width for the rectangle
+   * @param {number} options.maxWidth - Maximum width for the rectangle
+   * @param {number} options.minHeight - Minimum height for the rectangle
+   * @param {number} options.maxHeight - Maximum height for the rectangle
+   * @param {number} options.maxStrokeWidth - Maximum stroke width (minimum result will be 1px)
+   * @param {boolean} options.ensureEvenStroke - Whether to ensure stroke width is even (minimum becomes 2px)
+   * @param {boolean} options.randomPosition - Whether to apply random positioning offset
+   * @param {number} options.maxOffsetX - Maximum random X offset (if randomPosition is true)
+   * @param {number} options.maxOffsetY - Maximum random Y offset (if randomPosition is true)
+   * @returns {Object} Calculated rectangle parameters: {center, adjustedDimensions, strokeWidth}
+   */
+    function calculateCrispFillAndStrokeRectParams(options) {
+    const {
+      canvasWidth,
+      canvasHeight,
+      minWidth = 50,
+      maxWidth = canvasWidth * 0.6,
+      minHeight = 50, 
+      maxHeight = canvasHeight * 0.6,
+      maxStrokeWidth = 10,
+      ensureEvenStroke = true,
+      randomPosition = false,
+      maxOffsetX = 100,
+      maxOffsetY = 100
+    } = options;
+
+    // 1. Generate stroke width
+    let strokeWidth = Math.round(SeededRandom.getRandom() * maxStrokeWidth + 1);
+    if (ensureEvenStroke) {
+      strokeWidth = strokeWidth % 2 === 0 ? strokeWidth : strokeWidth + 1;
+    }
+
+    // 2. Set initial center to canvas center
+    let center = { x: canvasWidth / 2, y: canvasHeight / 2 };
+
+    // 3. Randomly choose between grid-centered and pixel-centered
+    if (SeededRandom.getRandom() < 0.5) {
+      center = { x: center.x + 0.5, y: center.y + 0.5 };
+    }
+
+    // 4. Generate rectangle dimensions
+    const rectWidth = Math.round(minWidth + SeededRandom.getRandom() * (maxWidth - minWidth));
+    const rectHeight = Math.round(minHeight + SeededRandom.getRandom() * (maxHeight - minHeight));
+
+    // 5. Adjust dimensions for crisp rendering
+    const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(rectWidth, rectHeight, strokeWidth, center);
+
+    // 6. Apply random positioning offset if requested (integer amounts preserve crispness)
+    if (randomPosition) {
+      const xOffset = Math.floor(SeededRandom.getRandom() * maxOffsetX) - Math.floor(maxOffsetX / 2);
+      const yOffset = Math.floor(SeededRandom.getRandom() * maxOffsetY) - Math.floor(maxOffsetY / 2);
+      center = {
+        x: center.x + xOffset,
+        y: center.y + yOffset
+      };
+    }
+
+    return { center, adjustedDimensions, strokeWidth };
+  }
+  
+
+  // Note: Each test file is wrapped in an IIFE (Immediately Invoked Function Expression)
+// to prevent function name collisions. All test files use 'drawTest' as the function name,
+// which would overwrite each other in a simple concatenation. IIFEs create separate scopes.
+// This avoids the need for unique function names, which would be cumbersome and redundant.
+
+(function() {
+/**
+ * TEST SUMMARY:
+ * =================
+ *
+ * Description: Test with 12 arcs, each at 90 degrees, using fixed parameters and a grid layout.
+ *
+ * ---
+ *
+ * | Facet                  | Value          | Reason
+ * |------------------------|----------------|-----------------------------------------------------------------------------------------------------
+ * | Shape category         | arcs           | The test calls `ctx.outerStrokeArc` to draw arcs.
+ * | Count                  | multi-12       | The test uses nested loops (4 stroke sizes * 3 radii) to draw exactly 12 arcs.
+ * | SizeCategory           | mixed          | The radii used are `[20, 40, 60]`, which span size categories 'S' (16-39px) and 'M' (40-79px).
+ * | FillStyle              | none           | No fill operation is performed; only `outerStrokeArc` is called.
+ * | StrokeStyle            | opaque         | The stroke color alpha value is fixed at 255, making it fully opaque.
+ * | StrokeThickness        | mixed          | The test uses a discrete set of stroke widths: `[1, 2, 3, 4]`.
+ * | Layout                 | grid           | Arcs are positioned in a clear grid formation using `xOffset` and `yOffset` increments.
+ * | CenteredAt             | grid           | The centers of the arcs are set to explicit integer coordinates, aligning them to the pixel grid.
+ * | EdgeAlignment          | not-crisp      | No specific logic is used to align strokes to pixel boundaries, leading to anti-aliased edges.
+ * | Orientation            | horizontal     | The `startAngle` for all arcs is fixed at 0, representing a consistent horizontal baseline.
+ * | ArcAngleExtent         | 90-deg         | The angle extent is fixed at `Math.PI / 2`, which is 90 degrees.
+ * | RoundRectRadius        | N/A            | This facet is not applicable to arc shapes.
+ * | ContextTranslation     | none           | The test does not use `ctx.translate()`.
+ * | ContextRotation        | none           | The test does not use `ctx.rotate()`.
+ * | ContextScaling         | none           | The test does not use `ctx.scale()`.
+ * | Clipped on shape       | none           | The test does not involve any clipping operations.
+ * | Clipped on shape count | n/a            | Not applicable as there is no clipping.
+ * | Clipped on shape arrangement | n/a      | Not applicable as there is no clipping.
+ * | Clipped on shape size  | n/a            | Not applicable as there is no clipping.
+ * | Clipped on shape edge alignment | n/a   | Not applicable as there is no clipping.
+ *
+ * ---
+ *
+ * UNCAPTURED ASPECTS IN FILENAME / FACETS ABOVE:
+ * ----------------------------------------------
+ * - The visual regression mode uses a fixed stroke color of `rgba(200, 100, 100, 255)`.
+ * - The performance mode (`isPerformanceRun = true`) uses different, fully randomized parameters for radius,
+ *   stroke width, color, and position, which are not reflected in the facets for the visual test.
+ *
+ */
+
+/**
  * @fileoverview Test definition for 90-degree arcs with various radii and stroke widths.
  */
 
@@ -9248,7 +9511,7 @@ function registerHighLevelTest(filename, drawFunction, category, checkConfigurat
  *                  the predefined set of 12 arcs for visual regression. For performance, it draws `instances` arcs.
  * @returns {?{logs: string[]}} Logs for the visual regression run.
  */
-function draw_arcs_multi_12_90_deg_fixed_params_grid_layout(ctx, currentIterationNumber, instances = null) {
+function drawTest(ctx, currentIterationNumber, instances = null) {
     const isPerformanceRun = instances !== null && instances > 0;
     const numToDrawForPerf = isPerformanceRun ? instances : 0;
     let logs = [];
@@ -9262,7 +9525,7 @@ function draw_arcs_multi_12_90_deg_fixed_params_grid_layout(ctx, currentIteratio
         const radii = [20, 40, 60];
         let xOffset = 150;
         const fixedStrokeColorObj = { r: 200, g: 100, b: 100, a: 255 };
-        const fixedStrokeColorStr = _colorObjectToString(fixedStrokeColorObj);
+        const fixedStrokeColorStr = fixedStrokeColorObj ? colorToString(fixedStrokeColorObj) : 'rgba(0,0,0,0)';
 
         for (const strokeWidth of strokeSizes) {
             let yOffset = 150;
@@ -9298,8 +9561,8 @@ function draw_arcs_multi_12_90_deg_fixed_params_grid_layout(ctx, currentIteratio
             const startAngleRad = quadrants[Math.floor(SeededRandom.getRandom() * 4)];
             const endAngleRad = startAngleRad + Math.PI / 2;
 
-            const strokeColorObj = getRandomColor(200, 255); // Opaque random color
-            const strokeColorStr = _colorObjectToString(strokeColorObj);
+            const strokeColorObj = getRandomColor(200, 255); // Opaque or semi-transparent random color
+            const strokeColorStr = strokeColorObj ? colorToString(strokeColorObj) : 'rgba(0,0,0,0)';
 
             // Base position from SeededRandom
             let drawCenterX = SeededRandom.getRandom() * canvasWidth;
@@ -9323,8 +9586,8 @@ function draw_arcs_multi_12_90_deg_fixed_params_grid_layout(ctx, currentIteratio
 
 // Register the test
 registerHighLevelTest(
-    'arcs--multi-12--90-deg--fixed-params--grid-layout--test.js',
-    draw_arcs_multi_12_90_deg_fixed_params_grid_layout,
+    'arc-m12-szMix-fNone-sOpaq-swMix-lytGrid-cenGrid-edgeNotCrisp-ornHoriz-arcADeg90-test',
+    drawTest,
     'arcs',
     {
         //compare: { swTol: 0, refTol: 0, diffTol: 0 } // Default visual comparison
@@ -9334,7 +9597,49 @@ registerHighLevelTest(
         description: 'Tests rendering of 90\u00B0 arcs with various fixed radii and stroke widths in a grid.',
         displayName: 'Perf: 12 90Deg Arcs FixedGrid'
     }
-); /**
+); })();
+
+(function() {
+/**
+ * TEST SUMMARY:
+ * =================
+ *
+ * Description: Test with 5 arcs, all parameters fully randomized.
+ *
+ * ---
+ *
+ * | Facet                  | Value          | Reason
+ * |------------------------|----------------|-----------------------------------------------------------------------------------------------------
+ * | Shape category         | arcs           | The test draws exclusively `arc` shapes using `ctx.fillAndOuterStrokeArc`.
+ * | Count                  | multi-5        | The test draws 5 instances in a loop for the visual regression case.
+ * | SizeCategory           | mixed          | The radius is randomized in `[15, 65)`, which spans the S and M size categories for circles.
+ * | FillStyle              | opaque         | `fillStyle` is set via `getRandomColor()` which produces a fully opaque color. A fill is applied.
+ * | StrokeStyle            | opaque         | `strokeStyle` is set via `getRandomColor()` which produces a fully opaque color. A stroke is applied.
+ * | StrokeThickness        | 1px-10px       | `lineWidth` is randomized in the range `[1, 11)`, which is categorized as `1px-10px`.
+ * | Layout                 | spread         | The 5 arcs are positioned randomly across the canvas using `getRandomPoint()` for each.
+ * | CenteredAt             | random         | Arc centers are random floating-point coordinates with no snapping to a grid or pixel centers.
+ * | EdgeAlignment          | not-crisp      | Use of random floating-point values for position, size, and stroke width without adjustment results in non-pixel-aligned edges.
+ * | Orientation            | random         | Both the start angle and end angle of the arcs are randomized, resulting in random orientations.
+ * | ArcAngleExtent         | randomized     | The arc's angular extent is randomized in the range `[90, 360)` degrees.
+ * | RoundRectRadius        | N/A            | This facet is not applicable to `arc` shapes.
+ * | ContextTranslation     | none           | The test code does not use `ctx.translate()`.
+ * | ContextRotation        | none           | The test code does not use `ctx.rotate()`.
+ * | ContextScaling         | none           | The test code does not use `ctx.scale()`.
+ * | Clipped on shape       | none           | The test code does not use clipping.
+ * | Clipped on shape count | n/a            | Not applicable as there is no clipping.
+ * | Clipped on shape arrangement | n/a      | Not applicable as there is no clipping.
+ * | Clipped on shape size  | n/a            | Not applicable as there is no clipping.
+ * | Clipped on shape edge alignment | n/a   | Not applicable as there is no clipping.
+ *
+ * ---
+ *
+ * UNCAPTURED ASPECTS IN FILENAME / FACETS ABOVE:
+ * ----------------------------------------------
+ * Specific randomization ranges for radius, start/end angles, stroke color. strokeWidth: SR.get()*10+1 => [1,11) => 1-10px. Arc radius [15,65) spans S,M circle categories.
+ *
+ */
+
+/**
  * @fileoverview Test definition for multiple fully random arcs.
  */
 
@@ -9348,7 +9653,7 @@ registerHighLevelTest(
  * @param {?number} instances Optional: Number of instances to draw. For visual regression (instances is null/0), 5 arcs are drawn.
  * @returns {?{logs: string[]}} Logs for single-instance mode, or null for performance mode.
  */
-function draw_arcs_multi_5_fully_random(ctx, currentIterationNumber, instances = null) {
+function drawTest(ctx, currentIterationNumber, instances = null) {
     const isPerformanceRun = instances !== null && instances > 0;
     const numToDraw = isPerformanceRun ? instances : 5; // Original test draws 5
 
@@ -9387,8 +9692,8 @@ function draw_arcs_multi_5_fully_random(ctx, currentIterationNumber, instances =
         // The getRandomPoint already randomizes position for each arc.
         // No additional Math.random() offset needed for performance mode spreading for this test.
         
-        ctx.fillStyle = _colorObjectToString(fillColorForRender); // Set for fillAndOuterStrokeArc
-        ctx.strokeStyle = _colorObjectToString(strokeColorForRender); // Set for fillAndOuterStrokeArc
+        ctx.fillStyle = fillColorForRender ? colorToString(fillColorForRender) : 'rgba(0,0,0,0)'; // Set for fillAndOuterStrokeArc
+        ctx.strokeStyle = strokeColorForRender ? colorToString(strokeColorForRender) : 'rgba(0,0,0,0)'; // Set for fillAndOuterStrokeArc
         ctx.lineWidth = strokeWidth;
 
         // Use fillAndOuterStrokeArc as both fill and stroke are defined with random colors
@@ -9410,17 +9715,460 @@ function draw_arcs_multi_5_fully_random(ctx, currentIterationNumber, instances =
 
 // Register the test
 registerHighLevelTest(
-    'arcs--multi-5--fully-random--test.js',
-    draw_arcs_multi_5_fully_random,
+    'arc-m5-szMix-fOpaq-sOpaq-sw1-10px-lytSpread-cenRand-edgeNotCrisp-ornRand-arcARand-test',
+    drawTest,
     'arcs',
     {
         //compare: { swTol: 0, refTol: 0, diffTol: 0 } // Default visual comparison
     },
     {
-        displayName: 'Perf: 5 FullyRandom Arcs',
-        description: '5 fully random arcs.'
+        title: 'Arcs: 5 fully random',
+        displayName: 'Arcs: 5 fully random',
+        description: 'Test with 5 arcs, all parameters fully randomized.'
     }
-); /**
+); })();
+
+(function() {
+/**
+ * TEST SUMMARY:
+ * =================
+ *
+ * Description: Tests rendering of 12 circles with no strokes, only fills, precise alignment, and random parameters/positions.
+ *
+ *
+ * ---
+ *
+ * | Facet                  | Value          | Reason
+ * |------------------------|----------------|-----------------------------------------------------------------------------------------------------
+ * | Shape category         | circles        | The test exclusively renders circles using `ctx.fillCircle()`.
+ * | Count                  | multi-12       | The test draws 12 separate circle instances in its standard (non-performance) mode.
+ * | SizeCategory           | mixed          | The radius is randomized in the range [8, 42), which spans the XS (5-15), S (16-39), and M (40-79) size categories.
+ * | FillStyle              | opaque         | Fill colors are generated by `getRandomColor(200, 255)`, ensuring they are fully opaque.
+ * | StrokeStyle            | none           | The test is designed to be "fill-only," and `strokeWidth` is explicitly set to 0.
+ * | StrokeThickness        | none           | Consistent with `StrokeStyle` being `none`.
+ * | Layout                 | spread         | The 12 circles are positioned independently and randomly across a wide area of the canvas.
+ * | CenteredAt             | random         | Each circle's center coordinates are randomized within a large sub-region of the canvas.
+ * | EdgeAlignment          | crisp          | The test explicitly uses `adjustDimensionsForCrispStrokeRendering()` to ensure sharp rendering.
+ * | Orientation            | N/A            | Not applicable for circles, which are rotationally symmetrical.
+ * | ArcAngleExtent         | N/A            | Not applicable for circles.
+ * | RoundRectRadius        | N/A            | Not applicable for circles.
+ * | ContextTranslation     | none           | The rendering context is not translated (`ctx.translate()` is not used).
+ * | ContextRotation        | none           | The rendering context is not rotated (`ctx.rotate()` is not used).
+ * | ContextScaling         | none           | The rendering context is not scaled (`ctx.scale()` is not used).
+ * | Clipped on shape       | none           | No clipping region is defined or applied in this test.
+ * | Clipped on shape count | n/a            | Not applicable as there is no clipping.
+ * | Clipped on shape arrangement | n/a      | Not applicable as there is no clipping.
+ * | Clipped on shape size  | n/a            | Not applicable as there is no clipping.
+ * | Clipped on shape edge alignment | n/a   | Not applicable as there is no clipping.
+ *
+ * ---
+ *
+ * UNCAPTURED ASPECTS IN FILENAME / FACETS ABOVE:
+ * ----------------------------------------------
+ * The specific randomization ranges for radius and fill color are not captured. The radius is randomized within [8, 42), spanning XS, S, and M size categories. The fill color is a random opaque color.
+ *
+ */
+
+/**
+ * @fileoverview Test definition for multiple precise fill-only circles.
+ */
+
+// Helper functions getRandomColor, adjustDimensionsForCrispStrokeRendering, 
+// calculateCircleTestParameters are available from test-helper-functions.js
+
+
+/**
+ * Draws multiple precise, fill-only random circles.
+ *
+ * @param {CanvasRenderingContext2D | CrispSwContext} ctx The rendering context.
+ * @param {number} currentIterationNumber The current test iteration (for seeding via RenderTest).
+ * @param {?number} instances Optional: Number of instances to draw. For visual regression (instances is null/0), 12 circles are drawn.
+ * @returns {?{logs: string[]}} Logs for single-instance mode, or null for performance mode.
+ */
+function drawTest(ctx, currentIterationNumber, instances = null) {
+    const isPerformanceRun = instances !== null && instances > 0;
+    const numToDraw = isPerformanceRun ? instances : 12; // Original test draws 12
+
+    let logs = [];
+
+    const canvasWidth = ctx.canvas.width;
+    const canvasHeight = ctx.canvas.height;
+
+    if (canvasWidth % 2 !== 0 || canvasHeight % 2 !== 0) {
+        const msg = 'Warning: Canvas dimensions are not even. Crisp rendering might be affected.';
+        if (!isPerformanceRun) logs.push(msg);
+    }
+
+    for (let i = 0; i < numToDraw; i++) {
+        // SR calls 1-4 happen inside calculateCircleTestParameters
+        const params = calculateCircleTestParameters({
+            canvasWidth,
+            canvasHeight,
+            minRadius: 8,
+            maxRadius: 42,
+            hasStroke: false,        // No stroke
+            randomPosition: true,    // Enable random positioning
+            marginX: 60,
+            marginY: 60
+        });
+        let { centerX, centerY, radius, finalDiameter, atPixel } = params;
+        
+        // SR Call 5: fillColor (opaque or semi-transparent, original used palette indexing)
+        const fillColorObj = getRandomColor(200, 255); 
+
+        const fillColorForRender = { r: fillColorObj.r, g: fillColorObj.g, b: fillColorObj.b, a: fillColorObj.a };
+
+        let drawCenterX = centerX;
+        let drawCenterY = centerY;
+        
+        ctx.fillCircle(
+            drawCenterX, drawCenterY, radius, 
+            fillColorForRender.r, fillColorForRender.g, fillColorForRender.b, fillColorForRender.a
+        );
+
+        if (!isPerformanceRun) { 
+            logs.push(
+                `PreciseNoStrokeCircle ${i+1}: center=(${centerX.toFixed(1)},${centerY.toFixed(1)}), r=${radius.toFixed(1)}, diamAdj=${finalDiameter}, initialCenterType=${atPixel ? 'pixel' : 'grid'}`
+            );
+        }
+    }
+
+    if (isPerformanceRun) {
+        return null; 
+    }
+    return { logs }; 
+}
+
+// Register the test
+registerHighLevelTest(
+    'circle-m12-szMix-fOpaq-sNone-lytSpread-cenRand-edgeCrisp-test',
+    drawTest,
+    'circles',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 } // Default visual comparison
+    },
+    {
+        title: 'Multiple Precise Fill-Only Circles (Random Params & Pos)',
+        description: 'Tests rendering of 12 circles with no strokes, only fills, precise alignment, and random parameters/positions.',
+        displayName: 'Perf: 12 Precise NoStroke RandCircles'
+    }
+); 
+})();
+
+(function() {
+/**
+ * TEST SUMMARY:
+ * =================
+ *
+ * Description: Tests rendering of 12 circles with precise pixel alignment, varied strokes and fills, and random positions. Each circle has a randomized radius, position, stroke color/thickness, and fill color.
+ *
+ *
+ * ---
+ *
+ * | Facet                  | Value          | Reason
+ * |------------------------|----------------|-----------------------------------------------------------------------------------------------------
+ * | Shape category         | circles        | The test renders circles using `ctx.fillAndStrokeCircle`.
+ * | Count                  | multi-12       | The code loops 12 times in its visual test mode (`numToDraw` is 12).
+ * | SizeCategory           | mixed          | The base radius is randomized in the range [8, 41], spanning XS, S, and M size categories.
+ * | FillStyle              | semitransparent| Fill alpha is randomized via `getRandomColor(150, 200)`, which is always semi-transparent.
+ * | StrokeStyle            | mixed          | Stroke alpha is randomized via `getRandomColor(200, 255)`, resulting in both opaque and semi-transparent strokes.
+ * | StrokeThickness        | 1px-4px        | `strokeWidth` is calculated as an integer in the range [1, 4].
+ * | Layout                 | spread         | Each circle is given a unique, randomized position within the canvas, distributing them.
+ * | CenteredAt             | random         | The final center coordinates for each circle are randomized integers, not snapped to a grid or pixel center.
+ * | EdgeAlignment          | crisp          | The code explicitly calls `adjustDimensionsForCrispStrokeRendering()` to ensure sharp edges.
+ * | Orientation            | N/A            | Circles are radially symmetric and have no orientation.
+ * | ArcAngleExtent         | N/A            | This facet only applies to `arc` shapes.
+ * | RoundRectRadius        | N/A            | This facet only applies to `rounded-rect` shapes.
+ * | ContextTranslation     | none           | The test does not call `ctx.translate()`.
+ * | ContextRotation        | none           | The test does not call `ctx.rotate()`.
+ * | ContextScaling         | none           | The test does not call `ctx.scale()`.
+ * | Clipped on shape       | none           | The test does not call `ctx.clip()`.
+ * | Clipped on shape count | n/a            | No clipping is applied.
+ * | Clipped on shape arrangement | n/a      | No clipping is applied.
+ * | Clipped on shape size  | n/a            | No clipping is applied.
+ * | Clipped on shape edge alignment | n/a   | Not applicable as there is no clipping.
+ *
+ * ---
+ *
+ * UNCAPTURED ASPECTS IN FILENAME / FACETS ABOVE:
+ * ----------------------------------------------
+ * The initial centering type (`atPixel` vs. `atGrid`) is determined randomly for each circle but is only used to set a reference point before the final, fully randomized position is calculated. This initial type does not affect the final `CenteredAt` facet, which remains `random`.
+ *
+ */
+
+/**
+ * @fileoverview Test definition for multiple precise random circles with strokes and fills.
+ */
+
+// Helper functions getRandomColor, adjustDimensionsForCrispStrokeRendering, 
+// calculateCircleTestParameters are available from test-helper-functions.js
+
+
+/**
+ * Draws multiple precise random circles.
+ *
+ * @param {CanvasRenderingContext2D | CrispSwContext} ctx The rendering context.
+ * @param {number} currentIterationNumber The current test iteration (for seeding via RenderTest).
+ * @param {?number} instances Optional: Number of instances to draw. For visual regression (instances is null/0), 12 circles are drawn.
+ * @returns {?{logs: string[]}} Logs for single-instance mode, or null for performance mode.
+ */
+function drawTest(ctx, currentIterationNumber, instances = null) {
+    const isPerformanceRun = instances !== null && instances > 0;
+    const numToDraw = isPerformanceRun ? instances : 12; // Original test draws 12
+
+    let logs = [];
+
+    const canvasWidth = ctx.canvas.width;
+    const canvasHeight = ctx.canvas.height;
+
+    if (canvasWidth % 2 !== 0 || canvasHeight % 2 !== 0) {
+        const msg = 'Warning: Canvas dimensions are not even. Crisp rendering might be affected.';
+        if (!isPerformanceRun) logs.push(msg);
+    }
+
+    for (let i = 0; i < numToDraw; i++) {
+        // SR calls 1-5 happen inside calculateCircleTestParameters
+        const params = calculateCircleTestParameters({
+            canvasWidth,
+            canvasHeight,
+            minRadius: 8,
+            maxRadius: 42,
+            hasStroke: true,         // Has stroke
+            minStrokeWidth: 1,
+            maxStrokeWidth: 4,
+            randomPosition: true,    // Enable random positioning
+            marginX: 60,
+            marginY: 60
+        });
+        let { centerX, centerY, radius, strokeWidth, finalDiameter, atPixel } = params;
+        
+        // SR Call 6: strokeColor (opaque)
+        // The original used palette indexing (i, count) for getRandomColor. 
+        // Using simpler version here; adjust if color checks (if any were added) fail.
+        const strokeColorObj = getRandomColor(200, 255);
+        // SR Call 7: fillColor (semi-transparent)
+        const fillColorObj = getRandomColor(150, 200); 
+
+        const strokeColorForRender = { r: strokeColorObj.r, g: strokeColorObj.g, b: strokeColorObj.b, a: strokeColorObj.a };
+        const fillColorForRender = { r: fillColorObj.r, g: fillColorObj.g, b: fillColorObj.b, a: fillColorObj.a };
+
+        let drawCenterX = centerX;
+        let drawCenterY = centerY;
+        
+        // The _calculate... function already handles random positioning for each call.
+        // In performance mode, each of the `instances` circles will have unique, random parameters.
+        // No need for Math.random() here to further offset, as positions are already varied.
+
+        ctx.fillAndStrokeCircle(
+            drawCenterX, drawCenterY, radius, 
+            fillColorForRender.r, fillColorForRender.g, fillColorForRender.b, fillColorForRender.a,
+            strokeWidth, 
+            strokeColorForRender.r, strokeColorForRender.g, strokeColorForRender.b, strokeColorForRender.a
+        );
+
+        if (!isPerformanceRun) { 
+            logs.push(
+                `PreciseRandCircle ${i+1}: center=(${centerX.toFixed(1)},${centerY.toFixed(1)}), r=${radius.toFixed(1)}, sw=${strokeWidth.toFixed(1)}, diamAdj=${finalDiameter}, initialCenterType=${atPixel ? 'pixel' : 'grid'}`
+            );
+        }
+    }
+
+    if (isPerformanceRun) {
+        return null; 
+    }
+    return { logs }; 
+}
+
+// Register the test
+registerHighLevelTest(
+    'circle-m12-szMix-fSemi-sMix-sw1-4px-lytSpread-cenRand-edgeCrisp-test',
+    drawTest,
+    'circles',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 } // Default visual comparison
+    },
+    {
+        title: 'Multiple Precise Random Circles (Stroked & Filled)',
+        description: 'Tests rendering of 12 circles with precise pixel alignment, varied strokes and fills, and random positions.',
+        displayName: 'Perf: 12 Precise RandCircles'
+    }
+); 
+})();
+
+(function() {
+/**
+* TEST SUMMARY:
+* =================
+*
+* Description: Test with 8 circles, all parameters fully randomized.
+*
+*
+* ---
+*
+* | Facet                  | Value          | Reason
+* |------------------------|----------------|--------------------------------------------------------------------------------------------------------------------------------------------
+* | Shape category         | circles        | The test draws circles using `ctx.fillAndStrokeCircle`.
+* | Count                  | multi-8        | The test draws 8 instances in a loop (`numToDraw = isPerformanceRun ? instances : 8`).
+* | SizeCategory           | mixed          | Radius is randomized as `15 + SR.get() * 50`, spanning `[15, 65)`, which covers both S (`16-39px`) and M (`40-79px`) size categories.
+* | FillStyle              | opaque         | `getRandomColor()` is called for fill, which returns a fully opaque color (alpha=255) by default.
+* | StrokeStyle            | opaque         | `getRandomColor()` is called for stroke, which returns a fully opaque color (alpha=255) by default.
+* | StrokeThickness        | 1px-10px       | `strokeWidth` is `SR.get() * 10 + 1`, resulting in a continuous range of `[1, 11)`, i.e., 1px to 10px.
+* | Layout                 | spread         | `getRandomPoint()` is called for each of the 8 circles, distributing them randomly across the canvas.
+* | CenteredAt             | random         | `getRandomPoint()` returns floating-point coordinates with no specific alignment to pixel or grid centers.
+* | EdgeAlignment          | not-crisp      | The test uses fully random, floating-point values for position, radius, and stroke, with no crisping logic applied.
+* | Orientation            | N/A            | Not applicable for circles, which are rotationally symmetrical.
+* | ArcAngleExtent         | N/A            | Not applicable for circles.
+* | RoundRectRadius        | N/A            | Not applicable for circles.
+* | ContextTranslation     | none           | The code contains no calls to `ctx.translate()`.
+* | ContextRotation        | none           | The code contains no calls to `ctx.rotate()`.
+* | ContextScaling         | none           | The code contains no calls to `ctx.scale()`.
+* | Clipped on shape       | none           | The code contains no calls to `ctx.clip()`.
+* | Clipped on shape count | n/a            | Clipping is not used.
+* | Clipped on shape arrangement | n/a      | Clipping is not used.
+* | Clipped on shape size  | n/a            | Clipping is not used.
+* | Clipped on shape edge alignment | n/a   | Not applicable as there is no clipping.
+*
+* ---
+*
+* UNCAPTURED ASPECTS IN FILENAME / FACETS ABOVE:
+* ----------------------------------------------
+* The precise randomization ranges for the fill color (`100, 200`) and stroke color (`200, 255`) are not captured in the filename.
+*/
+
+/**
+ * @fileoverview Test definition for multiple fully random circles.
+ */
+
+// Helper functions _colorObjectToString, getRandomColor, getRandomPoint are assumed globally available.
+
+/**
+ * Draws multiple circles with fully random parameters (position, size, colors, stroke width).
+ *
+ * @param {CanvasRenderingContext2D | CrispSwContext} ctx The rendering context.
+ * @param {number} currentIterationNumber The current test iteration (for seeding via RenderTest).
+ * @param {?number} instances Optional: Number of instances to draw. For visual regression (instances is null/0), 8 circles are drawn.
+ * @returns {?{logs: string[]}} Logs for single-instance mode, or null for performance mode.
+ */
+function drawTest(ctx, currentIterationNumber, instances = null) {
+    const isPerformanceRun = instances !== null && instances > 0;
+    const numToDraw = isPerformanceRun ? instances : 8; // Original test draws 8
+
+    let logs = [];
+
+    const canvasWidth = ctx.canvas.width;
+    const canvasHeight = ctx.canvas.height;
+
+    for (let i = 0; i < numToDraw; i++) {
+        // Each parameter is generated fresh for each circle in the loop, ensuring randomness for all.
+        
+        // SeededRandom Call 1 & 2 (inside getRandomPoint for x, y)
+        const center = getRandomPoint(1, canvasWidth, canvasHeight); 
+        // SeededRandom Call 3: radius
+        const radius = 15 + SeededRandom.getRandom() * 50; 
+        // SeededRandom Call 4 & 5 for angles are skipped as we draw a full circle.
+        // SeededRandom Call 6: strokeWidth
+        const strokeWidth = SeededRandom.getRandom() * 10 + 1;
+        // SeededRandom Call 7: strokeColor 
+        const strokeColorObj = getRandomColor(200, 255); 
+        // SeededRandom Call 8: fillColor
+        const fillColorObj = getRandomColor(100, 200);
+
+        const strokeColorForRender = { r: strokeColorObj.r, g: strokeColorObj.g, b: strokeColorObj.b, a: strokeColorObj.a };
+        const fillColorForRender = { r: fillColorObj.r, g: fillColorObj.g, b: fillColorObj.b, a: fillColorObj.a };
+
+        // In performance mode, getRandomPoint already ensures positions are varied across the canvas for each instance.
+        // For visual regression, the 8 circles will also be randomly placed by getRandomPoint.
+        let drawCenterX = center.x;
+        let drawCenterY = center.y;
+
+        if (isPerformanceRun && numToDraw > 1 && i > 0) {
+            // While getRandomPoint already randomizes, explicitly use Math.random for subsequent perf instances for wider spread if desired.
+            // However, the original getRandomPoint should already suffice for distribution.
+            // For this test, as each circle is fully random, including its center from getRandomPoint,
+            // additional Math.random() for position is not strictly necessary as in fixed-center tests.
+            // The existing SR calls make each circle unique in all aspects.
+        }
+        
+        ctx.fillAndStrokeCircle(
+            drawCenterX, drawCenterY, radius, 
+            fillColorForRender.r, fillColorForRender.g, fillColorForRender.b, fillColorForRender.a,
+            strokeWidth, 
+            strokeColorForRender.r, strokeColorForRender.g, strokeColorForRender.b, strokeColorForRender.a
+        );
+
+        if (!isPerformanceRun) { // Log all 8 circles in visual regression mode
+            logs.push(
+                `FullyRandomCircle ${i+1}: center=(${center.x.toFixed(1)},${center.y.toFixed(1)}), r=${radius.toFixed(1)}, sw=${strokeWidth.toFixed(1)}`
+            );
+        }
+    }
+
+    if (isPerformanceRun) {
+        return null; 
+    }
+    return { logs }; 
+}
+
+// Register the test
+registerHighLevelTest(
+    'circle-m8-szMix-fOpaq-sOpaq-sw1-10px-lytSpread-cenRand-edgeNotCrisp-test',
+    drawTest,
+    'circles',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 } // Default visual comparison
+    },
+    {
+        title: 'Circle: 8 fully random',
+        displayName: 'Perf: 8 FullyRandom Circles',
+        description: 'Performance of 8 fully random circles.'
+    }
+); 
+})();
+
+(function() {
+/**
+ * TEST SUMMARY:
+ * =================
+ *
+ * Description: Tests crisp rendering of a single 1px red stroked circle, centered at a grid crossing.
+ *
+ *
+ * ---
+ *
+ * | Facet                  | Value          | Reason
+ * |------------------------|----------------|-----------------------------------------------------------------------------------------------------
+ * | Shape category         | circles        | The test draws a circle shape.
+ * | Count                  | single         | The test draws a single instance of the shape in its primary visual mode.
+ * | SizeCategory           | mixed          | The radius is randomized in the range [10, 74.5], which spans XS, S, and M size categories.
+ * | FillStyle              | none           | No fill is applied; only a stroke operation is performed.
+ * | StrokeStyle            | opaque         | The stroke color is explicitly set to be fully opaque (alpha = 255).
+ * | StrokeThickness        | 1px            | The stroke width is hardcoded to 1 pixel.
+ * | Layout                 | centered       | The shape is positioned at the canvas center.
+ * | CenteredAt             | grid           | The center coordinates are integers (Math.floor), aligning the center to a grid intersection.
+ * | EdgeAlignment          | crisp          | The test name specifies "crisp" and code uses `adjustDimensionsForCrispStrokeRendering`.
+ * | Orientation            | N/A            | Circles are rotationally symmetric, so orientation is not an applicable facet.
+ * | ArcAngleExtent         | N/A            | This facet is only applicable to arc shapes.
+ * | RoundRectRadius        | N/A            | This facet is only applicable to rounded rectangle shapes.
+ * | ContextTranslation     | none           | The test does not use `ctx.translate()`.
+ * | ContextRotation        | none           | The test does not use `ctx.rotate()`.
+ * | ContextScaling         | none           | The test does not use `ctx.scale()`.
+ * | Clipped on shape       | none           | The test does not apply any clipping.
+ * | Clipped on shape count | n/a            | Not applicable as there is no clipping.
+ * | Clipped on shape arrangement | n/a      | Not applicable as there is no clipping.
+ * | Clipped on shape size  | n/a            | Not applicable as there is no clipping.
+ * | Clipped on shape edge alignment | n/a   | Not applicable as there is no clipping.
+ *
+ * ---
+ *
+ * UNCAPTURED ASPECTS IN FILENAME / FACETS ABOVE:
+ * ----------------------------------------------
+ * - The specific stroke color is a fixed opaque red.
+ * - When run in performance mode, the test draws multiple instances at random positions, which differs
+ *   from the single, centered instance in visual test mode.
+ *
+ */
+
+/**
  * @fileoverview Test definition for a single 1px stroked circle centered at a grid point.
  */
 
@@ -9437,7 +10185,7 @@ registerHighLevelTest(
  * @returns {?{logs: string[], checkData: object}} Logs and data for checks for single-instance
  *                  mode, or null for performance mode.
  */
-function draw_circle_single_1px_stroke_crisp_center_grid(ctx, currentIterationNumber, instances = null) {
+function drawTest(ctx, currentIterationNumber, instances = null) {
     const isPerformanceRun = instances !== null && instances > 0;
     const numToDraw = isPerformanceRun ? instances : 1;
 
@@ -9504,8 +10252,8 @@ function draw_circle_single_1px_stroke_crisp_center_grid(ctx, currentIterationNu
 
 // Register the test
 registerHighLevelTest(
-    'circle--single--1px-stroke--crisp--center-grid--test.js',
-    draw_circle_single_1px_stroke_crisp_center_grid,
+    'circle-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-cenGrid-edgeCrisp-test',
+    drawTest,
     'circles',
     {
         //compare: { swTol: 0, refTol: 0, diffTol: 0 },
@@ -9519,7 +10267,52 @@ registerHighLevelTest(
         displayName: 'Perf: Circle 1px Crisp Grid Center'
         // The description above will also be used for the performance test registry entry.
     }
-); /**
+); 
+})();
+
+(function() {
+/**
+ * TEST SUMMARY:
+ * =================
+ *
+ * Description: Tests crisp rendering of a single 1px red stroked circle, centered at a pixel center.
+ *
+ *
+ * ---
+ *
+ * | Facet                  | Value          | Reason
+ * |------------------------|----------------|-----------------------------------------------------------------------------------------------------
+ * | Shape category         | circles        | The test draws a circle shape.
+ * | Count                  | single         | The test draws a single shape instance in its primary visual mode.
+ * | SizeCategory           | mixed          | The radius is randomized in a range of ~[10, 74.5], spanning the 'S' and 'M' size categories.
+ * | FillStyle              | none           | The shape is not filled; only `ctx.strokeCircle()` is called.
+ * | StrokeStyle            | opaque         | The stroke color is explicitly set with a full alpha value (255).
+ * | StrokeThickness        | 1px            | The `lineWidth` parameter to `strokeCircle` is explicitly set to 1.
+ * | Layout                 | centered       | The shape is positioned at the calculated center of the canvas.
+ * | CenteredAt             | pixel          | The center coordinates are calculated as `floor(dimension / 2) + 0.5` to align with pixel centers.
+ * | EdgeAlignment          | crisp          | The test uses `adjustDimensionsForCrispStrokeRendering` to ensure the final shape edges are sharp.
+ * | Orientation            | N/A            | Not applicable for circles, which are rotationally symmetrical.
+ * | ArcAngleExtent         | N/A            | Not applicable; this facet is for 'arc' shapes only.
+ * | RoundRectRadius        | N/A            | Not applicable; this facet is for 'rounded-rect' shapes only.
+ * | ContextTranslation     | none           | `ctx.translate()` is not used.
+ * | ContextRotation        | none           | `ctx.rotate()` is not used.
+ * | ContextScaling         | none           | `ctx.scale()` is not used.
+ * | Clipped on shape       | none           | `ctx.clip()` is not used.
+ * | Clipped on shape count | n/a            | Not applicable as there is no clipping.
+ * | Clipped on shape arrangement | n/a      | Not applicable as there is no clipping.
+ * | Clipped on shape size  | n/a            | Not applicable as there is no clipping.
+ * | Clipped on shape edge alignment | n/a   | Not applicable as there is no clipping.
+ *
+ * ---
+ *
+ * UNCAPTURED ASPECTS IN FILENAME / FACETS ABOVE:
+ * ----------------------------------------------
+ * - The stroke color is a fixed, opaque red.
+ * - In performance mode, the circle's position is randomized across the canvas, unlike the centered position in the single-instance visual test.
+ *
+ */
+
+/**
  * @fileoverview Test definition for a single 1px stroked circle centered at a pixel.
  */
 
@@ -9536,7 +10329,7 @@ registerHighLevelTest(
  * @returns {?{logs: string[], checkData: object}} Logs and data for checks for single-instance
  *                  mode, or null for performance mode.
  */
-function draw_circle_single_1px_stroke_crisp_center_pixel(ctx, currentIterationNumber, instances = null) {
+function drawTest(ctx, currentIterationNumber, instances = null) {
     const isPerformanceRun = instances !== null && instances > 0;
     const numToDraw = isPerformanceRun ? instances : 1;
 
@@ -9606,8 +10399,8 @@ function draw_circle_single_1px_stroke_crisp_center_pixel(ctx, currentIterationN
 
 // Register the test
 registerHighLevelTest(
-    'circle--single--1px-stroke--crisp--center-pixel--test.js',
-    draw_circle_single_1px_stroke_crisp_center_pixel,
+    'circle-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-cenPx-edgeCrisp-test',
+    drawTest,
     'circles',
     {
         //compare: { swTol: 0, refTol: 0, diffTol: 0 },
@@ -9621,7 +10414,343 @@ registerHighLevelTest(
         displayName: 'Perf: Circle 1px Crisp Pixel Ctr'
         // The description above will also be used for the performance test registry entry.
     }
-); /**
+); 
+})();
+
+(function() {
+/**
+ * TEST SUMMARY:
+ * =================
+ *
+ * Description: Tests rendering of a single circle with no stroke, only fill. The circle has randomized parameters for its radius and fill color. Its position is centered on the canvas, with the center's alignment randomly chosen to be either on the pixel grid (integer coordinates) or on the pixel center (*.5 coordinates) to test crisp rendering in both scenarios.
+ *
+ *
+ * ---
+ *
+ * | Facet                        | Value              | Reason
+ * |------------------------------|--------------------|-----------------------------------------------------------------------------------------------------
+ * | Shape category               | circles            | The test draws a circle using `ctx.fillCircle`.
+ * | Count                        | single             | The test logic is designed to draw a single shape instance in its visual test mode.
+ * | SizeCategory                 | mixed              | The radius is randomized in the range [10, 225), which spans multiple size categories (S, M, L, XL).
+ * | FillStyle                    | opaque             | `getRandomColor()` is called without a specific alpha, resulting in a fully opaque fill.
+ * | StrokeStyle                  | none               | The code explicitly sets `hasStroke = false` and `strokeWidth = 0`, and no stroke operation is performed.
+ * | StrokeThickness              | none               | Follows from `StrokeStyle` being `none`; `strokeWidth` is 0.
+ * | Layout                       | centered           | The circle's center is calculated relative to the canvas center, not at a random spread position.
+ * | CenteredAt                   | mixed-pixel-grid   | The center is randomly chosen to be either on the pixel grid (e.g., (10, 20)) or on a pixel center (e.g., (10.5, 20.5)).
+ * | EdgeAlignment                | crisp              | The code calls `adjustDimensionsForCrispStrokeRendering()` to ensure edges align with pixel boundaries.
+ * | Orientation                  | N/A                | Not applicable to circles.
+ * | ArcAngleExtent               | N/A                | Not applicable to circles.
+ * | RoundRectRadius              | N/A                | Not applicable to rounded rectangles.
+ * | ContextTranslation           | none               | The code does not call `ctx.translate()`.
+ * | ContextRotation              | none               | The code does not call `ctx.rotate()`.
+ * | ContextScaling               | none               | The code does not call `ctx.scale()`.
+ * | Clipped on shape             | none               | The code does not call `ctx.clip()`.
+ * | Clipped on shape count       | n/a                | No clipping is applied.
+ * | Clipped on shape arrangement | n/a                | No clipping is applied.
+ * | Clipped on shape size        | n/a                | No clipping is applied.
+ * | Clipped on shape edge alignment | n/a             | Not applicable as there is no clipping.
+ *
+ * ---
+ *
+ * UNCAPTURED ASPECTS IN FILENAME / FACETS ABOVE:
+ * ----------------------------------------------
+ * - The specific randomization range for the radius is [10, 225).
+ * - The fill color is randomized within the RGB range of [100, 200] for each channel.
+ * - The "randpos-type" from the original filename is captured by the `CenteredAt` facet; it refers to the random choice between grid and pixel centering.
+ *
+ */
+/**
+ * @fileoverview Test definition for a single circle with no stroke and only fill.
+ */
+
+// Helper functions getRandomColor, adjustDimensionsForCrispStrokeRendering, 
+// calculateCircleTestParameters are available from test-helper-functions.js
+
+
+/**
+ * Draws a single circle with no stroke, only fill.
+ *
+ * @param {CanvasRenderingContext2D | CrispSwContext} ctx The rendering context.
+ * @param {number} currentIterationNumber The current test iteration (for seeding via RenderTest).
+ * @param {?number} instances Optional: Number of instances to draw.
+ * @returns {?{logs: string[], checkData: object}} Logs and data for checks for single-instance mode, or null.
+ */
+function drawTest(ctx, currentIterationNumber, instances = null) {
+    const isPerformanceRun = instances !== null && instances > 0;
+    const numToDraw = isPerformanceRun ? instances : 1;
+
+    let logs = [];
+    let checkData = null; 
+
+    const canvasWidth = ctx.canvas.width;
+    const canvasHeight = ctx.canvas.height;
+
+    if (canvasWidth % 2 !== 0 || canvasHeight % 2 !== 0) {
+        const msg = 'Warning: Canvas dimensions are not even. Crisp rendering might be affected.';
+        if (!isPerformanceRun) logs.push(msg);
+    }
+
+    for (let i = 0; i < numToDraw; i++) {
+        // SR calls 1-2 happen inside calculateCircleTestParameters
+        const params = calculateCircleTestParameters({
+            canvasWidth,
+            canvasHeight,
+            minRadius: 10,
+            maxRadius: 225,
+            hasStroke: false,        // No stroke
+            randomPosition: false    // Centered, not random positioning
+        });
+        let { centerX, centerY, radius, finalDiameter, atPixel } = params;
+        
+        // SR Call 3: fillColor 
+        const fillColorObj = getRandomColor(100, 200);
+        const fillColorForRender = { r: fillColorObj.r, g: fillColorObj.g, b: fillColorObj.b, a: fillColorObj.a };
+
+        let drawCenterX = centerX;
+        let drawCenterY = centerY;
+
+        if (isPerformanceRun && numToDraw > 1) {
+            drawCenterX = Math.random() * canvasWidth;
+            drawCenterY = Math.random() * canvasHeight;
+        }
+        
+        // Use the dedicated fillCircle method
+        ctx.fillCircle(
+            drawCenterX, drawCenterY, radius, 
+            fillColorForRender.r, fillColorForRender.g, fillColorForRender.b, fillColorForRender.a
+        );
+
+        if (!isPerformanceRun || i === 0) { 
+            const currentLogs = [
+                `SingleNoStrokeCircle: center=(${centerX.toFixed(1)},${centerY.toFixed(1)}), r=${radius.toFixed(1)}, diamAdj=${finalDiameter}, centerType=${atPixel ? 'pixel' : 'grid'}`
+            ];
+            if (i === 0) logs = logs.concat(currentLogs);
+
+            if (i === 0) {
+                // effectiveRadius is just radius since strokeWidth is 0
+                checkData = {
+                    leftX: Math.floor(centerX - radius),
+                    rightX: Math.floor(centerX - radius + radius * 2 - 1),
+                    topY: Math.floor(centerY - radius),
+                    bottomY: Math.floor(centerY - radius + radius * 2 - 1)
+                };
+            }
+        }
+    }
+
+    if (isPerformanceRun) {
+        return null; 
+    }
+    return { logs, checkData };
+}
+
+// Register the test
+registerHighLevelTest(
+    'circle-sgl-szMix-fOpaq-sNone-lytCenter-cenMixPG-edgeCrisp-test',
+    drawTest,
+    'circles',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 },
+        extremes: { tolerance: 0.03 },
+        noGapsInFillEdges: true,
+        totalUniqueColors: 1,
+        speckles: true
+    },
+    {
+        title: 'Single Circle Without Stroke (Crisp, Random Center Type)',
+        description: 'Tests rendering of a single circle with no stroke, only fill, random params, and crisp center (grid or pixel).',
+        displayName: 'Perf: Circle NoStroke Crisp RandCenterType'
+        // The description above will also be used for the performance test registry entry.
+    }
+); 
+})();
+
+(function() {
+/**
+ * TEST SUMMARY:
+ * =================
+ *
+ * Description: Tests a single randomly positioned circle with no stroke, random fill, and crisp rendering. The circle's radius and position are randomized within defined constraints.
+ *
+ *
+ * ---
+ *
+ * | Facet                  | Value          | Reason
+ * |------------------------|----------------|-----------------------------------------------------------------------------------------------------
+ * | Shape category         | circles        | The test calls `ctx.fillCircle()` to draw the shape.
+ * | Count                  | single         | The test logic is designed to draw one primary shape instance per iteration.
+ * | SizeCategory           | mixed          | The radius is randomized in the range [10, 225], which spans the S, M, L, and XL size categories.
+ * | FillStyle              | opaque         | `getRandomColor(100, 200)` is called for the fill, which by default returns a fully opaque color.
+ * | StrokeStyle            | none           | The `strokeWidth` variable is explicitly set to 0 and no stroke operation is performed.
+ * | StrokeThickness        | none           | Consistent with `StrokeStyle: none` as `strokeWidth` is 0.
+ * | Layout                 | random         | A single shape is placed at a random (x, y) position within calculated canvas margins.
+ * | CenteredAt             | random         | The final center coordinates (x, y) are fully randomized, not snapped to a grid or pixel center.
+ * | EdgeAlignment          | crisp          | The test explicitly calls `adjustDimensionsForCrispStrokeRendering()` to ensure sharp edges.
+ * | Orientation            | N/A            | Not applicable for circles, which are rotationally symmetrical.
+ * | ArcAngleExtent         | N/A            | Not applicable; this facet is for `arcs` only.
+ * | RoundRectRadius        | N/A            | Not applicable; this facet is for `rounded-rects` only.
+ * | ContextTranslation     | none           | The test does not call `ctx.translate()`.
+ * | ContextRotation        | none           | The test does not call `ctx.rotate()`.
+ * | ContextScaling         | none           | The test does not call `ctx.scale()`.
+ * | Clipped on shape       | none           | No clipping region is defined or applied in this test.
+ * | Clipped on shape count | n/a            | Not applicable as there is no clipping.
+ * | Clipped on shape arrangement | n/a      | Not applicable as there is no clipping.
+ * | Clipped on shape size  | n/a            | Not applicable as there is no clipping.
+ * | Clipped on shape edge alignment | n/a   | Not applicable as there is no clipping.
+ *
+ * ---
+ *
+ * UNCAPTURED ASPECTS IN FILENAME / FACETS ABOVE:
+ * ----------------------------------------------
+ * The specific randomization range for the circle's radius is [10, 225]. The fill color is also randomized. The `randpos-explicit` part of the original filename refers to the specific logic that calculates a random position within safe canvas margins to ensure the entire shape is visible.
+ *
+ */
+
+/**
+ * @fileoverview Test definition for a single randomly positioned circle with no stroke.
+ */
+
+// Helper functions getRandomColor, adjustDimensionsForCrispStrokeRendering, 
+// calculateCircleTestParameters are available from test-helper-functions.js
+
+
+/**
+ * Draws a single randomly positioned circle with no stroke.
+ *
+ * @param {CanvasRenderingContext2D | CrispSwContext} ctx The rendering context.
+ * @param {number} currentIterationNumber The current test iteration (for seeding via RenderTest).
+ * @param {?number} instances Optional: Number of instances to draw.
+ * @returns {?{logs: string[], checkData: object}} Logs and data for checks for single-instance mode, or null.
+ */
+function drawTest(ctx, currentIterationNumber, instances = null) {
+    const isPerformanceRun = instances !== null && instances > 0;
+    const numToDraw = isPerformanceRun ? instances : 1;
+
+    let logs = [];
+    let checkData = null; 
+
+    const canvasWidth = ctx.canvas.width;
+    const canvasHeight = ctx.canvas.height;
+
+    if (canvasWidth % 2 !== 0 || canvasHeight % 2 !== 0) {
+        const msg = 'Warning: Canvas dimensions are not even. Crisp rendering might be affected.';
+        if (!isPerformanceRun) logs.push(msg);
+    }
+
+    for (let i = 0; i < numToDraw; i++) {
+        // SR calls 1-4 happen inside calculateCircleTestParameters
+        const params = calculateCircleTestParameters({
+            canvasWidth,
+            canvasHeight,
+            minRadius: 10,
+            maxRadius: 225,
+            hasStroke: false,        // No stroke
+            randomPosition: true,    // Enable random positioning
+            marginX: 10,
+            marginY: 10
+        });
+        let { centerX, centerY, radius, finalDiameter, atPixel } = params;
+        
+        // SR Call 5: fillColor 
+        const fillColorObj = getRandomColor(100, 200);
+        const fillColorForRender = { r: fillColorObj.r, g: fillColorObj.g, b: fillColorObj.b, a: fillColorObj.a };
+
+        let drawCenterX = centerX;
+        let drawCenterY = centerY;
+
+        // The _calculate... function already handles random positioning for each call.
+        // No additional Math.random() needed for spreading in performance mode unless overriding SR logic.
+
+        ctx.fillCircle(
+            drawCenterX, drawCenterY, radius, 
+            fillColorForRender.r, fillColorForRender.g, fillColorForRender.b, fillColorForRender.a
+        );
+
+        if (!isPerformanceRun || i === 0) { 
+            const currentLogs = [
+                `RandPosNoStrokeCircle: center=(${centerX.toFixed(1)},${centerY.toFixed(1)}), r=${radius.toFixed(1)}, diamAdj=${finalDiameter}, initialCenterType=${atPixel ? 'pixel' : 'grid'}`
+            ];
+            if (i === 0) logs = logs.concat(currentLogs);
+
+            if (i === 0) {
+                // effectiveRadius is just radius since strokeWidth is 0
+                checkData = {
+                    leftX: Math.floor(centerX - radius),
+                    rightX: Math.floor(centerX - radius + radius * 2 - 1),
+                    topY: Math.floor(centerY - radius),
+                    bottomY: Math.floor(centerY - radius + radius * 2 - 1)
+                };
+            }
+        }
+    }
+
+    if (isPerformanceRun) {
+        return null; 
+    }
+    return { logs, checkData };
+}
+
+// Register the test
+registerHighLevelTest(
+    'circle-sgl-szMix-fOpaq-sNone-lytRand-cenRand-edgeCrisp-test',
+    drawTest,
+    'circles',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 },
+        extremes: { tolerance: 0.03 },
+        noGapsInFillEdges: true,
+        totalUniqueColors: 1,
+        speckles: true
+    },
+    {
+        title: 'Single Randomly Positioned Circle Without Stroke (Crisp)',
+        description: 'Tests a single randomly positioned circle with no stroke, random fill, and crisp center.',
+        displayName: 'Perf: Circle RandPos NoStroke Crisp'
+    }
+); 
+})();
+
+(function() {
+/**
+ * TEST SUMMARY:
+ * =================
+ * 
+ * Description: Test with a single circle, all parameters fully randomized.
+ * 
+ * 
+ * ---
+ * 
+ * | Facet                  | Value          | Reason
+ * |------------------------|----------------|-----------------------------------------------------------------------------------------------------
+ * | Shape category         | circles        | Draws a circle using ctx.fillAndStrokeCircle.
+ * | Count                  | single         | The test is designed to draw one instance in its standard high-level test run.
+ * | SizeCategory           | mixed          | The radius is randomized in the range [15, 65), which spans the S (16-39px) and M (40-79px) size categories.
+ * | FillStyle              | opaque         | The fill color is generated by getRandomColor(), which produces an opaque color by default.
+ * | StrokeStyle            | opaque         | The stroke color is generated by getRandomColor(), which produces an opaque color by default.
+ * | StrokeThickness        | 1px-10px       | Stroke width is randomized in the float range [1.0, 11.0), which maps to this facet.
+ * | Layout                 | random         | A single circle is placed at a random position on the canvas using getRandomPoint().
+ * | CenteredAt             | random         | The circle's center coordinates are fully random floats, not aligned to the pixel or grid centers.
+ * | EdgeAlignment          | not-crisp      | The use of random floating-point values for position, radius, and stroke width prevents crisp rendering.
+ * | Orientation            | N/A            | Circles are symmetrical and have no inherent orientation.
+ * | ArcAngleExtent         | N/A            | This facet is not applicable to circles.
+ * | RoundRectRadius        | N/A            | This facet is not applicable to circles.
+ * | ContextTranslation     | none           | The test does not use ctx.translate().
+ * | ContextRotation        | none           | The test does not use ctx.rotate().
+ * | ContextScaling         | none           | The test does not use ctx.scale().
+ * | Clipped on shape       | none           | The test does not apply any clipping.
+ * | Clipped on shape count | n/a            | No clipping is applied.
+ * | Clipped on shape arrangement | n/a      | No clipping is applied.
+ * | Clipped on shape size  | n/a            | No clipping is applied.
+ * | Clipped on shape edge alignment | n/a   | Not applicable as there is no clipping.
+ * 
+ * ---
+ * 
+ * UNCAPTURED ASPECTS IN FILENAME / FACETS ABOVE:
+ * ----------------------------------------------
+ * Specific randomization ranges for radius, fill/stroke colors. strokeWidth: SR.get()*10+1 => [1,11) => 1-10px. Circle radius [15,65) spans S,M categories.
+ * 
+ */
+/**
  * @fileoverview Test definition for a single circle with fully random parameters.
  */
 
@@ -9635,7 +10764,7 @@ registerHighLevelTest(
  * @param {?number} instances Optional: Number of instances to draw.
  * @returns {?{logs: string[]}} Logs for single-instance mode, or null for performance mode.
  */
-function draw_circle_single_fully_random(ctx, currentIterationNumber, instances = null) {
+function drawTest(ctx, currentIterationNumber, instances = null) {
     const isPerformanceRun = instances !== null && instances > 0;
     const numToDraw = isPerformanceRun ? instances : 1;
 
@@ -9691,8 +10820,8 @@ function draw_circle_single_fully_random(ctx, currentIterationNumber, instances 
 
 // Register the test
 registerHighLevelTest(
-    'circle--single--fully-random--test.js',
-    draw_circle_single_fully_random,
+    'circle-sgl-szMix-fOpaq-sOpaq-sw1-10px-lytRand-cenRand-edgeNotCrisp-test',
+    drawTest,
     'circles',
     {
         //compare: { swTol: 0, refTol: 0, diffTol: 0 }, // Default visual comparison
@@ -9701,517 +10830,62 @@ registerHighLevelTest(
         noGapsInStrokeEdges: true
     },
     {
+        title: 'Circle: fully random',
         displayName: 'Perf: Circle FullyRandom',
         description: 'Performance of a single fully random circle.'
     }
-); /**
- * @fileoverview Test definition for a single randomly positioned circle with no stroke.
- */
+); 
+})();
 
-// Helper functions _colorObjectToString, getRandomColor, adjustDimensionsForCrispStrokeRendering, 
-// placeCloseToCenterAtPixel, placeCloseToCenterAtGrid are assumed globally available.
+(function() {
+/**
+ * TEST SUMMARY:
+ * =================
+ * 
+ * Description: Tests a single random circle with random params, crisp center (grid or pixel), stroke, and fill.
+ * 
+ * 
+ * ---
+ * 
+ * | Facet                  | Value              | Reason
+ * |------------------------|--------------------|-----------------------------------------------------------------------------------------------------
+ * | Shape category         | circles            | The test focuses on rendering a circle.
+ * | Count                  | single             | The test draws a single circle instance in its visual verification mode.
+ * | SizeCategory           | mixed              | The radius is randomized in a range of [10, 225), which spans multiple T-shirt size categories (S, M, L, XL).
+ * | FillStyle              | opaque             | `getRandomColor()` is called for the fill, which defaults to an opaque color (alpha=1.0).
+ * | StrokeStyle            | opaque             | `getRandomColor()` is called for the stroke, which also defaults to an opaque color.
+ * | StrokeThickness        | 1px-30px           | Stroke width is randomized with `1 + floor(SR.get()*min(30, baseRadius))`, resulting in a range of 1-30px.
+ * | Layout                 | centered           | The circle's center coordinates are explicitly calculated to be at the canvas center.
+ * | CenteredAt             | mixed-pixel-grid   | A random flag (`atPixel`) determines if the center is on a pixel (`*.5`) or grid (`integer`) line.
+ * | EdgeAlignment          | crisp              | The `adjustDimensionsForCrispStrokeRendering()` function is explicitly called to ensure sharp edges.
+ * | Orientation            | N/A                | Not applicable to circles, which are rotationally symmetrical.
+ * | ArcAngleExtent         | N/A                | Not applicable to circles.
+ * | RoundRectRadius        | N/A                | Not applicable to circles.
+ * | ContextTranslation     | none               | `ctx.translate()` is not used in this test.
+ * | ContextRotation        | none               | `ctx.rotate()` is not used in this test.
+ * | ContextScaling         | none               | `ctx.scale()` is not used in this test.
+ * | Clipped on shape       | none               | No clipping path is defined or applied in this test.
+ * | Clipped on shape count | n/a                | Not applicable as there is no clipping.
+ * | Clipped on shape arrangement | n/a          | Not applicable as there is no clipping.
+ * | Clipped on shape size  | n/a                | Not applicable as there is no clipping.
+ * | Clipped on shape edge alignment | n/a       | Not applicable as there is no clipping.
+ * 
+ * ---
+ * 
+ * UNCAPTURED ASPECTS IN FILENAME / FACETS ABOVE:
+ * ----------------------------------------------
+ * - The randomization of the fill and stroke colors is not captured in the filename.
+ * - The stroke width's dependency on the circle's radius (`Math.min(30, baseRadius)`) is a nuance not fully captured by the simple `1px-30px` range.
+ * - The term "randpos-type" from the original filename referred to the random choice between grid-snapped and pixel-snapped centering, which is now captured by the `CenteredAt` facet.
+ * 
+ */
 
 /**
- * Adapts the logic from calculateCircleParameters for a randomly positioned circle with no stroke.
- * @param {number} canvasWidth The width of the canvas.
- * @param {number} canvasHeight The height of the canvas.
- * @returns {object} An object containing centerX, centerY, radius, finalDiameter, and atPixel (initial alignment type).
- */
-function _calculateRandomPositionNoStrokeCircleParams(canvasWidth, canvasHeight) {
-    const minRadius = 10;
-    const maxRadius = 225;
-    const strokeWidth = 0;   // No stroke
-    const marginX = 10;
-    const marginY = 10;
-
-    // SeededRandom Call 1: atPixel determination (influences initial centering before random positioning)
-    const atPixel = SeededRandom.getRandom() < 0.5;
-  
-    // This initial centerX/Y is just for the first step of determining random position range,
-    // it does not mean the final circle is centered at grid/pixel in the same way as non-randomly-positioned tests.
-    let tempCenterX, tempCenterY; // Temporary, not the final center
-    if (atPixel) {
-        tempCenterX = Math.floor(canvasWidth / 2) + 0.5;
-        tempCenterY = Math.floor(canvasHeight / 2) + 0.5;
-    } else {
-        tempCenterX = Math.floor(canvasWidth / 2);
-        tempCenterY = Math.floor(canvasHeight / 2);
-    }
-  
-    // SeededRandom Call 2: base diameter
-    const diameter = Math.floor(minRadius * 2 + SeededRandom.getRandom() * (maxRadius * 2 - minRadius * 2));
-    const baseRadius = diameter / 2;
-  
-    // No SeededRandom call for strokeWidth calculation as hasStroke is false.
-  
-    // Random Positioning Logic (SR calls 3 & 4 if used, or different SR path if not)
-    let finalCenterX, finalCenterY;
-    const totalRadiusForBounds = baseRadius; // Since strokeWidth is 0
-    const minX = Math.ceil(totalRadiusForBounds + marginX);
-    const maxX = Math.floor(canvasWidth - totalRadiusForBounds - marginX);
-    const minY = Math.ceil(totalRadiusForBounds + marginY);
-    const maxY = Math.floor(canvasHeight - totalRadiusForBounds - marginY);
-    
-    let currentDiameterForPositioning = diameter;
-    if (maxX <= minX || maxY <= minY) { 
-        currentDiameterForPositioning = Math.min(Math.floor(canvasWidth / 4), Math.floor(canvasHeight / 4));
-        const newTotalRadius = (currentDiameterForPositioning / 2); // No strokeWidth
-        const newMinX = Math.ceil(newTotalRadius + marginX);
-        const newMaxX = Math.floor(canvasWidth - newTotalRadius - marginX);
-        const newMinY = Math.ceil(newTotalRadius + marginY);
-        const newMaxY = Math.floor(canvasHeight - newTotalRadius - marginY);
-        // SeededRandom Call 3 & 4 (for position within new tighter bounds)
-        finalCenterX = newMinX + Math.floor(SeededRandom.getRandom() * (newMaxX - newMinX + 1));
-        finalCenterY = newMinY + Math.floor(SeededRandom.getRandom() * (newMaxY - newMinY + 1));
-    } else {
-        // SeededRandom Call 3 & 4 (for position within original safe bounds)
-        finalCenterX = minX + Math.floor(SeededRandom.getRandom() * (maxX - minX + 1));
-        finalCenterY = minY + Math.floor(SeededRandom.getRandom() * (maxY - minY + 1));
-    }
-
-    // Adjust dimensions for crisp rendering based on the *final* random center
-    const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(diameter, diameter, strokeWidth, { x: finalCenterX, y: finalCenterY });
-    const finalDiameter = adjustedDimensions.width;
-    const radius = finalDiameter / 2;
-  
-    return { centerX: finalCenterX, centerY: finalCenterY, radius, finalDiameter, atPixel };
-}
-
-
-/**
- * Draws a single randomly positioned circle with no stroke.
- *
- * @param {CanvasRenderingContext2D | CrispSwContext} ctx The rendering context.
- * @param {number} currentIterationNumber The current test iteration (for seeding via RenderTest).
- * @param {?number} instances Optional: Number of instances to draw.
- * @returns {?{logs: string[], checkData: object}} Logs and data for checks for single-instance mode, or null.
- */
-function draw_circle_single_no_stroke_randparams_crisp_randpos_explicit(ctx, currentIterationNumber, instances = null) {
-    const isPerformanceRun = instances !== null && instances > 0;
-    const numToDraw = isPerformanceRun ? instances : 1;
-
-    let logs = [];
-    let checkData = null; 
-
-    const canvasWidth = ctx.canvas.width;
-    const canvasHeight = ctx.canvas.height;
-
-    if (canvasWidth % 2 !== 0 || canvasHeight % 2 !== 0) {
-        const msg = 'Warning: Canvas dimensions are not even. Crisp rendering might be affected.';
-        if (!isPerformanceRun) logs.push(msg);
-    }
-
-    for (let i = 0; i < numToDraw; i++) {
-        // SR calls 1-4 happen inside _calculateRandomPositionNoStrokeCircleParams
-        const params = _calculateRandomPositionNoStrokeCircleParams(canvasWidth, canvasHeight);
-        let { centerX, centerY, radius, finalDiameter, atPixel } = params;
-        
-        // SR Call 5: fillColor 
-        const fillColorObj = getRandomColor(100, 200);
-        const fillColorForRender = { r: fillColorObj.r, g: fillColorObj.g, b: fillColorObj.b, a: fillColorObj.a };
-
-        let drawCenterX = centerX;
-        let drawCenterY = centerY;
-
-        // The _calculate... function already handles random positioning for each call.
-        // No additional Math.random() needed for spreading in performance mode unless overriding SR logic.
-
-        ctx.fillCircle(
-            drawCenterX, drawCenterY, radius, 
-            fillColorForRender.r, fillColorForRender.g, fillColorForRender.b, fillColorForRender.a
-        );
-
-        if (!isPerformanceRun || i === 0) { 
-            const currentLogs = [
-                `RandPosNoStrokeCircle: center=(${centerX.toFixed(1)},${centerY.toFixed(1)}), r=${radius.toFixed(1)}, diamAdj=${finalDiameter}, initialCenterType=${atPixel ? 'pixel' : 'grid'}`
-            ];
-            if (i === 0) logs = logs.concat(currentLogs);
-
-            if (i === 0) {
-                // effectiveRadius is just radius since strokeWidth is 0
-                checkData = {
-                    leftX: Math.floor(centerX - radius),
-                    rightX: Math.floor(centerX - radius + radius * 2 - 1),
-                    topY: Math.floor(centerY - radius),
-                    bottomY: Math.floor(centerY - radius + radius * 2 - 1)
-                };
-            }
-        }
-    }
-
-    if (isPerformanceRun) {
-        return null; 
-    }
-    return { logs, checkData };
-}
-
-// Register the test
-registerHighLevelTest(
-    'circle--single--no-stroke--randparams--crisp--randpos-explicit--test.js',
-    draw_circle_single_no_stroke_randparams_crisp_randpos_explicit,
-    'circles',
-    {
-        //compare: { swTol: 0, refTol: 0, diffTol: 0 },
-        extremes: { tolerance: 0.03 },
-        noGapsInFillEdges: true,
-        totalUniqueColors: 1,
-        speckles: true
-    },
-    {
-        title: 'Single Randomly Positioned Circle Without Stroke (Crisp)',
-        description: 'Tests a single randomly positioned circle with no stroke, random fill, and crisp center.',
-        displayName: 'Perf: Circle RandPos NoStroke Crisp'
-    }
-); /**
- * @fileoverview Test definition for a single circle with no stroke and only fill.
- */
-
-// Helper functions _colorObjectToString, getRandomColor, adjustDimensionsForCrispStrokeRendering, 
-// placeCloseToCenterAtPixel, placeCloseToCenterAtGrid are assumed globally available.
-
-/**
- * Adapts the logic from calculateCircleParameters for a no-stroke circle.
- * @param {number} canvasWidth The width of the canvas.
- * @param {number} canvasHeight The height of the canvas.
- * @returns {object} An object containing centerX, centerY, radius, and atPixel.
- */
-function _calculateSingleNoStrokeCircleParams(canvasWidth, canvasHeight) {
-    const minRadius = 10;
-    const maxRadius = 225;
-    const hasStroke = false; // Key difference for this test
-    const strokeWidth = 0;   // Effectively 0
-
-    // SeededRandom Call 1: atPixel determination
-    const atPixel = SeededRandom.getRandom() < 0.5;
-  
-    let centerX, centerY;
-    if (atPixel) {
-        centerX = Math.floor(canvasWidth / 2) + 0.5;
-        centerY = Math.floor(canvasHeight / 2) + 0.5;
-    } else {
-        centerX = Math.floor(canvasWidth / 2);
-        centerY = Math.floor(canvasHeight / 2);
-    }
-  
-    // SeededRandom Call 2: base diameter
-    const diameter = Math.floor(minRadius * 2 + SeededRandom.getRandom() * (maxRadius * 2 - minRadius * 2));
-  
-    // No SeededRandom call for strokeWidth as hasStroke is false.
-
-    const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(diameter, diameter, strokeWidth, { x: centerX, y: centerY });
-    const finalDiameter = adjustedDimensions.width;
-    const radius = finalDiameter / 2;
-  
-    return { centerX, centerY, radius, finalDiameter, atPixel }; // strokeWidth is implicitly 0
-}
-
-
-/**
- * Draws a single circle with no stroke, only fill.
- *
- * @param {CanvasRenderingContext2D | CrispSwContext} ctx The rendering context.
- * @param {number} currentIterationNumber The current test iteration (for seeding via RenderTest).
- * @param {?number} instances Optional: Number of instances to draw.
- * @returns {?{logs: string[], checkData: object}} Logs and data for checks for single-instance mode, or null.
- */
-function draw_circle_single_no_stroke_randparams_crisp_center_randpos_type(ctx, currentIterationNumber, instances = null) {
-    const isPerformanceRun = instances !== null && instances > 0;
-    const numToDraw = isPerformanceRun ? instances : 1;
-
-    let logs = [];
-    let checkData = null; 
-
-    const canvasWidth = ctx.canvas.width;
-    const canvasHeight = ctx.canvas.height;
-
-    if (canvasWidth % 2 !== 0 || canvasHeight % 2 !== 0) {
-        const msg = 'Warning: Canvas dimensions are not even. Crisp rendering might be affected.';
-        if (!isPerformanceRun) logs.push(msg);
-    }
-
-    for (let i = 0; i < numToDraw; i++) {
-        // SR calls 1-2 happen inside _calculateSingleNoStrokeCircleParams
-        const params = _calculateSingleNoStrokeCircleParams(canvasWidth, canvasHeight);
-        let { centerX, centerY, radius, finalDiameter, atPixel } = params;
-        
-        // SR Call 3: fillColor 
-        const fillColorObj = getRandomColor(100, 200);
-        const fillColorForRender = { r: fillColorObj.r, g: fillColorObj.g, b: fillColorObj.b, a: fillColorObj.a };
-
-        let drawCenterX = centerX;
-        let drawCenterY = centerY;
-
-        if (isPerformanceRun && numToDraw > 1) {
-            drawCenterX = Math.random() * canvasWidth;
-            drawCenterY = Math.random() * canvasHeight;
-        }
-        
-        // Use the dedicated fillCircle method
-        ctx.fillCircle(
-            drawCenterX, drawCenterY, radius, 
-            fillColorForRender.r, fillColorForRender.g, fillColorForRender.b, fillColorForRender.a
-        );
-
-        if (!isPerformanceRun || i === 0) { 
-            const currentLogs = [
-                `SingleNoStrokeCircle: center=(${centerX.toFixed(1)},${centerY.toFixed(1)}), r=${radius.toFixed(1)}, diamAdj=${finalDiameter}, centerType=${atPixel ? 'pixel' : 'grid'}`
-            ];
-            if (i === 0) logs = logs.concat(currentLogs);
-
-            if (i === 0) {
-                // effectiveRadius is just radius since strokeWidth is 0
-                checkData = {
-                    leftX: Math.floor(centerX - radius),
-                    rightX: Math.floor(centerX - radius + radius * 2 - 1),
-                    topY: Math.floor(centerY - radius),
-                    bottomY: Math.floor(centerY - radius + radius * 2 - 1)
-                };
-            }
-        }
-    }
-
-    if (isPerformanceRun) {
-        return null; 
-    }
-    return { logs, checkData };
-}
-
-// Register the test
-registerHighLevelTest(
-    'circle--single--no-stroke--randparams--crisp-center--randpos-type--test.js',
-    draw_circle_single_no_stroke_randparams_crisp_center_randpos_type,
-    'circles',
-    {
-        //compare: { swTol: 0, refTol: 0, diffTol: 0 },
-        extremes: { tolerance: 0.03 },
-        noGapsInFillEdges: true,
-        totalUniqueColors: 1,
-        speckles: true
-    },
-    {
-        title: 'Single Circle Without Stroke (Crisp, Random Center Type)',
-        description: 'Tests rendering of a single circle with no stroke, only fill, random params, and crisp center (grid or pixel).',
-        displayName: 'Perf: Circle NoStroke Crisp RandCenterType'
-        // The description above will also be used for the performance test registry entry.
-    }
-); /**
- * @fileoverview Test definition for a single randomly positioned circle with stroke.
- */
-
-// Helper functions _colorObjectToString, getRandomColor, adjustDimensionsForCrispStrokeRendering, 
-// placeCloseToCenterAtPixel, placeCloseToCenterAtGrid are assumed globally available.
-
-/**
- * Adapts the logic from calculateCircleParameters for a randomly positioned circle with stroke.
- * @param {number} canvasWidth The width of the canvas.
- * @param {number} canvasHeight The height of the canvas.
- * @returns {object} An object containing centerX, centerY, radius, strokeWidth, finalDiameter, and atPixel (initial alignment type).
- */
-function _calculateRandomPositionCircleParams(canvasWidth, canvasHeight) {
-    const minRadius = 10;
-    const maxRadius = 225;
-    const hasStroke = true;
-    const minStrokeWidth = 1;
-    const maxStrokeWidth = 30;
-    const marginX = 10; // Default marginX from original options
-    const marginY = 10; // Default marginY from original options
-
-    // SeededRandom Call 1: atPixel determination (influences initial centering before random positioning)
-    const atPixel = SeededRandom.getRandom() < 0.5;
-  
-    let initialCenterX, initialCenterY;
-    if (atPixel) {
-        initialCenterX = Math.floor(canvasWidth / 2) + 0.5;
-        initialCenterY = Math.floor(canvasHeight / 2) + 0.5;
-    } else {
-        initialCenterX = Math.floor(canvasWidth / 2);
-        initialCenterY = Math.floor(canvasHeight / 2);
-    }
-  
-    // SeededRandom Call 2: base diameter
-    const diameter = Math.floor(minRadius * 2 + SeededRandom.getRandom() * (maxRadius * 2 - minRadius * 2));
-    const baseRadius = diameter / 2;
-  
-    // SeededRandom Call 3: strokeWidth
-    const maxAllowedStrokeByRadius = Math.max(1, baseRadius);
-    const strokeWidth = minStrokeWidth + Math.floor(SeededRandom.getRandom() * Math.min(maxStrokeWidth - minStrokeWidth + 1, maxAllowedStrokeByRadius));
-  
-    // Random Positioning Logic (SR calls 4 & 5 if used, or different SR path if not)
-    let finalCenterX, finalCenterY;
-    const totalRadiusForBounds = baseRadius + (strokeWidth / 2);
-    const minX = Math.ceil(totalRadiusForBounds + marginX);
-    const maxX = Math.floor(canvasWidth - totalRadiusForBounds - marginX);
-    const minY = Math.ceil(totalRadiusForBounds + marginY);
-    const maxY = Math.floor(canvasHeight - totalRadiusForBounds - marginY);
-    
-    let currentDiameterForPositioning = diameter;
-    if (maxX <= minX || maxY <= minY) { // Circle too large for initial random placement with margins
-        currentDiameterForPositioning = Math.min(Math.floor(canvasWidth / 4), Math.floor(canvasHeight / 4));
-        const newTotalRadius = (currentDiameterForPositioning / 2) + (strokeWidth / 2);
-        const newMinX = Math.ceil(newTotalRadius + marginX);
-        const newMaxX = Math.floor(canvasWidth - newTotalRadius - marginX);
-        const newMinY = Math.ceil(newTotalRadius + marginY);
-        const newMaxY = Math.floor(canvasHeight - newTotalRadius - marginY);
-        // SeededRandom Call 4 & 5 (for position within new tighter bounds)
-        finalCenterX = newMinX + Math.floor(SeededRandom.getRandom() * (newMaxX - newMinX + 1));
-        finalCenterY = newMinY + Math.floor(SeededRandom.getRandom() * (newMaxY - newMinY + 1));
-    } else {
-        // SeededRandom Call 4 & 5 (for position within original safe bounds)
-        finalCenterX = minX + Math.floor(SeededRandom.getRandom() * (maxX - minX + 1));
-        finalCenterY = minY + Math.floor(SeededRandom.getRandom() * (maxY - minY + 1));
-    }
-
-    // Adjust dimensions for crisp rendering based on the *final* random center
-    const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(diameter, diameter, strokeWidth, { x: finalCenterX, y: finalCenterY });
-    const finalDiameter = adjustedDimensions.width;
-    const radius = finalDiameter / 2;
-  
-    return { centerX: finalCenterX, centerY: finalCenterY, radius, strokeWidth, finalDiameter, atPixel }; // atPixel refers to initial alignment before random pos
-}
-
-
-/**
- * Draws a single randomly positioned circle with stroke.
- *
- * @param {CanvasRenderingContext2D | CrispSwContext} ctx The rendering context.
- * @param {number} currentIterationNumber The current test iteration (for seeding via RenderTest).
- * @param {?number} instances Optional: Number of instances to draw.
- * @returns {?{logs: string[], checkData: object}} Logs and data for checks for single-instance mode, or null.
- */
-function draw_circle_single_randparams_crisp_randpos_explicit(ctx, currentIterationNumber, instances = null) {
-    const isPerformanceRun = instances !== null && instances > 0;
-    const numToDraw = isPerformanceRun ? instances : 1;
-
-    let logs = [];
-    let checkData = null; 
-
-    const canvasWidth = ctx.canvas.width;
-    const canvasHeight = ctx.canvas.height;
-
-    if (canvasWidth % 2 !== 0 || canvasHeight % 2 !== 0) {
-        const msg = 'Warning: Canvas dimensions are not even. Crisp rendering might be affected.';
-        if (!isPerformanceRun) logs.push(msg);
-    }
-
-    for (let i = 0; i < numToDraw; i++) {
-        // SR calls 1-5 happen inside _calculateRandomPositionCircleParams
-        const params = _calculateRandomPositionCircleParams(canvasWidth, canvasHeight);
-        let { centerX, centerY, radius, strokeWidth, finalDiameter, atPixel } = params;
-        
-        // SR Call 6: strokeColor
-        const strokeColorObj = getRandomColor(150, 230);
-        // SR Call 7: fillColor 
-        const fillColorObj = getRandomColor(100, 200);
-
-        const strokeColorForRender = { r: strokeColorObj.r, g: strokeColorObj.g, b: strokeColorObj.b, a: strokeColorObj.a };
-        const fillColorForRender = { r: fillColorObj.r, g: fillColorObj.g, b: fillColorObj.b, a: fillColorObj.a };
-
-        // The centerX, centerY from params are already the final random positions for drawing.
-        let drawCenterX = centerX;
-        let drawCenterY = centerY;
-
-        // For performance test, if we draw many, their properties (radius, stroke, initial center type) are already varied by SeededRandom.
-        // The _calculateRandomPositionCircleParams already ensures random positioning for each.
-        // So, no additional Math.random() for x/y offset needed here unless we want to override the SR-based random positioning.
-        // The current setup already provides good distribution and varied parameters per instance.
-
-        ctx.fillAndStrokeCircle(
-            drawCenterX, drawCenterY, radius, 
-            fillColorForRender.r, fillColorForRender.g, fillColorForRender.b, fillColorForRender.a,
-            strokeWidth, 
-            strokeColorForRender.r, strokeColorForRender.g, strokeColorForRender.b, strokeColorForRender.a
-        );
-
-        if (!isPerformanceRun || i === 0) { 
-            const currentLogs = [
-                `RandPosCircle: center=(${centerX.toFixed(1)},${centerY.toFixed(1)}), r=${radius.toFixed(1)}, sw=${strokeWidth.toFixed(1)}, diamAdj=${finalDiameter}, initialCenterType=${atPixel ? 'pixel' : 'grid'}`
-            ];
-            if (i === 0) logs = logs.concat(currentLogs);
-
-            if (i === 0) {
-                const effectiveRadius = radius + strokeWidth / 2;
-                checkData = {
-                    leftX: Math.floor(centerX - effectiveRadius),
-                    rightX: Math.floor(centerX - effectiveRadius + effectiveRadius * 2 - 1),
-                    topY: Math.floor(centerY - effectiveRadius),
-                    bottomY: Math.floor(centerY - effectiveRadius + effectiveRadius * 2 - 1)
-                };
-            }
-        }
-    }
-
-    if (isPerformanceRun) {
-        return null; 
-    }
-    return { logs, checkData };
-}
-
-// Register the test
-registerHighLevelTest(
-    'circle--single--randparams--crisp--randpos-explicit--test.js',
-    draw_circle_single_randparams_crisp_randpos_explicit,
-    'circles',
-    {
-        //compare: { swTol: 0, refTol: 0, diffTol: 0 },
-        extremes: { tolerance: 0.03 },
-        noGapsInStrokeEdges: true,
-        totalUniqueColors: 3,
-        speckles: true
-    },
-    {
-        title: 'Single Randomly Positioned Circle with Stroke (Crisp)',
-        description: 'Tests a single randomly positioned circle with random params, crisp stroke/fill.',
-        displayName: 'Perf: Circle RandPos Crisp'
-    }
-); /**
  * @fileoverview Test definition for a single random circle with proper pixel alignment.
  */
 
-// Helper functions _colorObjectToString, getRandomColor, adjustDimensionsForCrispStrokeRendering, 
-// placeCloseToCenterAtPixel, placeCloseToCenterAtGrid are assumed globally available.
-
-/**
- * Adapts the logic from calculateCircleParameters to generate circle properties.
- * @param {number} canvasWidth The width of the canvas.
- * @param {number} canvasHeight The height of the canvas.
- * @returns {object} An object containing centerX, centerY, radius, strokeWidth, and atPixel.
- */
-function _calculateSingleRandomCircleParams(canvasWidth, canvasHeight) {
-    const minRadius = 10;
-    const maxRadius = 225; // Max radius from original options
-    const minStrokeWidth = 1;
-    const maxStrokeWidth = 30; // Max stroke width from original options
-
-    // SeededRandom Call 1: atPixel determination
-    const atPixel = SeededRandom.getRandom() < 0.5;
-  
-    let centerX, centerY;
-    if (atPixel) {
-        centerX = Math.floor(canvasWidth / 2) + 0.5;
-        centerY = Math.floor(canvasHeight / 2) + 0.5;
-    } else {
-        centerX = Math.floor(canvasWidth / 2);
-        centerY = Math.floor(canvasHeight / 2);
-    }
-  
-    // SeededRandom Call 2: base diameter
-    const diameter = Math.floor(minRadius * 2 + SeededRandom.getRandom() * (maxRadius * 2 - minRadius * 2));
-    const baseRadius = diameter / 2;
-  
-    // SeededRandom Call 3: strokeWidth
-    // Max allowed stroke is also limited by radius size (original had baseRadius/1 but that seems too large for thinner circles)
-    // Let's use a simpler constraint like ensuring stroke is not more than radius itself for very small circles.
-    const maxAllowedStrokeByRadius = Math.max(1, baseRadius); 
-    const strokeWidth = minStrokeWidth + Math.floor(SeededRandom.getRandom() * Math.min(maxStrokeWidth - minStrokeWidth + 1, maxAllowedStrokeByRadius));
-  
-    // Note: Original calculateCircleParameters had logic for randomPosition, which is false for this specific test case.
-
-    const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(diameter, diameter, strokeWidth, { x: centerX, y: centerY });
-    const finalDiameter = adjustedDimensions.width;
-    const radius = finalDiameter / 2;
-  
-    return { centerX, centerY, radius, strokeWidth, finalDiameter, atPixel };
-}
+// Helper functions getRandomColor, adjustDimensionsForCrispStrokeRendering, 
+// calculateCircleTestParameters are available from test-helper-functions.js
 
 
 /**
@@ -10222,7 +10896,7 @@ function _calculateSingleRandomCircleParams(canvasWidth, canvasHeight) {
  * @param {?number} instances Optional: Number of instances to draw.
  * @returns {?{logs: string[], checkData: object}} Logs and data for checks for single-instance mode, or null.
  */
-function draw_circle_single_randparams_crisp_center_randpos_type(ctx, currentIterationNumber, instances = null) {
+function drawTest(ctx, currentIterationNumber, instances = null) {
     const isPerformanceRun = instances !== null && instances > 0;
     const numToDraw = isPerformanceRun ? instances : 1;
 
@@ -10238,8 +10912,19 @@ function draw_circle_single_randparams_crisp_center_randpos_type(ctx, currentIte
     }
 
     for (let i = 0; i < numToDraw; i++) {
-        // SR calls 1-3 happen inside _calculateSingleRandomCircleParams
-        const params = _calculateSingleRandomCircleParams(canvasWidth, canvasHeight);
+        // SR calls 1-3 happen inside calculateCircleTestParameters
+        const params = calculateCircleTestParameters({
+            canvasWidth,
+            canvasHeight,
+            minRadius: 10,
+            maxRadius: 225,
+            hasStroke: true,         // Has stroke
+            minStrokeWidth: 1,
+            maxStrokeWidth: 30,
+            randomPosition: false,   // Centered, not randomly positioned
+            marginX: 10,             // Default margins (not used since randomPosition=false)
+            marginY: 10
+        });
         let { centerX, centerY, radius, strokeWidth, finalDiameter, atPixel } = params;
         
         // SR Call 4: strokeColor
@@ -10291,8 +10976,8 @@ function draw_circle_single_randparams_crisp_center_randpos_type(ctx, currentIte
 
 // Register the test
 registerHighLevelTest(
-    'circle--single--randparams--crisp-center--randpos-type--test.js',
-    draw_circle_single_randparams_crisp_center_randpos_type,
+    'circle-sgl-szMix-fOpaq-sOpaq-sw1-30px-lytCenter-cenMixPG-edgeCrisp-test',
+    drawTest,
     'circles',
     {
         //compare: { swTol: 0, refTol: 0, diffTol: 0 },
@@ -10307,88 +10992,73 @@ registerHighLevelTest(
         displayName: 'Perf: Circle SingleRand Crisp RandCenterType'
         // The description above will also be used for the performance test registry entry.
     }
-); /**
- * @fileoverview Test definition for multiple precise fill-only circles.
- */
+); 
+})();
 
-// Helper functions _colorObjectToString, getRandomColor, adjustDimensionsForCrispStrokeRendering, 
-// placeCloseToCenterAtPixel, placeCloseToCenterAtGrid are assumed globally available.
+(function() {
+/**
+ * TEST SUMMARY:
+ * =================
+ * 
+ * Description: Tests a single circle with fully randomized parameters for position, size, fill, and stroke. The final rendering is adjusted to ensure the circle's edges are crisp (pixel-aligned).
+ * 
+ * 
+ * ---
+ * 
+ * | Facet                  | Value          | Reason
+ * |------------------------|----------------|-----------------------------------------------------------------------------------------------------
+ * | Shape category         | circles        | The test draws circles using `ctx.fillAndStrokeCircle()`.
+ * | Count                  | single         | The test is designed to draw a single circle instance in its primary visual test mode.
+ * | SizeCategory           | mixed          | The `baseRadius` is randomized in a range of [10, 224], spanning multiple size categories (XS-XL).
+ * | FillStyle              | semitransparent | `getRandomColor()` is called for the fill with an alpha bracket of [100, 200].
+ * | StrokeStyle            | semitransparent | `getRandomColor()` is called for the stroke with an alpha bracket of [150, 230].
+ * | StrokeThickness        | 1px-30px       | `strokeWidth` is randomized between a minimum of 1 and a maximum of 30.
+ * | Layout                 | random         | The circle's final `(centerX, centerY)` is explicitly randomized within the canvas boundaries.
+ * | CenteredAt             | random         | The final center coordinates are determined by the random layout and are not snapped to a grid or pixel.
+ * | EdgeAlignment          | crisp          | The code calls `adjustDimensionsForCrispStrokeRendering()` to ensure sharp edges.
+ * | Orientation            | N/A            | Circles are rotationally symmetrical, so this facet is not applicable.
+ * | ArcAngleExtent         | N/A            | This facet is not applicable to circles.
+ * | RoundRectRadius        | N/A            | This facet is not applicable to circles.
+ * | ContextTranslation     | none           | The test does not use `ctx.translate()`.
+ * | ContextRotation        | none           | The test does not use `ctx.rotate()`.
+ * | ContextScaling         | none           | The test does not use `ctx.scale()`.
+ * | Clipped on shape       | none           | The test does not use clipping.
+ * | Clipped on shape count | n/a            | No clipping is used.
+ * | Clipped on shape arrangement| n/a       | No clipping is used.
+ * | Clipped on shape size  | n/a            | No clipping is used.
+ * | Clipped on shape edge alignment | n/a   | Not applicable as there is no clipping.
+ * 
+ * ---
+ * 
+ * UNCAPTURED ASPECTS IN FILENAME / FACETS ABOVE:
+ * ----------------------------------------------
+ * - The `strokeWidth` is randomized from 1px up to a maximum of 30px, but it's also capped by the `baseRadius` of the circle to prevent visual artifacts where the stroke is wider than the radius.
+ * - The final position is randomized within the canvas boundaries while respecting a 10px margin.
+ * 
+ */
 
 /**
- * Adapts the logic from calculateCircleParameters for multiple precise, fill-only random circles.
- * @param {number} canvasWidth The width of the canvas.
- * @param {number} canvasHeight The height of the canvas.
- * @returns {object} An object containing centerX, centerY, radius, finalDiameter, and atPixel (initial alignment type).
+ * @fileoverview Test definition for a single randomly positioned circle with stroke.
  */
-function _calculateMultiplePreciseNoStrokeCirclesParams(canvasWidth, canvasHeight) {
-    const minRadius = 8;
-    const maxRadius = 42;
-    const strokeWidth = 0; // No stroke
-    const marginX = 60; 
-    const marginY = 60;
 
-    // SeededRandom Call 1: atPixel determination
-    const atPixel = SeededRandom.getRandom() < 0.5;
-  
-    let initialCenterX, initialCenterY; 
-    if (atPixel) {
-        initialCenterX = Math.floor(canvasWidth / 2) + 0.5;
-        initialCenterY = Math.floor(canvasHeight / 2) + 0.5;
-    } else {
-        initialCenterX = Math.floor(canvasWidth / 2);
-        initialCenterY = Math.floor(canvasHeight / 2);
-    }
-  
-    // SeededRandom Call 2: base diameter
-    const diameter = Math.floor(minRadius * 2 + SeededRandom.getRandom() * (maxRadius * 2 - minRadius * 2));
-    const baseRadius = diameter / 2;
-  
-    // No SeededRandom call for strokeWidth as it's 0.
-  
-    // Random Positioning Logic (SR calls 3 & 4 if used)
-    let finalCenterX, finalCenterY;
-    const totalRadiusForBounds = baseRadius; // No strokeWidth to add
-    const minX = Math.ceil(totalRadiusForBounds + marginX);
-    const maxX = Math.floor(canvasWidth - totalRadiusForBounds - marginX);
-    const minY = Math.ceil(totalRadiusForBounds + marginY);
-    const maxY = Math.floor(canvasHeight - totalRadiusForBounds - marginY);
-    
-    let currentDiameterForPositioning = diameter;
-    if (maxX <= minX || maxY <= minY) { 
-        currentDiameterForPositioning = Math.min(Math.floor(canvasWidth / 4), Math.floor(canvasHeight / 4));
-        const newTotalRadius = (currentDiameterForPositioning / 2);
-        const newMinX = Math.ceil(newTotalRadius + marginX);
-        const newMaxX = Math.floor(canvasWidth - newTotalRadius - marginX);
-        const newMinY = Math.ceil(newTotalRadius + marginY);
-        const newMaxY = Math.floor(canvasHeight - newTotalRadius - marginY);
-        finalCenterX = newMinX + Math.floor(SeededRandom.getRandom() * (newMaxX - newMinX + 1));
-        finalCenterY = newMinY + Math.floor(SeededRandom.getRandom() * (newMaxY - newMinY + 1));
-    } else {
-        finalCenterX = minX + Math.floor(SeededRandom.getRandom() * (maxX - minX + 1));
-        finalCenterY = minY + Math.floor(SeededRandom.getRandom() * (maxY - minY + 1));
-    }
-
-    const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(diameter, diameter, strokeWidth, { x: finalCenterX, y: finalCenterY });
-    const finalDiameter = adjustedDimensions.width;
-    const radius = finalDiameter / 2;
-  
-    return { centerX: finalCenterX, centerY: finalCenterY, radius, finalDiameter, atPixel };
-}
+// Helper functions getRandomColor, adjustDimensionsForCrispStrokeRendering, 
+// calculateCircleTestParameters are available from test-helper-functions.js
 
 
 /**
- * Draws multiple precise, fill-only random circles.
+ * Draws a single randomly positioned circle with stroke.
  *
  * @param {CanvasRenderingContext2D | CrispSwContext} ctx The rendering context.
  * @param {number} currentIterationNumber The current test iteration (for seeding via RenderTest).
- * @param {?number} instances Optional: Number of instances to draw. For visual regression (instances is null/0), 12 circles are drawn.
- * @returns {?{logs: string[]}} Logs for single-instance mode, or null for performance mode.
+ * @param {?number} instances Optional: Number of instances to draw.
+ * @returns {?{logs: string[], checkData: object}} Logs and data for checks for single-instance mode, or null.
  */
-function draw_circles_multi_12_precise_no_stroke_randparams_randpos(ctx, currentIterationNumber, instances = null) {
+function drawTest(ctx, currentIterationNumber, instances = null) {
     const isPerformanceRun = instances !== null && instances > 0;
-    const numToDraw = isPerformanceRun ? instances : 12; // Original test draws 12
+    const numToDraw = isPerformanceRun ? instances : 1;
 
     let logs = [];
+    let checkData = null; 
 
     const canvasWidth = ctx.canvas.width;
     const canvasHeight = ctx.canvas.height;
@@ -10399,253 +11069,38 @@ function draw_circles_multi_12_precise_no_stroke_randparams_randpos(ctx, current
     }
 
     for (let i = 0; i < numToDraw; i++) {
-        // SR calls 1-4 happen inside _calculateMultiplePreciseNoStrokeCirclesParams
-        const params = _calculateMultiplePreciseNoStrokeCirclesParams(canvasWidth, canvasHeight);
-        let { centerX, centerY, radius, finalDiameter, atPixel } = params;
-        
-        // SR Call 5: fillColor (opaque, original used palette indexing)
-        const fillColorObj = getRandomColor(200, 255); 
-
-        const fillColorForRender = { r: fillColorObj.r, g: fillColorObj.g, b: fillColorObj.b, a: fillColorObj.a };
-
-        let drawCenterX = centerX;
-        let drawCenterY = centerY;
-        
-        ctx.fillCircle(
-            drawCenterX, drawCenterY, radius, 
-            fillColorForRender.r, fillColorForRender.g, fillColorForRender.b, fillColorForRender.a
-        );
-
-        if (!isPerformanceRun) { 
-            logs.push(
-                `PreciseNoStrokeCircle ${i+1}: center=(${centerX.toFixed(1)},${centerY.toFixed(1)}), r=${radius.toFixed(1)}, diamAdj=${finalDiameter}, initialCenterType=${atPixel ? 'pixel' : 'grid'}`
-            );
-        }
-    }
-
-    if (isPerformanceRun) {
-        return null; 
-    }
-    return { logs }; 
-}
-
-// Register the test
-registerHighLevelTest(
-    'circles--multi-12--precise--no-stroke--randparams--randpos--test.js',
-    draw_circles_multi_12_precise_no_stroke_randparams_randpos,
-    'circles',
-    {
-        //compare: { swTol: 0, refTol: 0, diffTol: 0 } // Default visual comparison
-    },
-    {
-        title: 'Multiple Precise Fill-Only Circles (Random Params & Pos)',
-        description: 'Tests rendering of 12 circles with no strokes, only fills, precise alignment, and random parameters/positions.',
-        displayName: 'Perf: 12 Precise NoStroke RandCircles'
-    }
-); /**
- * @fileoverview Test definition for multiple precise random circles with strokes and fills.
- */
-
-// Helper functions _colorObjectToString, getRandomColor, adjustDimensionsForCrispStrokeRendering, 
-// placeCloseToCenterAtPixel, placeCloseToCenterAtGrid are assumed globally available.
-
-/**
- * Adapts the logic from calculateCircleParameters for multiple precise random circles.
- * @param {number} canvasWidth The width of the canvas.
- * @param {number} canvasHeight The height of the canvas.
- * @returns {object} An object containing centerX, centerY, radius, strokeWidth, finalDiameter, and atPixel (initial alignment type).
- */
-function _calculateMultiplePreciseRandomCirclesParams(canvasWidth, canvasHeight) {
-    const minRadius = 8;
-    const maxRadius = 42;
-    const hasStroke = true;
-    const minStrokeWidth = 1;
-    const maxStrokeWidth = 4;
-    const marginX = 60; 
-    const marginY = 60;
-
-    // SeededRandom Call 1: atPixel determination
-    const atPixel = SeededRandom.getRandom() < 0.5;
-  
-    let initialCenterX, initialCenterY; // Base for positioning logic, not necessarily the drawn center's type
-    if (atPixel) {
-        initialCenterX = Math.floor(canvasWidth / 2) + 0.5;
-        initialCenterY = Math.floor(canvasHeight / 2) + 0.5;
-    } else {
-        initialCenterX = Math.floor(canvasWidth / 2);
-        initialCenterY = Math.floor(canvasHeight / 2);
-    }
-  
-    // SeededRandom Call 2: base diameter
-    const diameter = Math.floor(minRadius * 2 + SeededRandom.getRandom() * (maxRadius * 2 - minRadius * 2));
-    const baseRadius = diameter / 2;
-  
-    // SeededRandom Call 3: strokeWidth
-    const maxAllowedStrokeByRadius = Math.max(1, baseRadius);
-    const strokeWidth = minStrokeWidth + Math.floor(SeededRandom.getRandom() * Math.min(maxStrokeWidth - minStrokeWidth + 1, maxAllowedStrokeByRadius));
-  
-    // Random Positioning Logic (SR calls 4 & 5 if used)
-    let finalCenterX, finalCenterY;
-    const totalRadiusForBounds = baseRadius + (strokeWidth / 2);
-    const minX = Math.ceil(totalRadiusForBounds + marginX);
-    const maxX = Math.floor(canvasWidth - totalRadiusForBounds - marginX);
-    const minY = Math.ceil(totalRadiusForBounds + marginY);
-    const maxY = Math.floor(canvasHeight - totalRadiusForBounds - marginY);
-    
-    let currentDiameterForPositioning = diameter;
-    if (maxX <= minX || maxY <= minY) { 
-        currentDiameterForPositioning = Math.min(Math.floor(canvasWidth / 4), Math.floor(canvasHeight / 4));
-        const newTotalRadius = (currentDiameterForPositioning / 2) + (strokeWidth / 2);
-        const newMinX = Math.ceil(newTotalRadius + marginX);
-        const newMaxX = Math.floor(canvasWidth - newTotalRadius - marginX);
-        const newMinY = Math.ceil(newTotalRadius + marginY);
-        const newMaxY = Math.floor(canvasHeight - newTotalRadius - marginY);
-        finalCenterX = newMinX + Math.floor(SeededRandom.getRandom() * (newMaxX - newMinX + 1));
-        finalCenterY = newMinY + Math.floor(SeededRandom.getRandom() * (newMaxY - newMinY + 1));
-    } else {
-        finalCenterX = minX + Math.floor(SeededRandom.getRandom() * (maxX - minX + 1));
-        finalCenterY = minY + Math.floor(SeededRandom.getRandom() * (maxY - minY + 1));
-    }
-
-    const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(diameter, diameter, strokeWidth, { x: finalCenterX, y: finalCenterY });
-    const finalDiameter = adjustedDimensions.width;
-    const radius = finalDiameter / 2;
-  
-    return { centerX: finalCenterX, centerY: finalCenterY, radius, strokeWidth, finalDiameter, atPixel };
-}
-
-
-/**
- * Draws multiple precise random circles.
- *
- * @param {CanvasRenderingContext2D | CrispSwContext} ctx The rendering context.
- * @param {number} currentIterationNumber The current test iteration (for seeding via RenderTest).
- * @param {?number} instances Optional: Number of instances to draw. For visual regression (instances is null/0), 12 circles are drawn.
- * @returns {?{logs: string[]}} Logs for single-instance mode, or null for performance mode.
- */
-function draw_circles_multi_12_precise_randparams_randpos(ctx, currentIterationNumber, instances = null) {
-    const isPerformanceRun = instances !== null && instances > 0;
-    const numToDraw = isPerformanceRun ? instances : 12; // Original test draws 12
-
-    let logs = [];
-
-    const canvasWidth = ctx.canvas.width;
-    const canvasHeight = ctx.canvas.height;
-
-    if (canvasWidth % 2 !== 0 || canvasHeight % 2 !== 0) {
-        const msg = 'Warning: Canvas dimensions are not even. Crisp rendering might be affected.';
-        if (!isPerformanceRun) logs.push(msg);
-    }
-
-    for (let i = 0; i < numToDraw; i++) {
-        // SR calls 1-5 happen inside _calculateMultiplePreciseRandomCirclesParams
-        const params = _calculateMultiplePreciseRandomCirclesParams(canvasWidth, canvasHeight);
+        // SR calls 1-5 happen inside calculateCircleTestParameters
+        const params = calculateCircleTestParameters({
+            canvasWidth,
+            canvasHeight,
+            minRadius: 10,
+            maxRadius: 225,
+            hasStroke: true,         // Has stroke
+            minStrokeWidth: 1,
+            maxStrokeWidth: 30,
+            randomPosition: true,    // Enable random positioning
+            marginX: 10,
+            marginY: 10
+        });
         let { centerX, centerY, radius, strokeWidth, finalDiameter, atPixel } = params;
         
-        // SR Call 6: strokeColor (opaque)
-        // The original used palette indexing (i, count) for getRandomColor. 
-        // Using simpler version here; adjust if color checks (if any were added) fail.
-        const strokeColorObj = getRandomColor(200, 255);
-        // SR Call 7: fillColor (semi-transparent)
-        const fillColorObj = getRandomColor(150, 200); 
-
-        const strokeColorForRender = { r: strokeColorObj.r, g: strokeColorObj.g, b: strokeColorObj.b, a: strokeColorObj.a };
-        const fillColorForRender = { r: fillColorObj.r, g: fillColorObj.g, b: fillColorObj.b, a: fillColorObj.a };
-
-        let drawCenterX = centerX;
-        let drawCenterY = centerY;
-        
-        // The _calculate... function already handles random positioning for each call.
-        // In performance mode, each of the `instances` circles will have unique, random parameters.
-        // No need for Math.random() here to further offset, as positions are already varied.
-
-        ctx.fillAndStrokeCircle(
-            drawCenterX, drawCenterY, radius, 
-            fillColorForRender.r, fillColorForRender.g, fillColorForRender.b, fillColorForRender.a,
-            strokeWidth, 
-            strokeColorForRender.r, strokeColorForRender.g, strokeColorForRender.b, strokeColorForRender.a
-        );
-
-        if (!isPerformanceRun) { 
-            logs.push(
-                `PreciseRandCircle ${i+1}: center=(${centerX.toFixed(1)},${centerY.toFixed(1)}), r=${radius.toFixed(1)}, sw=${strokeWidth.toFixed(1)}, diamAdj=${finalDiameter}, initialCenterType=${atPixel ? 'pixel' : 'grid'}`
-            );
-        }
-    }
-
-    if (isPerformanceRun) {
-        return null; 
-    }
-    return { logs }; 
-}
-
-// Register the test
-registerHighLevelTest(
-    'circles--multi-12--precise--randparams--randpos--test.js',
-    draw_circles_multi_12_precise_randparams_randpos,
-    'circles',
-    {
-        //compare: { swTol: 0, refTol: 0, diffTol: 0 } // Default visual comparison
-    },
-    {
-        title: 'Multiple Precise Random Circles (Stroked & Filled)',
-        description: 'Tests rendering of 12 circles with precise pixel alignment, varied strokes and fills, and random positions.',
-        displayName: 'Perf: 12 Precise RandCircles'
-    }
-); /**
- * @fileoverview Test definition for multiple fully random circles.
- */
-
-// Helper functions _colorObjectToString, getRandomColor, getRandomPoint are assumed globally available.
-
-/**
- * Draws multiple circles with fully random parameters (position, size, colors, stroke width).
- *
- * @param {CanvasRenderingContext2D | CrispSwContext} ctx The rendering context.
- * @param {number} currentIterationNumber The current test iteration (for seeding via RenderTest).
- * @param {?number} instances Optional: Number of instances to draw. For visual regression (instances is null/0), 8 circles are drawn.
- * @returns {?{logs: string[]}} Logs for single-instance mode, or null for performance mode.
- */
-function draw_circles_multi_8_fully_random(ctx, currentIterationNumber, instances = null) {
-    const isPerformanceRun = instances !== null && instances > 0;
-    const numToDraw = isPerformanceRun ? instances : 8; // Original test draws 8
-
-    let logs = [];
-
-    const canvasWidth = ctx.canvas.width;
-    const canvasHeight = ctx.canvas.height;
-
-    for (let i = 0; i < numToDraw; i++) {
-        // Each parameter is generated fresh for each circle in the loop, ensuring randomness for all.
-        
-        // SeededRandom Call 1 & 2 (inside getRandomPoint for x, y)
-        const center = getRandomPoint(1, canvasWidth, canvasHeight); 
-        // SeededRandom Call 3: radius
-        const radius = 15 + SeededRandom.getRandom() * 50; 
-        // SeededRandom Call 4 & 5 for angles are skipped as we draw a full circle.
-        // SeededRandom Call 6: strokeWidth
-        const strokeWidth = SeededRandom.getRandom() * 10 + 1;
-        // SeededRandom Call 7: strokeColor 
-        const strokeColorObj = getRandomColor(200, 255); 
-        // SeededRandom Call 8: fillColor
+        // SR Call 6: strokeColor
+        const strokeColorObj = getRandomColor(150, 230);
+        // SR Call 7: fillColor 
         const fillColorObj = getRandomColor(100, 200);
 
         const strokeColorForRender = { r: strokeColorObj.r, g: strokeColorObj.g, b: strokeColorObj.b, a: strokeColorObj.a };
         const fillColorForRender = { r: fillColorObj.r, g: fillColorObj.g, b: fillColorObj.b, a: fillColorObj.a };
 
-        // In performance mode, getRandomPoint already ensures positions are varied across the canvas for each instance.
-        // For visual regression, the 8 circles will also be randomly placed by getRandomPoint.
-        let drawCenterX = center.x;
-        let drawCenterY = center.y;
+        // The centerX, centerY from params are already the final random positions for drawing.
+        let drawCenterX = centerX;
+        let drawCenterY = centerY;
 
-        if (isPerformanceRun && numToDraw > 1 && i > 0) {
-            // While getRandomPoint already randomizes, explicitly use Math.random for subsequent perf instances for wider spread if desired.
-            // However, the original getRandomPoint should already suffice for distribution.
-            // For this test, as each circle is fully random, including its center from getRandomPoint,
-            // additional Math.random() for position is not strictly necessary as in fixed-center tests.
-            // The existing SR calls make each circle unique in all aspects.
-        }
-        
+        // For performance test, if we draw many, their properties (radius, stroke, initial center type) are already varied by SeededRandom.
+        // The calculateCircleTestParameters already ensures random positioning for each.
+        // So, no additional Math.random() for x/y offset needed here unless we want to override the SR-based random positioning.
+        // The current setup already provides good distribution and varied parameters per instance.
+
         ctx.fillAndStrokeCircle(
             drawCenterX, drawCenterY, radius, 
             fillColorForRender.r, fillColorForRender.g, fillColorForRender.b, fillColorForRender.a,
@@ -10653,32 +11108,1112 @@ function draw_circles_multi_8_fully_random(ctx, currentIterationNumber, instance
             strokeColorForRender.r, strokeColorForRender.g, strokeColorForRender.b, strokeColorForRender.a
         );
 
-        if (!isPerformanceRun) { // Log all 8 circles in visual regression mode
-            logs.push(
-                `FullyRandomCircle ${i+1}: center=(${center.x.toFixed(1)},${center.y.toFixed(1)}), r=${radius.toFixed(1)}, sw=${strokeWidth.toFixed(1)}`
-            );
+        if (!isPerformanceRun || i === 0) { 
+            const currentLogs = [
+                `RandPosCircle: center=(${centerX.toFixed(1)},${centerY.toFixed(1)}), r=${radius.toFixed(1)}, sw=${strokeWidth.toFixed(1)}, diamAdj=${finalDiameter}, initialCenterType=${atPixel ? 'pixel' : 'grid'}`
+            ];
+            if (i === 0) logs = logs.concat(currentLogs);
+
+            if (i === 0) {
+                const effectiveRadius = radius + strokeWidth / 2;
+                checkData = {
+                    leftX: Math.floor(centerX - effectiveRadius),
+                    rightX: Math.floor(centerX - effectiveRadius + effectiveRadius * 2 - 1),
+                    topY: Math.floor(centerY - effectiveRadius),
+                    bottomY: Math.floor(centerY - effectiveRadius + effectiveRadius * 2 - 1)
+                };
+            }
         }
     }
 
     if (isPerformanceRun) {
         return null; 
     }
-    return { logs }; 
+    return { logs, checkData };
 }
 
 // Register the test
 registerHighLevelTest(
-    'circles--multi-8--fully-random--test.js',
-    draw_circles_multi_8_fully_random,
+    'circle-sgl-szMix-fSemi-sSemi-sw1-30px-lytRand-cenRand-edgeCrisp-test',
+    drawTest,
     'circles',
     {
-        //compare: { swTol: 0, refTol: 0, diffTol: 0 } // Default visual comparison
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 },
+        extremes: { tolerance: 0.03 },
+        noGapsInStrokeEdges: true,
+        totalUniqueColors: 3,
+        speckles: true
     },
     {
-        displayName: 'Perf: 8 FullyRandom Circles',
-        description: 'Performance of 8 fully random circles.'
+        title: 'Single Randomly Positioned Circle with Stroke (Crisp)',
+        description: 'Tests a single randomly positioned circle with random params, crisp stroke/fill.',
+        displayName: 'Perf: Circle RandPos Crisp'
     }
-); /**
+); 
+})();
+
+(function() {
+/**
+ * TEST SUMMARY:
+ * =================
+ *
+ * Description: 15 lines, no fill, random stroke, random positions, random orientations.
+ *
+ *
+ * ---
+ *
+ * | Facet                  | Value          | Reason
+ * |------------------------|----------------|-----------------------------------------------------------------------------------------------------
+ * | Shape category         | lines          | The test draws lines using `ctx.strokeLine()`.
+ * | Count                  | multi-15       | The test is configured to draw 15 lines in a loop for its visual regression mode.
+ * | SizeCategory           | mixed          | Line start/end points are random within canvas bounds, so line length can vary greatly, spanning all size categories (XS-XL).
+ * | FillStyle              | none           | The test only calls `ctx.strokeLine()` and does not use any fill operations.
+ * | StrokeStyle            | mixed          | The stroke alpha is randomized in `[150, 255]`, resulting in both opaque (alpha=255) and semi-transparent strokes.
+ * | StrokeThickness        | 1px-10px       | `ctx.lineWidth` is set to `Math.floor(SeededRandom.getRandom() * 10) + 1`, yielding an integer in the range [1, 10].
+ * | Layout                 | spread         | Each line's start and end points are randomized independently, distributing them across the canvas.
+ * | CenteredAt             | N/A            | This facet is not applicable to line primitives.
+ * | EdgeAlignment          | not-crisp      | Line coordinates are fully random floating-point values with no logic to align them to pixel boundaries.
+ * | Orientation            | random         | With both start and end points chosen randomly, the resulting line orientation is also random.
+ * | ArcAngleExtent         | N/A            | This facet is only applicable to arc shapes.
+ * | RoundRectRadius        | N/A            | This facet is only applicable to rounded rectangle shapes.
+ * | ContextTranslation     | none           | The test code does not contain any calls to `ctx.translate()`.
+ * | ContextRotation        | none           | The test code does not contain any calls to `ctx.rotate()`.
+ * | ContextScaling         | none           | The test code does not contain any calls to `ctx.scale()`.
+ * | Clipped on shape       | none           | The test code does not contain any calls to `ctx.clip()`.
+ * | Clipped on shape count | n/a            | Clipping is not used in this test.
+ * | Clipped on shape arrangement | n/a      | Clipping is not used in this test.
+ * | Clipped on shape size  | n/a            | Clipping is not used in this test.
+ * | Clipped on shape edge alignment | n/a   | Not applicable as there is no clipping.
+ *
+ * ---
+ *
+ * UNCAPTURED ASPECTS IN FILENAME / FACETS ABOVE:
+ * ----------------------------------------------
+ * Stroke color has randomized RGB values and an alpha randomized in the range [150, 255]. strokeWidth: floor(SR.get()*10)+1 => 1-10px. Line length [1,~301) spans XS,S,M,L,XL.
+ *
+ */
+
+/**
+ * @fileoverview
+ * Test definition for rendering multiple (typically 15 for visual regression,
+ * 'instances' count for performance) lines with random thickness, color (including alpha),
+ * positions, and orientations.
+ *
+ * Guiding Principles for this draw function:
+ * - General:
+ *   - The function is designed to draw a variable number of lines with varied properties.
+ *   - `RenderTest` handles initial seeding of `SeededRandom.getRandom()`.
+ * - `initialCount` Parameter:
+ *   - Defines the number of lines for a standard visual test run.
+ *   - Passed to `runCanvasCode` by the `define_..._test` function.
+ * - `instances` Parameter (for Performance Testing):
+ *   - If provided (not null and > 0), signifies a performance test run.
+ *   - The function will then draw 'instances' number of lines instead of 'initialCount'.
+ *   - Logging is skipped, and `null` is returned in this mode.
+ * - Return Value:
+ *   - Returns an object with a `logs` array for single/initialCount runs.
+ *   - Returns `null` if `instances` is set (performance mode) or if no logs are generated.
+ *   - No `checkData` is returned as this test primarily focuses on rendering capability
+ *     and visual variety, rather than precise checks.
+ */
+
+/**
+ * Draws multiple lines with random properties (position, thickness, color).
+ * The number of lines drawn depends on whether 'instances' (for performance mode)
+ * or 'initialCount' (for visual regression mode) is active.
+ *
+ * @param {CanvasRenderingContext2D | CrispSwContext} ctx - The rendering context.
+ * @param {number} currentIterationNumber - The current test iteration.
+ * @param {?number} instances - Optional. If provided and > 0, this many lines are drawn for performance testing.
+ * @returns {?{ logs: string[] }} An object with logs, or null (especially in performance mode).
+ */
+function drawTest(ctx, currentIterationNumber, instances = null) {
+    const initialCount = 15; // number of lines to draw for visual regression mode (i.e. not in performance mode)
+    const isPerformanceRun = instances !== null && instances > 0;
+    const lineCount = isPerformanceRun ? instances : initialCount;
+
+    let logs = isPerformanceRun ? null : [];
+
+    const canvasWidth = ctx.canvas.width;
+    const canvasHeight = ctx.canvas.height;
+
+    // Use the existing getRandomPoint function with no margin to get points anywhere within canvas boundaries
+
+    // Use existing getRandomColor and colorToString functions instead of duplicate code
+
+    for (let i = 0; i < lineCount; i++) {
+        const start = getRandomPoint(null, canvasWidth, canvasHeight, 0);
+        const end = getRandomPoint(null, canvasWidth, canvasHeight, 0);
+        const thickness = Math.floor(SeededRandom.getRandom() * 10) + 1; // Thickness 1 to 10
+        const colorStr = colorToString(getRandomColor(150, 255));
+
+        ctx.lineWidth = thickness;
+        ctx.strokeStyle = colorStr;
+        // ctx.fillStyle is not relevant for lines unless they have caps that might be filled differently, which is not the case here.
+
+        // --- Single Drawing Block ---
+        ctx.strokeLine(start.x, start.y, end.x, end.y);
+        // --- End Single Drawing Block ---
+
+        if (!isPerformanceRun) {
+            logs.push(`&#x2500; Random Line from (${start.x.toFixed(1)}, ${start.y.toFixed(1)}) to (${end.x.toFixed(1)}, ${end.y.toFixed(1)}) thickness: ${thickness}, color: ${colorStr}`);
+        }
+    }
+
+    if (!isPerformanceRun && logs.length === 0 && lineCount > 0) {
+        logs.push('Attempted to draw random lines, but none were generated in the loop.');
+    } else if (!isPerformanceRun && lineCount === 0) {
+        logs.push('No random lines drawn (lineCount was 0).');
+    }
+    
+    return logs && logs.length > 0 ? { logs } : null;
+}
+
+// Register the test
+registerHighLevelTest(
+    'line-m15-szMix-fNone-sMix-sw1-10px-lytSpread-edgeNotCrisp-ornRand-test',
+    drawTest,
+    'lines',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 }, // Default visual comparison
+    },
+    {
+        title: 'Lines: Multi-15 No-Fill Random-Stroke Random-Pos Random-Orient',
+        displayName: 'Perf: Lines Multi Random Props',
+        description: 'Performance test for rendering multiple (default 15, or N from harness) lines with random properties.'
+    }
+); 
+})();
+
+(function() {
+/**
+ * TEST SUMMARY:
+ * =================
+ * 
+ * Description: Renders 20 lines with 10px black opaque strokes at random positions and orientations. This test is used for both visual regression and performance measurement.
+ * 
+ * 
+ * ---
+ * 
+ * | Facet                  | Value          | Reason
+ * |------------------------|----------------|-----------------------------------------------------------------------------------------------------
+ * | Shape category         | lines          | The test draws lines using `ctx.strokeLine`.
+ * | Count                  | multi-20       | The test is configured to draw 20 lines in its standard visual regression mode.
+ * | SizeCategory           | mixed          | Line length is determined by two random points, resulting in a variable length that spans multiple size categories.
+ * | FillStyle              | none           | `ctx.fillStyle` is set to `rgba(0,0,0,0)`, meaning no fill is applied.
+ * | StrokeStyle            | opaque         | `ctx.strokeStyle` is set to `rgb(0,0,0)`, which is fully opaque.
+ * | StrokeThickness        | 10px           | `ctx.lineWidth` is explicitly set to the constant value `10`.
+ * | Layout                 | spread         | 20 lines are drawn, each with independently randomized start/end points, distributing them across the canvas.
+ * | CenteredAt             | N/A            | This facet is not applicable for lines, which are defined by endpoints, not a geometric center.
+ * | EdgeAlignment          | not-crisp      | The random start and end points result in angled lines that are inherently not pixel-aligned.
+ * | Orientation            | random         | The orientation of each line is determined by its two random endpoints, resulting in random angles.
+ * | ArcAngleExtent         | N/A            | Not an arc shape.
+ * | RoundRectRadius        | N/A            | Not a rounded rectangle shape.
+ * | ContextTranslation     | none           | The drawing context is not translated; no `ctx.translate()` is called.
+ * | ContextRotation        | none           | The drawing context is not rotated; no `ctx.rotate()` is called.
+ * | ContextScaling         | none           | The drawing context is not scaled; no `ctx.scale()` is called.
+ * | Clipped on shape       | none           | No clipping region is defined or applied in this test.
+ * | Clipped on shape count | n/a            | Not applicable as no clipping is used.
+ * | Clipped on shape arrangement | n/a      | Not applicable as no clipping is used.
+ * | Clipped on shape size  | n/a            | Not applicable as no clipping is used.
+ * | Clipped on shape edge alignment | n/a   | Not applicable as there is no clipping.
+ * 
+ * ---
+ * 
+ * UNCAPTURED ASPECTS IN FILENAME / FACETS ABOVE:
+ * ----------------------------------------------
+ * The line length is randomized between 1 and ~301 pixels, which spans the XS, S, M, L, and XL size categories. 
+ * The position and orientation are fully randomized within the canvas bounds. The stroke color is fixed black.
+ */
+/**
+ * @fileoverview
+ * Test definition for rendering multiple (typically 20 for visual regression,
+ * 'instances' count for performance) 10px thick, black, opaque stroke lines
+ * at random positions and with random orientations.
+ *
+ * Guiding Principles for this draw function:
+ * - General:
+ *   - The function is designed to draw a variable number of lines.
+ *   - `currentIterationNumber` is used to seed `SeededRandom` if drawing the 'initialCount'
+ *     of lines (e.g., for visual regression tests where reproducibility of the scene is key).
+ *     However, for the core logic of getting random points for lines, this function
+ *     directly uses `SeededRandom.getRandom()` as per standard practice, assuming
+ *     `RenderTest` handles initial seeding.
+ * - `initialCount` Parameter:
+ *   - This parameter defines the number of lines to draw for a standard visual test run.
+ *   - It's passed to `runCanvasCode` by the `define_..._test` function.
+ * - `instances` Parameter (for Performance Testing):
+ *   - If `instances` is provided (not null and > 0), it signifies a performance test run.
+ *   - The function will then draw 'instances' number of lines instead of 'initialCount'.
+ *   - In this mode, logging is skipped, and `null` is returned.
+ *   - `SeededRandom` is still used for coordinates to maintain the nature of the test,
+ *     but the sheer number of operations is the focus.
+ * - Return Value:
+ *   - Returns an object with a `logs` array for single/initialCount runs.
+ *   - Returns `null` if `instances` is set (performance mode) or if no logs are generated.
+ *   - No `checkData` is returned as this test primarily focuses on rendering multiple
+ *     lines without specific positional or color checks beyond visual comparison and
+ *     performance measurement.
+ */
+
+/**
+ * Draws multiple 10px thick, black, opaque lines at random positions.
+ * The number of lines drawn depends on whether 'instances' (for performance mode)
+ * or 'initialCount' (for visual regression mode) is active.
+ *
+ * @param {CanvasRenderingContext2D | CrispSwContext} ctx - The rendering context.
+ * @param {number} currentIterationNumber - The current test iteration (used by RenderTest for seeding).
+ * @param {?number} instances - Optional. If provided and > 0, this many lines are drawn for performance testing.
+ * @returns {?{ logs: string[] }} An object with logs, or null (especially in performance mode).
+ */
+function drawTest(ctx, currentIterationNumber, instances = null) {
+    const initialCount = 20; // number of lines to draw for visual regression mode (i.e. not in performance mode)
+    const isPerformanceRun = instances !== null && instances > 0;
+    const lineCount = isPerformanceRun ? instances : initialCount;
+
+    let logs = isPerformanceRun ? null : [];
+
+    // Set constant drawing properties
+    ctx.lineWidth = 10;
+    ctx.strokeStyle = 'rgb(0,0,0)'; // Opaque black in RGB format
+    ctx.fillStyle = 'rgba(0,0,0,0)'; // No fill for lines
+
+    const canvasWidth = ctx.canvas.width;
+    const canvasHeight = ctx.canvas.height;
+
+    for (let i = 0; i < lineCount; i++) {
+        // Use the existing getRandomPoint function with no margin and integer precision to get points anywhere within canvas boundaries
+        const start = getRandomPoint(0, canvasWidth, canvasHeight, 0);
+        const end = getRandomPoint(0, canvasWidth, canvasHeight, 0);
+
+        // --- Single Drawing Block ---
+        // Using strokeLine as it's common in these tests.
+        // Assumes it's available/polyfilled on ctx.
+        ctx.strokeLine(start.x, start.y, end.x, end.y);
+        // --- End Single Drawing Block ---
+
+        if (!isPerformanceRun) {
+            logs.push(`&#x2500; 10px Black line from (${start.x}, ${start.y}) to (${end.x}, ${end.y})`);
+        }
+    }
+
+    if (!isPerformanceRun && logs.length === 0) {
+        // Ensure logs array is not empty if it wasn't a perf run but no lines were drawn (e.g. initialCount = 0)
+        logs.push('No 10px black lines drawn.');
+    }
+    
+    return logs && logs.length > 0 ? { logs } : null;
+}
+
+// Register the test
+registerHighLevelTest(
+    'line-m20-szMix-fNone-sOpaq-sw10px-lytSpread-edgeNotCrisp-ornRand-test',
+    drawTest,
+    'lines',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 }, // Default visual comparison
+    },
+    {
+        title: 'Lines: Multi-20 No-Fill 10px-Black-Opaque-Stroke Random-Pos Random-Orient',
+        // Visual description will be default generated. The one in perf config is more specific to perf.
+        displayName: 'Perf: Lines Multi 10px Black Random',
+        description: 'Performance test for rendering multiple (default 20, or N from harness) 10px black lines at random positions.'
+    }
+); 
+})();
+
+(function() {
+/**
+ * TEST SUMMARY:
+ * =================
+ *
+ * Description: Tests rendering of 20 black, 1px-thick lines. Each line has a randomly chosen start and end point, resulting in random positions, lengths, and orientations.
+ *
+ *
+ * ---
+ *
+ * | Facet                        | Value          | Reason
+ * |------------------------------|----------------|-----------------------------------------------------------------------------------------------------
+ * | Shape category               | lines          | The test draws lines using `ctx.strokeLine` or `ctx.moveTo` and `ctx.lineTo`.
+ * | Count                        | multi-20       | In its default visual test mode (`instances` is null), the script draws 20 lines in a loop.
+ * | SizeCategory                 | mixed          | Line endpoints are randomized across the canvas, resulting in lengths that span multiple size categories.
+ * | FillStyle                    | none           | The code sets `ctx.fillStyle` to be fully transparent `rgba(0, 0, 0, 0)` and no fill is applied.
+ * | StrokeStyle                  | opaque         | `ctx.strokeStyle` is set to `'rgb(0, 0, 0)'`, which is a fully opaque black color.
+ * | StrokeThickness              | 1px            | `ctx.lineWidth` is hardcoded to `1`.
+ * | Layout                       | spread         | The test draws 20 lines with randomized start/end points, distributing them across the canvas.
+ * | CenteredAt                   | N/A            | This facet is not applicable for line primitives.
+ * | EdgeAlignment                | not-crisp      | Line endpoints are random floating-point coordinates, resulting in non-crisp, anti-aliased rendering.
+ * | Orientation                  | random         | Both start and end points are chosen randomly, leading to random line orientations.
+ * | ArcAngleExtent               | N/A            | This facet only applies to `arc` shapes.
+ * | RoundRectRadius              | N/A            | This facet only applies to `rounded-rect` shapes.
+ * | ContextTranslation           | none           | The test code does not contain any calls to `ctx.translate()`.
+ * | ContextRotation              | none           | The test code does not contain any calls to `ctx.rotate()`.
+ * | ContextScaling               | none           | The test code does not contain any calls to `ctx.scale()`.
+ * | Clipped on shape             | none           | The test code does not contain any calls to `ctx.clip()`.
+ * | Clipped on shape count       | n/a            | Not applicable as no clipping is performed.
+ * | Clipped on shape arrangement | n/a            | Not applicable as no clipping is performed.
+ * | Clipped on shape size        | n/a            | Not applicable as no clipping is performed.
+ * | Clipped on shape edge alignment | n/a         | Not applicable as there is no clipping.
+ *
+ * ---
+ *
+ * UNCAPTURED ASPECTS IN FILENAME / FACETS ABOVE:
+ * ----------------------------------------------
+ * The line length is randomized, resulting in a range of approximately [1, ~301) pixels on a 300x150 canvas,
+ * which spans all size categories from XS to XL. The position and orientation are also fully randomized for each line.
+ *
+ */
+
+/**
+ * @fileoverview Test definition for rendering multiple (20 by default) 1px thick, black, opaque
+ * lines with random start/end points. Supports a parameter to vary the number of instances.
+ *
+ * Guiding Principles for this function:
+ * - General:
+ *   - Canvas width and height must be even; an error is thrown otherwise.
+ *   - The number of lines drawn can be controlled by the 'instances' parameter.
+ * - Multiple Instances (when 'instances' parameter > 0):
+ *   - No logging is performed, and the function returns `null`.
+ *   - Each line's position is determined randomly using `getRandomPoint` (which relies on `SeededRandom`).
+ *     No additional `Math.random()` offsets are applied on top of this, as the inherent randomness
+ *     of `getRandomPoint` serves the purpose for this specific test.
+ * - Single Instance / Default Behavior (when 'instances' is null, 0, or negative):
+ *   - If 'instances' is null (default), 20 lines are drawn, and logs are collected (matches original behavior).
+ *   - If 'instances' is 0 or negative, 1 line is drawn, and logs are collected (for a minimal single run).
+ *   - `SeededRandom` (via `getRandomPoint`) is used for all random elements to ensure test reproducibility.
+ *   - Returns { logs: string[] }.
+ */
+
+/**
+ * Draws a specified number of 1px thick, black, opaque lines with random start/end points.
+ *
+ * @param {CanvasRenderingContext2D | CrispSwContext} ctx - The rendering context.
+ * @param {number} currentIterationNumber - The current test iteration.
+ * @param {?number} instances - Number of lines to draw. If null, defaults to 20.
+ *                              If > 0, this many lines are drawn without logging.
+ *                              If 0 or negative, 1 line is drawn with logging.
+ * @returns {?{ logs: string[] }} Log entries if not in multi-instance mode (instances > 0), otherwise null.
+ */
+function drawTest(ctx, currentIterationNumber, instances = null) {
+    const currentCanvasWidth = ctx.canvas.width;
+    const currentCanvasHeight = ctx.canvas.height;
+
+    if (currentCanvasWidth % 2 !== 0 || currentCanvasHeight % 2 !== 0) {
+        throw new Error("Canvas width and height must be even for this test.");
+    }
+
+    const isTrueMultiInstance = instances !== null && instances > 0;
+    let numIterations;
+
+    if (isTrueMultiInstance) {
+        numIterations = instances;
+    } else if (instances === null) {
+        numIterations = 20; // Default original behavior
+    } else { // instances <= 0
+        numIterations = 1; // Minimal single run with logging
+    }
+
+    let logs = isTrueMultiInstance ? null : [];
+
+    // Assume SeededRandom is available globally and seeded externally by RenderTest.
+    // Assume getRandomPoint is available globally (from scene-creation-utils.js).
+
+    // Set fixed drawing properties
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = 'rgb(0, 0, 0)'; // Black
+    ctx.fillStyle = 'rgba(0, 0, 0, 0)'; // No fill
+
+    for (let i = 0; i < numIterations; i++) {
+        // getRandomPoint uses SeededRandom for reproducibility of base characteristics.
+        const start = isTrueMultiInstance ? 
+            {
+                x: Math.random() * currentCanvasWidth,
+                y: Math.random() * currentCanvasHeight
+            } :
+            getRandomPoint(3, currentCanvasWidth, currentCanvasHeight);
+            
+        const end = isTrueMultiInstance ?
+            {
+                x: Math.random() * currentCanvasWidth,
+                y: Math.random() * currentCanvasHeight
+            } :
+            getRandomPoint(4, currentCanvasWidth, currentCanvasHeight);
+
+        // Draw the line using the canvas-like API
+        if (typeof ctx.strokeLine === 'function') {
+            ctx.strokeLine(start.x, start.y, end.x, end.y);
+        } else {
+            ctx.beginPath();
+            ctx.moveTo(start.x, start.y);
+            ctx.lineTo(end.x, end.y);
+            ctx.stroke();
+        }
+
+        if (!isTrueMultiInstance) {
+            logs.push(`&#x2500; 1px Black line from (${start.x.toFixed(1)}, ${start.y.toFixed(1)}) to (${end.x.toFixed(1)}, ${end.y.toFixed(1)}) color: ${ctx.strokeStyle} thickness: ${ctx.lineWidth}`);
+        }
+    }
+
+    if (isTrueMultiInstance) {
+        return null;
+    } else {
+        return { logs: logs }; // No checkData in this specific test's original design
+    }
+}
+
+// Register the test
+registerHighLevelTest(
+    'line-m20-szMix-fNone-sOpaq-sw1px-lytSpread-edgeNotCrisp-ornRand-test',
+    drawTest,
+    'lines',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 } // Default visual comparison
+        // No drawFunctionArgs needed as the draw function handles null instances to draw 20 lines.
+    },
+    {
+        title: 'Lines: Multi-20 No-Fill 1px-Black-Opaque-Stroke Random-Pos Random-Orient',
+        description: 'Tests rendering of 20 black lines (1px width) with random positions/orientations using canvas code.',
+        displayName: 'Perf: Lines Multi-20 1px Random'
+        // The description above will also be used for the performance test registry entry.
+    }
+); 
+})();
+
+(function() {
+/**
+ * TEST SUMMARY:
+ * =================
+ *
+ * Description: Renders 20 lines with a 2px black opaque stroke. The lines have random positions and orientations.
+ *
+ *
+ * ---
+ *
+ * | Facet                  | Value          | Reason
+ * |------------------------|----------------|-----------------------------------------------------------------------------------------------------
+ * | Shape category         | lines          | The test draws primitives using `ctx.strokeLine()`.
+ * | Count                  | multi-20       | The test is configured to draw 20 instances in its standard visual regression mode (`initialCount = 20`).
+ * | SizeCategory           | mixed          | Line length is determined by two random points on the canvas, so it can span multiple size categories (XS-XL).
+ * | FillStyle              | none           | `ctx.fillStyle` is explicitly set to be fully transparent (`rgba(0,0,0,0)`), and only a stroke operation is performed.
+ * | StrokeStyle            | opaque         | `ctx.strokeStyle` is set to `'rgb(0,0,0)'`, which is fully opaque.
+ * | StrokeThickness        | 2px            | `ctx.lineWidth` is hardcoded to `2`.
+ * | Layout                 | spread         | Multiple lines are drawn with their start and end points chosen randomly, distributing them across the canvas.
+ * | CenteredAt             | N/A            | This facet is not applicable to lines, which are defined by start and end points, not a center.
+ * | EdgeAlignment          | not-crisp      | Lines are drawn at random (often oblique) angles, which inherently prevents crisp pixel grid alignment.
+ * | Orientation            | random         | The line's orientation is determined by its two randomly selected endpoints, resulting in a random orientation.
+ * | ArcAngleExtent         | N/A            | This facet is only applicable to arc shapes.
+ * | RoundRectRadius        | N/A            | This facet is only applicable to rounded rectangle shapes.
+ * | ContextTranslation     | none           | The test code does not contain any calls to `ctx.translate()`.
+ * | ContextRotation        | none           | The test code does not contain any calls to `ctx.rotate()`.
+ * | ContextScaling         | none           | The test code does not contain any calls to `ctx.scale()`.
+ * | Clipped on shape       | none           | The test code does not contain any calls to `ctx.clip()`.
+ * | Clipped on shape count | n/a            | Clipping is not used in this test.
+ * | Clipped on shape arrangement | n/a      | Clipping is not used in this test.
+ * | Clipped on shape size  | n/a            | Clipping is not used in this test.
+ * | Clipped on shape edge alignment | n/a   | Not applicable as there is no clipping.
+ *
+ * ---
+ *
+ * UNCAPTURED ASPECTS IN FILENAME / FACETS ABOVE:
+ * ----------------------------------------------
+ * Line length is randomized from 0 to the canvas diagonal length, spanning multiple size categories (XS-XL). Position and orientation are randomized.
+ *
+ */
+/**
+ * @fileoverview
+ * Test definition for rendering multiple (typically 20 for visual regression,
+ * 'instances' count for performance) 2px thick, black, opaque stroke lines
+ * at random positions and with random orientations.
+ *
+ * Guiding Principles for this draw function:
+ * - General:
+ *   - The function is designed to draw a variable number of lines.
+ *   - `currentIterationNumber` is used to seed `SeededRandom` if drawing the 'initialCount'
+ *     of lines (e.g., for visual regression tests where reproducibility of the scene is key).
+ *     However, for the core logic of getting random points for lines, this function
+ *     directly uses `SeededRandom.getRandom()` as per standard practice, assuming
+ *     `RenderTest` handles initial seeding.
+ * - `initialCount` Parameter:
+ *   - This parameter defines the number of lines to draw for a standard visual test run.
+ *   - It's passed to `runCanvasCode` by the `define_..._test` function.
+ * - `instances` Parameter (for Performance Testing):
+ *   - If `instances` is provided (not null and > 0), it signifies a performance test run.
+ *   - The function will then draw 'instances' number of lines instead of 'initialCount'.
+ *   - In this mode, logging is skipped, and `null` is returned.
+ *   - `SeededRandom` is still used for coordinates to maintain the nature of the test,
+ *     but the sheer number of operations is the focus.
+ * - Return Value:
+ *   - Returns an object with a `logs` array for single/initialCount runs.
+ *   - Returns `null` if `instances` is set (performance mode) or if no logs are generated.
+ *   - No `checkData` is returned as this test primarily focuses on rendering multiple
+ *     lines without specific positional or color checks beyond visual comparison and
+ *     performance measurement.
+ */
+
+/**
+ * Draws multiple 2px thick, black, opaque lines at random positions.
+ * The number of lines drawn depends on whether 'instances' (for performance mode)
+ * or 'initialCount' (for visual regression mode) is active.
+ *
+ * @param {CanvasRenderingContext2D | CrispSwContext} ctx - The rendering context.
+ * @param {number} currentIterationNumber - The current test iteration (used by RenderTest for seeding).
+ * @param {?number} instances - Optional. If provided and > 0, this many lines are drawn for performance testing.
+ * @returns {?{ logs: string[] }} An object with logs, or null (especially in performance mode).
+ */
+function drawTest(ctx, currentIterationNumber, instances = null) {
+    const initialCount = 20; // number of lines to draw for visual regression mode (i.e. not in performance mode)
+    const isPerformanceRun = instances !== null && instances > 0;
+    const lineCount = isPerformanceRun ? instances : initialCount;
+
+    let logs = isPerformanceRun ? null : [];
+
+    // Set constant drawing properties
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = 'rgb(0,0,0)'; // Opaque black in RGB format
+    ctx.fillStyle = 'rgba(0,0,0,0)'; // No fill for lines
+
+    const canvasWidth = ctx.canvas.width;
+    const canvasHeight = ctx.canvas.height;
+
+    for (let i = 0; i < lineCount; i++) {
+        // Use the existing getRandomPoint function with no margin and integer precision to get points anywhere within canvas boundaries
+        const start = getRandomPoint(0, canvasWidth, canvasHeight, 0);
+        const end = getRandomPoint(0, canvasWidth, canvasHeight, 0);
+
+        // --- Single Drawing Block ---
+        // Using strokeLine as it's common in these tests.
+        // Assumes it's available/polyfilled on ctx.
+        ctx.strokeLine(start.x, start.y, end.x, end.y);
+        // --- End Single Drawing Block ---
+
+        if (!isPerformanceRun) {
+            logs.push(`&#x2500; 2px Black line from (${start.x}, ${start.y}) to (${end.x}, ${end.y})`);
+        }
+    }
+
+    if (!isPerformanceRun && logs.length === 0) {
+        // Ensure logs array is not empty if it wasn't a perf run but no lines were drawn (e.g. initialCount = 0)
+        logs.push('No 2px black lines drawn.');
+    }
+    
+    return logs && logs.length > 0 ? { logs } : null;
+}
+
+// Register the test
+registerHighLevelTest(
+    'line-m20-szMix-fNone-sOpaq-sw2px-lytSpread-edgeNotCrisp-ornRand-test',
+    drawTest,
+    'lines',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 }, // Default visual comparison
+    },
+    {
+        title: 'Lines: Multi-20 No-Fill 2px-Black-Opaque-Stroke Random-Pos Random-Orient',
+        displayName: 'Perf: Lines Multi 2px Black Random',
+        description: 'Performance test for rendering multiple (default 20, or N from harness) 2px black lines at random positions.'
+    }
+); 
+})();
+
+(function() {
+/**
+* TEST SUMMARY:
+* =================
+*
+* Description: Renders 20 lines with a 3px black opaque stroke. The position and orientation of each line are fully randomized.
+*
+*
+* ---
+*
+* | Facet                  | Value          | Reason
+* |------------------------|----------------|-----------------------------------------------------------------------------------------------------
+* | Shape category         | lines          | The test draws line primitives using ctx.strokeLine().
+* | Count                  | multi-20       | The test is configured to draw 20 lines in a standard visual test run (initialCount = 20).
+* | SizeCategory           | mixed          | Line length is randomized from 0 to canvas diagonal, spanning multiple size categories (XS-XL).
+* | FillStyle              | none           | The code explicitly sets fillStyle to transparent ('rgba(0,0,0,0)') and does not call fill methods.
+* | StrokeStyle            | opaque         | The code sets strokeStyle to an opaque color ('rgb(0,0,0)').
+* | StrokeThickness        | 3px            | The code hardcodes ctx.lineWidth = 3.
+* | Layout                 | spread         | Each of the 20 lines has its start/end points randomized, spreading them across the canvas.
+* | CenteredAt             | N/A            | This facet is not applicable to lines.
+* | EdgeAlignment          | not-crisp      | Endpoints are random integers and lines are not axis-aligned; no specific crisping logic is applied.
+* | Orientation            | random         | Both start and end points of each line are chosen randomly, resulting in random orientations.
+* | ArcAngleExtent         | N/A            | This facet is not applicable to lines.
+* | RoundRectRadius        | N/A            | This facet is not applicable to lines.
+* | ContextTranslation     | none           | The code does not use ctx.translate().
+* | ContextRotation        | none           | The code does not use ctx.rotate().
+* | ContextScaling         | none           | The code does not use ctx.scale().
+* | Clipped on shape       | none           | The code does not create or apply any clipping regions.
+* | Clipped on shape count | n/a            | Not applicable as there is no clipping.
+* | Clipped on shape arrangement | n/a      | Not applicable as there is no clipping.
+* | Clipped on shape size  | n/a            | Not applicable as there is no clipping.
+* | Clipped on shape edge alignment | n/a   | Not applicable as there is no clipping.
+*
+* ---
+*
+* UNCAPTURED ASPECTS IN FILENAME / FACETS ABOVE:
+* ----------------------------------------------
+* The primary uncaptured aspect is the specific randomization range for the line length. Since start and end points
+* are chosen randomly anywhere on the canvas, the length can vary from 0 up to the canvas diagonal length, which
+* is why SizeCategory is 'mixed'.
+*
+*/
+
+/**
+ * @fileoverview
+ * Test definition for rendering multiple (typically 20 for visual regression,
+ * 'instances' count for performance) 3px thick, black, opaque stroke lines
+ * at random positions and with random orientations.
+ *
+ * Guiding Principles for this draw function:
+ * - General:
+ *   - The function is designed to draw a variable number of lines.
+ *   - `currentIterationNumber` is used to seed `SeededRandom` if drawing the 'initialCount'
+ *     of lines (e.g., for visual regression tests where reproducibility of the scene is key).
+ *     However, for the core logic of getting random points for lines, this function
+ *     directly uses `SeededRandom.getRandom()` as per standard practice, assuming
+ *     `RenderTest` handles initial seeding.
+ * - `initialCount` Parameter:
+ *   - This parameter defines the number of lines to draw for a standard visual test run.
+ *   - It's passed to `runCanvasCode` by the `define_..._test` function.
+ * - `instances` Parameter (for Performance Testing):
+ *   - If `instances` is provided (not null and > 0), it signifies a performance test run.
+ *   - The function will then draw 'instances' number of lines instead of 'initialCount'.
+ *   - In this mode, logging is skipped, and `null` is returned.
+ *   - `SeededRandom` is still used for coordinates to maintain the nature of the test,
+ *     but the sheer number of operations is the focus.
+ * - Return Value:
+ *   - Returns an object with a `logs` array for single/initialCount runs.
+ *   - Returns `null` if `instances` is set (performance mode) or if no logs are generated.
+ *   - No `checkData` is returned as this test primarily focuses on rendering multiple
+ *     lines without specific positional or color checks beyond visual comparison and
+ *     performance measurement.
+ */
+
+/**
+ * Draws multiple 3px thick, black, opaque lines at random positions.
+ * The number of lines drawn depends on whether 'instances' (for performance mode)
+ * or 'initialCount' (for visual regression mode) is active.
+ *
+ * @param {CanvasRenderingContext2D | CrispSwContext} ctx - The rendering context.
+ * @param {number} currentIterationNumber - The current test iteration (used by RenderTest for seeding).
+ * @param {?number} instances - Optional. If provided and > 0, this many lines are drawn for performance testing.
+ * @returns {?{ logs: string[] }} An object with logs, or null (especially in performance mode).
+ */
+function drawTest(ctx, currentIterationNumber, instances = null) {
+    const initialCount = 20; // number of lines to draw for visual regression mode (i.e. not in performance mode)
+    const isPerformanceRun = instances !== null && instances > 0;
+    const lineCount = isPerformanceRun ? instances : initialCount;
+
+    let logs = isPerformanceRun ? null : [];
+
+    // Set constant drawing properties
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = 'rgb(0,0,0)'; // Opaque black in RGB format
+    ctx.fillStyle = 'rgba(0,0,0,0)'; // No fill for lines
+
+    const canvasWidth = ctx.canvas.width;
+    const canvasHeight = ctx.canvas.height;
+
+    for (let i = 0; i < lineCount; i++) {
+        // Use the existing getRandomPoint function with no margin and integer precision to get points anywhere within canvas boundaries
+        const start = getRandomPoint(0, canvasWidth, canvasHeight, 0);
+        const end = getRandomPoint(0, canvasWidth, canvasHeight, 0);
+
+        // --- Single Drawing Block ---
+        // Using strokeLine as it's common in these tests.
+        // Assumes it's available/polyfilled on ctx.
+        ctx.strokeLine(start.x, start.y, end.x, end.y);
+        // --- End Single Drawing Block ---
+
+        if (!isPerformanceRun) {
+            logs.push(`&#x2500; 3px Black line from (${start.x}, ${start.y}) to (${end.x}, ${end.y})`);
+        }
+    }
+
+    if (!isPerformanceRun && logs.length === 0) {
+        // Ensure logs array is not empty if it wasn't a perf run but no lines were drawn (e.g. initialCount = 0)
+        logs.push('No 3px black lines drawn.');
+    }
+    
+    return logs && logs.length > 0 ? { logs } : null;
+}
+
+// Register the test
+registerHighLevelTest(
+    'line-m20-szMix-fNone-sOpaq-sw3px-lytSpread-edgeNotCrisp-ornRand-test',
+    drawTest,
+    'lines',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 }, // Default visual comparison
+    },
+    {
+        title: 'Lines: Multi-20 No-Fill 3px-Black-Opaque-Stroke Random-Pos Random-Orient',
+        displayName: 'Perf: Lines Multi 3px Black Random',
+        description: 'Performance test for rendering multiple (default 20, or N from harness) 3px black lines at random positions.'
+    }
+); 
+})();
+
+(function() {
+/**
+ * TEST SUMMARY:
+ * =================
+ *
+ * Description: Renders 20 lines with a 5px black opaque stroke at random positions and with random orientations.
+ *
+ *
+ * ---
+ *
+ * | Facet                  | Value          | Reason
+ * |------------------------|----------------|-----------------------------------------------------------------------------------------------------
+ * | Shape category         | lines          | The test draws lines using `ctx.strokeLine`.
+ * | Count                  | multi-20       | The test is configured to draw 20 lines in its default visual regression mode (`initialCount = 20`).
+ * | SizeCategory           | mixed          | Line length is determined by two random points on the canvas, leading to a wide, unpredictable range of lengths that spans multiple size categories (XS to XL).
+ * | FillStyle              | none           | Lines do not have a fill, and `ctx.fillStyle` is set to be fully transparent. Only a stroke operation is performed.
+ * | StrokeStyle            | opaque         | The stroke color is explicitly set to `rgb(0,0,0)`, which is fully opaque.
+ * | StrokeThickness        | 5px            | The context's `lineWidth` is hardcoded to 5.
+ * | Layout                 | spread         | The start and end points for each of the 20 lines are chosen randomly, distributing them across the canvas.
+ * | CenteredAt             | N/A            | This facet is not applicable to lines, as their primary anchor points are their ends, not a geometric center.
+ * | EdgeAlignment          | not-crisp      | The line coordinates are random integers and the stroke width is odd (5px). No crisping logic is applied, so the final rendered edges are not guaranteed to align with pixel boundaries.
+ * | Orientation            | random         | With both start and end points chosen randomly for each line, the resulting orientation is also random.
+ * | ArcAngleExtent         | N/A            | Not applicable to lines.
+ * | RoundRectRadius        | N/A            | Not applicable to lines.
+ * | ContextTranslation     | none           | The test does not use `ctx.translate()`.
+ * | ContextRotation        | none           | The test does not use `ctx.rotate()`.
+ * | ContextScaling         | none           | The test does not use `ctx.scale()`.
+ * | Clipped on shape       | none           | The test does not apply any clipping regions.
+ * | Clipped on shape count | n/a            | Not applicable as there is no clipping.
+ * | Clipped on shape arrangement | n/a      | Not applicable as there is no clipping.
+ * | Clipped on shape size  | n/a            | Not applicable as there is no clipping.
+ * | Clipped on shape edge alignment | n/a   | Not applicable as there is no clipping.
+ *
+ * ---
+ *
+ * UNCAPTURED ASPECTS IN FILENAME / FACETS ABOVE:
+ * ----------------------------------------------
+ * The line length is randomized from 0 up to the canvas diagonal length. The stroke color is fixed to opaque black.
+ *
+ */
+
+/**
+ * @fileoverview
+ * Test definition for rendering multiple (typically 20 for visual regression,
+ * 'instances' count for performance) 5px thick, black, opaque stroke lines
+ * at random positions and with random orientations.
+ *
+ * Guiding Principles for this draw function:
+ * - General:
+ *   - The function is designed to draw a variable number of lines.
+ *   - `currentIterationNumber` is used to seed `SeededRandom` if drawing the 'initialCount'
+ *     of lines (e.g., for visual regression tests where reproducibility of the scene is key).
+ *     However, for the core logic of getting random points for lines, this function
+ *     directly uses `SeededRandom.getRandom()` as per standard practice, assuming
+ *     `RenderTest` handles initial seeding.
+ * - `initialCount` Parameter:
+ *   - This parameter defines the number of lines to draw for a standard visual test run.
+ *   - It's passed to `runCanvasCode` by the `define_..._test` function.
+ * - `instances` Parameter (for Performance Testing):
+ *   - If `instances` is provided (not null and > 0), it signifies a performance test run.
+ *   - The function will then draw 'instances' number of lines instead of 'initialCount'.
+ *   - In this mode, logging is skipped, and `null` is returned.
+ *   - `SeededRandom` is still used for coordinates to maintain the nature of the test,
+ *     but the sheer number of operations is the focus.
+ * - Return Value:
+ *   - Returns an object with a `logs` array for single/initialCount runs.
+ *   - Returns `null` if `instances` is set (performance mode) or if no logs are generated.
+ *   - No `checkData` is returned as this test primarily focuses on rendering multiple
+ *     lines without specific positional or color checks beyond visual comparison and
+ *     performance measurement.
+ */
+
+/**
+ * Draws multiple 5px thick, black, opaque lines at random positions.
+ * The number of lines drawn depends on whether 'instances' (for performance mode)
+ * or 'initialCount' (for visual regression mode) is active.
+ *
+ * @param {CanvasRenderingContext2D | CrispSwContext} ctx - The rendering context.
+ * @param {number} currentIterationNumber - The current test iteration (used by RenderTest for seeding).
+ * @param {?number} instances - Optional. If provided and > 0, this many lines are drawn for performance testing.
+ * @returns {?{ logs: string[] }} An object with logs, or null (especially in performance mode).
+ */
+function drawTest(ctx, currentIterationNumber, instances = null) {
+    const initialCount = 20; // number of lines to draw for visual regression mode (i.e. not in performance mode)
+    const isPerformanceRun = instances !== null && instances > 0;
+    const lineCount = isPerformanceRun ? instances : initialCount;
+
+    let logs = isPerformanceRun ? null : [];
+
+    // Set constant drawing properties
+    ctx.lineWidth = 5;
+    ctx.strokeStyle = 'rgb(0,0,0)'; // Opaque black in RGB format
+    ctx.fillStyle = 'rgba(0,0,0,0)'; // No fill for lines
+
+    const canvasWidth = ctx.canvas.width;
+    const canvasHeight = ctx.canvas.height;
+
+    for (let i = 0; i < lineCount; i++) {
+        // Use the existing getRandomPoint function with no margin and integer precision to get points anywhere within canvas boundaries
+        const start = getRandomPoint(0, canvasWidth, canvasHeight, 0);
+        const end = getRandomPoint(0, canvasWidth, canvasHeight, 0);
+
+        // --- Single Drawing Block ---
+        // Using strokeLine as it's common in these tests.
+        // Assumes it's available/polyfilled on ctx.
+        ctx.strokeLine(start.x, start.y, end.x, end.y);
+        // --- End Single Drawing Block ---
+
+        if (!isPerformanceRun) {
+            logs.push(`&#x2500; 5px Black line from (${start.x}, ${start.y}) to (${end.x}, ${end.y})`);
+        }
+    }
+
+    if (!isPerformanceRun && logs.length === 0) {
+        // Ensure logs array is not empty if it wasn't a perf run but no lines were drawn (e.g. initialCount = 0)
+        logs.push('No 5px black lines drawn.');
+    }
+    
+    return logs && logs.length > 0 ? { logs } : null;
+}
+
+// Register the test
+registerHighLevelTest(
+    'line-m20-szMix-fNone-sOpaq-sw5px-lytSpread-edgeNotCrisp-ornRand-test',
+    drawTest,
+    'lines',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 }, // Default visual comparison
+    },
+    {
+        title: 'Lines: Multi-20 No-Fill 5px-Black-Opaque-Stroke Random-Pos Random-Orient',
+        displayName: 'Perf: Lines Multi 5px Black Random',
+        description: 'Performance test for rendering multiple (default 20, or N from harness) 5px black lines at random positions.'
+    }
+); 
+})();
+
+(function() {
+/**
+ * TEST SUMMARY:
+ * =================
+ *
+ * Description: Tests a single, horizontal line with a 1px opaque stroke. The line's length is randomized but falls within a range spanning S, M, and L size categories. It is programmatically centered on the canvas and positioned on a half-pixel Y-coordinate to ensure it renders crisply.
+ *
+ *
+ * ---
+ *
+ * | Facet                  | Value          | Reason
+ * |------------------------|----------------|-----------------------------------------------------------------------------------------------------
+ * | Shape category         | lines          | The test draws lines using `ctx.strokeLine`.
+ * | Count                  | single         | The test is designed to draw one line in its primary visual testing mode (`instances` is null).
+ * | SizeCategory           | mixed          | Line length is randomized in `[20, 149]`, spanning S (16-39), M (40-79), and L (80-159) categories.
+ * | FillStyle              | none           | No fill operation is performed.
+ * | StrokeStyle            | opaque         | Stroke is set to a fully opaque color: `rgb(255, 0, 0)`.
+ * | StrokeThickness        | 1px            | `ctx.lineWidth` is explicitly set to `1`.
+ * | Layout                 | centered       | The line's base position is calculated relative to the canvas center.
+ * | CenteredAt             | N/A            | Facet is not applicable to lines.
+ * | EdgeAlignment          | crisp          | The vertical position is set to `y + 0.5`, a key technique for crisp horizontal 1px lines.
+ * | Orientation            | horizontal     | The line is drawn with a constant Y-coordinate, making it perfectly horizontal.
+ * | ArcAngleExtent         | N/A            | Not an arc.
+ * | RoundRectRadius        | N/A            | Not a rounded rectangle.
+ * | ContextTranslation     | none           | The code does not use `ctx.translate()`.
+ * | ContextRotation        | none           | The code does not use `ctx.rotate()`.
+ * | ContextScaling         | none           | The code does not use `ctx.scale()`.
+ * | Clipped on shape       | none           | No clipping is performed.
+ * | Clipped on shape count | n/a            | No clipping.
+ * | Clipped on shape arrangement | n/a      | No clipping.
+ * | Clipped on shape size  | n/a            | No clipping.
+ * | Clipped on shape edge alignment | n/a   | Not applicable as there is no clipping.
+ *
+ * ---
+ *
+ * UNCAPTURED ASPECTS IN FILENAME / FACETS ABOVE:
+ * ----------------------------------------------
+ * - The stroke color is fixed as opaque red (`rgb(255, 0, 0)`).
+ * - For reproducibility in single-instance mode, all random values (line length, start/end point swapping) are derived from `SeededRandom`.
+ *
+ */
+/**
+ * @fileoverview Test definition for rendering a medium-sized, horizontal, 1px thick,
+ * opaque stroke line positioned precisely between pixels.
+ *
+ * Guiding Principles for the draw_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__horizontal_orient function:
+ * - General:
+ *   - Canvas width and height must be even; an error is thrown otherwise.
+ *   - Drawing logic is consolidated into a single loop to handle both single and multiple instances,
+ *     reducing code duplication.
+ * - Multiple Instances (when 'instances' parameter > 0):
+ *   - No logging is performed, and the function returns `null`.
+ *   - Positional offsets for each instance are applied directly to the primitive's coordinates
+ *     (e.g., line endpoints) rather than using canvas transformations (like `ctx.translate()`).
+ *   - The random offsets for these multiple instances are generated using `Math.random()` for simplicity
+ *     and potential performance benefits, as the exact reproducibility of these specific offsets
+ *     is not considered critical for this mode. The base primitive's characteristics remain
+ *     reproducible via `SeededRandom` for the single instance case or base calculations.
+ *   - Offsets are integers and aim to keep the primitive visible within the canvas.
+ * - Single Instance (when 'instances' is null or <= 0):
+ *   - Original behavior is maintained: logs are collected, and checkData is returned.
+ *   - `SeededRandom` is used for all random elements to ensure test reproducibility.
+ */
+
+/**
+ * Draws a single, 1px thick, fully opaque horizontal line centered vertically
+ * between pixels, with variable width and potentially swapped start/end points.
+ *
+ * @param {CanvasRenderingContext2D | CrispSwContext} ctx - The rendering context.
+ * @param {number} currentIterationNumber - The current test iteration (unused here but required by signature).
+ * @param {?number} instances - Number of instances to draw (optional). If > 0, draw multiple instances.
+ * @returns {?{ logs: string[], checkData: {topY: number, bottomY: number, leftX: number, rightX: number} }} Log entries and expected pixel extremes, or null if drawing multiple instances.
+ */
+function drawTest(ctx, currentIterationNumber, instances = null) {
+    const currentCanvasWidth = ctx.canvas.width;
+    const currentCanvasHeight = ctx.canvas.height;
+
+    if (currentCanvasWidth % 2 !== 0 || currentCanvasHeight % 2 !== 0) {
+        throw new Error("Canvas width and height must be even for this test.");
+    }
+
+    const isMultiInstance = instances !== null && instances > 0;
+
+    const effectiveWidth = currentCanvasWidth;
+    const effectiveHeight = currentCanvasHeight;
+
+    // Common calculations for base line (using SeededRandom for reproducibility)
+    const baseLineWidth = Math.floor(20 + SeededRandom.getRandom() * 130);
+    const baseCenterX = Math.floor(effectiveWidth / 2);
+    const baseCenterY = Math.floor(effectiveHeight / 2) + 0.5; // Key: centered *between* pixels vertically
+    const baseLeftX = Math.floor(baseCenterX - baseLineWidth / 2);
+    const baseRightX = baseLeftX + baseLineWidth;
+    const basePixelY = Math.floor(baseCenterY); // The single pixel row involved
+
+    // Set drawing properties once
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = 'rgb(255, 0, 0)';
+    ctx.fillStyle = 'rgba(0, 0, 0, 0)';
+
+    const numIterations = isMultiInstance ? instances : 1;
+    let logs = isMultiInstance ? null : [];
+
+    let currentStartX, currentEndX, currentCenterY; // For drawing, declared outside loop for single instance checkData access
+
+    for (let i = 0; i < numIterations; i++) {
+        let startX = baseLeftX; // Loop-local for clarity of base points per iteration
+        let endX = baseRightX;
+        
+        // Randomly swap start/end points using SeededRandom for base primitive
+        if (SeededRandom.getRandom() < 0.5) {
+            [startX, endX] = [endX, startX];
+        }
+
+        // Initialize/Assign final draw coordinates for this iteration
+        currentStartX = startX;
+        currentEndX = endX;
+        currentCenterY = baseCenterY; // centerY is fixed for a horizontal line
+
+        if (isMultiInstance) {
+            // For multiple instances, use Math.random() for offsets.
+            // Reproducibility of these specific offsets is not critical.
+            const maxOffsetX = effectiveWidth - Math.max(currentStartX, currentEndX);
+            const minOffsetX = -Math.min(currentStartX, currentEndX);
+            const maxOffsetY = effectiveHeight - 1 - currentCenterY; // -1 because line is on pixel Y
+            const minOffsetY = -Math.floor(currentCenterY);
+
+            const offsetX = Math.floor(Math.random() * (maxOffsetX - minOffsetX + 1)) + minOffsetX;
+            const offsetY = Math.floor(Math.random() * (maxOffsetY - minOffsetY + 1)) + minOffsetY;
+
+            // Apply offsets to the drawing coordinates
+            currentStartX += offsetX;
+            currentEndX += offsetX;
+            currentCenterY += offsetY;
+        }
+
+        // --- Single Drawing Block ---
+        // Original code used ctx.strokeLine directly. Let's assume it's available or polyfilled.
+        ctx.strokeLine(currentStartX, currentCenterY, currentEndX, currentCenterY);
+        // --- End Single Drawing Block ---
+
+        if (!isMultiInstance) {
+            logs.push(`&#x2500; 1px Red line from (${currentStartX.toFixed(1)}, ${currentCenterY.toFixed(1)}) to (${currentEndX.toFixed(1)}, ${currentCenterY.toFixed(1)}) color: ${ctx.strokeStyle} thickness: ${ctx.lineWidth}`);
+        }
+    }
+
+    if (!isMultiInstance) {
+        // For single instance, extremes are based on the un-offsetted line from the single iteration.
+        // currentStartX, currentEndX, and basePixelY (derived from baseCenterY) are used.
+        const extremes = {
+            topY: basePixelY,
+            bottomY: basePixelY,
+            leftX: Math.min(currentStartX, currentEndX), // Values from the single loop iteration
+            rightX: Math.max(currentStartX, currentEndX) - 1
+        };
+        return { logs: logs, checkData: extremes };
+    } else {
+        return null;
+    }
+}
+
+// Register the test
+registerHighLevelTest(
+    'line-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-edgeCrisp-ornHoriz-test',
+    drawTest,
+    'lines',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 }, // Default visual comparison
+        uniqueColors: { 
+            middleRow: { count: 1 },
+            middleColumn: { count: 1 } // Added MiddleColumn
+        }, 
+        extremes: true
+    },
+    {
+        title: 'Lines: M-Size No-Fill 1px-Opaque-Stroke Crisp-Pixel-Pos Horizontal',
+        description: 'Tests crisp rendering of a horizontal 1px line centered between pixels using canvas code.',
+        displayName: 'Perf: Lines M 1px Crisp Horizontal'
+    }
+); 
+})();
+
+(function() {
+/**
+ * TEST SUMMARY:
+ * =================
+ *
+ * Description: Tests the crisp rendering of a single, vertical 1px opaque red line. The line is centered on the canvas, and its length is randomized across S, M, and L size categories. Its horizontal position is set between pixels to test for correct pixel snapping.
+ *
+ *
+ * ---
+ *
+ * | Facet                  | Value          | Reason
+ * |------------------------|----------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ * | Shape category         | lines          | The test draws line primitives.
+ * | Count                  | single         | The test draws a single line instance in its primary visual mode.
+ * | SizeCategory           | mixed          | The line's length is randomized in the range `[20, 149]`, which spans the S `(16-39px)`, M `(40-79px)`, and L `(80-159px)` size categories.
+ * | FillStyle              | none           | No fill is applied to the line; `ctx.fillStyle` is set to be fully transparent.
+ * | StrokeStyle            | opaque         | The line is stroked with an opaque color (`rgb(255, 0, 0)`), which has an alpha of 1.0.
+ * | StrokeThickness        | 1px            | `ctx.lineWidth` is explicitly set to `1`.
+ * | Layout                 | centered       | The line's geometric center is positioned at the center of the canvas.
+ * | CenteredAt             | N/A            | This facet is not applicable to lines, as their position is defined by endpoints, not a center point in the same way as circles or rectangles.
+ * | EdgeAlignment          | crisp          | The line is vertical and its `x` coordinate is set to a `.5` value (`Math.floor(width / 2) + 0.5`), a key technique for ensuring a 1px vertical line renders crisply on a single column of pixels.
+ * | Orientation            | vertical       | The line is drawn with identical start and end `x` coordinates.
+ * | ArcAngleExtent         | N/A            | Not applicable to lines.
+ * | RoundRectRadius        | N/A            | Not applicable to lines.
+ * | ContextTranslation     | none           | The code does not use `ctx.translate()`.
+ * | ContextRotation        | none           | The code does not use `ctx.rotate()`.
+ * | ContextScaling         | none           | The code does not use `ctx.scale()`.
+ * | Clipped on shape       | none           | The code does not use `ctx.clip()`.
+ * | Clipped on shape count | n/a            | Not applicable as there is no clipping.
+ * | Clipped on shape arrangement | n/a      | Not applicable as there is no clipping.
+ * | Clipped on shape size  | n/a            | Not applicable as there is no clipping.
+ * | Clipped on shape edge alignment | n/a   | Not applicable as there is no clipping.
+ *
+ * ---
+ *
+ * UNCAPTURED ASPECTS IN FILENAME / FACETS ABOVE:
+ * ----------------------------------------------
+ * The stroke color is hardcoded to be opaque red (`rgb(255, 0, 0)`), which is more specific than the `sOpaq` facet value implies.
+ *
+ */
+
+/**
  * @fileoverview Test definition for rendering a medium-sized, vertical, 1px thick,
  * opaque stroke line positioned precisely between pixels horizontally.
  *
@@ -10710,7 +12245,7 @@ registerHighLevelTest(
  * @param {?number} instances - Number of instances to draw (optional). If > 0, draw multiple instances.
  * @returns {?{ logs: string[], checkData: {topY: number, bottomY: number, leftX: number, rightX: number} }} Log entries and expected pixel extremes, or null if drawing multiple instances.
  */
-function draw_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__vertical_orient(ctx, currentIterationNumber, instances = null) {
+function drawTest(ctx, currentIterationNumber, instances = null) {
     const currentCanvasWidth = ctx.canvas.width;
     const currentCanvasHeight = ctx.canvas.height;
 
@@ -10813,8 +12348,8 @@ function draw_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__vertic
 
 // Register the test
 registerHighLevelTest(
-    'lines--M-size--no-fill--1px_opaque_stroke--crisp_pixel_pos--vertical_orient--test.js',
-    draw_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__vertical_orient,
+    'line-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-edgeCrisp-ornVert-test',
+    drawTest,
     'lines',
     {
         //compare: { swTol: 0, refTol: 0, diffTol: 0 }, // Default visual comparison
@@ -10829,144 +12364,50 @@ registerHighLevelTest(
         description: 'Tests crisp rendering of a vertical 1px line centered between pixels using canvas code.',
         displayName: 'Perf: Lines M 1px Crisp Vertical'
     }
-); /**
- * @fileoverview Test definition for rendering a medium-sized, horizontal, 1px thick,
- * opaque stroke line positioned precisely between pixels.
- *
- * Guiding Principles for the draw_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__horizontal_orient function:
- * - General:
- *   - Canvas width and height must be even; an error is thrown otherwise.
- *   - Drawing logic is consolidated into a single loop to handle both single and multiple instances,
- *     reducing code duplication.
- * - Multiple Instances (when 'instances' parameter > 0):
- *   - No logging is performed, and the function returns `null`.
- *   - Positional offsets for each instance are applied directly to the primitive's coordinates
- *     (e.g., line endpoints) rather than using canvas transformations (like `ctx.translate()`).
- *   - The random offsets for these multiple instances are generated using `Math.random()` for simplicity
- *     and potential performance benefits, as the exact reproducibility of these specific offsets
- *     is not considered critical for this mode. The base primitive's characteristics remain
- *     reproducible via `SeededRandom` for the single instance case or base calculations.
- *   - Offsets are integers and aim to keep the primitive visible within the canvas.
- * - Single Instance (when 'instances' is null or <= 0):
- *   - Original behavior is maintained: logs are collected, and checkData is returned.
- *   - `SeededRandom` is used for all random elements to ensure test reproducibility.
- */
+); 
+})();
 
+(function() {
 /**
- * Draws a single, 1px thick, fully opaque horizontal line centered vertically
- * between pixels, with variable width and potentially swapped start/end points.
+ * TEST SUMMARY:
+ * =================
  *
- * @param {CanvasRenderingContext2D | CrispSwContext} ctx - The rendering context.
- * @param {number} currentIterationNumber - The current test iteration (unused here but required by signature).
- * @param {?number} instances - Number of instances to draw (optional). If > 0, draw multiple instances.
- * @returns {?{ logs: string[], checkData: {topY: number, bottomY: number, leftX: number, rightX: number} }} Log entries and expected pixel extremes, or null if drawing multiple instances.
+ * Description: Tests the crisp rendering of a single horizontal 2px line. The line has a fixed opaque red stroke, no fill, and is centered on the canvas at an integer Y-coordinate (grid line). Its length is randomized, spanning multiple t-shirt size categories (S, M, L).
+ *
+ *
+ * ---
+ *
+ * | Facet                  | Value          | Reason
+ * |------------------------|----------------|-----------------------------------------------------------------------------------------------------
+ * | Shape category         | line           | The test draws line primitives using `strokeLine` or `moveTo/lineTo`.
+ * | Count                  | single         | The test's primary mode draws one instance per run.
+ * | SizeCategory           | mixed          | The code `Math.floor(20 + SeededRandom.getRandom() * 130)` generates a length of [20, 149], which spans the S, M, and L size categories.
+ * | FillStyle              | none           | `fillStyle` is explicitly set to transparent and no fill operation is performed.
+ * | StrokeStyle            | opaque         | `strokeStyle` is set to `'rgb(255, 0, 0)'`, which is a fully opaque color.
+ * | StrokeThickness        | 2px            | `lineWidth` is hardcoded to `2`.
+ * | Layout                 | centered       | The line's start and end points are calculated relative to the canvas center.
+ * | CenteredAt             | N/A            | This facet is not applicable to line primitives.
+ * | EdgeAlignment          | crisp          | The combination of a horizontal orientation, an even `lineWidth` (2px), and an integer Y-coordinate for the center ensures the stroke perfectly covers two pixel rows without anti-aliasing.
+ * | Orientation            | horizontal     | The line is drawn with a constant Y-coordinate for both its start and end points.
+ * | ArcAngleExtent         | N/A            | Not an arc.
+ * | RoundRectRadius        | N/A            | Not a rounded rectangle.
+ * | ContextTranslation     | none           | No `ctx.translate()` calls are made.
+ * | ContextRotation        | none           | No `ctx.rotate()` calls are made.
+ * | ContextScaling         | none           | No `ctx.scale()` calls are made.
+ * | Clipped on shape       | none           | No `ctx.clip()` calls are made.
+ * | Clipped on shape count | n/a            | No clipping is applied.
+ * | Clipped on shape arrangement | n/a      | No clipping is applied.
+ * | Clipped on shape size  | n/a            | No clipping is applied.
+ * | Clipped on shape edge alignment | n/a   | Not applicable as there is no clipping.
+ *
+ * ---
+ *
+ * UNCAPTURED ASPECTS IN FILENAME / FACETS ABOVE:
+ * ----------------------------------------------
+ * - The stroke color is specifically fixed to opaque red (`rgb(255, 0, 0)`), which is not captured by the `sOpaq` facet alone.
+ *
  */
-function draw_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__horizontal_orient(ctx, currentIterationNumber, instances = null) {
-    const currentCanvasWidth = ctx.canvas.width;
-    const currentCanvasHeight = ctx.canvas.height;
-
-    if (currentCanvasWidth % 2 !== 0 || currentCanvasHeight % 2 !== 0) {
-        throw new Error("Canvas width and height must be even for this test.");
-    }
-
-    const isMultiInstance = instances !== null && instances > 0;
-
-    const effectiveWidth = currentCanvasWidth;
-    const effectiveHeight = currentCanvasHeight;
-
-    // Common calculations for base line (using SeededRandom for reproducibility)
-    const baseLineWidth = Math.floor(20 + SeededRandom.getRandom() * 130);
-    const baseCenterX = Math.floor(effectiveWidth / 2);
-    const baseCenterY = Math.floor(effectiveHeight / 2) + 0.5; // Key: centered *between* pixels vertically
-    const baseLeftX = Math.floor(baseCenterX - baseLineWidth / 2);
-    const baseRightX = baseLeftX + baseLineWidth;
-    const basePixelY = Math.floor(baseCenterY); // The single pixel row involved
-
-    // Set drawing properties once
-    ctx.lineWidth = 1;
-    ctx.strokeStyle = 'rgb(255, 0, 0)';
-    ctx.fillStyle = 'rgba(0, 0, 0, 0)';
-
-    const numIterations = isMultiInstance ? instances : 1;
-    let logs = isMultiInstance ? null : [];
-
-    let currentStartX, currentEndX, currentCenterY; // For drawing, declared outside loop for single instance checkData access
-
-    for (let i = 0; i < numIterations; i++) {
-        let startX = baseLeftX; // Loop-local for clarity of base points per iteration
-        let endX = baseRightX;
-        
-        // Randomly swap start/end points using SeededRandom for base primitive
-        if (SeededRandom.getRandom() < 0.5) {
-            [startX, endX] = [endX, startX];
-        }
-
-        // Initialize/Assign final draw coordinates for this iteration
-        currentStartX = startX;
-        currentEndX = endX;
-        currentCenterY = baseCenterY; // centerY is fixed for a horizontal line
-
-        if (isMultiInstance) {
-            // For multiple instances, use Math.random() for offsets.
-            // Reproducibility of these specific offsets is not critical.
-            const maxOffsetX = effectiveWidth - Math.max(currentStartX, currentEndX);
-            const minOffsetX = -Math.min(currentStartX, currentEndX);
-            const maxOffsetY = effectiveHeight - 1 - currentCenterY; // -1 because line is on pixel Y
-            const minOffsetY = -Math.floor(currentCenterY);
-
-            const offsetX = Math.floor(Math.random() * (maxOffsetX - minOffsetX + 1)) + minOffsetX;
-            const offsetY = Math.floor(Math.random() * (maxOffsetY - minOffsetY + 1)) + minOffsetY;
-
-            // Apply offsets to the drawing coordinates
-            currentStartX += offsetX;
-            currentEndX += offsetX;
-            currentCenterY += offsetY;
-        }
-
-        // --- Single Drawing Block ---
-        // Original code used ctx.strokeLine directly. Let's assume it's available or polyfilled.
-        ctx.strokeLine(currentStartX, currentCenterY, currentEndX, currentCenterY);
-        // --- End Single Drawing Block ---
-
-        if (!isMultiInstance) {
-            logs.push(`&#x2500; 1px Red line from (${currentStartX.toFixed(1)}, ${currentCenterY.toFixed(1)}) to (${currentEndX.toFixed(1)}, ${currentCenterY.toFixed(1)}) color: ${ctx.strokeStyle} thickness: ${ctx.lineWidth}`);
-        }
-    }
-
-    if (!isMultiInstance) {
-        // For single instance, extremes are based on the un-offsetted line from the single iteration.
-        // currentStartX, currentEndX, and basePixelY (derived from baseCenterY) are used.
-        const extremes = {
-            topY: basePixelY,
-            bottomY: basePixelY,
-            leftX: Math.min(currentStartX, currentEndX), // Values from the single loop iteration
-            rightX: Math.max(currentStartX, currentEndX) - 1
-        };
-        return { logs: logs, checkData: extremes };
-    } else {
-        return null;
-    }
-}
-
-// Register the test
-registerHighLevelTest(
-    'lines--M-size--no-fill--1px-opaque-stroke--crisp-pixel-pos--horizontal-orient--test.js',
-    draw_lines__M_size__no_fill__1px_opaque_stroke__crisp_pixel_pos__horizontal_orient,
-    'lines',
-    {
-        //compare: { swTol: 0, refTol: 0, diffTol: 0 }, // Default visual comparison
-        uniqueColors: { 
-            middleRow: { count: 1 },
-            middleColumn: { count: 1 } // Added MiddleColumn
-        }, 
-        extremes: true
-    },
-    {
-        title: 'Lines: M-Size No-Fill 1px-Opaque-Stroke Crisp-Pixel-Pos Horizontal',
-        description: 'Tests crisp rendering of a horizontal 1px line centered between pixels using canvas code.',
-        displayName: 'Perf: Lines M 1px Crisp Horizontal'
-    }
-); /**
+/**
  * @fileoverview Test definition for rendering a medium-sized, horizontal, 2px thick,
  * opaque stroke line centered at a grid intersection.
  *
@@ -10999,7 +12440,7 @@ registerHighLevelTest(
  * @param {?number} instances - Number of instances to draw (optional). If > 0, draw multiple instances.
  * @returns {?{ logs: string[], checkData: {topY: number, bottomY: number, leftX: number, rightX: number} }} Log entries and expected pixel extremes, or null if drawing multiple instances.
  */
-function draw_lines__M_size__no_fill__2px_opaque_stroke__centered_at_grid__horizontal_orient(ctx, currentIterationNumber, instances = null) {
+function drawTest(ctx, currentIterationNumber, instances = null) {
     const currentCanvasWidth = ctx.canvas.width;
     const currentCanvasHeight = ctx.canvas.height;
 
@@ -11094,8 +12535,8 @@ function draw_lines__M_size__no_fill__2px_opaque_stroke__centered_at_grid__horiz
 
 // Register the test
 registerHighLevelTest(
-    'lines--M-size--no-fill--2px-opaque-stroke--centered-at-grid--horizontal-orient--test.js',
-    draw_lines__M_size__no_fill__2px_opaque_stroke__centered_at_grid__horizontal_orient,
+    'line-sgl-szMix-fNone-sOpaq-sw2px-lytCenter-edgeCrisp-ornHoriz-test',
+    drawTest,
     'lines',
     {
         //compare: { swTol: 0, refTol: 0, diffTol: 0 }, // Default visual comparison
@@ -11110,7 +12551,50 @@ registerHighLevelTest(
         description: 'Tests crisp rendering of a horizontal 2px line centered at grid crossing using canvas code.',
         displayName: 'Perf: Lines M 2px Grid Horizontal'
     }
-); /**
+); 
+})();
+
+(function() {
+/**
+* TEST SUMMARY:
+* =================
+*
+* Description: Tests crisp rendering of a single, vertical, 2px-thick opaque line centered on a grid line.
+*
+*
+* ---
+*
+* | Facet                  | Value          | Reason
+* |------------------------|----------------|-----------------------------------------------------------------------------------------------------
+* | Shape category         | lines          | The code draws lines using `ctx.strokeLine`.
+* | Count                  | single         | The default test case draws a single line instance.
+* | SizeCategory           | mixed          | The line length is randomized in `[20, 149]`, which spans S (`16-39`), M (`40-79`), and L (`80-159`) size categories.
+* | FillStyle              | none           | No fill is applied to the line.
+* | StrokeStyle            | opaque         | The stroke is a solid, opaque red color (`rgb(255, 0, 0)`).
+* | StrokeThickness        | 2px            | `ctx.lineWidth` is explicitly set to `2`.
+* | Layout                 | centered       | The line is positioned relative to the canvas center.
+* | CenteredAt             | N/A            | This facet is not applicable to lines as per the project's convention.
+* | EdgeAlignment          | crisp          | The line has a 2px (even) width and is drawn on an integer x-coordinate, ensuring its edges align with pixel boundaries.
+* | Orientation            | vertical       | The line is drawn with identical start and end x-coordinates.
+* | ArcAngleExtent         | N/A            | Not an arc.
+* | RoundRectRadius        | N/A            | Not a rounded rectangle.
+* | ContextTranslation     | none           | `ctx.translate()` is not used.
+* | ContextRotation        | none           | `ctx.rotate()` is not used.
+* | ContextScaling         | none           | `ctx.scale()` is not used.
+* | Clipped on shape       | none           | `ctx.clip()` is not used.
+* | Clipped on shape count | n/a            | No clipping.
+* | Clipped on shape arrangement | n/a      | No clipping.
+* | Clipped on shape size  | n/a            | No clipping.
+* | Clipped on shape edge alignment | n/a   | Not applicable as there is no clipping.
+*
+* ---
+*
+* UNCAPTURED ASPECTS IN FILENAME / FACETS ABOVE:
+* ----------------------------------------------
+* The stroke color is a fixed opaque red.
+*
+*/
+/**
  * @fileoverview Test definition for rendering a medium-sized, vertical, 2px thick,
  * opaque stroke line centered at a grid intersection.
  *
@@ -11143,7 +12627,7 @@ registerHighLevelTest(
  * @param {?number} instances - Number of instances to draw (optional). If > 0, draw multiple instances.
  * @returns {?{ logs: string[], checkData: {topY: number, bottomY: number, leftX: number, rightX: number} }} Log entries and expected pixel extremes, or null if drawing multiple instances.
  */
-function draw_lines__M_size__no_fill__2px_opaque_stroke__centered_at_grid__vertical_orient(ctx, currentIterationNumber, instances = null) {
+function drawTest(ctx, currentIterationNumber, instances = null) {
     const currentCanvasWidth = ctx.canvas.width;
     const currentCanvasHeight = ctx.canvas.height;
 
@@ -11238,8 +12722,8 @@ function draw_lines__M_size__no_fill__2px_opaque_stroke__centered_at_grid__verti
 
 // Register the test
 registerHighLevelTest(
-    'lines--M-size--no-fill--2px-opaque-stroke--centered-at-grid--vertical-orient--test.js',
-    draw_lines__M_size__no_fill__2px_opaque_stroke__centered_at_grid__vertical_orient,
+    'line-sgl-szMix-fNone-sOpaq-sw2px-lytCenter-edgeCrisp-ornVert-test',
+    drawTest,
     'lines',
     {
         //compare: { swTol: 0, refTol: 0, diffTol: 0 }, // Default visual comparison
@@ -11254,722 +12738,62 @@ registerHighLevelTest(
         description: 'Tests crisp rendering of a vertical 2px line centered at grid crossing using canvas code.',
         displayName: 'Perf: Lines M 2px Grid Vertical'
     }
-); /**
- * @fileoverview
- * Test definition for rendering multiple (typically 15 for visual regression,
- * 'instances' count for performance) lines with random thickness, color (including alpha),
- * positions, and orientations.
+); 
+})();
+
+(function() {
+/**
+ * TEST SUMMARY:
+ * =================
  *
- * Guiding Principles for this draw function:
- * - General:
- *   - The function is designed to draw a variable number of lines with varied properties.
- *   - `RenderTest` handles initial seeding of `SeededRandom.getRandom()`.
- * - `initialCount` Parameter:
- *   - Defines the number of lines for a standard visual test run.
- *   - Passed to `runCanvasCode` by the `define_..._test` function.
- * - `instances` Parameter (for Performance Testing):
- *   - If provided (not null and > 0), signifies a performance test run.
- *   - The function will then draw 'instances' number of lines instead of 'initialCount'.
- *   - Logging is skipped, and `null` is returned in this mode.
- * - Return Value:
- *   - Returns an object with a `logs` array for single/initialCount runs.
- *   - Returns `null` if `instances` is set (performance mode) or if no logs are generated.
- *   - No `checkData` is returned as this test primarily focuses on rendering capability
- *     and visual variety, rather than precise checks.
+ * Description: Tests rendering of multiple axis-aligned rectangles with random sizes, fills (variable alpha), strokes (opaque/semi-transparent, even width), and positions. This test is designed to produce crisp edges by using helper functions to adjust geometry based on stroke width and placement. No rotation is applied.
+ *
+ *
+ * ---
+ *
+ * | Facet                  | Value              | Reason
+ * |------------------------|--------------------|-----------------------------------------------------------------------------------------------------
+ * | Shape category         | rectangles         | Test draws rectangles using `ctx.fillRect` and `ctx.strokeRect`.
+ * | Count                  | multi-10           | Draws 10 instances in visual regression mode (`numToDraw` defaults to 10).
+ * | SizeCategory           | mixed              | `rectWidth`/`rectHeight` are randomized in a range of `[50, ~410]`, spanning M, L, and XL categories.
+ * | FillStyle              | semitransparent    | `fillColorObj` is generated with an alpha range of `[100, 200]`, which is always semi-transparent.
+ * | StrokeStyle            | mixed              | `strokeColorObj` is generated with an alpha range of `[200, 255]`, including both semi-transparent and opaque values.
+ * | StrokeThickness        | mixed              | `strokeWidth` is randomized to an even integer in `[2, 12]`, a discrete set of values.
+ * | Layout                 | spread             | Rectangles are distributed by applying a random offset to each instance's calculated center point.
+ * | CenteredAt             | mixed-pixel-grid   | The initial placement logic in `calculateCrispFillAndStrokeRectParams` centers on a grid or pixel center.
+ * | EdgeAlignment          | crisp              | The test explicitly uses the `adjustDimensionsForCrispStrokeRendering` helper to ensure crisp edges.
+ * | Orientation            | square             | Rectangles are axis-aligned (`ornAxial` in new convention).
+ * | ArcAngleExtent         | N/A                | Not applicable to rectangles.
+ * | RoundRectRadius        | N/A                | Not applicable to standard rectangles.
+ * | ContextTranslation     | none               | No `ctx.translate()` calls are made.
+ * | ContextRotation        | none               | No `ctx.rotate()` calls are made.
+ * | ContextScaling         | none               | No `ctx.scale()` calls are made.
+ * | Clipped on shape       | none               | No clipping is applied in this test.
+ * | Clipped on shape count | n/a                | No clipping is applied in this test.
+ * | Clipped on shape arrangement | n/a          | No clipping is applied in this test.
+ * | Clipped on shape size  | n/a                | No clipping is applied in this test.
+ * | Clipped on shape edge alignment | n/a       | Not applicable as there is no clipping.
+ *
+ * ---
+ *
+ * UNCAPTURED ASPECTS IN FILENAME / FACETS ABOVE:
+ * ----------------------------------------------
+ * - The fill alpha is specifically randomized within the range `[100, 200]`.
+ * - The stroke alpha is specifically randomized within the range `[200, 255]`.
+ * - The stroke width is calculated by rounding `SR.get()*10+1` and then forcing the result to be an even number,
+ *   resulting in a discrete set of values: `{2, 4, 6, 8, 10, 12}`.
+ *
  */
 
 /**
- * Draws multiple lines with random properties (position, thickness, color).
- * The number of lines drawn depends on whether 'instances' (for performance mode)
- * or 'initialCount' (for visual regression mode) is active.
- *
- * @param {CanvasRenderingContext2D | CrispSwContext} ctx - The rendering context.
- * @param {number} currentIterationNumber - The current test iteration.
- * @param {number} initialCount - The number of lines to draw for a standard (non-performance) run.
- * @param {?number} instances - Optional. If provided and > 0, this many lines are drawn for performance testing.
- * @returns {?{ logs: string[] }} An object with logs, or null (especially in performance mode).
- */
-function draw_lines__multi_15__no_fill__random_stroke__random_pos__random_orient(ctx, currentIterationNumber, initialCount = 15, instances = null) {
-    const isPerformanceRun = instances !== null && instances > 0;
-    const lineCount = isPerformanceRun ? instances : initialCount;
-
-    let logs = isPerformanceRun ? null : [];
-
-    const canvasWidth = ctx.canvas.width;
-    const canvasHeight = ctx.canvas.height;
-
-    // Helper to get a random point within canvas boundaries
-    const getRandomPoint = () => ({
-        x: SeededRandom.getRandom() * canvasWidth,
-        y: SeededRandom.getRandom() * canvasHeight
-    });
-
-    // Helper to get a random color string (rgba)
-    // Original used getRandomColor(150, 255) where alpha is generated first.
-    const getRandomColorString = () => {
-        // Match order of SeededRandom.getRandom() calls in global getRandomColor: Alpha, then R, G, B
-        const minAlphaForThisTest = 150;
-        const maxAlphaForThisTest = 255;
-        const a_byte = Math.floor(minAlphaForThisTest + SeededRandom.getRandom() * (maxAlphaForThisTest - minAlphaForThisTest + 1));
-        
-        const r = Math.floor(SeededRandom.getRandom() * 256);
-        const g = Math.floor(SeededRandom.getRandom() * 256);
-        const b = Math.floor(SeededRandom.getRandom() * 256);
-        
-        return `rgba(${r},${g},${b},${(a_byte / 255).toFixed(3)})`;
-    };
-
-    for (let i = 0; i < lineCount; i++) {
-        const start = getRandomPoint();
-        const end = getRandomPoint();
-        const thickness = Math.floor(SeededRandom.getRandom() * 10) + 1; // Thickness 1 to 10
-        const colorStr = getRandomColorString();
-
-        ctx.lineWidth = thickness;
-        ctx.strokeStyle = colorStr;
-        // ctx.fillStyle is not relevant for lines unless they have caps that might be filled differently, which is not the case here.
-
-        // --- Single Drawing Block ---
-        ctx.strokeLine(start.x, start.y, end.x, end.y);
-        // --- End Single Drawing Block ---
-
-        if (!isPerformanceRun) {
-            logs.push(`&#x2500; Random Line from (${start.x.toFixed(1)}, ${start.y.toFixed(1)}) to (${end.x.toFixed(1)}, ${end.y.toFixed(1)}) thickness: ${thickness}, color: ${colorStr}`);
-        }
-    }
-
-    if (!isPerformanceRun && logs.length === 0 && lineCount > 0) {
-        logs.push('Attempted to draw random lines, but none were generated in the loop.');
-    } else if (!isPerformanceRun && lineCount === 0) {
-        logs.push('No random lines drawn (lineCount was 0).');
-    }
-    
-    return logs && logs.length > 0 ? { logs } : null;
-}
-
-// Register the test
-registerHighLevelTest(
-    'lines--multi_15--no-fill--random-stroke__random_pos--random_orient--test.js',
-    draw_lines__multi_15__no_fill__random_stroke__random_pos__random_orient,
-    'lines',
-    {
-        //compare: { swTol: 0, refTol: 0, diffTol: 0 }, // Default visual comparison
-        drawFunctionArgs: [15] // initialCount for the draw function
-    },
-    {
-        title: 'Lines: Multi-15 No-Fill Random-Stroke Random-Pos Random-Orient',
-        displayName: 'Perf: Lines Multi Random Props',
-        description: 'Performance test for rendering multiple (default 15, or N from harness) lines with random properties.'
-    }
-); /**
- * @fileoverview
- * Test definition for rendering multiple (typically 20 for visual regression,
- * 'instances' count for performance) 10px thick, black, opaque stroke lines
- * at random positions and with random orientations.
- *
- * Guiding Principles for this draw function:
- * - General:
- *   - The function is designed to draw a variable number of lines.
- *   - `currentIterationNumber` is used to seed `SeededRandom` if drawing the 'initialCount'
- *     of lines (e.g., for visual regression tests where reproducibility of the scene is key).
- *     However, for the core logic of getting random points for lines, this function
- *     directly uses `SeededRandom.getRandom()` as per standard practice, assuming
- *     `RenderTest` handles initial seeding.
- * - `initialCount` Parameter:
- *   - This parameter defines the number of lines to draw for a standard visual test run.
- *   - It's passed to `runCanvasCode` by the `define_..._test` function.
- * - `instances` Parameter (for Performance Testing):
- *   - If `instances` is provided (not null and > 0), it signifies a performance test run.
- *   - The function will then draw 'instances' number of lines instead of 'initialCount'.
- *   - In this mode, logging is skipped, and `null` is returned.
- *   - `SeededRandom` is still used for coordinates to maintain the nature of the test,
- *     but the sheer number of operations is the focus.
- * - Return Value:
- *   - Returns an object with a `logs` array for single/initialCount runs.
- *   - Returns `null` if `instances` is set (performance mode) or if no logs are generated.
- *   - No `checkData` is returned as this test primarily focuses on rendering multiple
- *     lines without specific positional or color checks beyond visual comparison and
- *     performance measurement.
- */
-
-/**
- * Draws multiple 10px thick, black, opaque lines at random positions.
- * The number of lines drawn depends on whether 'instances' (for performance mode)
- * or 'initialCount' (for visual regression mode) is active.
- *
- * @param {CanvasRenderingContext2D | CrispSwContext} ctx - The rendering context.
- * @param {number} currentIterationNumber - The current test iteration (used by RenderTest for seeding).
- * @param {number} initialCount - The number of lines to draw for a standard (non-performance) run.
- * @param {?number} instances - Optional. If provided and > 0, this many lines are drawn for performance testing.
- * @returns {?{ logs: string[] }} An object with logs, or null (especially in performance mode).
- */
-function draw_lines__multi_20__no_fill__10px_black_opaque_stroke__random_pos__random_orient(ctx, currentIterationNumber, initialCount = 20, instances = null) {
-    const isPerformanceRun = instances !== null && instances > 0;
-    const lineCount = isPerformanceRun ? instances : initialCount;
-
-    let logs = isPerformanceRun ? null : [];
-
-    // Set constant drawing properties
-    ctx.lineWidth = 10;
-    ctx.strokeStyle = 'rgb(0,0,0)'; // Opaque black in RGB format
-    ctx.fillStyle = 'rgba(0,0,0,0)'; // No fill for lines
-
-    const canvasWidth = ctx.canvas.width;
-    const canvasHeight = ctx.canvas.height;
-
-    // Helper to get a random point within canvas boundaries (integer for simplicity here)
-    // SeededRandom.getRandom() is expected to be seeded by RenderTest per iteration.
-    const getRandomPoint = () => ({
-        x: Math.floor(SeededRandom.getRandom() * canvasWidth),
-        y: Math.floor(SeededRandom.getRandom() * canvasHeight)
-    });
-
-    for (let i = 0; i < lineCount; i++) {
-        const start = getRandomPoint();
-        const end = getRandomPoint();
-
-        // --- Single Drawing Block ---
-        // Using strokeLine as it's common in these tests.
-        // Assumes it's available/polyfilled on ctx.
-        ctx.strokeLine(start.x, start.y, end.x, end.y);
-        // --- End Single Drawing Block ---
-
-        if (!isPerformanceRun) {
-            logs.push(`&#x2500; 10px Black line from (${start.x}, ${start.y}) to (${end.x}, ${end.y})`);
-        }
-    }
-
-    if (!isPerformanceRun && logs.length === 0) {
-        // Ensure logs array is not empty if it wasn't a perf run but no lines were drawn (e.g. initialCount = 0)
-        logs.push('No 10px black lines drawn.');
-    }
-    
-    return logs && logs.length > 0 ? { logs } : null;
-}
-
-// Register the test
-registerHighLevelTest(
-    'lines--multi_20--no-fill--10px_black_opaque_stroke__random_pos--random_orient--test.js',
-    draw_lines__multi_20__no_fill__10px_black_opaque_stroke__random_pos__random_orient,
-    'lines',
-    {
-        //compare: { swTol: 0, refTol: 0, diffTol: 0 }, // Default visual comparison
-        drawFunctionArgs: [20] // initialCount for the draw function
-    },
-    {
-        title: 'Lines: Multi-20 No-Fill 10px-Black-Opaque-Stroke Random-Pos Random-Orient',
-        // Visual description will be default generated. The one in perf config is more specific to perf.
-        displayName: 'Perf: Lines Multi 10px Black Random',
-        description: 'Performance test for rendering multiple (default 20, or N from harness) 10px black lines at random positions.'
-    }
-); /**
- * @fileoverview Test definition for rendering multiple (20 by default) 1px thick, black, opaque
- * lines with random start/end points. Supports a parameter to vary the number of instances.
- *
- * Guiding Principles for this function:
- * - General:
- *   - Canvas width and height must be even; an error is thrown otherwise.
- *   - The number of lines drawn can be controlled by the 'instances' parameter.
- * - Multiple Instances (when 'instances' parameter > 0):
- *   - No logging is performed, and the function returns `null`.
- *   - Each line's position is determined randomly using `getRandomPoint` (which relies on `SeededRandom`).
- *     No additional `Math.random()` offsets are applied on top of this, as the inherent randomness
- *     of `getRandomPoint` serves the purpose for this specific test.
- * - Single Instance / Default Behavior (when 'instances' is null, 0, or negative):
- *   - If 'instances' is null (default), 20 lines are drawn, and logs are collected (matches original behavior).
- *   - If 'instances' is 0 or negative, 1 line is drawn, and logs are collected (for a minimal single run).
- *   - `SeededRandom` (via `getRandomPoint`) is used for all random elements to ensure test reproducibility.
- *   - Returns { logs: string[] }.
- */
-
-/**
- * Draws a specified number of 1px thick, black, opaque lines with random start/end points.
- *
- * @param {CanvasRenderingContext2D | CrispSwContext} ctx - The rendering context.
- * @param {number} currentIterationNumber - The current test iteration.
- * @param {?number} instances - Number of lines to draw. If null, defaults to 20.
- *                              If > 0, this many lines are drawn without logging.
- *                              If 0 or negative, 1 line is drawn with logging.
- * @returns {?{ logs: string[] }} Log entries if not in multi-instance mode (instances > 0), otherwise null.
- */
-function draw_lines__multi_20__no_fill__1px_black_opaque_stroke__random_pos__random_orient(ctx, currentIterationNumber, instances = null) {
-    const currentCanvasWidth = ctx.canvas.width;
-    const currentCanvasHeight = ctx.canvas.height;
-
-    if (currentCanvasWidth % 2 !== 0 || currentCanvasHeight % 2 !== 0) {
-        throw new Error("Canvas width and height must be even for this test.");
-    }
-
-    const isTrueMultiInstance = instances !== null && instances > 0;
-    let numIterations;
-
-    if (isTrueMultiInstance) {
-        numIterations = instances;
-    } else if (instances === null) {
-        numIterations = 20; // Default original behavior
-    } else { // instances <= 0
-        numIterations = 1; // Minimal single run with logging
-    }
-
-    let logs = isTrueMultiInstance ? null : [];
-
-    // Assume SeededRandom is available globally and seeded externally by RenderTest.
-    // Assume getRandomPoint is available globally (from scene-creation-utils.js).
-
-    // Set fixed drawing properties
-    ctx.lineWidth = 1;
-    ctx.strokeStyle = 'rgb(0, 0, 0)'; // Black
-    ctx.fillStyle = 'rgba(0, 0, 0, 0)'; // No fill
-
-    for (let i = 0; i < numIterations; i++) {
-        // getRandomPoint uses SeededRandom for reproducibility of base characteristics.
-        const start = isTrueMultiInstance ? 
-            {
-                x: Math.random() * currentCanvasWidth,
-                y: Math.random() * currentCanvasHeight
-            } :
-            getRandomPoint(3, currentCanvasWidth, currentCanvasHeight);
-            
-        const end = isTrueMultiInstance ?
-            {
-                x: Math.random() * currentCanvasWidth,
-                y: Math.random() * currentCanvasHeight
-            } :
-            getRandomPoint(4, currentCanvasWidth, currentCanvasHeight);
-
-        // Draw the line using the canvas-like API
-        if (typeof ctx.strokeLine === 'function') {
-            ctx.strokeLine(start.x, start.y, end.x, end.y);
-        } else {
-            ctx.beginPath();
-            ctx.moveTo(start.x, start.y);
-            ctx.lineTo(end.x, end.y);
-            ctx.stroke();
-        }
-
-        if (!isTrueMultiInstance) {
-            logs.push(`&#x2500; 1px Black line from (${start.x.toFixed(1)}, ${start.y.toFixed(1)}) to (${end.x.toFixed(1)}, ${end.y.toFixed(1)}) color: ${ctx.strokeStyle} thickness: ${ctx.lineWidth}`);
-        }
-    }
-
-    if (isTrueMultiInstance) {
-        return null;
-    } else {
-        return { logs: logs }; // No checkData in this specific test's original design
-    }
-}
-
-// Register the test
-registerHighLevelTest(
-    'lines--multi_20--no-fill--1px_black_opaque_stroke__random_pos--random_orient--test.js',
-    draw_lines__multi_20__no_fill__1px_black_opaque_stroke__random_pos__random_orient,
-    'lines',
-    {
-        //compare: { swTol: 0, refTol: 0, diffTol: 0 } // Default visual comparison
-        // No drawFunctionArgs needed as the draw function handles null instances to draw 20 lines.
-    },
-    {
-        title: 'Lines: Multi-20 No-Fill 1px-Black-Opaque-Stroke Random-Pos Random-Orient',
-        description: 'Tests rendering of 20 black lines (1px width) with random positions/orientations using canvas code.',
-        displayName: 'Perf: Lines Multi-20 1px Random'
-        // The description above will also be used for the performance test registry entry.
-    }
-); /**
- * @fileoverview
- * Test definition for rendering multiple (typically 20 for visual regression,
- * 'instances' count for performance) 2px thick, black, opaque stroke lines
- * at random positions and with random orientations.
- *
- * Guiding Principles for this draw function:
- * - General:
- *   - The function is designed to draw a variable number of lines.
- *   - `currentIterationNumber` is used to seed `SeededRandom` if drawing the 'initialCount'
- *     of lines (e.g., for visual regression tests where reproducibility of the scene is key).
- *     However, for the core logic of getting random points for lines, this function
- *     directly uses `SeededRandom.getRandom()` as per standard practice, assuming
- *     `RenderTest` handles initial seeding.
- * - `initialCount` Parameter:
- *   - This parameter defines the number of lines to draw for a standard visual test run.
- *   - It's passed to `runCanvasCode` by the `define_..._test` function.
- * - `instances` Parameter (for Performance Testing):
- *   - If `instances` is provided (not null and > 0), it signifies a performance test run.
- *   - The function will then draw 'instances' number of lines instead of 'initialCount'.
- *   - In this mode, logging is skipped, and `null` is returned.
- *   - `SeededRandom` is still used for coordinates to maintain the nature of the test,
- *     but the sheer number of operations is the focus.
- * - Return Value:
- *   - Returns an object with a `logs` array for single/initialCount runs.
- *   - Returns `null` if `instances` is set (performance mode) or if no logs are generated.
- *   - No `checkData` is returned as this test primarily focuses on rendering multiple
- *     lines without specific positional or color checks beyond visual comparison and
- *     performance measurement.
- */
-
-/**
- * Draws multiple 2px thick, black, opaque lines at random positions.
- * The number of lines drawn depends on whether 'instances' (for performance mode)
- * or 'initialCount' (for visual regression mode) is active.
- *
- * @param {CanvasRenderingContext2D | CrispSwContext} ctx - The rendering context.
- * @param {number} currentIterationNumber - The current test iteration (used by RenderTest for seeding).
- * @param {number} initialCount - The number of lines to draw for a standard (non-performance) run.
- * @param {?number} instances - Optional. If provided and > 0, this many lines are drawn for performance testing.
- * @returns {?{ logs: string[] }} An object with logs, or null (especially in performance mode).
- */
-function draw_lines__multi_20__no_fill__2px_black_opaque_stroke__random_pos__random_orient(ctx, currentIterationNumber, initialCount = 20, instances = null) {
-    const isPerformanceRun = instances !== null && instances > 0;
-    const lineCount = isPerformanceRun ? instances : initialCount;
-
-    let logs = isPerformanceRun ? null : [];
-
-    // Set constant drawing properties
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = 'rgb(0,0,0)'; // Opaque black in RGB format
-    ctx.fillStyle = 'rgba(0,0,0,0)'; // No fill for lines
-
-    const canvasWidth = ctx.canvas.width;
-    const canvasHeight = ctx.canvas.height;
-
-    // Helper to get a random point within canvas boundaries (integer for simplicity here)
-    // SeededRandom.getRandom() is expected to be seeded by RenderTest per iteration.
-    const getRandomPoint = () => ({
-        x: Math.floor(SeededRandom.getRandom() * canvasWidth),
-        y: Math.floor(SeededRandom.getRandom() * canvasHeight)
-    });
-
-    for (let i = 0; i < lineCount; i++) {
-        const start = getRandomPoint();
-        const end = getRandomPoint();
-
-        // --- Single Drawing Block ---
-        // Using strokeLine as it's common in these tests.
-        // Assumes it's available/polyfilled on ctx.
-        ctx.strokeLine(start.x, start.y, end.x, end.y);
-        // --- End Single Drawing Block ---
-
-        if (!isPerformanceRun) {
-            logs.push(`&#x2500; 2px Black line from (${start.x}, ${start.y}) to (${end.x}, ${end.y})`);
-        }
-    }
-
-    if (!isPerformanceRun && logs.length === 0) {
-        // Ensure logs array is not empty if it wasn't a perf run but no lines were drawn (e.g. initialCount = 0)
-        logs.push('No 2px black lines drawn.');
-    }
-    
-    return logs && logs.length > 0 ? { logs } : null;
-}
-
-// Register the test
-registerHighLevelTest(
-    'lines--multi_20--no-fill--2px_black_opaque_stroke__random_pos--random_orient--test.js',
-    draw_lines__multi_20__no_fill__2px_black_opaque_stroke__random_pos__random_orient,
-    'lines',
-    {
-        //compare: { swTol: 0, refTol: 0, diffTol: 0 }, // Default visual comparison
-        drawFunctionArgs: [20] // initialCount for the draw function
-    },
-    {
-        title: 'Lines: Multi-20 No-Fill 2px-Black-Opaque-Stroke Random-Pos Random-Orient',
-        displayName: 'Perf: Lines Multi 2px Black Random',
-        description: 'Performance test for rendering multiple (default 20, or N from harness) 2px black lines at random positions.'
-    }
-); /**
- * @fileoverview
- * Test definition for rendering multiple (typically 20 for visual regression,
- * 'instances' count for performance) 3px thick, black, opaque stroke lines
- * at random positions and with random orientations.
- *
- * Guiding Principles for this draw function:
- * - General:
- *   - The function is designed to draw a variable number of lines.
- *   - `currentIterationNumber` is used to seed `SeededRandom` if drawing the 'initialCount'
- *     of lines (e.g., for visual regression tests where reproducibility of the scene is key).
- *     However, for the core logic of getting random points for lines, this function
- *     directly uses `SeededRandom.getRandom()` as per standard practice, assuming
- *     `RenderTest` handles initial seeding.
- * - `initialCount` Parameter:
- *   - This parameter defines the number of lines to draw for a standard visual test run.
- *   - It's passed to `runCanvasCode` by the `define_..._test` function.
- * - `instances` Parameter (for Performance Testing):
- *   - If `instances` is provided (not null and > 0), it signifies a performance test run.
- *   - The function will then draw 'instances' number of lines instead of 'initialCount'.
- *   - In this mode, logging is skipped, and `null` is returned.
- *   - `SeededRandom` is still used for coordinates to maintain the nature of the test,
- *     but the sheer number of operations is the focus.
- * - Return Value:
- *   - Returns an object with a `logs` array for single/initialCount runs.
- *   - Returns `null` if `instances` is set (performance mode) or if no logs are generated.
- *   - No `checkData` is returned as this test primarily focuses on rendering multiple
- *     lines without specific positional or color checks beyond visual comparison and
- *     performance measurement.
- */
-
-/**
- * Draws multiple 3px thick, black, opaque lines at random positions.
- * The number of lines drawn depends on whether 'instances' (for performance mode)
- * or 'initialCount' (for visual regression mode) is active.
- *
- * @param {CanvasRenderingContext2D | CrispSwContext} ctx - The rendering context.
- * @param {number} currentIterationNumber - The current test iteration (used by RenderTest for seeding).
- * @param {number} initialCount - The number of lines to draw for a standard (non-performance) run.
- * @param {?number} instances - Optional. If provided and > 0, this many lines are drawn for performance testing.
- * @returns {?{ logs: string[] }} An object with logs, or null (especially in performance mode).
- */
-function draw_lines__multi_20__no_fill__3px_black_opaque_stroke__random_pos__random_orient(ctx, currentIterationNumber, initialCount = 20, instances = null) {
-    const isPerformanceRun = instances !== null && instances > 0;
-    const lineCount = isPerformanceRun ? instances : initialCount;
-
-    let logs = isPerformanceRun ? null : [];
-
-    // Set constant drawing properties
-    ctx.lineWidth = 3;
-    ctx.strokeStyle = 'rgb(0,0,0)'; // Opaque black in RGB format
-    ctx.fillStyle = 'rgba(0,0,0,0)'; // No fill for lines
-
-    const canvasWidth = ctx.canvas.width;
-    const canvasHeight = ctx.canvas.height;
-
-    // Helper to get a random point within canvas boundaries (integer for simplicity here)
-    // SeededRandom.getRandom() is expected to be seeded by RenderTest per iteration.
-    const getRandomPoint = () => ({
-        x: Math.floor(SeededRandom.getRandom() * canvasWidth),
-        y: Math.floor(SeededRandom.getRandom() * canvasHeight)
-    });
-
-    for (let i = 0; i < lineCount; i++) {
-        const start = getRandomPoint();
-        const end = getRandomPoint();
-
-        // --- Single Drawing Block ---
-        // Using strokeLine as it's common in these tests.
-        // Assumes it's available/polyfilled on ctx.
-        ctx.strokeLine(start.x, start.y, end.x, end.y);
-        // --- End Single Drawing Block ---
-
-        if (!isPerformanceRun) {
-            logs.push(`&#x2500; 3px Black line from (${start.x}, ${start.y}) to (${end.x}, ${end.y})`);
-        }
-    }
-
-    if (!isPerformanceRun && logs.length === 0) {
-        // Ensure logs array is not empty if it wasn't a perf run but no lines were drawn (e.g. initialCount = 0)
-        logs.push('No 3px black lines drawn.');
-    }
-    
-    return logs && logs.length > 0 ? { logs } : null;
-}
-
-// Register the test
-registerHighLevelTest(
-    'lines--multi_20--no-fill--3px_black_opaque_stroke__random_pos--random_orient--test.js',
-    draw_lines__multi_20__no_fill__3px_black_opaque_stroke__random_pos__random_orient,
-    'lines',
-    {
-        //compare: { swTol: 0, refTol: 0, diffTol: 0 }, // Default visual comparison
-        drawFunctionArgs: [20] // initialCount for the draw function
-    },
-    {
-        title: 'Lines: Multi-20 No-Fill 3px-Black-Opaque-Stroke Random-Pos Random-Orient',
-        displayName: 'Perf: Lines Multi 3px Black Random',
-        description: 'Performance test for rendering multiple (default 20, or N from harness) 3px black lines at random positions.'
-    }
-); /**
- * @fileoverview
- * Test definition for rendering multiple (typically 20 for visual regression,
- * 'instances' count for performance) 5px thick, black, opaque stroke lines
- * at random positions and with random orientations.
- *
- * Guiding Principles for this draw function:
- * - General:
- *   - The function is designed to draw a variable number of lines.
- *   - `currentIterationNumber` is used to seed `SeededRandom` if drawing the 'initialCount'
- *     of lines (e.g., for visual regression tests where reproducibility of the scene is key).
- *     However, for the core logic of getting random points for lines, this function
- *     directly uses `SeededRandom.getRandom()` as per standard practice, assuming
- *     `RenderTest` handles initial seeding.
- * - `initialCount` Parameter:
- *   - This parameter defines the number of lines to draw for a standard visual test run.
- *   - It's passed to `runCanvasCode` by the `define_..._test` function.
- * - `instances` Parameter (for Performance Testing):
- *   - If `instances` is provided (not null and > 0), it signifies a performance test run.
- *   - The function will then draw 'instances' number of lines instead of 'initialCount'.
- *   - In this mode, logging is skipped, and `null` is returned.
- *   - `SeededRandom` is still used for coordinates to maintain the nature of the test,
- *     but the sheer number of operations is the focus.
- * - Return Value:
- *   - Returns an object with a `logs` array for single/initialCount runs.
- *   - Returns `null` if `instances` is set (performance mode) or if no logs are generated.
- *   - No `checkData` is returned as this test primarily focuses on rendering multiple
- *     lines without specific positional or color checks beyond visual comparison and
- *     performance measurement.
- */
-
-/**
- * Draws multiple 5px thick, black, opaque lines at random positions.
- * The number of lines drawn depends on whether 'instances' (for performance mode)
- * or 'initialCount' (for visual regression mode) is active.
- *
- * @param {CanvasRenderingContext2D | CrispSwContext} ctx - The rendering context.
- * @param {number} currentIterationNumber - The current test iteration (used by RenderTest for seeding).
- * @param {number} initialCount - The number of lines to draw for a standard (non-performance) run.
- * @param {?number} instances - Optional. If provided and > 0, this many lines are drawn for performance testing.
- * @returns {?{ logs: string[] }} An object with logs, or null (especially in performance mode).
- */
-function draw_lines__multi_20__no_fill__5px_black_opaque_stroke__random_pos__random_orient(ctx, currentIterationNumber, initialCount = 20, instances = null) {
-    const isPerformanceRun = instances !== null && instances > 0;
-    const lineCount = isPerformanceRun ? instances : initialCount;
-
-    let logs = isPerformanceRun ? null : [];
-
-    // Set constant drawing properties
-    ctx.lineWidth = 5;
-    ctx.strokeStyle = 'rgb(0,0,0)'; // Opaque black in RGB format
-    ctx.fillStyle = 'rgba(0,0,0,0)'; // No fill for lines
-
-    const canvasWidth = ctx.canvas.width;
-    const canvasHeight = ctx.canvas.height;
-
-    // Helper to get a random point within canvas boundaries (integer for simplicity here)
-    // SeededRandom.getRandom() is expected to be seeded by RenderTest per iteration.
-    const getRandomPoint = () => ({
-        x: Math.floor(SeededRandom.getRandom() * canvasWidth),
-        y: Math.floor(SeededRandom.getRandom() * canvasHeight)
-    });
-
-    for (let i = 0; i < lineCount; i++) {
-        const start = getRandomPoint();
-        const end = getRandomPoint();
-
-        // --- Single Drawing Block ---
-        // Using strokeLine as it's common in these tests.
-        // Assumes it's available/polyfilled on ctx.
-        ctx.strokeLine(start.x, start.y, end.x, end.y);
-        // --- End Single Drawing Block ---
-
-        if (!isPerformanceRun) {
-            logs.push(`&#x2500; 5px Black line from (${start.x}, ${start.y}) to (${end.x}, ${end.y})`);
-        }
-    }
-
-    if (!isPerformanceRun && logs.length === 0) {
-        // Ensure logs array is not empty if it wasn't a perf run but no lines were drawn (e.g. initialCount = 0)
-        logs.push('No 5px black lines drawn.');
-    }
-    
-    return logs && logs.length > 0 ? { logs } : null;
-}
-
-// Register the test
-registerHighLevelTest(
-    'lines--multi_20--no-fill--5px_black_opaque_stroke__random_pos--random_orient--test.js',
-    draw_lines__multi_20__no_fill__5px_black_opaque_stroke__random_pos__random_orient,
-    'lines',
-    {
-        //compare: { swTol: 0, refTol: 0, diffTol: 0 }, // Default visual comparison
-        drawFunctionArgs: [20] // initialCount for the draw function
-    },
-    {
-        title: 'Lines: Multi-20 No-Fill 5px-Black-Opaque-Stroke Random-Pos Random-Orient',
-        displayName: 'Perf: Lines Multi 5px Black Random',
-        description: 'Performance test for rendering multiple (default 20, or N from harness) 5px black lines at random positions.'
-    }
-); /**
  * @fileoverview Test definition for multiple axis-aligned rectangles with random parameters,
  * matching the new descriptive naming convention.
  */
 
-/**
- * Adjusts width and height to ensure crisp rendering based on stroke width and center position.
- * Adapted from src/scene-creation/scene-creation-utils.js
- * @param {number} width - Original width.
- * @param {number} height - Original height.
- * @param {number} strokeWidth - Width of the stroke.
- * @param {{x: number, y: number}} center - Center coordinates {x, y}.
- * @returns {{width: number, height: number}} Adjusted width and height.
- */
-function _adjustDimensionsForCrispStrokeRendering(width, height, strokeWidth, center) {
-    let adjustedWidth = Math.floor(width);
-    let adjustedHeight = Math.floor(height);
+// Helper functions adjustDimensionsForCrispStrokeRendering, calculateCrispFillAndStrokeRectParams 
+// are available from test-helper-functions.js
 
-    // FIXING THE WIDTH
-    if (Number.isInteger(center.x)) { // Center x is on grid
-        if (strokeWidth % 2 !== 0) { // Odd stroke
-            if (adjustedWidth % 2 === 0) adjustedWidth++; // Width must be odd
-        } else { // Even stroke
-            if (adjustedWidth % 2 !== 0) adjustedWidth++; // Width must be even
-        }
-    } else if (center.x % 1 === 0.5) { // Center x is on pixel center
-        if (strokeWidth % 2 !== 0) { // Odd stroke
-            if (adjustedWidth % 2 !== 0) adjustedWidth++; // Width must be even
-        } else { // Even stroke
-            if (adjustedWidth % 2 === 0) adjustedWidth++; // Width must be odd
-        }
-    }
-
-    // FIXING THE HEIGHT
-    if (Number.isInteger(center.y)) { // Center y is on grid
-        if (strokeWidth % 2 !== 0) { // Odd stroke
-            if (adjustedHeight % 2 === 0) adjustedHeight++; // Height must be odd
-        } else { // Even stroke
-            if (adjustedHeight % 2 !== 0) adjustedHeight++; // Height must be even
-        }
-    } else if (center.y % 1 === 0.5) { // Center y is on pixel center
-        if (strokeWidth % 2 !== 0) { // Odd stroke
-            if (adjustedHeight % 2 !== 0) adjustedHeight++; // Height must be even
-        } else { // Even stroke
-            if (adjustedHeight % 2 === 0) adjustedHeight++; // Height must be odd
-        }
-    }
-    return { width: adjustedWidth, height: adjustedHeight };
-}
-
-/**
- * Calculates parameters for a rectangle aiming for crisp fill and stroke.
- * Adapted from placeRoundedRectWithFillAndStrokeBothCrisp in src/scene-creation/scene-creation-rounded-rects.js
- * (Note: The "rounded" part of the original name is a misnomer for this specific usage,
- * as the original addAxisAlignedRectangles test pushes a non-rounded 'rect' type).
- * @param {number} canvasWidth The width of the canvas.
- * @param {number} canvasHeight The height of the canvas.
- * @param {number} maxStrokeWidth Maximum stroke width to generate.
- * @returns {{center: {x: number, y: number}, adjustedDimensions: {width: number, height: number}, strokeWidth: number}}
- */
-function _placeRectWithFillAndStrokeBothCrisp(canvasWidth, canvasHeight, maxStrokeWidth = 10) {
-    const maxAllowedContentWidth = canvasWidth * 0.6;
-    const maxAllowedContentHeight = canvasHeight * 0.6;
-
-    // Order of SeededRandom calls must be preserved:
-    // 1. strokeWidth base
-    let strokeWidth = Math.round(SeededRandom.getRandom() * maxStrokeWidth + 1);
-    // Ensure strokeWidth is even for this placement strategy
-    strokeWidth = strokeWidth % 2 === 0 ? strokeWidth : strokeWidth + 1;
-
-    let initialCenter = { x: canvasWidth / 2, y: canvasHeight / 2 };
-
-    // 2. Center offset
-    if (SeededRandom.getRandom() < 0.5) {
-        initialCenter = { x: initialCenter.x + 0.5, y: initialCenter.y + 0.5 };
-    }
-
-    // 3. rectWidth base
-    let rectWidth = Math.round(50 + SeededRandom.getRandom() * maxAllowedContentWidth);
-    // 4. rectHeight base
-    let rectHeight = Math.round(50 + SeededRandom.getRandom() * maxAllowedContentHeight);
-
-    const adjustedDimensions = _adjustDimensionsForCrispStrokeRendering(rectWidth, rectHeight, strokeWidth, initialCenter);
-    return { center: initialCenter, adjustedDimensions, strokeWidth };
-}
-
-/**
- * Converts a color object to an rgba string.
- * @param {{r: number, g: number, b: number, a: number}} colorObj Color object.
- * @returns {string} CSS rgba string.
- */
-function _colorObjectToString(colorObj) {
-    if (!colorObj) return 'rgba(0,0,0,0)';
-    const alpha = (typeof colorObj.a === 'number') ? (colorObj.a / 255).toFixed(3) : 1;
-    return `rgba(${colorObj.r},${colorObj.g},${colorObj.b},${alpha})`;
-}
+// _colorObjectToString is now available globally from test-helper-functions.js
 
 /**
  * Draws multiple axis-aligned rectangles with random parameters.
@@ -11982,7 +12806,7 @@ function _colorObjectToString(colorObj) {
  * @returns {?{logs: string[], checkData: object}} Logs and data for checks for single-instance
  *                  mode, or null for performance mode.
  */
-function draw_rectangles_axalign_multi_varsize_randfill_randstroke_randpos_no_rotation(ctx, currentIterationNumber, instances = null) {
+function drawTest(ctx, currentIterationNumber, instances = null) {
     const isPerformanceRun = instances !== null && instances > 0;
     const numToDraw = isPerformanceRun ? instances : 10; // Original test draws 10
 
@@ -11997,8 +12821,18 @@ function draw_rectangles_axalign_multi_varsize_randfill_randstroke_randpos_no_ro
 
     for (let i = 0; i < numToDraw; i++) {
         // Preserve SeededRandom sequence from original test functions:
-        // Calls 1-4 happen inside _placeRectWithFillAndStrokeBothCrisp
-        const placement = _placeRectWithFillAndStrokeBothCrisp(canvasWidth, canvasHeight, 10); // maxStrokeWidth=10 as in original
+        // Calls 1-4 happen inside calculateCrispFillAndStrokeRectParams
+        const placement = calculateCrispFillAndStrokeRectParams({
+            canvasWidth,
+            canvasHeight,
+            minWidth: 50,
+            maxWidth: canvasWidth * 0.6,
+            minHeight: 50,
+            maxHeight: canvasHeight * 0.6,
+            maxStrokeWidth: 10,
+            ensureEvenStroke: true,
+            randomPosition: false  // This test applies positioning separately
+        });
         let rectCenter = placement.center;
         const rectWidth = placement.adjustedDimensions.width;
         const rectHeight = placement.adjustedDimensions.height;
@@ -12013,12 +12847,12 @@ function draw_rectangles_axalign_multi_varsize_randfill_randstroke_randpos_no_ro
         let finalDrawCenterY = rectCenter.y + yOffset;
 
         // Call 7: strokeColor (getRandomColor uses SeededRandom internally)
-        const strokeColorObj = getRandomColor(200, 255); // Opaque stroke
+        const strokeColorObj = getRandomColor(200, 255); // Opaque or semi-transparent stroke
         // Call 8: fillColor (getRandomColor uses SeededRandom internally)
-        const fillColorObj = getRandomColor(100, 200);   // Semi-transparent fill possible
+        const fillColorObj = getRandomColor(100, 200);   // Semi-transparent fill
 
-        const strokeColorStr = _colorObjectToString(strokeColorObj);
-        const fillColorStr = _colorObjectToString(fillColorObj);
+        const strokeColorStr = strokeColorObj ? colorToString(strokeColorObj) : 'rgba(0,0,0,0)';
+        const fillColorStr = fillColorObj ? colorToString(fillColorObj) : 'rgba(0,0,0,0)';
 
         let geomX = finalDrawCenterX - rectWidth / 2;
         let geomY = finalDrawCenterY - rectHeight / 2;
@@ -12085,8 +12919,8 @@ function draw_rectangles_axalign_multi_varsize_randfill_randstroke_randpos_no_ro
 
 // Register the test
 registerHighLevelTest(
-    'rectangles--axalign--multi--varsize--randfill--randstroke--randpos--no-rotation--test.js',
-    draw_rectangles_axalign_multi_varsize_randfill_randstroke_randpos_no_rotation,
+    'rect-m10-szMix-fSemi-sMix-swMix-lytSpread-cenMixPG-edgeCrisp-ornAxial-test',
+    drawTest,
     'rectangles',
     {
         extremes: true,
@@ -12097,141 +12931,51 @@ registerHighLevelTest(
         description: 'Tests rendering of multiple axis-aligned rectangles with random sizes, fills (variable alpha), strokes (opaque, even width), and positions. No rotation.',
         displayName: 'Perf: Rects AxAlign Multi Random'
     }
-); /**
- * @fileoverview
- * Test definition for rendering a single, medium-sized, axis-aligned rectangle.
- * This version aims to replicate the logic from the original low-level test's
- * addAxisAlignedRectangles, including its direct use of getRandomColor.
- *
- * Guiding Principles for this draw function:
- * - Reproducibility: Uses SeededRandom for all random elements of the archetype.
- * - Properties: Derived from adapted logic of placeRoundedRectWithFillAndStrokeBothCrisp and addAxisAlignedRectangles.
- * - Checks: Returns extremes data for `withExtremesCheck`.
- * - Performance: Draws multiple instances at random positions in performance mode.
- */
+); 
+})();
 
-// Helper to convert color object from getRandomColor to CSS rgba string
-function _testHelper_colorObjectToRgbaCss(colorObj) {
-    if (!colorObj || typeof colorObj.r === 'undefined') return 'rgba(0,0,0,0)'; // Basic check
-    return `rgba(${colorObj.r},${colorObj.g},${colorObj.b},${(colorObj.a / 255).toFixed(3)})`;
-}
+(function() {
+/**
+ * TEST SUMMARY:
+ * =================
+ *
+ * Description: Tests rendering of multiple rotated rectangles with random positions, sizes, angles, strokes, and fills.
+ *
+ *
+ * ---
+ *
+ * | Facet                  | Value          | Reason
+ * |------------------------|----------------|-----------------------------------------------------------------------------------------------------
+ * | Shape category         | rectangles     | The test draws rectangles using `ctx.fillRect()` and `ctx.strokeRect()`.
+ * | Count                  | multi-5        | The test draws 5 instances in visual regression mode, as defined by `numToDraw`.
+ * | SizeCategory           | mixed          | The width and height are randomized in the range `[30, 130)`, which spans the S, M, and L size categories.
+ * | FillStyle              | semitransparent| Fill alpha is randomized in the range `[100, 200]` (out of 255), which is always semi-transparent.
+ * | StrokeStyle            | mixed          | Stroke alpha is randomized in the range `[200, 255]`, which includes both semi-transparent and fully opaque values.
+ * | StrokeThickness        | 1px-10px       | The stroke width is randomized in the range `[1, 11)`, resulting in integer values from 1 to 10.
+ * | Layout                 | spread         | The `getRandomPoint()` function is called for each of the 5 instances, spreading them across the canvas.
+ * | CenteredAt             | random         | The geometric center of each rectangle is placed at a fully random point on the canvas.
+ * | EdgeAlignment          | not-crisp      | The rectangles are rotated by a fully random angle, which prevents crisp edge alignment.
+ * | Orientation            | random         | `ctx.rotate()` is used with a fully random angle for each instance.
+ * | ArcAngleExtent         | N/A            | This facet is not applicable to rectangle shapes.
+ * | RoundRectRadius        | N/A            | This facet is not applicable to non-rounded rectangle shapes.
+ * | ContextTranslation     | random         | `ctx.translate()` is called with a random (x, y) point for each rectangle's center.
+ * | ContextRotation        | random         | `ctx.rotate()` is called with a random angle for each instance.
+ * | ContextScaling         | none           | The `ctx.scale()` function is not used in this test.
+ * | Clipped on shape       | none           | No clipping is applied in this test.
+ * | Clipped on shape count | n/a            | No clipping is applied in this test.
+ * | Clipped on shape arrangement | n/a      | No clipping is applied in this test.
+ * | Clipped on shape size  | n/a            | No clipping is applied in this test.
+ * | Clipped on shape edge alignment | n/a   | Not applicable as there is no clipping.
+ *
+ * ---
+ *
+ * UNCAPTURED ASPECTS IN FILENAME / FACETS ABOVE:
+ * ----------------------------------------------
+ * The test is designed to draw 5 instances in visual mode. In performance mode, it draws a variable number of instances and spreads them using `Math.random()` to avoid overdraw, which differs from the `SeededRandom`-based positioning in visual mode. The randomization ranges for colors, dimensions, and rotation are specific to this test's implementation.
+ *
+ */
 
 /**
- * Draws a single axis-aligned rectangle based on original low-level test logic, or multiple for performance.
- *
- * @param {CanvasRenderingContext2D | CrispSwContext} ctx - The rendering context.
- * @param {number} currentIterationNumber - The current test iteration.
- * @param {?number} instances - Optional. If > 0, draws multiple instances for performance.
- * @returns {?{ logs: string[], checkData: object }} 
- *          Log entries and data for checks, or null if in multi-instance mode.
- */
-function draw_rectangles__M_size__semitransparent_fill__random_semitransparent_stroke__random_pos__no_rotation(ctx, currentIterationNumber, instances = null) {
-    const canvasWidth = ctx.canvas.width;
-    const canvasHeight = ctx.canvas.height;
-
-    const isPerformanceRun = instances !== null && instances > 0;
-    const numToDraw = isPerformanceRun ? instances : 1;
-
-    let logs = isPerformanceRun ? null : [];
-    let checkData = null; 
-
-
-    for (let i = 0; i < numToDraw; i++) {
-        // --- Generate ALL properties for EACH rectangle instance using SeededRandom ---
-        const maxStrokeWidthRand = 10; // Max stroke width for randomization, as per original logic source
-        let currentStrokeWidth = Math.round(SeededRandom.getRandom() * maxStrokeWidthRand + 1);
-        currentStrokeWidth = currentStrokeWidth % 2 === 0 ? currentStrokeWidth : currentStrokeWidth + 1;
-
-        let currentCenter = { x: canvasWidth / 2, y: canvasHeight / 2 };
-        if (SeededRandom.getRandom() < 0.5) { // Randomize if center is on grid or pixel center
-            currentCenter = { x: currentCenter.x + 0.5, y: currentCenter.y + 0.5 };
-        }
-
-        // M-size: 20-120px, as per performance test guidelines
-        const minDimM = 20;
-        const maxDimM = 120;
-        let currentInitialRectWidth = Math.floor(minDimM + SeededRandom.getRandom() * (maxDimM - minDimM + 1));
-        let currentInitialRectHeight = Math.floor(minDimM + SeededRandom.getRandom() * (maxDimM - minDimM + 1));
-
-        const { 
-            width: currentDrawWidth, 
-            height: currentDrawHeight 
-        } = adjustDimensionsForCrispStrokeRendering(currentInitialRectWidth, currentInitialRectHeight, currentStrokeWidth, currentCenter);
-
-        // Apply random offsets to this instance's calculated center
-        const xOffset = Math.floor(SeededRandom.getRandom() * 100) - 50;
-        const yOffset = Math.floor(SeededRandom.getRandom() * 100) - 50;
-        currentCenter.x += xOffset;
-        currentCenter.y += yOffset;
-
-        const fillObj = getRandomColor(100, 200);
-        const strokeObj = getRandomColor(200, 255);
-        const currentFillColor = _testHelper_colorObjectToRgbaCss(fillObj);
-        const currentStrokeColor = _testHelper_colorObjectToRgbaCss(strokeObj);
-        // --- End property generation for this instance ---
-
-        let finalDrawX = currentCenter.x - currentDrawWidth / 2;
-        let finalDrawY = currentCenter.y - currentDrawHeight / 2;
-        let centerForLog = { ...currentCenter };
-
-        if (isPerformanceRun) {
-            // Apply an additional large random offset for spread, using Math.random()
-            // This offset is applied to the already SeededRandom-derived position of the rect's center
-            finalDrawX = Math.floor(Math.random() * (canvasWidth - currentDrawWidth));
-            finalDrawY = Math.floor(Math.random() * (canvasHeight - currentDrawHeight));
-            // Update centerForLog if it were to be used in perf logs (not typical)
-            centerForLog.x = finalDrawX + currentDrawWidth / 2;
-            centerForLog.y = finalDrawY + currentDrawHeight / 2;
-        }
-
-        ctx.fillStyle = currentFillColor;
-        ctx.fillRect(finalDrawX, finalDrawY, currentDrawWidth, currentDrawHeight);
-
-        ctx.strokeStyle = currentStrokeColor;
-        ctx.lineWidth = currentStrokeWidth;
-        ctx.strokeRect(finalDrawX, finalDrawY, currentDrawWidth, currentDrawHeight);
-
-        if (!isPerformanceRun) { // This will only be true for the first (and only) iteration when not in perf mode
-            logs.push(`Drew Axis-Aligned Rectangle at (${finalDrawX.toFixed(1)},${finalDrawY.toFixed(1)}), size ${currentDrawWidth}x${currentDrawHeight}, stroke: ${currentStrokeWidth}px, center: (${centerForLog.x.toFixed(1)}, ${centerForLog.y.toFixed(1)}), fill: ${currentFillColor}, stroke: ${currentStrokeColor}`);
-            
-            const sw = currentStrokeWidth; 
-            checkData = {
-                leftX: finalDrawX - sw / 2,
-                rightX: finalDrawX + currentDrawWidth + sw / 2 - 1, 
-                topY: finalDrawY - sw / 2,
-                bottomY: finalDrawY + currentDrawHeight + sw / 2 - 1  
-            };
-            // For non-performance mode, we only want one rectangle as per original test intent
-            break; 
-        }
-    }
-
-    if (isPerformanceRun && numToDraw > 0 && logs && logs.length > 0) {
-      // Clear logs if it was a performance run with actual drawing, as per-instance logs are too verbose.
-      // This condition is a bit defensive; logs should ideally be null from the start for perf runs.
-      logs = null;
-    }
-
-    // If it wasn't a performance run, logs and checkData for the single drawn instance are returned.
-    // If it was a performance run, logs would be null.
-    return (logs || checkData) ? { logs, checkData } : null; 
-}
-
-// Register the test
-registerHighLevelTest(
-    'rectangles--M-size--semitransparent_fill--random_semitransparent_stroke--random_pos--no-rotation--test.js',
-    draw_rectangles__M_size__semitransparent_fill__random_semitransparent_stroke__random_pos__no_rotation,
-    'rectangles',
-    {
-        extremes: true,
-        compare: { swTol: 3, refTol: 1, diffTol: 0 }
-    },
-    {
-        title: 'Rectangles: M-Size Semi-Transparent Fill, Random Semi-Transparent Stroke, Random Position, No Rotation',
-        description: 'Tests a single axis-aligned rectangle with random dimensions, stroke width, and semi-transparent colors, mimicking original low-level logic including color generation.',
-        displayName: 'Perf: Rect M Axis-Aligned (Original Logic)'
-    }
-); /**
  * @fileoverview Test definition for multiple rotated rectangles with random parameters.
  */
 
@@ -12242,7 +12986,7 @@ registerHighLevelTest(
  * Converts a color object to an rgba string.
  * Assumes _colorObjectToString is available from a shared utility or defined in a previous script.
  * If not, it should be defined here:
- * function _colorObjectToString(colorObj) {
+ * function colorObj ? colorToString(colorObj) : 'rgba(0,0,0,0)' {
  *     if (!colorObj) return 'rgba(0,0,0,0)';
  *     const alpha = (typeof colorObj.a === 'number') ? (colorObj.a / 255).toFixed(3) : 1;
  *     return `rgba(${colorObj.r},${colorObj.g},${colorObj.b},${alpha})`;
@@ -12260,7 +13004,7 @@ registerHighLevelTest(
  * @returns {?{logs: string[]}} Logs for single-instance mode, or null for performance mode.
  *                   (No checkData as original test had no withExtremesCheck).
  */
-function draw_rectangles_rotated_multi_varsize_randparams_randpos_randrot(ctx, currentIterationNumber, instances = null) {
+function drawTest(ctx, currentIterationNumber, instances = null) {
     const isPerformanceRun = instances !== null && instances > 0;
     const numToDraw = isPerformanceRun ? instances : 5; // Original test draws 5
 
@@ -12286,12 +13030,12 @@ function draw_rectangles_rotated_multi_varsize_randparams_randpos_randrot(ctx, c
         const strokeWidth = SeededRandom.getRandom() * 10 + 1;
         
         // 6. strokeColor (getRandomColor uses SeededRandom)
-        const strokeColorObj = getRandomColor(200, 255); // Opaque stroke
+        const strokeColorObj = getRandomColor(200, 255); // Opaque or semi-transparent stroke
         // 7. fillColor (getRandomColor uses SeededRandom)
-        const fillColorObj = getRandomColor(100, 200);   // Semi-transparent fill possible
+        const fillColorObj = getRandomColor(100, 200);   // Semi-transparent fill
 
-        const strokeColorStr = _colorObjectToString(strokeColorObj);
-        const fillColorStr = _colorObjectToString(fillColorObj);
+        const strokeColorStr = strokeColorObj ? colorToString(strokeColorObj) : 'rgba(0,0,0,0)';
+        const fillColorStr = fillColorObj ? colorToString(fillColorObj) : 'rgba(0,0,0,0)';
 
         let drawAtX = center.x;
         let drawAtY = center.y;
@@ -12335,8 +13079,8 @@ function draw_rectangles_rotated_multi_varsize_randparams_randpos_randrot(ctx, c
 
 // Register the test
 registerHighLevelTest(
-    'rectangles--rotated--multi--varsize--randparams--randpos--randrot--test.js',
-    draw_rectangles_rotated_multi_varsize_randparams_randpos_randrot,
+    'rect-m5-szMix-fSemi-sMix-sw1-10px-lytSpread-cenRand-edgeNotCrisp-ornRand-ctxTransRand-ctxRotRand-test',
+    drawTest,
     'rectangles',
     {
         //compare: { swTol: 0, refTol: 0, diffTol: 0 } // Default visual comparison
@@ -12346,7 +13090,51 @@ registerHighLevelTest(
         description: 'Tests rendering of multiple rotated rectangles with random positions, sizes, angles, strokes, and fills.',
         displayName: 'Perf: Rects Rotated Multi Random'
     }
-); /**
+); 
+})();
+
+(function() {
+/**
+ * TEST SUMMARY:
+ * =================
+ *
+ * Description: Tests rendering of a single, axis-aligned rectangle with a 1px opaque red stroke and no fill. The rectangle has randomized dimensions but is explicitly centered on a grid-line intersection and adjusted to ensure its edges are rendered crisply.
+ *
+ *
+ * ---
+ *
+ * | Facet                  | Value          | Reason
+ * |------------------------|----------------|-----------------------------------------------------------------------------------------------------
+ * | Shape category         | rectangles     | The test draws a rectangle using `ctx.strokeRect()`.
+ * | Count                  | single         | The test is designed to draw one rectangle instance in its primary visual regression mode.
+ * | SizeCategory           | mixed          | The rectangle's width and height are randomized in the range `[20, 149]`, spanning S, M, and L categories.
+ * | FillStyle              | none           | No fill is applied; `fillStyle` is set to be fully transparent and `fillRect()` is not called.
+ * | StrokeStyle            | opaque         | `strokeStyle` is set to an opaque color (`rgb(255,0,0)`).
+ * | StrokeThickness        | 1px            | `lineWidth` is explicitly set to `1`.
+ * | Layout                 | centered       | The rectangle is positioned relative to the center of the canvas.
+ * | CenteredAt             | grid           | The center coordinates are calculated to be even integers, aligning with grid line intersections.
+ * | EdgeAlignment          | crisp          | The test uses the `adjustDimensionsForCrispStrokeRendering()` helper function to ensure sharp edges.
+ * | Orientation            | square         | The rectangle is axis-aligned with no rotation applied.
+ * | ArcAngleExtent         | N/A            | Not applicable for a rectangle shape.
+ * | RoundRectRadius        | N/A            | Not applicable for a non-rounded rectangle.
+ * | ContextTranslation     | none           | `ctx.translate()` is not used.
+ * | ContextRotation        | none           | `ctx.rotate()` is not used.
+ * | ContextScaling         | none           | `ctx.scale()` is not used.
+ * | Clipped on shape       | none           | No clipping path is defined or applied in the test.
+ * | Clipped on shape count | n/a            | Not applicable as there is no clipping.
+ * | Clipped on shape arrangement | n/a      | Not applicable as there is no clipping.
+ * | Clipped on shape size  | n/a            | Not applicable as there is no clipping.
+ * | Clipped on shape edge alignment | n/a   | Not applicable as there is no clipping.
+ *
+ * ---
+ *
+ * UNCAPTURED ASPECTS IN FILENAME / FACETS ABOVE:
+ * ----------------------------------------------
+ * - The test requires the canvas dimensions to be even numbers for its centering logic to work correctly.
+ * - The stroke color is fixed to an explicit, non-random opaque red.
+ *
+ */
+/**
  * @fileoverview
  * Test definition for rendering a single, small-to-medium sized, 1px thick, red, opaque stroked rectangle
  * with no fill, centered at a grid crossing, and with no rotation.
@@ -12367,7 +13155,7 @@ registerHighLevelTest(
  * @returns {?{ logs: string[], checkData: {leftX: number, rightX: number, topY: number, bottomY: number} }} 
  *          Log entries and expected pixel extremes, or null if in multi-instance mode.
  */
-function draw_rectangles__S_size__no_fill__1px_red_opaque_stroke__centered_at_grid__no_rotation(ctx, currentIterationNumber, instances = null) {
+function drawTest(ctx, currentIterationNumber, instances = null) {
     const canvasWidth = ctx.canvas.width;
     const canvasHeight = ctx.canvas.height;
 
@@ -12457,8 +13245,8 @@ function draw_rectangles__S_size__no_fill__1px_red_opaque_stroke__centered_at_gr
 
 // Register the test
 registerHighLevelTest(
-    'rectangles--S-size--no-fill--1px_red_opaque_stroke--centered_at_grid--no-rotation--test.js',
-    draw_rectangles__S_size__no_fill__1px_red_opaque_stroke__centered_at_grid__no_rotation,
+    'rect-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-cenGrid-edgeCrisp-ornAxial-test',
+    drawTest,
     'rectangles',
     {
         extremes: true,
@@ -12469,7 +13257,51 @@ registerHighLevelTest(
         description: 'Tests a single 1px red stroked rectangle, centered on grid lines, with even dimensions.',
         displayName: 'Perf: Rect S 1px Red Centered Grid'
     }
-); /**
+); 
+})();
+
+(function() {
+/**
+ * TEST SUMMARY:
+ * =================
+ *
+ * Description: Tests rendering of a single 1px red stroked rectangle with no fill. The rectangle is centered at a pixel center (X.5, Y.5 coordinates) and its dimensions are adjusted to ensure crisp rendering.
+ *
+ *
+ * ---
+ *
+ * | Facet                      | Value          | Reason
+ * |----------------------------|----------------|-----------------------------------------------------------------------------------------------------
+ * | Shape category             | rectangles     | The test calls `ctx.strokeRect`, which draws rectangles.
+ * | Count                      | single         | The test draws a single rectangle in its visual test mode (`instances` is null).
+ * | SizeCategory               | mixed          | Rectangle dimensions are randomized in the range `[20, 149]`, which spans S, M, and L categories.
+ * | FillStyle                  | none           | `ctx.fillStyle` is set to be fully transparent and `fillRect` is not called.
+ * | StrokeStyle                | opaque         | `ctx.strokeStyle` is set to `rgb(255,0,0)`, which is fully opaque red.
+ * | StrokeThickness            | 1px            | `ctx.lineWidth` is hardcoded to `1`.
+ * | Layout                     | centered       | The rectangle's archetype is positioned relative to the canvas center.
+ * | CenteredAt                 | pixel          | The center coordinates are calculated as `floor(dimension/2) + 0.5`, aligning them to pixel centers.
+ * | EdgeAlignment              | crisp          | The test uses a pixel-centered position and calls `adjustDimensionsForCrispStrokeRendering`.
+ * | Orientation                | square         | The test draws an axis-aligned rectangle with no rotation.
+ * | ArcAngleExtent             | N/A            | This facet only applies to `arc` shapes.
+ * | RoundRectRadius            | N/A            | This facet only applies to `rounded-rect` shapes.
+ * | ContextTranslation         | none           | The test does not call `ctx.translate()`.
+ * | ContextRotation            | none           | The test does not call `ctx.rotate()`.
+ * | ContextScaling             | none           | The test does not call `ctx.scale()`.
+ * | Clipped on shape           | none           | The test does not call `ctx.clip()`.
+ * | Clipped on shape count     | n/a            | No clipping is applied.
+ * | Clipped on shape arrangement | n/a          | No clipping is applied.
+ * | Clipped on shape size      | n/a            | No clipping is applied.
+ * | Clipped on shape edge alignment | n/a       | Not applicable as there is no clipping.
+ *
+ * ---
+ *
+ * UNCAPTURED ASPECTS IN FILENAME / FACETS ABOVE:
+ * ----------------------------------------------
+ * - The original filename suggests 'S-size', but the implementation randomizes dimensions across S, M, and L categories, so SizeCategory is correctly 'mixed'.
+ * - Stroke color is fixed to opaque red.
+ */
+
+/**
  * @fileoverview
  * Test definition for rendering a single, small-to-medium sized, 1px thick, red, opaque stroked rectangle
  * with no fill, centered at a pixel center (X.5, Y.5 coordinates), and with no rotation.
@@ -12490,7 +13322,7 @@ registerHighLevelTest(
  * @returns {?{ logs: string[], checkData: {leftX: number, rightX: number, topY: number, bottomY: number} }} 
  *          Log entries and expected pixel extremes, or null if in multi-instance mode.
  */
-function draw_rectangles__S_size__no_fill__1px_red_opaque_stroke__centered_at_pixel__no_rotation(ctx, currentIterationNumber, instances = null) {
+function drawTest(ctx, currentIterationNumber, instances = null) {
     const canvasWidth = ctx.canvas.width;
     const canvasHeight = ctx.canvas.height;
 
@@ -12568,8 +13400,8 @@ function draw_rectangles__S_size__no_fill__1px_red_opaque_stroke__centered_at_pi
 
 // Register the test
 registerHighLevelTest(
-    'rectangles--S-size--no-fill--1px_red_opaque_stroke--centered_at_pixel--no-rotation--test.js',
-    draw_rectangles__S_size__no_fill__1px_red_opaque_stroke__centered_at_pixel__no_rotation,
+    'rect-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-cenPx-edgeCrisp-ornAxial-test',
+    drawTest,
     'rectangles',
     {
         extremes: true,
@@ -12580,7 +13412,802 @@ registerHighLevelTest(
         description: 'Tests a single 1px red stroked rectangle, centered at pixel centers (X.5,Y.5), with adjusted even dimensions.',
         displayName: 'Perf: Rect S 1px Red Centered Pixel'
     }
-); /**
+); 
+})();
+
+(function() {
+/**
+ * TEST SUMMARY:
+ * =================
+ *
+ * Description: Tests a single axis-aligned rectangle with random dimensions, stroke width, and semi-transparent colors, mimicking original low-level logic including color generation.
+ *
+ *
+ * ---
+ *
+ * | Facet                  | Value              | Reason
+ * |------------------------|--------------------|-----------------------------------------------------------------------------------------------------
+ * | Shape category         | rectangles         | The code uses `fillRect` and `strokeRect` to draw rectangles.
+ * | Count                  | single             | In visual test mode, the `for` loop is explicitly broken after one iteration, drawing a single shape.
+ * | SizeCategory           | mixed              | The rectangle's dimensions are randomized in a `[20, 120]` pixel range, which spans S, M, and L categories.
+ * | FillStyle              | semitransparent    | The fill color alpha is randomized in `[100, 200]` (out of 255), which is always semi-transparent.
+ * | StrokeStyle            | mixed              | The stroke color alpha is randomized in `[200, 255]`, so it can be either semi-transparent or fully opaque.
+ * | StrokeThickness        | mixed              | The stroke width is randomized to be one of the even numbers `{2, 4, 6, 8, 10, 12}`.
+ * | Layout                 | random             | The single shape's final position is determined by applying a random offset from the canvas center.
+ * | CenteredAt             | mixed-pixel-grid   | The code explicitly randomizes the geometric center between integer (`grid`) and half-pixel (`pixel`) coordinates.
+ * | EdgeAlignment          | crisp              | The code makes an explicit call to `adjustDimensionsForCrispStrokeRendering()` to ensure sharp edges.
+ * | Orientation            | square             | The test draws an axis-aligned rectangle with no rotation.
+ * | ArcAngleExtent         | N/A                | Not applicable to rectangles.
+ * | RoundRectRadius        | N/A                | Not applicable to non-rounded rectangles.
+ * | ContextTranslation     | none               | No call to `ctx.translate()`.
+ * | ContextRotation        | none               | No call to `ctx.rotate()`.
+ * | ContextScaling         | none               | No call to `ctx.scale()`.
+ * | Clipped on shape       | none               | No clipping is performed.
+ * | Clipped on shape count | n/a                | No clipping is performed.
+ * | Clipped on shape arrangement | n/a          | No clipping is performed.
+ * | Clipped on shape size  | n/a                | No clipping is performed.
+ * | Clipped on shape edge alignment | n/a       | Not applicable as there is no clipping.
+ *
+ * ---
+ *
+ * UNCAPTURED ASPECTS IN FILENAME / FACETS ABOVE:
+ * ----------------------------------------------
+ * Fill is semi-transparent (alpha 100-200). Stroke is mixed opaque/semi (alpha 200-255). EdgeAlignment is crisp via helper function.
+ * CenteredAt is mixed-pixel-grid. strokeWidth is even numbers in [2,12]. Rect dims [20,120] span S,M,L categories.
+ * In performance mode, positions are fully random across the canvas, overriding the `random` (offset-based) layout.
+ */
+/**
+ * @fileoverview
+ * Test definition for rendering a single, medium-sized, axis-aligned rectangle.
+ * This version aims to replicate the logic from the original low-level test's
+ * addAxisAlignedRectangles, including its direct use of getRandomColor.
+ *
+ * Guiding Principles for this draw function:
+ * - Reproducibility: Uses SeededRandom for all random elements of the archetype.
+ * - Properties: Derived from adapted logic of placeRoundedRectWithFillAndStrokeBothCrisp and addAxisAlignedRectangles.
+ * - Checks: Returns extremes data for `withExtremesCheck`.
+ * - Performance: Draws multiple instances at random positions in performance mode.
+ */
+
+// Helper function colorToString is already available from color-utils.js
+
+/**
+ * Draws a single axis-aligned rectangle based on original low-level test logic, or multiple for performance.
+ *
+ * @param {CanvasRenderingContext2D | CrispSwContext} ctx - The rendering context.
+ * @param {number} currentIterationNumber - The current test iteration.
+ * @param {?number} instances - Optional. If > 0, draws multiple instances for performance.
+ * @returns {?{ logs: string[], checkData: object }} 
+ *          Log entries and data for checks, or null if in multi-instance mode.
+ */
+function drawTest(ctx, currentIterationNumber, instances = null) {
+    const canvasWidth = ctx.canvas.width;
+    const canvasHeight = ctx.canvas.height;
+
+    const isPerformanceRun = instances !== null && instances > 0;
+    const numToDraw = isPerformanceRun ? instances : 1;
+
+    let logs = isPerformanceRun ? null : [];
+    let checkData = null; 
+
+
+    for (let i = 0; i < numToDraw; i++) {
+        // --- Generate ALL properties for EACH rectangle instance using SeededRandom ---
+        const maxStrokeWidthRand = 10; // Max stroke width for randomization, as per original logic source
+        let currentStrokeWidth = Math.round(SeededRandom.getRandom() * maxStrokeWidthRand + 1);
+        currentStrokeWidth = currentStrokeWidth % 2 === 0 ? currentStrokeWidth : currentStrokeWidth + 1;
+
+        let currentCenter = { x: canvasWidth / 2, y: canvasHeight / 2 };
+        if (SeededRandom.getRandom() < 0.5) { // Randomize if center is on grid or pixel center
+            currentCenter = { x: currentCenter.x + 0.5, y: currentCenter.y + 0.5 };
+        }
+
+        // M-size: 20-120px, as per performance test guidelines
+        const minDimM = 20;
+        const maxDimM = 120;
+        let currentInitialRectWidth = Math.floor(minDimM + SeededRandom.getRandom() * (maxDimM - minDimM + 1));
+        let currentInitialRectHeight = Math.floor(minDimM + SeededRandom.getRandom() * (maxDimM - minDimM + 1));
+
+        const { 
+            width: currentDrawWidth, 
+            height: currentDrawHeight 
+        } = adjustDimensionsForCrispStrokeRendering(currentInitialRectWidth, currentInitialRectHeight, currentStrokeWidth, currentCenter);
+
+        // Apply random offsets to this instance's calculated center
+        const xOffset = Math.floor(SeededRandom.getRandom() * 100) - 50;
+        const yOffset = Math.floor(SeededRandom.getRandom() * 100) - 50;
+        currentCenter.x += xOffset;
+        currentCenter.y += yOffset;
+
+        const fillObj = getRandomColor(100, 200);
+        const strokeObj = getRandomColor(200, 255);
+        const currentFillColor = colorToString(fillObj);
+        const currentStrokeColor = colorToString(strokeObj);
+        // --- End property generation for this instance ---
+
+        let finalDrawX = currentCenter.x - currentDrawWidth / 2;
+        let finalDrawY = currentCenter.y - currentDrawHeight / 2;
+        let centerForLog = { ...currentCenter };
+
+        if (isPerformanceRun) {
+            // Apply an additional large random offset for spread, using Math.random()
+            // This offset is applied to the already SeededRandom-derived position of the rect's center
+            finalDrawX = Math.floor(Math.random() * (canvasWidth - currentDrawWidth));
+            finalDrawY = Math.floor(Math.random() * (canvasHeight - currentDrawHeight));
+            // Update centerForLog if it were to be used in perf logs (not typical)
+            centerForLog.x = finalDrawX + currentDrawWidth / 2;
+            centerForLog.y = finalDrawY + currentDrawHeight / 2;
+        }
+
+        ctx.fillStyle = currentFillColor;
+        ctx.fillRect(finalDrawX, finalDrawY, currentDrawWidth, currentDrawHeight);
+
+        ctx.strokeStyle = currentStrokeColor;
+        ctx.lineWidth = currentStrokeWidth;
+        ctx.strokeRect(finalDrawX, finalDrawY, currentDrawWidth, currentDrawHeight);
+
+        if (!isPerformanceRun) { // This will only be true for the first (and only) iteration when not in perf mode
+            logs.push(`Drew Axis-Aligned Rectangle at (${finalDrawX.toFixed(1)},${finalDrawY.toFixed(1)}), size ${currentDrawWidth}x${currentDrawHeight}, stroke: ${currentStrokeWidth}px, center: (${centerForLog.x.toFixed(1)}, ${centerForLog.y.toFixed(1)}), fill: ${currentFillColor}, stroke: ${currentStrokeColor}`);
+            
+            const sw = currentStrokeWidth; 
+            checkData = {
+                leftX: finalDrawX - sw / 2,
+                rightX: finalDrawX + currentDrawWidth + sw / 2 - 1, 
+                topY: finalDrawY - sw / 2,
+                bottomY: finalDrawY + currentDrawHeight + sw / 2 - 1  
+            };
+            // For non-performance mode, we only want one rectangle as per original test intent
+            break; 
+        }
+    }
+
+    if (isPerformanceRun && numToDraw > 0 && logs && logs.length > 0) {
+      // Clear logs if it was a performance run with actual drawing, as per-instance logs are too verbose.
+      // This condition is a bit defensive; logs should ideally be null from the start for perf runs.
+      logs = null;
+    }
+
+    // If it wasn't a performance run, logs and checkData for the single drawn instance are returned.
+    // If it was a performance run, logs would be null.
+    return (logs || checkData) ? { logs, checkData } : null; 
+}
+
+// Register the test
+registerHighLevelTest(
+    'rect-sgl-szMix-fSemi-sMix-swMix-lytRand-cenMixPG-edgeCrisp-ornAxial-test',
+    drawTest,
+    'rectangles',
+    {
+        extremes: true,
+        compare: { swTol: 3, refTol: 1, diffTol: 0 }
+    },
+    {
+        title: 'Rectangles: M-Size Semi-Transparent Fill, Random Semi-Transparent Stroke, Random Position, No Rotation',
+        description: 'Tests a single axis-aligned rectangle with random dimensions, stroke width, and semi-transparent colors, mimicking original low-level logic including color generation.',
+        displayName: 'Perf: Rect M Axis-Aligned (Original Logic)'
+    }
+); 
+})();
+
+(function() {
+/**
+ * TEST SUMMARY:
+ * =================
+ *
+ * Description: Tests rendering of 10 rounded rectangles with 1px opaque strokes, random semi-transparent fills, and crisp center adjustment to ensure pixel-aligned edges.
+ *
+ *
+ * ---
+ *
+ * | Facet                  | Value          | Reason
+ * |------------------------|----------------|----------------------------------------------------------------------------------------------------------------------------------
+ * | Shape category         | rounded-rects  | The test draws rounded rectangles using `ctx.fillRoundRect` and `ctx.strokeRoundRect`.
+ * | Count                  | multi-10       | The test draws 10 instances in a loop for visual regression.
+ * | SizeCategory           | mixed          | `width` and `height` are randomized in `[50, 150]`, which spans 'M' (40-79px) and 'L' (80-159px) size categories.
+ * | FillStyle              | semitransparent| `fillColorObj` is created via `getRandomColor(100, 200)`, resulting in an alpha channel between 100-200.
+ * | StrokeStyle            | opaque         | `strokeColorObj` is created via `getRandomColor(255, 255)`, resulting in a fixed alpha of 255.
+ * | StrokeThickness        | 1px            | `ctx.lineWidth` is hardcoded to `1`.
+ * | Layout                 | spread         | The 10 shapes are positioned independently at randomized locations, distributing them across the canvas.
+ * | CenteredAt             | mixed-pixel-grid| The center is first rounded to an integer grid, then adjusted by `adjustCenterForCrispStrokeRendering` to a pixel center (`*.5`).
+ * | EdgeAlignment          | crisp          | The test explicitly calls `adjustCenterForCrispStrokeRendering` to ensure shape edges align with pixel boundaries.
+ * | Orientation            | square         | The rectangles are axis-aligned with no rotation.
+ * | ArcAngleExtent         | N/A            | Not an arc.
+ * | RoundRectRadius        | randomized     | The corner radius is randomized based on a factor of the shape's smaller dimension.
+ * | ContextTranslation     | none           | No calls to `ctx.translate()`.
+ * | ContextRotation        | none           | No calls to `ctx.rotate()`.
+ * | ContextScaling         | none           | No calls to `ctx.scale()`.
+ * | Clipped on shape       | none           | No clipping is applied in this test.
+ * | Clipped on shape count | n/a            | No clipping.
+ * | Clipped on shape arrangement | n/a      | No clipping.
+ * | Clipped on shape size  | n/a            | No clipping.
+ * | Clipped on shape edge alignment | n/a   | Not applicable as there is no clipping.
+ *
+ * ---
+ *
+ * UNCAPTURED ASPECTS IN FILENAME / FACETS ABOVE:
+ * ----------------------------------------------
+ * The specifics of `crisp-center-adj` logic are handled by the `adjustCenterForCrispStrokeRendering` helper function. The fill color is semi-transparent,
+ * but the stroke is always fully opaque. The rectangle dimensions are randomized within the range `[50, 150]`, which covers the M and L size categories.
+ *
+ */
+/**
+ * @fileoverview Test definition for 10 thin, opaque-stroked rounded rectangles with 1px line width.
+ */
+
+// Helper functions getRandomColor, getRandomPoint, roundPoint, adjustCenterForCrispStrokeRendering 
+// are available from scene-creation-utils.js and test-helper-functions.js
+
+/**
+ * Draws 10 thin, opaque-stroked rounded rectangles.
+ *
+ * @param {CanvasRenderingContext2D | CrispSwContext} ctx The rendering context.
+ * @param {number} currentIterationNumber The current test iteration (for seeding via RenderTest).
+ * @param {?number} instances Optional: Number of instances to draw. Passed by the performance
+ *                  testing harness. For visual regression (instances is null/0), 10 rectangles are drawn.
+ * @returns {?{logs: string[]}} Logs for single-instance mode, or null for performance mode.
+ */
+function drawTest(ctx, currentIterationNumber, instances = null) {
+    const isPerformanceRun = instances !== null && instances > 0;
+    const numToDraw = isPerformanceRun ? instances : 10; // Original test draws 10
+
+    let logs = [];
+
+    const canvasWidth = ctx.canvas.width;
+    const canvasHeight = ctx.canvas.height;
+
+    for (let i = 0; i < numToDraw; i++) {
+        // SeededRandom Call 1: width
+        const width = Math.round(50 + SeededRandom.getRandom() * 100);
+        // SeededRandom Call 2: height
+        const height = Math.round(50 + SeededRandom.getRandom() * 100);
+        
+        // SeededRandom Call 3 & 4 (approx, inside getRandomPoint)
+        // The starting initialisation of center is a random point, then rounded for grid crossing.
+        const randomCenter = getRandomPoint(1, canvasWidth, canvasHeight); // Assuming decimalPlaces=1, then pass canvas W/H
+        const centerGrid = roundPoint(randomCenter); // Ensures integer coords for grid alignment before adjustment
+
+        // adjustCenterForCrispStrokeRendering is for a 1px stroke.
+        const adjustedCenter = adjustCenterForCrispStrokeRendering(centerGrid.x, centerGrid.y, width, height, 1);
+
+        // SeededRandom Call 5: radius
+        const radius = Math.round(SeededRandom.getRandom() * Math.min(width, height) * 0.2);
+        
+        // SeededRandom Call 6: strokeColor (opaque)
+        const strokeColorObj = getRandomColor(255, 255); 
+        // SeededRandom Call 7: fillColor (semi-transparent)
+        const fillColorObj = getRandomColor(100, 200);
+
+        const strokeColorStr = strokeColorObj ? colorToString(strokeColorObj) : 'rgba(0,0,0,0)';
+        const fillColorStr = fillColorObj ? colorToString(fillColorObj) : 'rgba(0,0,0,0)';
+
+        // For drawing, use the adjusted center and original width/height
+        let geomX = adjustedCenter.x - width / 2;
+        let geomY = adjustedCenter.y - height / 2;
+
+        if (isPerformanceRun) { // For additional instances in perf mode, spread them out
+             if (i > 0) { // Keep first instance as per original logic for potential single-frame visual check
+                geomX = Math.random() * Math.max(0, canvasWidth - width);
+                geomY = Math.random() * Math.max(0, canvasHeight - height);
+             }
+        } else { // For visual regression, ensure shapes are reasonably on canvas
+            geomX = Math.max(0 - width/4, Math.min(geomX, canvasWidth - width*3/4));
+            geomY = Math.max(0 - height/4, Math.min(geomY, canvasHeight - height*3/4 ));
+        }
+        
+        ctx.fillStyle = fillColorStr;
+        ctx.strokeStyle = strokeColorStr;
+        ctx.lineWidth = 1; // Fixed 1px stroke
+
+        ctx.fillRoundRect(geomX, geomY, width, height, radius);
+        ctx.strokeRoundRect(geomX, geomY, width, height, radius);
+
+        if (!isPerformanceRun) { 
+            logs.push(
+                `ThinRRect ${i+1}: adjCenter=(${adjustedCenter.x.toFixed(1)},${adjustedCenter.y.toFixed(1)}), W/H=(${width},${height}), r=${radius}`
+            );
+        }
+    }
+
+    if (isPerformanceRun) {
+        return null; 
+    }
+    return { logs }; 
+}
+
+// Register the test
+registerHighLevelTest(
+    'roundrect-m10-szMix-fSemi-sOpaq-sw1px-lytSpread-cenMixPG-edgeCrisp-ornAxial-rrrRand-test',
+    drawTest,
+    'rounded-rects',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 } // Default visual comparison
+    },
+    {
+        title: '10 Thin Opaque-Stroke Rounded Rectangles (1px, Crisp Center Adj.)',
+        description: 'Tests rendering of 10 rounded rectangles with 1px opaque strokes, random fills, and crisp center adjustment.',
+        displayName: 'Perf: 10 RRects ThinOpaque AdjCenter'
+    }
+); 
+})();
+
+(function() {
+/**
+ * TEST SUMMARY:
+ * =================
+ *
+ * Description: Tests rendering of 6 axis-aligned rounded rectangles. Rectangles have a fixed large corner radius, random semi-transparent fills, and fixed semi-transparent strokes. Their size and position are randomized, but dimensions are adjusted to ensure crisp rendering.
+ *
+ *
+ * ---
+ *
+ * | Facet                  | Value              | Reason
+ * |------------------------|--------------------|-----------------------------------------------------------------------------------------------------
+ * | Shape category         | `rounded-rects`    | Code calls `ctx.fillRoundRect` and `ctx.strokeRoundRect`.
+ * | Count                  | `multi-6`          | The test draws 6 instances in its default visual regression mode.
+ * | SizeCategory           | `mixed`            | Rectangle dimensions are randomized in a range `[50, ~410)`, spanning the M, L, and XL size categories.
+ * | FillStyle              | `semitransparent`  | Fill color is generated by `getRandomColor(100, 200)`, resulting in an alpha < 255.
+ * | StrokeStyle            | `semitransparent`  | Stroke color is hardcoded to `rgba(0, 0, 0, 50)`, which is semi-transparent.
+ * | StrokeThickness        | `mixed`            | Stroke width is a randomized even integer between 2 and 42. As it's a set of discrete values, it's `mixed`.
+ * | Layout                 | `spread`           | The 6 rectangles are positioned with random offsets, spreading them across the canvas.
+ * | CenteredAt             | `mixed-pixel-grid` | The core positioning logic centers the shape on either a grid line or a pixel center to enable crispness.
+ * | EdgeAlignment          | `crisp`            | Code explicitly calls `adjustDimensionsForCrispStrokeRendering()` to ensure sharp edges.
+ * | Orientation            | `square`           | The test is for axis-aligned rectangles, meaning no rotation.
+ * | ArcAngleExtent         | `N/A`              | Not applicable for rectangle shapes.
+ * | RoundRectRadius        | `large-cat`        | The corner radius is a fixed value of `40`, which falls into the "large" category.
+ * | ContextTranslation     | `none`             | No `ctx.translate()` calls are made.
+ * | ContextRotation        | `none`             | No `ctx.rotate()` calls are made.
+ * | ContextScaling         | `none`             | No `ctx.scale()` calls are made.
+ * | Clipped on shape       | `none`             | No clipping is applied in this test.
+ * | Clipped on shape count | `n/a`              | Not applicable as there is no clipping.
+ * | Clipped on shape arrangement | `n/a`        | Not applicable as there is no clipping.
+ * | Clipped on shape size  | `n/a`              | Not applicable as there is no clipping.
+ * | Clipped on shape edge alignment | `n/a`     | Not applicable as there is no clipping.
+ *
+ * ---
+ *
+ * UNCAPTURED ASPECTS IN FILENAME / FACETS ABOVE:
+ * ----------------------------------------------
+ * - The corner radius is specifically fixed at 40px.
+ * - The stroke color is fixed at a semi-transparent black (`rgba(0,0,0,50)`).
+ * - While the final layout is a `spread`, the underlying logic first aligns the shape to a crisp
+ *   pixel/grid center before applying a final random offset.
+ *
+ */
+
+/**
+ * @fileoverview Test definition for multiple large, transparent-stroked rounded rectangles.
+ */
+
+// Helper functions getRandomColor, adjustDimensionsForCrispStrokeRendering, 
+// calculateCrispFillAndStrokeRectParams are available from test-helper-functions.js
+
+
+/**
+ * Draws multiple large rounded rectangles with transparent strokes.
+ *
+ * @param {CanvasRenderingContext2D | CrispSwContext} ctx The rendering context.
+ * @param {number} currentIterationNumber The current test iteration (for seeding via RenderTest).
+ * @param {?number} instances Optional: Number of instances to draw. Passed by the performance
+ *                  testing harness. For visual regression (instances is null/0), 6 rectangles are drawn.
+ * @returns {?{logs: string[]}} Logs for single-instance mode, or null for performance mode.
+ */
+function drawTest(ctx, currentIterationNumber, instances = null) {
+    const isPerformanceRun = instances !== null && instances > 0;
+    const numToDraw = isPerformanceRun ? instances : 6; // Original test draws 6
+
+    let logs = [];
+
+    const canvasWidth = ctx.canvas.width;
+    const canvasHeight = ctx.canvas.height;
+    const fixedRadius = 40; // Fixed radius for this test
+
+    for (let i = 0; i < numToDraw; i++) {
+        // Calls 1-4 for SeededRandom happen inside calculateCrispFillAndStrokeRectParams
+        const placement = calculateCrispFillAndStrokeRectParams({
+            canvasWidth,
+            canvasHeight,
+            minWidth: 50,
+            maxWidth: canvasWidth * 0.6,
+            minHeight: 50,
+            maxHeight: canvasHeight * 0.6,
+            maxStrokeWidth: 40,
+            ensureEvenStroke: true,
+            randomPosition: false          // Test handles the offset separately
+        });
+        let currentCenter = placement.center; 
+        const finalRectWidth = placement.adjustedDimensions.width;
+        const finalRectHeight = placement.adjustedDimensions.height;
+        const strokeWidth = placement.strokeWidth;
+
+        // SeededRandom Call 5: xOffset
+        const xOffset = Math.floor(SeededRandom.getRandom() * 100) - 50;
+        // SeededRandom Call 6: yOffset
+        const yOffset = Math.floor(SeededRandom.getRandom() * 100) - 50;
+        
+        const finalCenter = {
+            x: currentCenter.x + xOffset,
+            y: currentCenter.y + yOffset
+        };
+
+        const strokeColorObj = { r: 0, g: 0, b: 0, a: 50 }; // Fixed: Black, very transparent
+        // SeededRandom Call 7: fillColor (can be semi-transparent)
+        const fillColorObj = getRandomColor(100, 200);
+
+        const strokeColorStr = strokeColorObj ? colorToString(strokeColorObj) : 'rgba(0,0,0,0)';
+        const fillColorStr = fillColorObj ? colorToString(fillColorObj) : 'rgba(0,0,0,0)';
+
+        let geomX = finalCenter.x - finalRectWidth / 2;
+        let geomY = finalCenter.y - finalRectHeight / 2;
+
+        if (isPerformanceRun && numToDraw > 1) { 
+             geomX = Math.random() * Math.max(0, canvasWidth - finalRectWidth);
+             geomY = Math.random() * Math.max(0, canvasHeight - finalRectHeight);
+        }
+        
+        ctx.fillStyle = fillColorStr;
+        ctx.strokeStyle = strokeColorStr;
+        ctx.lineWidth = strokeWidth;
+
+        ctx.fillRoundRect(geomX, geomY, finalRectWidth, finalRectHeight, fixedRadius);
+        if (strokeWidth > 0) {
+            ctx.strokeRoundRect(geomX, geomY, finalRectWidth, finalRectHeight, fixedRadius);
+        }
+
+        if (!isPerformanceRun) { 
+            logs.push(
+                `LargeTransRRect ${i+1}: center=(${finalCenter.x.toFixed(1)},${finalCenter.y.toFixed(1)}), W/H=(${finalRectWidth},${finalRectHeight}), r=${fixedRadius}, sw=${strokeWidth.toFixed(1)}`
+            );
+        }
+    }
+
+    if (isPerformanceRun) {
+        return null; 
+    }
+    return { logs }; 
+}
+
+// Register the test
+registerHighLevelTest(
+    'roundrect-m6-szMix-fSemi-sSemi-swMix-lytSpread-cenMixPG-edgeCrisp-ornAxial-rrrLrg-test',
+    drawTest,
+    'rounded-rects',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 } // Default visual comparison
+    },
+    {
+        title: 'Large Transparent-Stroke Rounded Rectangles (Multiple, Random Params)',
+        description: 'Tests rendering of multiple large rounded rectangles with transparent strokes, random fills, and fixed large radius.',
+        displayName: 'Perf: 6 Large TranspStroke RRects'
+    }
+); 
+})();
+
+(function() {
+/**
+ * TEST SUMMARY:
+ * =================
+ *
+ * Description: Tests rendering of 8 axis-aligned rounded rectangles. The test uses a helper function to ensure crisp rendering by adjusting dimensions and placing the shape's center on a grid or pixel-center boundary. Position, size, stroke, fill, and corner radii are all randomized.
+ *
+ *
+ * ---
+ *
+ * | Facet                  | Value          | Reason
+ * |------------------------|----------------|-----------------------------------------------------------------------------------------------------
+ * | Shape category         | rounded-rects  | The test draws rounded rectangles using `ctx.fillRoundRect` and `ctx.strokeRoundRect`.
+ * | Count                  | multi-8        | The test draws 8 instances when not in performance mode.
+ * | SizeCategory           | mixed          | Width/Height are randomized in a range of [50, ~530] which spans M, L, and XL size categories.
+ * | FillStyle              | semitransparent| `getRandomColor(100, 200)` is called for fill, which produces an alpha value in that range.
+ * | StrokeStyle            | mixed          | `getRandomColor(200, 255)` is called for stroke, producing alpha values that can be opaque (255) or semitransparent.
+ * | StrokeThickness        | mixed          | `strokeWidth` is randomized to a discrete set of even integers: 2, 4, 6, 8, 10, 12.
+ * | Layout                 | spread         | Positions are randomized within the canvas to distribute the shapes.
+ * | CenteredAt             | mixed-pixel-grid | The `initialCenter` has a 50% chance of being on a pixel center (+0.5) or a grid integer coordinate.
+ * | EdgeAlignment          | crisp          | The code explicitly calls `adjustDimensionsForCrispStrokeRendering()` to ensure crisp edges.
+ * | Orientation            | square         | The test draws axis-aligned rectangles with no rotation.
+ * | ArcAngleExtent         | N/A            | This facet is not applicable to rounded rectangles.
+ * | RoundRectRadius        | mixed          | The corner radius is randomized based on the rectangle's randomized dimensions.
+ * | ContextTranslation     | none           | `ctx.translate()` is not used.
+ * | ContextRotation        | none           | `ctx.rotate()` is not used.
+ * | ContextScaling         | none           | `ctx.scale()` is not used.
+ * | Clipped on shape       | none           | `ctx.clip()` is not used.
+ * | Clipped on shape count | n/a            | Clipping is not used.
+ * | Clipped on shape arrangement | n/a      | Clipping is not used.
+ * | Clipped on shape size  | n/a            | Clipping is not used.
+ * | Clipped on shape edge alignment | n/a   | Not applicable as there is no clipping.
+ *
+ * ---
+ *
+ * UNCAPTURED ASPECTS IN FILENAME / FACETS ABOVE:
+ * ----------------------------------------------
+ * - The visual test (`!isPerformanceRun`) uses a combination of pre-calculated center + random offsets, whereas the performance-mode test uses `Math.random()` for layout, which is a slightly different `spread` logic.
+ * - The stroke color alpha range of [200, 255] means strokes are either fully opaque or very close to it.
+ * - The corner radius is specifically randomized as a factor of the shape's smaller dimension (`Math.min(finalRectWidth, finalRectHeight) * 0.2`).
+ */
+/**
+ * @fileoverview Test definition for multiple axis-aligned rounded rectangles with random parameters.
+ */
+
+// Helper functions getRandomColor, adjustDimensionsForCrispStrokeRendering, 
+// calculateCrispFillAndStrokeRectParams are available from test-helper-functions.js
+
+
+/**
+ * Draws multiple axis-aligned rounded rectangles with random parameters.
+ *
+ * @param {CanvasRenderingContext2D | CrispSwContext} ctx The rendering context.
+ * @param {number} currentIterationNumber The current test iteration (for seeding via RenderTest).
+ * @param {?number} instances Optional: Number of instances to draw. Passed by the performance
+ *                  testing harness. For visual regression (instances is null/0), 8 rectangles are drawn.
+ * @returns {?{logs: string[]}} Logs for single-instance mode, or null for performance mode.
+ */
+function drawTest(ctx, currentIterationNumber, instances = null) {
+    const isPerformanceRun = instances !== null && instances > 0;
+    const numToDraw = isPerformanceRun ? instances : 8; // Original test draws 8
+
+    let logs = [];
+
+    const canvasWidth = ctx.canvas.width;
+    const canvasHeight = ctx.canvas.height;
+
+    for (let i = 0; i < numToDraw; i++) {
+        // Calls 1-4 for SeededRandom happen inside calculateCrispFillAndStrokeRectParams
+        const placement = calculateCrispFillAndStrokeRectParams({
+            canvasWidth,
+            canvasHeight,
+            minWidth: 50,
+            maxWidth: canvasWidth * 0.6,
+            minHeight: 50,
+            maxHeight: canvasHeight * 0.6,
+            maxStrokeWidth: 10,
+            ensureEvenStroke: true,
+            randomPosition: false  // We'll apply our own offset below
+        });
+        let currentCenter = placement.center; // This is the center *before* the per-instance random offset
+        const finalRectWidth = placement.adjustedDimensions.width;
+        const finalRectHeight = placement.adjustedDimensions.height;
+        const strokeWidth = placement.strokeWidth;
+
+        // SeededRandom Call 5: xOffset
+        const xOffset = Math.floor(SeededRandom.getRandom() * 100) - 50;
+        // SeededRandom Call 6: yOffset
+        const yOffset = Math.floor(SeededRandom.getRandom() * 100) - 50;
+        
+        // Apply the random offset to get the final center for this specific rectangle
+        const finalCenter = {
+            x: currentCenter.x + xOffset,
+            y: currentCenter.y + yOffset
+        };
+
+        // SeededRandom Call 7: radius
+        const radius = Math.round(SeededRandom.getRandom() * Math.min(finalRectWidth, finalRectHeight) * 0.2);
+        // SeededRandom Call 8: strokeColor (semi-transparent or also opaque)
+        const strokeColorObj = getRandomColor(200, 255); 
+        // SeededRandom Call 9: fillColor (semi-transparent)
+        const fillColorObj = getRandomColor(100, 200);
+
+        const strokeColorStr = strokeColorObj ? colorToString(strokeColorObj) : 'rgba(0,0,0,0)';
+        const fillColorStr = fillColorObj ? colorToString(fillColorObj) : 'rgba(0,0,0,0)';
+
+        let geomX = finalCenter.x - finalRectWidth / 2;
+        let geomY = finalCenter.y - finalRectHeight / 2;
+
+        // For performance mode, if drawing multiple instances, ensure the base properties are unique per instance (done by SR calls)
+        // then spread them out using Math.random for position only for instances *after the first one for that frame*.
+        if (isPerformanceRun && numToDraw > 1) { // Apply to all instances in perf run
+             geomX = Math.random() * Math.max(0, canvasWidth - finalRectWidth);
+             geomY = Math.random() * Math.max(0, canvasHeight - finalRectHeight);
+        } else if (!isPerformanceRun) { // For visual regression (numToDraw = 8), ensure shapes are reasonably on canvas
+            geomX = Math.max(0 - finalRectWidth / 4, Math.min(geomX, canvasWidth - finalRectWidth * 3/4));
+            geomY = Math.max(0 - finalRectHeight / 4, Math.min(geomY, canvasHeight - finalRectHeight* 3/4));
+        }
+        
+        ctx.fillStyle = fillColorStr;
+        ctx.strokeStyle = strokeColorStr;
+        ctx.lineWidth = strokeWidth;
+
+        ctx.fillRoundRect(geomX, geomY, finalRectWidth, finalRectHeight, radius);
+        if (strokeWidth > 0) {
+            ctx.strokeRoundRect(geomX, geomY, finalRectWidth, finalRectHeight, radius);
+        }
+
+        if (!isPerformanceRun) { 
+            logs.push(
+                `AxAlignedRRect ${i+1}: center=(${finalCenter.x.toFixed(1)},${finalCenter.y.toFixed(1)}), W/H=(${finalRectWidth},${finalRectHeight}), r=${radius}, sw=${strokeWidth.toFixed(1)}`
+            );
+        }
+    }
+
+    if (isPerformanceRun) {
+        return null; 
+    }
+    return { logs }; 
+}
+
+// Register the test
+registerHighLevelTest(
+    'roundrect-m8-szMix-fSemi-sMix-swMix-lytSpread-cenMixPG-edgeCrisp-ornAxial-rrrMix-test',
+    drawTest,
+    'rounded-rects',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 } // Default visual comparison
+    },
+    {
+        title: 'Axis-Aligned Rounded Rectangles (Multiple, Random Params)',
+        description: 'Tests rendering of multiple axis-aligned rounded rectangles with random positions, sizes, strokes, fills, and corner radii.',
+        displayName: 'Perf: 8 AxAlign RRects RandParams'
+    }
+); 
+})();
+
+(function() {
+/**
+ * TEST SUMMARY:
+ * =================
+ *
+ * Description: Tests rendering of 8 rounded rectangles with no stroke, only fill. The shapes have a fixed size (200x200px) and a large, fixed corner radius (40px). Their positions are randomized but their centers are snapped to the integer grid, and their fills are semi-transparent.
+ *
+ *
+ * ---
+ *
+ * | Facet                  | Value           | Reason
+ * |------------------------|-----------------|-----------------------------------------------------------------------------------------------------
+ * | Shape category         | rounded-rects   | Uses `ctx.fillRoundRect` to draw the shapes.
+ * | Count                  | multi-8         | The test draws 8 instances in a loop for the visual regression test.
+ * | SizeCategory           | XL              | The fixed side length of 200px falls into the Unified T-Shirt Size Scale's XL range (160-400px).
+ * | FillStyle              | semitransparent | Fill color is generated by `getRandomColor(100, 200)`, resulting in an alpha between ~0.39 and ~0.78.
+ * | StrokeStyle            | none            | No stroke is applied; `ctx.strokeRoundRect` is not called and no `strokeStyle` is set.
+ * | StrokeThickness        | none            | Follows from `StrokeStyle` being `none`.
+ * | Layout                 | spread          | The 8 shapes are distributed across the canvas with randomized center points.
+ * | CenteredAt             | grid            | The `randomCenter` point is rounded to the nearest integer, aligning the center with the grid.
+ * | EdgeAlignment          | crisp           | The shape has even dimensions (200x200) and is drawn at integer start coordinates with no stroke.
+ * | Orientation            | square          | The rectangles are axis-aligned with no rotation applied.
+ * | ArcAngleExtent         | N/A             | Not applicable to rounded rectangles.
+ * | RoundRectRadius        | large-cat       | The filename cue "large-radius" is confirmed by the `fixedRadius = 40;` in the code.
+ * | ContextTranslation     | none            | The test does not use `ctx.translate()`.
+ * | ContextRotation        | none            | The test does not use `ctx.rotate()`.
+ * | ContextScaling         | none            | The test does not use `ctx.scale()`.
+ * | Clipped on shape       | none            | Clipping is not used in this test.
+ * | Clipped on shape count | n/a             | Clipping is not used in this test.
+ * | Clipped on shape arrangement | n/a       | Clipping is not used in this test.
+ * | Clipped on shape size  | n/a             | Clipping is not used in this test.
+ * | Clipped on shape edge alignment | n/a    | Not applicable as there is no clipping.
+ *
+ * ---
+ *
+ * UNCAPTURED ASPECTS IN FILENAME / FACETS ABOVE:
+ * ----------------------------------------------
+ * The RGB components of the fill color are also randomized within the range [100, 200]. While the center
+ * positions are randomized, the final geometry coordinates are clamped to ensure the shapes remain
+ * reasonably on-screen during the visual regression test.
+ *
+ */
+
+/**
+ * @fileoverview Test definition for 8 rounded rectangles with no stroke and fixed size/radius.
+ */
+
+// Helper functions getRandomColor, getRandomPoint, roundPoint are available from scene-creation-utils.js
+
+/**
+ * Draws 8 rounded rectangles with no stroke.
+ *
+ * @param {CanvasRenderingContext2D | CrispSwContext} ctx The rendering context.
+ * @param {number} currentIterationNumber The current test iteration (for seeding via RenderTest).
+ * @param {?number} instances Optional: Number of instances to draw. Passed by the performance
+ *                  testing harness. For visual regression (instances is null/0), 8 rectangles are drawn.
+ * @returns {?{logs: string[]}} Logs for single-instance mode, or null for performance mode.
+ */
+function drawTest(ctx, currentIterationNumber, instances = null) {
+    const isPerformanceRun = instances !== null && instances > 0;
+    const numToDraw = isPerformanceRun ? instances : 8; // Original test draws 8
+
+    let logs = [];
+
+    const canvasWidth = ctx.canvas.width;
+    const canvasHeight = ctx.canvas.height;
+    
+    const fixedWidth = 200;
+    const fixedHeight = 200;
+    const fixedRadius = 40;
+
+    for (let i = 0; i < numToDraw; i++) {
+        // SeededRandom Call 1 & 2 (approx, inside getRandomPoint)
+        const randomCenter = getRandomPoint(1, canvasWidth, canvasHeight); 
+        const center = roundPoint(randomCenter); // Ensures integer coords for grid alignment
+
+        // SeededRandom Call 3: fillColor (semi-transparent)
+        const fillColorObj = getRandomColor(100, 200);
+        const fillColorStr = fillColorObj ? colorToString(fillColorObj) : 'rgba(0,0,0,0)';
+
+        let geomX = center.x - fixedWidth / 2;
+        let geomY = center.y - fixedHeight / 2;
+
+        if (isPerformanceRun && numToDraw > 1) { 
+             if (i > 0 || numToDraw > 1) { // Spread all instances in perf mode for this one
+                geomX = Math.random() * Math.max(0, canvasWidth - fixedWidth);
+                geomY = Math.random() * Math.max(0, canvasHeight - fixedHeight);
+            }
+        } else { // For visual regression, ensure shapes are reasonably on canvas
+            geomX = Math.max(0 - fixedWidth / 4, Math.min(geomX, canvasWidth - fixedWidth * 3/4));
+            geomY = Math.max(0 - fixedHeight / 4, Math.min(geomY, canvasHeight - fixedHeight * 3/4));
+        }
+        
+        ctx.fillStyle = fillColorStr;
+        // No strokeStyle or lineWidth needed as strokeWidth is 0
+
+        ctx.fillRoundRect(geomX, geomY, fixedWidth, fixedHeight, fixedRadius);
+        // No ctx.strokeRoundRect() call
+
+        if (!isPerformanceRun) { 
+            logs.push(
+                `NoStrokeRRect ${i+1}: center=(${center.x},${center.y}), W/H=(${fixedWidth},${fixedHeight}), r=${fixedRadius}`
+            );
+        }
+    }
+
+    if (isPerformanceRun) {
+        return null; 
+    }
+    return { logs }; 
+}
+
+// Register the test
+registerHighLevelTest(
+    'roundrect-m8-xl-fSemi-sNone-lytSpread-cenGrid-edgeCrisp-ornAxial-rrrLrg-test',
+    drawTest,
+    'rounded-rects',
+    {
+        //compare: { swTol: 0, refTol: 0, diffTol: 0 } // Default visual comparison
+    },
+    {
+        title: 'Rounded Rectangles Without Stroke (Multiple, Fixed Size, Random Pos)',
+        description: 'Tests rendering of 8 rounded rectangles with no stroke, only fill, fixed size/radius, and random positions.',
+        displayName: 'Perf: 8 NoStroke RRects FixedSize RandPos'
+    }
+); 
+})();
+
+(function() {
+/**
+ * TEST SUMMARY:
+ * =================
+ *
+ * Description: Tests crisp rendering of a single 1px red stroked rounded rectangle, centered at a grid crossing.
+ *
+ *
+ * ---
+ *
+ * | Facet                  | Value          | Reason
+ * |------------------------|----------------|-----------------------------------------------------------------------------------------------------
+ * | Shape category         | rounded-rects  | The test draws rounded rectangles.
+ * | Count                  | single         | The test is designed to draw a single shape instance in visual test mode.
+ * | SizeCategory           | mixed          | The base width/height are randomized in [20, 149], which spans S, M, and L size categories.
+ * | FillStyle              | none           | The fill color is set to be fully transparent ('rgba(0,0,0,0)').
+ * | StrokeStyle            | opaque         | The stroke color is explicitly set to be fully opaque ('rgba(255,0,0,1)').
+ * | StrokeThickness        | 1px            | The lineWidth is explicitly set to 1.
+ * | Layout                 | centered       | The shape is drawn relative to the canvas center in visual test mode.
+ * | CenteredAt             | grid           | The center point is calculated using Math.floor(), resulting in integer coordinates.
+ * | EdgeAlignment          | crisp          | The test uses the adjustDimensionsForCrispStrokeRendering() helper to ensure crisp edges.
+ * | Orientation            | square         | The shape is drawn with its sides parallel to the canvas axes (axis-aligned).
+ * | ArcAngleExtent         | N/A            | This facet is not applicable to rectangles.
+ * | RoundRectRadius        | randomized     | The corner radius is randomized using SeededRandom.getRandom().
+ * | ContextTranslation     | none           | The test does not use ctx.translate().
+ * | ContextRotation        | none           | The test does not use ctx.rotate().
+ * | ContextScaling         | none           | The test does not use ctx.scale().
+ * | Clipped on shape       | none           | The test does not use clipping.
+ * | Clipped on shape count | n/a            | N/A because no clipping is used.
+ * | Clipped on shape arrangement | n/a      | N/A because no clipping is used.
+ * | Clipped on shape size  | n/a            | N/A because no clipping is used.
+ * | Clipped on shape edge alignment | n/a   | Not applicable as there is no clipping.
+ *
+ * ---
+ *
+ * UNCAPTURED ASPECTS IN FILENAME / FACETS ABOVE:
+ * ----------------------------------------------
+ * Stroke color is fixed opaque red. It is axis-aligned. Rectangle dimensions are randomized in the range [20, 149], spanning S, M, and L size categories.
+ */
+
+/**
  * @fileoverview Test definition for a single 1px stroked rounded rectangle centered at a grid point.
  */
 
@@ -12588,29 +14215,6 @@ registerHighLevelTest(
 // and adjustDimensionsForCrispStrokeRendering are assumed to be globally available
 // from included utility scripts (e.g., random-utils.js, scene-creation-utils.js)
 // and use SeededRandom internally as needed.
-
-/**
- * Creates a path for a rounded rectangle.
- * @param {CanvasRenderingContext2D | CrispSwContext} ctx The rendering context.
- * @param {number} x The x-coordinate of the top-left corner.
- * @param {number} y The y-coordinate of the top-left corner.
- * @param {number} width The width of the rectangle.
- * @param {number} height The height of the rectangle.
- * @param {number} radius The corner radius.
- */
-/*
-function _roundedRectPath(ctx, x, y, width, height, radius) {
-    if (width < 2 * radius) radius = width / 2;
-    if (height < 2 * radius) radius = height / 2;
-    ctx.beginPath();
-    ctx.moveTo(x + radius, y);
-    ctx.arcTo(x + width, y, x + width, y + height, radius);
-    ctx.arcTo(x + width, y + height, x, y + height, radius);
-    ctx.arcTo(x, y + height, x, y + radius, radius);
-    ctx.arcTo(x, y, x + radius, y, radius);
-    ctx.closePath();
-}
-*/
 
 /**
  * Draws a single 1px stroked rounded rectangle, centered at a grid point.
@@ -12623,7 +14227,7 @@ function _roundedRectPath(ctx, x, y, width, height, radius) {
  * @returns {?{logs: string[], checkData: object}} Logs and data for checks for single-instance
  *                  mode, or null for performance mode.
  */
-function draw_rounded_rect_single_1px_stroke_crisp_center_grid(ctx, currentIterationNumber, instances = null) {
+function drawTest(ctx, currentIterationNumber, instances = null) {
     const isPerformanceRun = instances !== null && instances > 0;
     const numToDraw = isPerformanceRun ? instances : 1;
 
@@ -12709,8 +14313,8 @@ function draw_rounded_rect_single_1px_stroke_crisp_center_grid(ctx, currentItera
 
 // Register the test
 registerHighLevelTest(
-    'rounded-rect--single--1px-stroke--crisp--center-grid--test.js',
-    draw_rounded_rect_single_1px_stroke_crisp_center_grid,
+    'roundrect-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-cenGrid-edgeCrisp-ornAxial-rrrRand-test',
+    drawTest,
     'rounded-rects',
     {
         extremes: true,
@@ -12721,7 +14325,51 @@ registerHighLevelTest(
         description: 'Tests crisp rendering of a single 1px red stroked rounded rectangle, centered at a grid crossing.',
         displayName: 'Perf: RRect 1px Crisp Grid Center'
     }
-); /**
+); 
+})();
+
+(function() {
+/**
+ * TEST SUMMARY:
+ * =================
+ *
+ * Description: Tests the crisp rendering of a single, 1px red-stroked rounded rectangle. The shape is centered on a physical pixel's center coordinates to test for precise alignment.
+ *
+ *
+ * ---
+ *
+ * | Facet                  | Value          | Reason
+ * |------------------------|----------------|-----------------------------------------------------------------------------------------------------
+ * | Shape category         | rounded-rects  | The test draws and registers itself as a 'rounded-rects' test.
+ * | Count                  | single         | The test draws a single shape instance in its primary visual regression mode.
+ * | SizeCategory           | mixed          | Base rect dimensions are randomized in [20, 149], spanning size categories S, M, and L.
+ * | FillStyle              | none           | The test only calls `ctx.strokeRoundRect()` and does not apply a fill.
+ * | StrokeStyle            | opaque         | The stroke color is hardcoded to `rgba(255,0,0,1)`, which is fully opaque.
+ * | StrokeThickness        | 1px            | `ctx.lineWidth` is hardcoded to 1.
+ * | Layout                 | centered       | The shape is positioned relative to the canvas center.
+ * | CenteredAt             | pixel          | Center coordinates are calculated as `floor(dim / 2) + 0.5`.
+ * | EdgeAlignment          | crisp          | The code explicitly uses `adjustDimensionsForCrispStrokeRendering()` to ensure sharp edges.
+ * | Orientation            | square         | The rectangle is axis-aligned with no rotation.
+ * | ArcAngleExtent         | N/A            | This facet is not applicable to rectangle shapes.
+ * | RoundRectRadius        | randomized     | The corner radius is calculated using `SeededRandom.getRandom()`.
+ * | ContextTranslation     | none           | The test does not use `ctx.translate()`.
+ * | ContextRotation        | none           | The test does not use `ctx.rotate()`.
+ * | ContextScaling         | none           | The test does not use `ctx.scale()`.
+ * | Clipped on shape       | none           | The test does not involve clipping.
+ * | Clipped on shape count | n/a            | Not applicable as there is no clipping.
+ * | Clipped on shape arrangement | n/a      | Not applicable as there is no clipping.
+ * | Clipped on shape size  | n/a            | Not applicable as there is no clipping.
+ * | Clipped on shape edge alignment | n/a   | Not applicable as there is no clipping.
+ *
+ * ---
+ *
+ * UNCAPTURED ASPECTS IN FILENAME / FACETS ABOVE:
+ * ----------------------------------------------
+ * - The stroke color is not just opaque, it is specifically opaque red. This level of detail is not
+ *   captured in the filename facets.
+ */
+
+/**
  * @fileoverview Test definition for a single 1px stroked rounded rectangle centered at a pixel.
  */
 
@@ -12742,7 +14390,7 @@ registerHighLevelTest(
  * @returns {?{logs: string[], checkData: object}} Logs and data for checks for single-instance
  *                  mode, or null for performance mode.
  */
-function draw_rounded_rect_single_1px_stroke_crisp_center_pixel(ctx, currentIterationNumber, instances = null) {
+function drawTest(ctx, currentIterationNumber, instances = null) {
     const isPerformanceRun = instances !== null && instances > 0;
     const numToDraw = isPerformanceRun ? instances : 1;
 
@@ -12823,8 +14471,8 @@ function draw_rounded_rect_single_1px_stroke_crisp_center_pixel(ctx, currentIter
 
 // Register the test
 registerHighLevelTest(
-    'rounded-rect--single--1px-stroke--crisp--center-pixel--test.js',
-    draw_rounded_rect_single_1px_stroke_crisp_center_pixel,
+    'roundrect-sgl-szMix-fNone-sOpaq-sw1px-lytCenter-cenPx-edgeCrisp-ornAxial-rrrRand-test',
+    drawTest,
     'rounded-rects',
     {
         extremes: true,
@@ -12835,7 +14483,51 @@ registerHighLevelTest(
         description: 'Tests crisp rendering of a single 1px red stroked rounded rectangle, centered at a pixel center.',
         displayName: 'Perf: RRect 1px Crisp Pixel Center'
     }
-); /**
+); 
+})();
+
+(function() {
+/**
+ * TEST SUMMARY:
+ * =================
+ *
+ * Description: Tests a single rounded rectangle with random stroke widths (opaque), random fills, centered at a grid crossing, with explicit logic to make it crisp.
+ *
+ *
+ * ---
+ *
+ * | Facet                  | Value          | Reason
+ * |------------------------|----------------|-----------------------------------------------------------------------------------------------------
+ * | Shape category         | rounded-rects  | The test draws using `ctx.fillRoundRect()` and `ctx.strokeRoundRect()`.
+ * | Count                  | single         | The test is designed to draw one shape in its visual regression mode (`instances = null`).
+ * | SizeCategory           | mixed          | `baseRectWidth` is randomized in `[50, 50 + 0.6 * canvasWidth]`. With a typical 800px canvas, this spans M, L, and XL size categories.
+ * | FillStyle              | semitransparent| Fill color alpha is randomized in `[100, 200]` via `getRandomColor(100, 200)`.
+ * | StrokeStyle            | opaque         | Stroke color alpha is fixed at 255 via `getRandomColor(255, 255)`.
+ * | StrokeThickness        | 1px-11px       | `strokeWidth` is `Math.round(SeededRandom.getRandom() * 10 + 1)`, which results in an integer range of 1 to 11.
+ * | Layout                 | centered       | The shape's reference point is calculated at the canvas center (`Math.floor(canvasWidth / 2)`).
+ * | CenteredAt             | grid           | The center coordinates are snapped to integer values (`Math.floor`), aligning them with grid intersections.
+ * | EdgeAlignment          | crisp          | The code explicitly calls `adjustDimensionsForCrispStrokeRendering()` to ensure pixel-perfect edges.
+ * | Orientation            | square         | The test draws an axis-aligned rectangle with no rotation applied.
+ * | ArcAngleExtent         | N/A            | This facet is not applicable to rectangle shapes.
+ * | RoundRectRadius        | randomized     | The corner radius is randomized based on the rectangle's final dimensions.
+ * | ContextTranslation     | none           | The test does not use `ctx.translate()`.
+ * | ContextRotation        | none           | The test does not use `ctx.rotate()`.
+ * | ContextScaling         | none           | The test does not use `ctx.scale()`.
+ * | Clipped on shape       | none           | The test does not use `ctx.clip()`.
+ * | Clipped on shape count | n/a            | Clipping is not used.
+ * | Clipped on shape arrangement | n/a      | Clipping is not used.
+ * | Clipped on shape size  | n/a            | Clipping is not used.
+ * | Clipped on shape edge alignment | n/a   | Not applicable as there is no clipping.
+ *
+ * ---
+ *
+ * UNCAPTURED ASPECTS IN FILENAME / FACETS ABOVE:
+ * ----------------------------------------------
+ *  - In performance testing mode (`instances > 0`), the layout changes from `centered` to a random `spread`.
+ *
+ */
+
+/**
  * @fileoverview Test definition for a single centered rounded rectangle with random opaque stroke and random fill, centered at a grid point.
  */
 
@@ -12853,7 +14545,7 @@ registerHighLevelTest(
  *                  regression, and `instances` count for performance, each with unique properties based on SeededRandom.
  * @returns {?{logs: string[]}} Logs for single-instance mode, or null for performance mode.
  */
-function draw_rounded_rect_single_rand_opaque_stroke_center_grid_rand_fill(ctx, currentIterationNumber, instances = null) {
+function drawTest(ctx, currentIterationNumber, instances = null) {
     const isPerformanceRun = instances !== null && instances > 0;
     const numToDraw = isPerformanceRun ? instances : 1;
 
@@ -12892,11 +14584,11 @@ function draw_rounded_rect_single_rand_opaque_stroke_center_grid_rand_fill(ctx, 
         
         // SeededRandom Call 5 (potentially multiple inside getRandomColor): strokeColor (opaque)
         const strokeColorObj = getRandomColor(255, 255); 
-        // SeededRandom Call 6 (potentially multiple inside getRandomColor): fillColor (can be semi-transparent)
+        // SeededRandom Call 6 (potentially multiple inside getRandomColor): fillColor (semi-transparent)
         const fillColorObj = getRandomColor(100, 200);
 
-        const strokeColorStr = _colorObjectToString(strokeColorObj);
-        const fillColorStr = _colorObjectToString(fillColorObj);
+        const strokeColorStr = strokeColorObj ? colorToString(strokeColorObj) : 'rgba(0,0,0,0)';
+        const fillColorStr = fillColorObj ? colorToString(fillColorObj) : 'rgba(0,0,0,0)';
 
         let geomX = centerX - finalRectWidth / 2;
         let geomY = centerY - finalRectHeight / 2;
@@ -12934,8 +14626,8 @@ function draw_rounded_rect_single_rand_opaque_stroke_center_grid_rand_fill(ctx, 
 
 // Register the test
 registerHighLevelTest(
-    'rounded-rect--single--rand-opaque-stroke--center-grid--rand-fill--test.js',
-    draw_rounded_rect_single_rand_opaque_stroke_center_grid_rand_fill,
+    'roundrect-sgl-szMix-fSemi-sOpaq-sw1-11px-lytCenter-cenGrid-edgeCrisp-ornAxial-rrrRand-test',
+    drawTest,
     'rounded-rects',
     {
         //compare: { swTol: 0, refTol: 0, diffTol: 0 }, // Default visual comparison
@@ -12950,46 +14642,58 @@ registerHighLevelTest(
         description: 'Tests a single rounded rectangle with random stroke widths (opaque), random fills, centered at a grid crossing.',
         displayName: 'Perf: RRect RandStroke Opaque Grid Fill'
     }
-); /**
+); 
+})();
+
+(function() {
+/**
+ * TEST SUMMARY:
+ * =================
+ *
+ * Description: Tests a single rounded rectangle with random stroke widths and semi-transparent colors, centered crisply (grid or pixel).
+ *
+ *
+ * ---
+ *
+ * | Facet                  | Value               | Reason
+ * |------------------------|---------------------|----------------------------------------------------------------------------------------------------------------------------
+ * | Shape category         | `rounded-rects`     | The test renders a rounded rectangle using `ctx.fillRoundRect()` and `ctx.strokeRoundRect()`.
+ * | Count                  | `single`            | The test logic draws only one shape instance in visual test mode.
+ * | SizeCategory           | `mixed`             | The rectangle's width/height are randomized (e.g., from `50` to `~530px`), spanning M, L, and XL size categories.
+ * | FillStyle              | `semitransparent`   | Fill color is set with a random alpha between 50 and 150 (out of 255) using `getRandomColor(50, 150)`.
+ * | StrokeStyle            | `semitransparent`   | Stroke color is set with a random alpha between 50 and 150 (out of 255) using `getRandomColor(50, 150)`.
+ * | StrokeThickness        | `mixed`             | Stroke width is randomized to be an even number between 2 and 42. A discrete set of values is categorized as 'mixed'.
+ * | Layout                 | `centered`          | The shape's position is calculated relative to the canvas center.
+ * | CenteredAt             | `mixed-pixel-grid`  | The center has a 50% chance of being on a grid intersection (integer coordinates) or a pixel center (`*.5` coordinates).
+ * | EdgeAlignment          | `crisp`             | The test uses the `adjustDimensionsForCrispStrokeRendering()` helper function to ensure sharp edges.
+ * | Orientation            | `square`            | The rectangle is always drawn axis-aligned with no rotation.
+ * | ArcAngleExtent         | `N/A`               | This facet is not applicable to rectangle shapes.
+ * | RoundRectRadius        | `randomized`        | The corner radius is randomized based on a fraction of the rectangle's dimensions.
+ * | ContextTranslation     | `none`              | The test code does not contain any calls to `ctx.translate()`.
+ * | ContextRotation        | `none`              | The test code does not contain any calls to `ctx.rotate()`.
+ * | ContextScaling         | `none`              | The test code does not contain any calls to `ctx.scale()`.
+ * | Clipped on shape       | `none`              | The test code does not contain any calls to `ctx.clip()`.
+ * | Clipped on shape count | `n/a`               | Not applicable as there is no clipping.
+ * | Clipped on shape arrangement | `n/a`         | Not applicable as there is no clipping.
+ * | Clipped on shape size  | `n/a`               | Not applicable as there is no clipping.
+ * | Clipped on shape edge alignment | `n/a`      | Not applicable as there is no clipping.
+ *
+ * ---
+ *
+ * UNCAPTURED ASPECTS IN FILENAME / FACETS ABOVE:
+ * ----------------------------------------------
+ * - The stroke width is randomized to be an even integer in the range [2, 42].
+ * - The rectangle's dimensions are randomized to be in the approximate range of [50, ~530] pixels.
+ * - The corner radius is randomized based on the final, crisp-adjusted rectangle dimensions.
+ *
+ */
+
+/**
  * @fileoverview Test definition for a single centered rounded rectangle with semi-transparent stroke and fill.
  */
 
-// Helper functions _colorObjectToString, getRandomColor, adjustDimensionsForCrispStrokeRendering 
-// are assumed globally available.
-
-/**
- * Adapted from placeRoundedRectWithFillAndStrokeBothCrisp in src/scene-creation/scene-creation-rounded-rects.js
- * Calculates parameters for a rectangle aiming for crisp fill and stroke.
- * This version is specific to the needs of the transparent strokes test (e.g. maxStrokeWidth = 40).
- * @param {number} canvasWidth The width of the canvas.
- * @param {number} canvasHeight The height of the canvas.
- * @returns {{center: {x: number, y: number}, adjustedDimensions: {width: number, height: number}, strokeWidth: number}}
- */
-function _placeRectForTransparentTest(canvasWidth, canvasHeight) {
-    const maxAllowedContentWidth = canvasWidth * 0.6;
-    const maxAllowedContentHeight = canvasHeight * 0.6;
-    const maxStrokeWidth = 40; // As used in the original addCenteredRoundedRectTransparentStrokesRandomStrokeWidth
-
-    // SeededRandom Call 1: base strokeWidth
-    let strokeWidth = Math.round(SeededRandom.getRandom() * maxStrokeWidth + 1);
-    // Ensure strokeWidth is even for this placement strategy for crisp fill and stroke with one path
-    strokeWidth = strokeWidth % 2 === 0 ? strokeWidth : strokeWidth + 1;
-
-    let initialCenter = { x: canvasWidth / 2, y: canvasHeight / 2 }; // Base center on grid
-
-    // SeededRandom Call 2: Center offset (50% chance to be on pixel center)
-    if (SeededRandom.getRandom() < 0.5) {
-        initialCenter = { x: initialCenter.x + 0.5, y: initialCenter.y + 0.5 };
-    }
-
-    // SeededRandom Call 3: base rectWidth
-    let rectWidth = Math.round(50 + SeededRandom.getRandom() * maxAllowedContentWidth);
-    // SeededRandom Call 4: base rectHeight
-    let rectHeight = Math.round(50 + SeededRandom.getRandom() * maxAllowedContentHeight);
-
-    const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(rectWidth, rectHeight, strokeWidth, initialCenter);
-    return { center: initialCenter, adjustedDimensions, strokeWidth };
-}
+// Helper functions getRandomColor, adjustDimensionsForCrispStrokeRendering, 
+// calculateCrispFillAndStrokeRectParams are available from test-helper-functions.js
 
 
 /**
@@ -13001,7 +14705,7 @@ function _placeRectForTransparentTest(canvasWidth, canvasHeight) {
  *                  testing harness.
  * @returns {?{logs: string[]}} Logs for single-instance mode, or null for performance mode.
  */
-function draw_rounded_rect_single_rand_semitrans_stroke_fill_crisp_center(ctx, currentIterationNumber, instances = null) {
+function drawTest(ctx, currentIterationNumber, instances = null) {
     const isPerformanceRun = instances !== null && instances > 0;
     const numToDraw = isPerformanceRun ? instances : 1;
 
@@ -13017,8 +14721,18 @@ function draw_rounded_rect_single_rand_semitrans_stroke_fill_crisp_center(ctx, c
     }
 
     for (let i = 0; i < numToDraw; i++) {
-        // Calls 1-4 for SeededRandom happen inside _placeRectForTransparentTest
-        const placement = _placeRectForTransparentTest(canvasWidth, canvasHeight);
+        // Calls 1-4 for SeededRandom happen inside calculateCrispFillAndStrokeRectParams
+        const placement = calculateCrispFillAndStrokeRectParams({
+            canvasWidth,
+            canvasHeight,
+            minWidth: 50,
+            maxWidth: canvasWidth * 0.6,
+            minHeight: 50,
+            maxHeight: canvasHeight * 0.6,
+            maxStrokeWidth: 40,        // Higher max stroke width for this test
+            ensureEvenStroke: true,
+            randomPosition: false      // Centered positioning
+        });
         const center = placement.center;
         const finalRectWidth = placement.adjustedDimensions.width;
         const finalRectHeight = placement.adjustedDimensions.height;
@@ -13031,8 +14745,8 @@ function draw_rounded_rect_single_rand_semitrans_stroke_fill_crisp_center(ctx, c
         // SeededRandom Call 7: radius
         const radius = Math.round(SeededRandom.getRandom() * Math.min(finalRectWidth, finalRectHeight) * 0.2);
 
-        const strokeColorStr = _colorObjectToString(strokeColorObj);
-        const fillColorStr = _colorObjectToString(fillColorObj);
+        const strokeColorStr = strokeColorObj ? colorToString(strokeColorObj) : 'rgba(0,0,0,0)';
+        const fillColorStr = fillColorObj ? colorToString(fillColorObj) : 'rgba(0,0,0,0)';
 
         let geomX = center.x - finalRectWidth / 2;
         let geomY = center.y - finalRectHeight / 2;
@@ -13067,8 +14781,8 @@ function draw_rounded_rect_single_rand_semitrans_stroke_fill_crisp_center(ctx, c
 
 // Register the test
 registerHighLevelTest(
-    'rounded-rect--single--rand-semitrans-stroke-fill--crisp-center--test.js',
-    draw_rounded_rect_single_rand_semitrans_stroke_fill_crisp_center,
+    'roundrect-sgl-szMix-fSemi-sSemi-swMix-lytCenter-cenMixPG-edgeCrisp-ornAxial-rrrRand-test',
+    drawTest,
     'rounded-rects',
     {
         //compare: { swTol: 0, refTol: 0, diffTol: 0 },
@@ -13083,469 +14797,54 @@ registerHighLevelTest(
         description: 'Tests a single rounded rectangle with random stroke widths and semi-transparent colors, centered crisply (grid or pixel).',
         displayName: 'Perf: RRect RandTrans Stroke/Fill CrispCenter'
     }
-);/**
- * @fileoverview Test definition for multiple large, transparent-stroked rounded rectangles.
- */
+);
+})();
 
-// Helper functions _colorObjectToString, getRandomColor, adjustDimensionsForCrispStrokeRendering 
-// are assumed globally available.
-
+(function() {
 /**
- * Adapted from placeRoundedRectWithFillAndStrokeBothCrisp in src/scene-creation/scene-creation-rounded-rects.js
- * Calculates parameters for a rectangle aiming for crisp fill and stroke.
- * This version is specific to tests needing maxStrokeWidth = 40.
- * @param {number} canvasWidth The width of the canvas.
- * @param {number} canvasHeight The height of the canvas.
- * @returns {{initialCenter: {x: number, y: number}, adjustedDimensions: {width: number, height: number}, strokeWidth: number}}
- */
-function _placeRectForLargeTransparentTest(canvasWidth, canvasHeight) {
-    const maxAllowedContentWidth = canvasWidth * 0.6;
-    const maxAllowedContentHeight = canvasHeight * 0.6;
-    const maxStrokeWidth = 40; // As used in the original addLargeTransparentRoundedRectangles
-
-    // SeededRandom Call 1: base strokeWidth
-    let strokeWidth = Math.round(SeededRandom.getRandom() * maxStrokeWidth + 1);
-    strokeWidth = strokeWidth % 2 === 0 ? strokeWidth : strokeWidth + 1; // Ensure even
-
-    let initialCenter = { x: canvasWidth / 2, y: canvasHeight / 2 }; // Base center on grid
-
-    // SeededRandom Call 2: Center offset (50% chance to be on pixel center)
-    if (SeededRandom.getRandom() < 0.5) {
-        initialCenter = { x: initialCenter.x + 0.5, y: initialCenter.y + 0.5 };
-    }
-
-    // SeededRandom Call 3: base rectWidth
-    let rectWidth = Math.round(50 + SeededRandom.getRandom() * maxAllowedContentWidth);
-    // SeededRandom Call 4: base rectHeight
-    let rectHeight = Math.round(50 + SeededRandom.getRandom() * maxAllowedContentHeight);
-
-    const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(rectWidth, rectHeight, strokeWidth, initialCenter);
-    return { initialCenter, adjustedDimensions, strokeWidth };
-}
-
-
-/**
- * Draws multiple large rounded rectangles with transparent strokes.
- *
- * @param {CanvasRenderingContext2D | CrispSwContext} ctx The rendering context.
- * @param {number} currentIterationNumber The current test iteration (for seeding via RenderTest).
- * @param {?number} instances Optional: Number of instances to draw. Passed by the performance
- *                  testing harness. For visual regression (instances is null/0), 6 rectangles are drawn.
- * @returns {?{logs: string[]}} Logs for single-instance mode, or null for performance mode.
- */
-function draw_rounded_rects_axalign_multi_6_large_transparent_stroke_randpos_randsize_randfill(ctx, currentIterationNumber, instances = null) {
-    const isPerformanceRun = instances !== null && instances > 0;
-    const numToDraw = isPerformanceRun ? instances : 6; // Original test draws 6
-
-    let logs = [];
-
-    const canvasWidth = ctx.canvas.width;
-    const canvasHeight = ctx.canvas.height;
-    const fixedRadius = 40; // Fixed radius for this test
-
-    for (let i = 0; i < numToDraw; i++) {
-        // Calls 1-4 for SeededRandom happen inside _placeRectForLargeTransparentTest
-        const placement = _placeRectForLargeTransparentTest(canvasWidth, canvasHeight);
-        let currentCenter = placement.initialCenter; 
-        const finalRectWidth = placement.adjustedDimensions.width;
-        const finalRectHeight = placement.adjustedDimensions.height;
-        const strokeWidth = placement.strokeWidth;
-
-        // SeededRandom Call 5: xOffset
-        const xOffset = Math.floor(SeededRandom.getRandom() * 100) - 50;
-        // SeededRandom Call 6: yOffset
-        const yOffset = Math.floor(SeededRandom.getRandom() * 100) - 50;
-        
-        const finalCenter = {
-            x: currentCenter.x + xOffset,
-            y: currentCenter.y + yOffset
-        };
-
-        const strokeColorObj = { r: 0, g: 0, b: 0, a: 50 }; // Fixed: Black, very transparent
-        // SeededRandom Call 7: fillColor (can be semi-transparent)
-        const fillColorObj = getRandomColor(100, 200);
-
-        const strokeColorStr = _colorObjectToString(strokeColorObj);
-        const fillColorStr = _colorObjectToString(fillColorObj);
-
-        let geomX = finalCenter.x - finalRectWidth / 2;
-        let geomY = finalCenter.y - finalRectHeight / 2;
-
-        if (isPerformanceRun && numToDraw > 1) { 
-             geomX = Math.random() * Math.max(0, canvasWidth - finalRectWidth);
-             geomY = Math.random() * Math.max(0, canvasHeight - finalRectHeight);
-        }
-        
-        ctx.fillStyle = fillColorStr;
-        ctx.strokeStyle = strokeColorStr;
-        ctx.lineWidth = strokeWidth;
-
-        ctx.fillRoundRect(geomX, geomY, finalRectWidth, finalRectHeight, fixedRadius);
-        if (strokeWidth > 0) {
-            ctx.strokeRoundRect(geomX, geomY, finalRectWidth, finalRectHeight, fixedRadius);
-        }
-
-        if (!isPerformanceRun) { 
-            logs.push(
-                `LargeTransRRect ${i+1}: center=(${finalCenter.x.toFixed(1)},${finalCenter.y.toFixed(1)}), W/H=(${finalRectWidth},${finalRectHeight}), r=${fixedRadius}, sw=${strokeWidth.toFixed(1)}`
-            );
-        }
-    }
-
-    if (isPerformanceRun) {
-        return null; 
-    }
-    return { logs }; 
-}
-
-// Register the test
-registerHighLevelTest(
-    'rounded-rects--axalign--multi-6--large--transparent-stroke--randpos--randsize--randfill--test.js',
-    draw_rounded_rects_axalign_multi_6_large_transparent_stroke_randpos_randsize_randfill,
-    'rounded-rects',
-    {
-        //compare: { swTol: 0, refTol: 0, diffTol: 0 } // Default visual comparison
-    },
-    {
-        title: 'Large Transparent-Stroke Rounded Rectangles (Multiple, Random Params)',
-        description: 'Tests rendering of multiple large rounded rectangles with transparent strokes, random fills, and fixed large radius.',
-        displayName: 'Perf: 6 Large TranspStroke RRects'
-    }
-); /**
- * @fileoverview Test definition for multiple axis-aligned rounded rectangles with random parameters.
- */
-
-// Helper functions _colorObjectToString, getRandomColor, adjustDimensionsForCrispStrokeRendering 
-// are assumed globally available.
-
-/**
- * Adapted from placeRoundedRectWithFillAndStrokeBothCrisp in src/scene-creation/scene-creation-rounded-rects.js
- * Calculates parameters for a rectangle aiming for crisp fill and stroke.
- * This version is specific to the needs of the axis-aligned rounded rectangles test (e.g. maxStrokeWidth = 10).
- * @param {number} canvasWidth The width of the canvas.
- * @param {number} canvasHeight The height of the canvas.
- * @returns {{initialCenter: {x: number, y: number}, adjustedDimensions: {width: number, height: number}, strokeWidth: number}}
- */
-function _placeRectForAxisAlignedTest(canvasWidth, canvasHeight) {
-    const maxAllowedContentWidth = canvasWidth * 0.6;
-    const maxAllowedContentHeight = canvasHeight * 0.6;
-    const maxStrokeWidth = 10; // As used in the original addAxisAlignedRoundedRectangles -> placeRoundedRectWithFillAndStrokeBothCrisp(10)
-
-    // SeededRandom Call 1: base strokeWidth
-    let strokeWidth = Math.round(SeededRandom.getRandom() * maxStrokeWidth + 1);
-    strokeWidth = strokeWidth % 2 === 0 ? strokeWidth : strokeWidth + 1; // Ensure even
-
-    let initialCenter = { x: canvasWidth / 2, y: canvasHeight / 2 }; // Base center on grid
-
-    // SeededRandom Call 2: Center offset (50% chance to be on pixel center)
-    if (SeededRandom.getRandom() < 0.5) {
-        initialCenter = { x: initialCenter.x + 0.5, y: initialCenter.y + 0.5 };
-    }
-
-    // SeededRandom Call 3: base rectWidth
-    let rectWidth = Math.round(50 + SeededRandom.getRandom() * maxAllowedContentWidth);
-    // SeededRandom Call 4: base rectHeight
-    let rectHeight = Math.round(50 + SeededRandom.getRandom() * maxAllowedContentHeight);
-
-    const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(rectWidth, rectHeight, strokeWidth, initialCenter);
-    return { initialCenter, adjustedDimensions, strokeWidth }; // Return initialCenter before random offset
-}
-
-
-/**
- * Draws multiple axis-aligned rounded rectangles with random parameters.
- *
- * @param {CanvasRenderingContext2D | CrispSwContext} ctx The rendering context.
- * @param {number} currentIterationNumber The current test iteration (for seeding via RenderTest).
- * @param {?number} instances Optional: Number of instances to draw. Passed by the performance
- *                  testing harness. For visual regression (instances is null/0), 8 rectangles are drawn.
- * @returns {?{logs: string[]}} Logs for single-instance mode, or null for performance mode.
- */
-function draw_rounded_rects_axalign_multi_8_randpos_randsize_randstroke_randfill(ctx, currentIterationNumber, instances = null) {
-    const isPerformanceRun = instances !== null && instances > 0;
-    const numToDraw = isPerformanceRun ? instances : 8; // Original test draws 8
-
-    let logs = [];
-
-    const canvasWidth = ctx.canvas.width;
-    const canvasHeight = ctx.canvas.height;
-
-    for (let i = 0; i < numToDraw; i++) {
-        // Calls 1-4 for SeededRandom happen inside _placeRectForAxisAlignedTest
-        const placement = _placeRectForAxisAlignedTest(canvasWidth, canvasHeight);
-        let currentCenter = placement.initialCenter; // This is the center *before* the per-instance random offset
-        const finalRectWidth = placement.adjustedDimensions.width;
-        const finalRectHeight = placement.adjustedDimensions.height;
-        const strokeWidth = placement.strokeWidth;
-
-        // SeededRandom Call 5: xOffset
-        const xOffset = Math.floor(SeededRandom.getRandom() * 100) - 50;
-        // SeededRandom Call 6: yOffset
-        const yOffset = Math.floor(SeededRandom.getRandom() * 100) - 50;
-        
-        // Apply the random offset to get the final center for this specific rectangle
-        const finalCenter = {
-            x: currentCenter.x + xOffset,
-            y: currentCenter.y + yOffset
-        };
-
-        // SeededRandom Call 7: radius
-        const radius = Math.round(SeededRandom.getRandom() * Math.min(finalRectWidth, finalRectHeight) * 0.2);
-        // SeededRandom Call 8: strokeColor (opaque)
-        const strokeColorObj = getRandomColor(200, 255); 
-        // SeededRandom Call 9: fillColor (can be semi-transparent)
-        const fillColorObj = getRandomColor(100, 200);
-
-        const strokeColorStr = _colorObjectToString(strokeColorObj);
-        const fillColorStr = _colorObjectToString(fillColorObj);
-
-        let geomX = finalCenter.x - finalRectWidth / 2;
-        let geomY = finalCenter.y - finalRectHeight / 2;
-
-        // For performance mode, if drawing multiple instances, ensure the base properties are unique per instance (done by SR calls)
-        // then spread them out using Math.random for position only for instances *after the first one for that frame*.
-        if (isPerformanceRun && numToDraw > 1) { // Apply to all instances in perf run
-             geomX = Math.random() * Math.max(0, canvasWidth - finalRectWidth);
-             geomY = Math.random() * Math.max(0, canvasHeight - finalRectHeight);
-        } else if (!isPerformanceRun) { // For visual regression (numToDraw = 8), ensure shapes are reasonably on canvas
-            geomX = Math.max(0 - finalRectWidth / 4, Math.min(geomX, canvasWidth - finalRectWidth * 3/4));
-            geomY = Math.max(0 - finalRectHeight / 4, Math.min(geomY, canvasHeight - finalRectHeight* 3/4));
-        }
-        
-        ctx.fillStyle = fillColorStr;
-        ctx.strokeStyle = strokeColorStr;
-        ctx.lineWidth = strokeWidth;
-
-        ctx.fillRoundRect(geomX, geomY, finalRectWidth, finalRectHeight, radius);
-        if (strokeWidth > 0) {
-            ctx.strokeRoundRect(geomX, geomY, finalRectWidth, finalRectHeight, radius);
-        }
-
-        if (!isPerformanceRun) { 
-            logs.push(
-                `AxAlignedRRect ${i+1}: center=(${finalCenter.x.toFixed(1)},${finalCenter.y.toFixed(1)}), W/H=(${finalRectWidth},${finalRectHeight}), r=${radius}, sw=${strokeWidth.toFixed(1)}`
-            );
-        }
-    }
-
-    if (isPerformanceRun) {
-        return null; 
-    }
-    return { logs }; 
-}
-
-// Register the test
-registerHighLevelTest(
-    'rounded-rects--axalign--multi-8--randpos--randsize--randstroke--randfill--test.js',
-    draw_rounded_rects_axalign_multi_8_randpos_randsize_randstroke_randfill,
-    'rounded-rects',
-    {
-        //compare: { swTol: 0, refTol: 0, diffTol: 0 } // Default visual comparison
-    },
-    {
-        title: 'Axis-Aligned Rounded Rectangles (Multiple, Random Params)',
-        description: 'Tests rendering of multiple axis-aligned rounded rectangles with random positions, sizes, strokes, fills, and corner radii.',
-        displayName: 'Perf: 8 AxAlign RRects RandParams'
-    }
-); /**
- * @fileoverview Test definition for 10 thin, opaque-stroked rounded rectangles with 1px line width.
- */
-
-// Helper functions _colorObjectToString, getRandomColor, getRandomPoint, adjustCenterForCrispStrokeRendering 
-// are assumed globally available and use SeededRandom internally as needed.
-
-/**
- * Rounds the x and y coordinates of a point object.
- * @param {{x: number, y: number}} point The point to round.
- * @returns {{x: number, y: number}} The point with rounded coordinates.
- */
-function _roundPoint(point) {
-    return { x: Math.round(point.x), y: Math.round(point.y) };
-}
-
-/**
- * Draws 10 thin, opaque-stroked rounded rectangles.
- *
- * @param {CanvasRenderingContext2D | CrispSwContext} ctx The rendering context.
- * @param {number} currentIterationNumber The current test iteration (for seeding via RenderTest).
- * @param {?number} instances Optional: Number of instances to draw. Passed by the performance
- *                  testing harness. For visual regression (instances is null/0), 10 rectangles are drawn.
- * @returns {?{logs: string[]}} Logs for single-instance mode, or null for performance mode.
- */
-function draw_rounded_rects_multi_10_1px_opaque_stroke_rand_fill_crisp_center_adj(ctx, currentIterationNumber, instances = null) {
-    const isPerformanceRun = instances !== null && instances > 0;
-    const numToDraw = isPerformanceRun ? instances : 10; // Original test draws 10
-
-    let logs = [];
-
-    const canvasWidth = ctx.canvas.width;
-    const canvasHeight = ctx.canvas.height;
-
-    for (let i = 0; i < numToDraw; i++) {
-        // SeededRandom Call 1: width
-        const width = Math.round(50 + SeededRandom.getRandom() * 100);
-        // SeededRandom Call 2: height
-        const height = Math.round(50 + SeededRandom.getRandom() * 100);
-        
-        // SeededRandom Call 3 & 4 (approx, inside getRandomPoint)
-        // The starting initialisation of center is a random point, then rounded for grid crossing.
-        const randomCenter = getRandomPoint(1, canvasWidth, canvasHeight); // Assuming decimalPlaces=1, then pass canvas W/H
-        const centerGrid = _roundPoint(randomCenter); // Ensures integer coords for grid alignment before adjustment
-
-        // adjustCenterForCrispStrokeRendering is for a 1px stroke.
-        const adjustedCenter = adjustCenterForCrispStrokeRendering(centerGrid.x, centerGrid.y, width, height, 1);
-
-        // SeededRandom Call 5: radius
-        const radius = Math.round(SeededRandom.getRandom() * Math.min(width, height) * 0.2);
-        
-        // SeededRandom Call 6: strokeColor (opaque)
-        const strokeColorObj = getRandomColor(255, 255); 
-        // SeededRandom Call 7: fillColor (can be semi-transparent)
-        const fillColorObj = getRandomColor(100, 200);
-
-        const strokeColorStr = _colorObjectToString(strokeColorObj);
-        const fillColorStr = _colorObjectToString(fillColorObj);
-
-        // For drawing, use the adjusted center and original width/height
-        let geomX = adjustedCenter.x - width / 2;
-        let geomY = adjustedCenter.y - height / 2;
-
-        if (isPerformanceRun) { // For additional instances in perf mode, spread them out
-             if (i > 0) { // Keep first instance as per original logic for potential single-frame visual check
-                geomX = Math.random() * Math.max(0, canvasWidth - width);
-                geomY = Math.random() * Math.max(0, canvasHeight - height);
-             }
-        } else { // For visual regression, ensure shapes are reasonably on canvas
-            geomX = Math.max(0 - width/4, Math.min(geomX, canvasWidth - width*3/4));
-            geomY = Math.max(0 - height/4, Math.min(geomY, canvasHeight - height*3/4 ));
-        }
-        
-        ctx.fillStyle = fillColorStr;
-        ctx.strokeStyle = strokeColorStr;
-        ctx.lineWidth = 1; // Fixed 1px stroke
-
-        ctx.fillRoundRect(geomX, geomY, width, height, radius);
-        ctx.strokeRoundRect(geomX, geomY, width, height, radius);
-
-        if (!isPerformanceRun) { 
-            logs.push(
-                `ThinRRect ${i+1}: adjCenter=(${adjustedCenter.x.toFixed(1)},${adjustedCenter.y.toFixed(1)}), W/H=(${width},${height}), r=${radius}`
-            );
-        }
-    }
-
-    if (isPerformanceRun) {
-        return null; 
-    }
-    return { logs }; 
-}
-
-// Register the test
-registerHighLevelTest(
-    'rounded-rects--multi-10--1px-opaque-stroke--rand-fill--crisp-center-adj--test.js',
-    draw_rounded_rects_multi_10_1px_opaque_stroke_rand_fill_crisp_center_adj,
-    'rounded-rects',
-    {
-        //compare: { swTol: 0, refTol: 0, diffTol: 0 } // Default visual comparison
-    },
-    {
-        title: '10 Thin Opaque-Stroke Rounded Rectangles (1px, Crisp Center Adj.)',
-        description: 'Tests rendering of 10 rounded rectangles with 1px opaque strokes, random fills, and crisp center adjustment.',
-        displayName: 'Perf: 10 RRects ThinOpaque AdjCenter'
-    }
-); /**
- * @fileoverview Test definition for 8 rounded rectangles with no stroke and fixed size/radius.
- */
-
-// Helper functions _colorObjectToString, getRandomColor, getRandomPoint are assumed globally available.
-
-/**
- * Rounds the x and y coordinates of a point object.
- * @param {{x: number, y: number}} point The point to round.
- * @returns {{x: number, y: number}} The point with rounded coordinates.
- */
-function _roundPoint(point) {
-    return { x: Math.round(point.x), y: Math.round(point.y) };
-}
-
-/**
- * Draws 8 rounded rectangles with no stroke.
- *
- * @param {CanvasRenderingContext2D | CrispSwContext} ctx The rendering context.
- * @param {number} currentIterationNumber The current test iteration (for seeding via RenderTest).
- * @param {?number} instances Optional: Number of instances to draw. Passed by the performance
- *                  testing harness. For visual regression (instances is null/0), 8 rectangles are drawn.
- * @returns {?{logs: string[]}} Logs for single-instance mode, or null for performance mode.
- */
-function draw_rounded_rects_multi_8_no_stroke_fixed_size_large_radius_randpos_randfill(ctx, currentIterationNumber, instances = null) {
-    const isPerformanceRun = instances !== null && instances > 0;
-    const numToDraw = isPerformanceRun ? instances : 8; // Original test draws 8
-
-    let logs = [];
-
-    const canvasWidth = ctx.canvas.width;
-    const canvasHeight = ctx.canvas.height;
-    
-    const fixedWidth = 200;
-    const fixedHeight = 200;
-    const fixedRadius = 40;
-
-    for (let i = 0; i < numToDraw; i++) {
-        // SeededRandom Call 1 & 2 (approx, inside getRandomPoint)
-        const randomCenter = getRandomPoint(1, canvasWidth, canvasHeight); 
-        const center = _roundPoint(randomCenter); // Ensures integer coords for grid alignment
-
-        // SeededRandom Call 3: fillColor (can be semi-transparent)
-        const fillColorObj = getRandomColor(100, 200);
-        const fillColorStr = _colorObjectToString(fillColorObj);
-
-        let geomX = center.x - fixedWidth / 2;
-        let geomY = center.y - fixedHeight / 2;
-
-        if (isPerformanceRun && numToDraw > 1) { 
-             if (i > 0 || numToDraw > 1) { // Spread all instances in perf mode for this one
-                geomX = Math.random() * Math.max(0, canvasWidth - fixedWidth);
-                geomY = Math.random() * Math.max(0, canvasHeight - fixedHeight);
-            }
-        } else { // For visual regression, ensure shapes are reasonably on canvas
-            geomX = Math.max(0 - fixedWidth / 4, Math.min(geomX, canvasWidth - fixedWidth * 3/4));
-            geomY = Math.max(0 - fixedHeight / 4, Math.min(geomY, canvasHeight - fixedHeight * 3/4));
-        }
-        
-        ctx.fillStyle = fillColorStr;
-        // No strokeStyle or lineWidth needed as strokeWidth is 0
-
-        ctx.fillRoundRect(geomX, geomY, fixedWidth, fixedHeight, fixedRadius);
-        // No ctx.strokeRoundRect() call
-
-        if (!isPerformanceRun) { 
-            logs.push(
-                `NoStrokeRRect ${i+1}: center=(${center.x},${center.y}), W/H=(${fixedWidth},${fixedHeight}), r=${fixedRadius}`
-            );
-        }
-    }
-
-    if (isPerformanceRun) {
-        return null; 
-    }
-    return { logs }; 
-}
-
-// Register the test
-registerHighLevelTest(
-    'rounded-rects--multi-8--no-stroke--fixed-size-large-radius--randpos--randfill--test.js',
-    draw_rounded_rects_multi_8_no_stroke_fixed_size_large_radius_randpos_randfill,
-    'rounded-rects',
-    {
-        //compare: { swTol: 0, refTol: 0, diffTol: 0 } // Default visual comparison
-    },
-    {
-        title: 'Rounded Rectangles Without Stroke (Multiple, Fixed Size, Random Pos)',
-        description: 'Tests rendering of 8 rounded rectangles with no stroke, only fill, fixed size/radius, and random positions.',
-        displayName: 'Perf: 8 NoStroke RRects FixedSize RandPos'
-    }
-); /**
  * @fileoverview Test definition for a combined scene with all shape types.
+ *
+ * TEST SUMMARY:
+ * =================
+ *
+ * Description: A test scene combining various shapes. This test draws a large, complex
+ * scene by calling numerous individual shape-generating functions (e.g., for lines,
+ * rectangles, circles, arcs) to populate the canvas. It serves as a comprehensive
+ * integration test for the renderer.
+ *
+ * ---
+ *
+ * | Facet                  | Value          | Reason
+ * |------------------------|----------------|-----------------------------------------------------------------------------------------------------
+ * | Shape category         | mixed          | Draws lines, rectangles, circles, arcs, and rounded-rects.
+ * | Count                  | multi          | Draws a large number of shapes in total (15 lines, 10 rects, 40+ rounded-rects, etc.).
+ * | SizeCategory           | mixed          | The various shape-generating functions create primitives of many different sizes.
+ * | FillStyle              | mixed          | Some shapes are filled (opaque/transparent), others are not (e.g., lines).
+ * | StrokeStyle            | mixed          | Some shapes have opaque/transparent strokes, while others have no stroke.
+ * | StrokeThickness        | mixed          | Stroke width varies between the different shape types being drawn.
+ * | Layout                 | mixed          | Shapes are distributed across the canvas, some in grids, some randomly.
+ * | CenteredAt             | N/A            | Not a relevant characteristic for a complex scene with a `mixed` layout.
+ * | EdgeAlignment          | mixed          | Combines axis-aligned, rotated, and random shapes, resulting in both crisp and non-crisp edges.
+ * | Orientation            | mixed          | Includes axis-aligned, rotated, and randomly oriented shapes.
+ * | ArcAngleExtent         | mixed          | Includes both fixed 90-degree arcs and random-angle arcs.
+ * | RoundRectRadius        | mixed          | Includes rounded rectangles with various and likely randomized corner radii.
+ * | ContextTranslation     | fixed          | Uses `ctx.translate()` to position rectangles before rotation.
+ * | ContextRotation        | fixed          | Uses `ctx.rotate()` to draw rotated rectangles.
+ * | ContextScaling         | none           | The code does not use `ctx.scale()`.
+ * | Clipped on shape       | none           | No clipping is performed in this test.
+ * | Clipped on shape count | N/A            | Not applicable as no clipping is performed.
+ * | Clipped on shape arrangement | N/A      | Not applicable as no clipping is performed.
+ * | Clipped on shape size  | N/A            | Not applicable as no clipping is performed.
+ * | Clipped on shape edge alignment | n/a   | Not applicable as there is no clipping.
+ *
+ * ---
+ *
+ * UNCAPTURED ASPECTS IN FILENAME / FACETS ABOVE:
+ * ----------------------------------------------
+ * Specific shapes included, count of each, actual scene parameters/layout; precise
+ * randomization details for each sub-component (size, fill, stroke, etc.) are mixed
+ * and not individually captured. SizeCategory remains mixed as shape category is mixed.
+ *
  */
 
 // Assumes all individual scene-creation functions (addRandomLines, addAxisAlignedRectangles, etc.)
@@ -13562,7 +14861,7 @@ registerHighLevelTest(
  *                  In performance mode, `instances` full scenes are drawn.
  * @returns {?{logs: string[]}} Logs for the visual regression run.
  */
-function draw_scene_all_shapes_combined(ctx, currentIterationNumber, instances = null) {
+function drawTest(ctx, currentIterationNumber, instances = null) {
     const isPerformanceRun = instances !== null && instances > 0;
     const numScenesToDraw = isPerformanceRun ? instances : 1;
 
@@ -13572,8 +14871,8 @@ function draw_scene_all_shapes_combined(ctx, currentIterationNumber, instances =
     // Helper to draw shapes from the array populated by original add... functions
     function drawShapesFromArray(shapesArray, context) {
         shapesArray.forEach(shape => {
-            const fillColorStr = shape.fillColor ? _colorObjectToString(shape.fillColor) : 'rgba(0,0,0,0)';
-            const strokeColorStr = shape.strokeColor ? _colorObjectToString(shape.strokeColor) : 'rgba(0,0,0,0)';
+            const fillColorStr = shape.fillColor ? colorToString(shape.fillColor) : 'rgba(0,0,0,0)'    ;
+            const strokeColorStr = shape.strokeColor ? colorToString(shape.strokeColor) : 'rgba(0,0,0,0)'    ;
             context.fillStyle = fillColorStr;
             context.strokeStyle = strokeColorStr;
             context.lineWidth = shape.strokeWidth || (shape.thickness || 0); // Use thickness for lines
@@ -13712,17 +15011,20 @@ function draw_scene_all_shapes_combined(ctx, currentIterationNumber, instances =
 
 // Register the test
 registerHighLevelTest(
-    'scene--all-shapes-combined--test.js',
-    draw_scene_all_shapes_combined,
+    'scene-multi-szMix-fMix-sMix-swMix-lytMix-edgeMix-ornMix-arcAMix-rrrMix-ctxTransFixed-ctxRotFixed-test',
+    drawTest,
     'scenes',
     {
         //compare: { swTol: 0, refTol: 0, diffTol: 0 } // Default visual comparison
     },
     {
-        displayName: 'Perf: Scene All Combined',
-        description: 'Performance of drawing a combined scene with multiple shape types.'
+        title: 'Scenes: All-shapes-combined',
+        displayName: 'Scenes: All-shapes-combined',
+        description: 'A test scene combining various shapes. This test draws a large, complex scene by calling numerous individual shape-generating functions (e.g., for lines, rectangles, circles, arcs) to populate the canvas. It serves as a comprehensive integration test for the renderer.'
     }
-); /**
+); })();
+
+/**
  * Node.js Test Runner for Minimal-2D-Js-Software-Renderer - High Level Tests
  * ==========================================================================
  * 
