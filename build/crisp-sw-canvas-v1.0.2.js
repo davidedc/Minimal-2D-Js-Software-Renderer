@@ -110,76 +110,495 @@ function getScaleFactors(matrix) {
     const scaleY = Math.sqrt(matrix[3] * matrix[3] + matrix[4] * matrix[4]);
     return { scaleX, scaleY };
 }
-// Color parsing and normalization
-function parseColor(colorStr) {
-    if (!colorStr || typeof colorStr !== 'string') {
+/**
+ * Color class for SWCanvas
+ * 
+ * Encapsulates color operations, conversions, and alpha blending math.
+ * Follows Joshua Bloch's principle of making classes immutable where practical.
+ * 
+ * Internally uses premultiplied sRGB for consistency with HTML5 Canvas behavior.
+ * Provides methods for converting between premultiplied and non-premultiplied forms.
+ */
+class Color {
+    /**
+     * Create a Color instance
+     * @param {number} r - Red component (0-255)
+     * @param {number} g - Green component (0-255)  
+     * @param {number} b - Blue component (0-255)
+     * @param {number} a - Alpha component (0-255)
+     * @param {boolean} isPremultiplied - Whether values are already premultiplied
+     */
+    constructor(r, g, b, a = 255, isPremultiplied = false) {
+        // Validate input ranges
+        if (r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255 || a < 0 || a > 255) {
+            throw new Error('Color components must be in range 0-255');
+        }
+
+        if (isPremultiplied) {
+            this._r = Math.round(r);
+            this._g = Math.round(g);
+            this._b = Math.round(b);
+            this._a = Math.round(a);
+        } else {
+            // Convert to premultiplied form
+            const alpha = a / 255;
+            this._r = Math.round(r * alpha);
+            this._g = Math.round(g * alpha);
+            this._b = Math.round(b * alpha);
+            this._a = Math.round(a);
+        }
+    }
+
+    // Getters for premultiplied components (internal storage format)
+    get premultipliedR() { return this._r; }
+    get premultipliedG() { return this._g; }
+    get premultipliedB() { return this._b; }
+    get premultipliedA() { return this._a; }
+
+    // Getters for non-premultiplied components (API-friendly)
+    get r() {
+        if (this._a === 0) return 0;
+        if (this._a === 255) return this._r;
+        return Math.round((this._r * 255) / this._a);
+    }
+
+    get g() {
+        if (this._a === 0) return 0;
+        if (this._a === 255) return this._g;
+        return Math.round((this._g * 255) / this._a);
+    }
+
+    get b() {
+        if (this._a === 0) return 0;
+        if (this._a === 255) return this._b;
+        return Math.round((this._b * 255) / this._a);
+    }
+
+    get a() {
+        return this._a;
+    }
+
+    /**
+     * Get non-premultiplied RGBA array
+     * @returns {number[]} [r, g, b, a] array
+     */
+    toRGBA() {
+        return [this.r, this.g, this.b, this.a];
+    }
+
+    /**
+     * Get premultiplied RGBA array (internal storage format)
+     * @returns {number[]} [r, g, b, a] array with RGB premultiplied
+     */
+    toPremultipliedRGBA() {
+        return [this._r, this._g, this._b, this._a];
+    }
+
+    /**
+     * Get alpha as normalized value (0-1)
+     * @returns {number} Alpha in 0-1 range
+     */
+    get normalizedAlpha() {
+        return this._a / 255;
+    }
+
+    /**
+     * Check if color is fully transparent
+     * @returns {boolean} True if alpha is 0
+     */
+    get isTransparent() {
+        return this._a === 0;
+    }
+
+    /**
+     * Check if color is fully opaque
+     * @returns {boolean} True if alpha is 255
+     */
+    get isOpaque() {
+        return this._a === 255;
+    }
+
+    /**
+     * Apply global alpha to this color (immutable operation)
+     * @param {number} globalAlpha - Alpha multiplier (0-1)
+     * @returns {Color} New Color with applied global alpha
+     */
+    withGlobalAlpha(globalAlpha) {
+        if (globalAlpha < 0 || globalAlpha > 1) {
+            throw new Error('Global alpha must be in range 0-1');
+        }
+
+        // Work with non-premultiplied values to apply global alpha correctly
+        const nonPremultR = this.r;
+        const nonPremultG = this.g;
+        const nonPremultB = this.b;
+        const nonPremultA = this.a;
+
+        const newAlpha = Math.round(nonPremultA * globalAlpha);
+        return new Color(nonPremultR, nonPremultG, nonPremultB, newAlpha, false);
+    }
+
+    /**
+     * Blend this color over another color using source-over composition
+     * @param {Color} background - Background color to blend over
+     * @returns {Color} New Color representing the blended result
+     */
+    blendOver(background) {
+        if (this._a === 255) {
+            // Source is opaque - return source
+            return this;
+        }
+
+        if (this._a === 0) {
+            // Source is transparent - return background
+            return background;
+        }
+
+        // Standard premultiplied alpha blending
+        const srcAlpha = this.normalizedAlpha;
+        const invSrcAlpha = 1 - srcAlpha;
+
+        const newR = Math.round(this._r + background._r * invSrcAlpha);
+        const newG = Math.round(this._g + background._g * invSrcAlpha);
+        const newB = Math.round(this._b + background._b * invSrcAlpha);
+        const newA = Math.round(this._a + background._a * invSrcAlpha);
+
+        return new Color(newR, newG, newB, newA, true);
+    }
+
+    /**
+     * Convert color for BMP output (non-premultiplied RGB)
+     * @returns {Object} {r, g, b} object for BMP encoding
+     */
+    toBMP() {
+        return {
+            r: this.r,
+            g: this.g,
+            b: this.b
+        };
+    }
+
+    /**
+     * Convert to CSS rgba() string
+     * @returns {string} CSS rgba() format string
+     */
+    toCSS() {
+        const alpha = (this.a / 255).toFixed(3).replace(/\.?0+$/, '');
+        return `rgba(${this.r}, ${this.g}, ${this.b}, ${alpha})`;
+    }
+
+    /**
+     * String representation for debugging
+     * @returns {string} Color description
+     */
+    toString() {
+        return `Color(${this.r}, ${this.g}, ${this.b}, ${this.a})`;
+    }
+
+    /**
+     * Check equality with another Color
+     * @param {Color} other - Color to compare with
+     * @returns {boolean} True if colors are equal
+     */
+    equals(other) {
+        return other instanceof Color &&
+            this._r === other._r &&
+            this._g === other._g &&
+            this._b === other._b &&
+            this._a === other._a;
+    }
+}
+
+// Static constant: transparent black
+Color.transparent = new Color(0, 0, 0, 0);
+
+// Static constant: opaque black
+Color.black = new Color(0, 0, 0, 255);
+
+/**
+ * Create Color from CSS string using provided parser
+ * @param {string} cssString - CSS color string
+ * @param {ColorParser} parser - ColorParser instance
+ * @returns {Color} New Color instance
+ */
+Color.fromCSS = function (cssString, parser) {
+    if (!cssString || typeof cssString !== 'string') {
         throw new Error("Invalid color format: must be a string");
     }
-    
-    colorStr = colorStr.trim().replace(/\s+/g, '');
-
-    // Handle hex colors
-    if (colorStr.startsWith('#')) {
-        let r, g, b;
+    const parsed = parser.parse(cssString);
+    return new Color(parsed.r, parsed.g, parsed.b, parsed.a, false);
+};/**
+ * ColorParser for SWCanvas
+ * 
+ * Parses CSS color strings into RGBA values for use with Core API.
+ * Supports hex, RGB/RGBA functions, and named colors.
+ * Includes caching for performance optimization.
+ */
+class ColorParser {
+    constructor() {
+        this._cache = new Map();
         
-        if (colorStr.length === 4) {
-            // #RGB format
-            r = parseInt(colorStr[1] + colorStr[1], 16);
-            g = parseInt(colorStr[2] + colorStr[2], 16);
-            b = parseInt(colorStr[3] + colorStr[3], 16);
-            return normalizeColor(r, g, b, 1);
-        } else if (colorStr.length === 7) {
-            // #RRGGBB format
-            r = parseInt(colorStr.substring(1, 3), 16);
-            g = parseInt(colorStr.substring(3, 5), 16);
-            b = parseInt(colorStr.substring(5, 7), 16);
-            return normalizeColor(r, g, b, 1);
-        }
-    }
-
-    // Handle rgb/rgba formats
-    const rgbMatch = colorStr.match(/^rgb\((\d+),(\d+),(\d+)\)$/i);
-    const rgbaMatch = colorStr.match(/^rgba\((\d+),(\d+),(\d+),([0-9]*\.?[0-9]+)\)$/i);
-
-    if (rgbMatch) {
-        const [_, r, g, b] = rgbMatch;
-        if (r > 255 || g > 255 || b > 255) {
-            throw new Error("RGB values must be between 0-255");
-        }
-        return normalizeColor(+r, +g, +b, 1);
-    } else if (rgbaMatch) {
-        const [_, r, g, b, a] = rgbaMatch;
-        if (r > 255 || g > 255 || b > 255) {
-            throw new Error("RGB values must be between 0-255");
-        }
-        return normalizeColor(+r, +g, +b, +a);
+        // CSS Color names to RGB mapping - Complete MDN specification
+        this._namedColors = {
+            // CSS Level 1 colors
+            black: { r: 0, g: 0, b: 0 },
+            silver: { r: 192, g: 192, b: 192 },
+            gray: { r: 128, g: 128, b: 128 },
+            white: { r: 255, g: 255, b: 255 },
+            maroon: { r: 128, g: 0, b: 0 },
+            red: { r: 255, g: 0, b: 0 },
+            purple: { r: 128, g: 0, b: 128 },
+            fuchsia: { r: 255, g: 0, b: 255 },
+            green: { r: 0, g: 128, b: 0 },
+            lime: { r: 0, g: 255, b: 0 },
+            olive: { r: 128, g: 128, b: 0 },
+            yellow: { r: 255, g: 255, b: 0 },
+            navy: { r: 0, g: 0, b: 128 },
+            blue: { r: 0, g: 0, b: 255 },
+            teal: { r: 0, g: 128, b: 128 },
+            aqua: { r: 0, g: 255, b: 255 },
+            
+            // CSS Level 2 (X11) colors  
+            aliceblue: { r: 240, g: 248, b: 255 },
+            antiquewhite: { r: 250, g: 235, b: 215 },
+            aquamarine: { r: 127, g: 255, b: 212 },
+            azure: { r: 240, g: 255, b: 255 },
+            beige: { r: 245, g: 245, b: 220 },
+            bisque: { r: 255, g: 228, b: 196 },
+            blanchedalmond: { r: 255, g: 235, b: 205 },
+            blueviolet: { r: 138, g: 43, b: 226 },
+            brown: { r: 165, g: 42, b: 42 },
+            burlywood: { r: 222, g: 184, b: 135 },
+            cadetblue: { r: 95, g: 158, b: 160 },
+            chartreuse: { r: 127, g: 255, b: 0 },
+            chocolate: { r: 210, g: 105, b: 30 },
+            coral: { r: 255, g: 127, b: 80 },
+            cornflowerblue: { r: 100, g: 149, b: 237 },
+            cornsilk: { r: 255, g: 248, b: 220 },
+            crimson: { r: 220, g: 20, b: 60 },
+            cyan: { r: 0, g: 255, b: 255 }, // synonym of aqua
+            darkblue: { r: 0, g: 0, b: 139 },
+            darkcyan: { r: 0, g: 139, b: 139 },
+            darkgoldenrod: { r: 184, g: 134, b: 11 },
+            darkgray: { r: 169, g: 169, b: 169 },
+            darkgreen: { r: 0, g: 100, b: 0 },
+            darkgrey: { r: 169, g: 169, b: 169 }, // synonym of darkgray
+            darkkhaki: { r: 189, g: 183, b: 107 },
+            darkmagenta: { r: 139, g: 0, b: 139 },
+            darkolivegreen: { r: 85, g: 107, b: 47 },
+            darkorange: { r: 255, g: 140, b: 0 },
+            darkorchid: { r: 153, g: 50, b: 204 },
+            darkred: { r: 139, g: 0, b: 0 },
+            darksalmon: { r: 233, g: 150, b: 122 },
+            darkseagreen: { r: 143, g: 188, b: 143 },
+            darkslateblue: { r: 72, g: 61, b: 139 },
+            darkslategray: { r: 47, g: 79, b: 79 },
+            darkslategrey: { r: 47, g: 79, b: 79 }, // synonym of darkslategray
+            darkturquoise: { r: 0, g: 206, b: 209 },
+            darkviolet: { r: 148, g: 0, b: 211 },
+            deeppink: { r: 255, g: 20, b: 147 },
+            deepskyblue: { r: 0, g: 191, b: 255 },
+            dimgray: { r: 105, g: 105, b: 105 },
+            dimgrey: { r: 105, g: 105, b: 105 }, // synonym of dimgray
+            dodgerblue: { r: 30, g: 144, b: 255 },
+            firebrick: { r: 178, g: 34, b: 34 },
+            floralwhite: { r: 255, g: 250, b: 240 },
+            forestgreen: { r: 34, g: 139, b: 34 },
+            gainsboro: { r: 220, g: 220, b: 220 },
+            ghostwhite: { r: 248, g: 248, b: 255 },
+            gold: { r: 255, g: 215, b: 0 },
+            goldenrod: { r: 218, g: 165, b: 32 },
+            grey: { r: 128, g: 128, b: 128 }, // synonym of gray
+            greenyellow: { r: 173, g: 255, b: 47 },
+            honeydew: { r: 240, g: 255, b: 240 },
+            hotpink: { r: 255, g: 105, b: 180 },
+            indianred: { r: 205, g: 92, b: 92 },
+            indigo: { r: 75, g: 0, b: 130 },
+            ivory: { r: 255, g: 255, b: 240 },
+            khaki: { r: 240, g: 230, b: 140 },
+            lavender: { r: 230, g: 230, b: 250 },
+            lavenderblush: { r: 255, g: 240, b: 245 },
+            lawngreen: { r: 124, g: 252, b: 0 },
+            lemonchiffon: { r: 255, g: 250, b: 205 },
+            lightblue: { r: 173, g: 216, b: 230 },
+            lightcoral: { r: 240, g: 128, b: 128 },
+            lightcyan: { r: 224, g: 255, b: 255 },
+            lightgoldenrodyellow: { r: 250, g: 250, b: 210 },
+            lightgray: { r: 211, g: 211, b: 211 },
+            lightgreen: { r: 144, g: 238, b: 144 },
+            lightgrey: { r: 211, g: 211, b: 211 }, // synonym of lightgray
+            lightpink: { r: 255, g: 182, b: 193 },
+            lightsalmon: { r: 255, g: 160, b: 122 },
+            lightseagreen: { r: 32, g: 178, b: 170 },
+            lightskyblue: { r: 135, g: 206, b: 250 },
+            lightslategray: { r: 119, g: 136, b: 153 },
+            lightslategrey: { r: 119, g: 136, b: 153 }, // synonym of lightslategray
+            lightsteelblue: { r: 176, g: 196, b: 222 },
+            lightyellow: { r: 255, g: 255, b: 224 },
+            limegreen: { r: 50, g: 205, b: 50 },
+            linen: { r: 250, g: 240, b: 230 },
+            magenta: { r: 255, g: 0, b: 255 }, // synonym of fuchsia
+            mediumaquamarine: { r: 102, g: 205, b: 170 },
+            mediumblue: { r: 0, g: 0, b: 205 },
+            mediumorchid: { r: 186, g: 85, b: 211 },
+            mediumpurple: { r: 147, g: 112, b: 219 },
+            mediumseagreen: { r: 60, g: 179, b: 113 },
+            mediumslateblue: { r: 123, g: 104, b: 238 },
+            mediumspringgreen: { r: 0, g: 250, b: 154 },
+            mediumturquoise: { r: 72, g: 209, b: 204 },
+            mediumvioletred: { r: 199, g: 21, b: 133 },
+            midnightblue: { r: 25, g: 25, b: 112 },
+            mintcream: { r: 245, g: 255, b: 250 },
+            mistyrose: { r: 255, g: 228, b: 225 },
+            moccasin: { r: 255, g: 228, b: 181 },
+            navajowhite: { r: 255, g: 222, b: 173 },
+            oldlace: { r: 253, g: 245, b: 230 },
+            olivedrab: { r: 107, g: 142, b: 35 },
+            orange: { r: 255, g: 165, b: 0 },
+            orangered: { r: 255, g: 69, b: 0 },
+            orchid: { r: 218, g: 112, b: 214 },
+            palegoldenrod: { r: 238, g: 232, b: 170 },
+            palegreen: { r: 152, g: 251, b: 152 },
+            paleturquoise: { r: 175, g: 238, b: 238 },
+            palevioletred: { r: 219, g: 112, b: 147 },
+            papayawhip: { r: 255, g: 239, b: 213 },
+            peachpuff: { r: 255, g: 218, b: 185 },
+            peru: { r: 205, g: 133, b: 63 },
+            pink: { r: 255, g: 192, b: 203 },
+            plum: { r: 221, g: 160, b: 221 },
+            powderblue: { r: 176, g: 224, b: 230 },
+            rebeccapurple: { r: 102, g: 51, b: 153 }, // CSS Level 4
+            rosybrown: { r: 188, g: 143, b: 143 },
+            royalblue: { r: 65, g: 105, b: 225 },
+            saddlebrown: { r: 139, g: 69, b: 19 },
+            salmon: { r: 250, g: 128, b: 114 },
+            sandybrown: { r: 244, g: 164, b: 96 },
+            seagreen: { r: 46, g: 139, b: 87 },
+            seashell: { r: 255, g: 245, b: 238 },
+            sienna: { r: 160, g: 82, b: 45 },
+            skyblue: { r: 135, g: 206, b: 235 },
+            slateblue: { r: 106, g: 90, b: 205 },
+            slategray: { r: 112, g: 128, b: 144 },
+            slategrey: { r: 112, g: 128, b: 144 }, // synonym of slategray
+            snow: { r: 255, g: 250, b: 250 },
+            springgreen: { r: 0, g: 255, b: 127 },
+            steelblue: { r: 70, g: 130, b: 180 },
+            tan: { r: 210, g: 180, b: 140 },
+            thistle: { r: 216, g: 191, b: 216 },
+            tomato: { r: 255, g: 99, b: 71 },
+            turquoise: { r: 64, g: 224, b: 208 },
+            violet: { r: 238, g: 130, b: 238 },
+            wheat: { r: 245, g: 222, b: 179 },
+            whitesmoke: { r: 245, g: 245, b: 245 },
+            yellowgreen: { r: 154, g: 205, b: 50 }
+        };
     }
     
-    throw new Error(`Invalid color format: ${colorStr}`);
-}
-
-function normalizeColor(r, g, b, a) {
-    return {
-        r: Math.round(Math.max(0, Math.min(255, r))),
-        g: Math.round(Math.max(0, Math.min(255, g))),
-        b: Math.round(Math.max(0, Math.min(255, b))),
-        // the a must be now transformed to 0-255
-        a: Math.max(0, Math.min(255, a * 255))
-    };
-}
-
-function colorToString(colorOrR, g, b, a) {
-    // if a color object is passed, convert it to a string
-    // like `rgba(${color.r}, ${color.g}, ${color.b}, ${(color.a/255).toFixed(3)})`;
-    // otherwise, if the four r,g,b,a parameters are passed, convert them to a string
-    // like `rgba(${r}, ${g}, ${b}, ${(a/255).toFixed(3)})`;
-    // Note that 3 decimal places should be enough, because the alpha is still 8 bits anyways
-    // and 1/255 is the smallest increment for the alpha channel and that is 0.003921....
-    // the .replace(/\.?0+$/, '') removes any trailing zeros so that we don't have things like "1.000"
-    if (typeof colorOrR === 'object') {
-        return `rgba(${colorOrR.r}, ${colorOrR.g}, ${colorOrR.b}, ${(colorOrR.a/255).toFixed(3).replace(/\.?0+$/, '')})`;
-    } else {
-        return `rgba(${colorOrR}, ${g}, ${b}, ${(a/255).toFixed(3).replace(/\.?0+$/, '')})`;
+    /**
+     * Parse a CSS color string to RGBA values
+     * @param {string} color - CSS color string
+     * @returns {Object} {r, g, b, a} with values 0-255
+     */
+    parse(color) {
+        // Check cache first
+        if (this._cache.has(color)) {
+            return this._cache.get(color);
+        }
+        
+        let result;
+        
+        if (typeof color !== 'string') {
+            result = { r: 0, g: 0, b: 0, a: 255 };
+        } else {
+            const trimmed = color.trim().toLowerCase();
+            
+            if (trimmed.startsWith('#')) {
+                result = this._parseHex(trimmed);
+            } else if (trimmed.startsWith('rgb')) {
+                result = this._parseRGB(trimmed);
+            } else if (this._namedColors[trimmed]) {
+                const named = this._namedColors[trimmed];
+                result = { r: named.r, g: named.g, b: named.b, a: 255 };
+            } else {
+                // Unknown color - default to black
+                result = { r: 0, g: 0, b: 0, a: 255 };
+            }
+        }
+        
+        // Cache the result
+        this._cache.set(color, result);
+        return result;
+    }
+    
+    /**
+     * Parse hex color (#RGB, #RRGGBB, #RRGGBBAA)
+     * @private
+     */
+    _parseHex(hex) {
+        // Remove the #
+        hex = hex.substring(1);
+        
+        if (hex.length === 3) {
+            // #RGB -> #RRGGBB
+            hex = hex.split('').map(c => c + c).join('');
+        }
+        
+        if (hex.length === 6) {
+            // #RRGGBB
+            const r = parseInt(hex.substring(0, 2), 16);
+            const g = parseInt(hex.substring(2, 4), 16);
+            const b = parseInt(hex.substring(4, 6), 16);
+            return { r, g, b, a: 255 };
+        } else if (hex.length === 8) {
+            // #RRGGBBAA
+            const r = parseInt(hex.substring(0, 2), 16);
+            const g = parseInt(hex.substring(2, 4), 16);
+            const b = parseInt(hex.substring(4, 6), 16);
+            const a = parseInt(hex.substring(6, 8), 16);
+            return { r, g, b, a };
+        }
+        
+        // Invalid hex - default to black
+        return { r: 0, g: 0, b: 0, a: 255 };
+    }
+    
+    /**
+     * Parse RGB/RGBA function notation
+     * @private
+     */
+    _parseRGB(rgb) {
+        // Extract the content inside parentheses
+        const match = rgb.match(/rgba?\s*\(\s*([^)]+)\s*\)/);
+        if (!match) {
+            return { r: 0, g: 0, b: 0, a: 255 };
+        }
+        
+        const parts = match[1].split(',').map(s => s.trim());
+        
+        if (parts.length < 3) {
+            return { r: 0, g: 0, b: 0, a: 255 };
+        }
+        
+        const r = Math.max(0, Math.min(255, parseInt(parts[0]) || 0));
+        const g = Math.max(0, Math.min(255, parseInt(parts[1]) || 0));
+        const b = Math.max(0, Math.min(255, parseInt(parts[2]) || 0));
+        
+        let a = 255;
+        if (parts.length >= 4) {
+            const alpha = parseFloat(parts[3]);
+            if (!isNaN(alpha)) {
+                a = Math.max(0, Math.min(255, Math.round(alpha * 255)));
+            }
+        }
+        
+        return { r, g, b, a };
+    }
+    
+    /**
+     * Clear the color cache
+     */
+    clearCache() {
+        this._cache.clear();
     }
 }/**
  * Represents the state of a CrispSwContext at a point in time.
@@ -191,8 +610,9 @@ class ContextState {
         this.canvasHeight = canvasHeight;
         this.lineWidth = lineWidth || 1;
         this.transform = transform || new TransformationMatrix();
-        this.strokeColor = strokeColor || { r: 0, g: 0, b: 0, a: 1 };
-        this.fillColor = fillColor || { r: 0, g: 0, b: 0, a: 1 };
+        // Store Color instances (default: opaque black)
+        this.strokeColor = strokeColor || Color.black;
+        this.fillColor = fillColor || Color.black;
         this.globalAlpha = globalAlpha || 1.0;
         this.clippingMask = clippingMask || new Uint8Array(Math.ceil(canvasWidth * canvasHeight / 8)).fill(255);
     }
@@ -203,11 +623,11 @@ class ContextState {
             this.canvasWidth, this.canvasHeight,
             this.lineWidth,
             this.transform.clone(),
-            { ...this.strokeColor }, { ...this.fillColor },
+            // Color is immutable - can reuse same instance
+            this.strokeColor, this.fillColor,
             this.globalAlpha,
             clippingMaskCopy
         );
-
     }
 }
 // THIS IS NOT USED SO FAR BECAUSE WE FILL (ROTATED) RECTANGLES SO FAR, FOR WHICH WE
@@ -4504,6 +4924,9 @@ class CrispSwCanvas {
 // Check for Node.js environment and load polyfills if needed
 const isNode = typeof window === 'undefined' && typeof process !== 'undefined';
 
+// Global ColorParser instance for parsing CSS color strings
+const _colorParser = new ColorParser();
+
 /**
  * Software-based Canvas 2D rendering context
  * This provides a subset of the CanvasRenderingContext2D API that runs
@@ -4585,13 +5008,21 @@ class CrispSwContext {
         this.currentState.transform.reset();
     }
 
-    // Style setters
+    // Style setters and getters
     set fillStyle(style) {
-        this.currentState.fillColor = parseColor(style);
+        this.currentState.fillColor = Color.fromCSS(style, _colorParser);
+    }
+
+    get fillStyle() {
+        return this.currentState.fillColor.toCSS();
     }
 
     set strokeStyle(style) {
-        this.currentState.strokeColor = parseColor(style);
+        this.currentState.strokeColor = Color.fromCSS(style, _colorParser);
+    }
+
+    get strokeStyle() {
+        return this.currentState.strokeColor.toCSS();
     }
 
     set lineWidth(width) {
@@ -4694,7 +5125,7 @@ class CrispSwContext {
             rotation: rotation,
             clippingOnly: false,
             strokeWidth: 0,
-            strokeColor: { r: 0, g: 0, b: 0, a: 0 },
+            strokeColor: Color.transparent,
             fillColor: state.fillColor
         });
     }
@@ -4715,7 +5146,7 @@ class CrispSwContext {
             clippingOnly: false,
             strokeWidth: scaledLineWidth,
             strokeColor: state.strokeColor,
-            fillColor: { r: 0, g: 0, b: 0, a: 0 }
+            fillColor: Color.transparent
         });
     }
 
@@ -4732,30 +5163,27 @@ class CrispSwContext {
      * @param {number} centerX - X coordinate of the circle center
      * @param {number} centerY - Y coordinate of the circle center
      * @param {number} radius - Radius of the circle
-     * @param {number} fillR - Red component of fill color (0-255)
-     * @param {number} fillG - Green component of fill color (0-255)
-     * @param {number} fillB - Blue component of fill color (0-255)
-     * @param {number} fillA - Alpha component of fill color (0-255)
+     * @param {Color} fillColor - Fill color as a Color instance
      */
-    fillCircle(centerX, centerY, radius, fillR, fillG, fillB, fillA) {
+    fillCircle(centerX, centerY, radius, fillColor) {
         const state = this.currentState;
-        
+
         // Transform center point according to current transformation matrix
         const center = transformPoint(centerX, centerY, state.transform.elements);
-        
+
         // Apply scale factor to radius
         const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
         const scaledRadius = radius * Math.max(scaleX, scaleY);
-        
+
         // Create shape object for the circle
         const circleShape = {
             center: { x: center.tx, y: center.ty },
             radius: scaledRadius,
             strokeWidth: 0,
-            strokeColor: { r: 0, g: 0, b: 0, a: 0 }, // No stroke
-            fillColor: { r: fillR, g: fillG, b: fillB, a: fillA }
+            strokeColor: Color.transparent,
+            fillColor: fillColor
         };
-        
+
         // Call the circle renderer with our shape
         this.circleRenderer.drawCircle(circleShape);
     }
@@ -4766,31 +5194,28 @@ class CrispSwContext {
      * @param {number} centerY - Y coordinate of the circle center
      * @param {number} radius - Radius of the circle
      * @param {number} strokeWidth - Width of the stroke
-     * @param {number} strokeR - Red component of stroke color (0-255)
-     * @param {number} strokeG - Green component of stroke color (0-255)
-     * @param {number} strokeB - Blue component of stroke color (0-255)
-     * @param {number} strokeA - Alpha component of stroke color (0-255)
+     * @param {Color} strokeColor - Stroke color as a Color instance
      */
-    strokeCircle(centerX, centerY, radius, strokeWidth, strokeR, strokeG, strokeB, strokeA) {
+    strokeCircle(centerX, centerY, radius, strokeWidth, strokeColor) {
         const state = this.currentState;
-        
+
         // Transform center point according to current transformation matrix
         const center = transformPoint(centerX, centerY, state.transform.elements);
-        
+
         // Apply scale factor to radius and stroke width
         const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
         const scaledRadius = radius * Math.max(scaleX, scaleY);
         const scaledStrokeWidth = getScaledLineWidth(state.transform.elements, strokeWidth);
-        
+
         // Create shape object for the circle
         const circleShape = {
             center: { x: center.tx, y: center.ty },
             radius: scaledRadius,
             strokeWidth: scaledStrokeWidth,
-            strokeColor: { r: strokeR, g: strokeG, b: strokeB, a: strokeA },
-            fillColor: { r: 0, g: 0, b: 0, a: 0 } // No fill
+            strokeColor: strokeColor,
+            fillColor: Color.transparent
         };
-        
+
         // Call the circle renderer with our shape
         this.circleRenderer.drawCircle(circleShape);
     }
@@ -4800,41 +5225,30 @@ class CrispSwContext {
      * @param {number} centerX - X coordinate of the circle center
      * @param {number} centerY - Y coordinate of the circle center
      * @param {number} radius - Radius of the circle
-     * @param {number} fillR - Red component of fill color (0-255)
-     * @param {number} fillG - Green component of fill color (0-255)
-     * @param {number} fillB - Blue component of fill color (0-255)
-     * @param {number} fillA - Alpha component of fill color (0-255)
+     * @param {Color} fillColor - Fill color as a Color instance
      * @param {number} strokeWidth - Width of the stroke
-     * @param {number} strokeR - Red component of stroke color (0-255)
-     * @param {number} strokeG - Green component of stroke color (0-255)
-     * @param {number} strokeB - Blue component of stroke color (0-255)
-     * @param {number} strokeA - Alpha component of stroke color (0-255)
+     * @param {Color} strokeColor - Stroke color as a Color instance
      */
-    fillAndStrokeCircle(
-        centerX, centerY, radius,
-        fillR, fillG, fillB, fillA,
-        strokeWidth,
-        strokeR, strokeG, strokeB, strokeA
-    ) {
+    fillAndStrokeCircle(centerX, centerY, radius, fillColor, strokeWidth, strokeColor) {
         const state = this.currentState;
-        
+
         // Transform center point according to current transformation matrix
         const center = transformPoint(centerX, centerY, state.transform.elements);
-        
+
         // Apply scale factor to radius and stroke width
         const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
         const scaledRadius = radius * Math.max(scaleX, scaleY);
         const scaledStrokeWidth = getScaledLineWidth(state.transform.elements, strokeWidth);
-        
+
         // Create shape object for the circle
         const circleShape = {
             center: { x: center.tx, y: center.ty },
             radius: scaledRadius,
             strokeWidth: scaledStrokeWidth,
-            strokeColor: { r: strokeR, g: strokeG, b: strokeB, a: strokeA },
-            fillColor: { r: fillR, g: fillG, b: fillB, a: fillA }
+            strokeColor: strokeColor,
+            fillColor: fillColor
         };
-        
+
         // Call the circle renderer with our shape
         this.circleRenderer.drawCircle(circleShape);
     }
@@ -4961,9 +5375,9 @@ class CrispSwContext {
             height: height * scaleY,
             radius: scaledRadius,
             rotation: rotation,
-            fillColor: state.fillColor, // Use state.fillColor directly
+            fillColor: state.fillColor,
             strokeWidth: 0,
-            strokeColor: { r: 0, g: 0, b: 0, a: 0 }
+            strokeColor: Color.transparent
         });
     }
 
@@ -4991,9 +5405,9 @@ class CrispSwContext {
             height: height * scaleY,
             radius: scaledRadius,
             rotation: rotation,
-            fillColor: { r: 0, g: 0, b: 0, a: 0 },
+            fillColor: Color.transparent,
             strokeWidth: scaledLineWidth,
-            strokeColor: state.strokeColor // Use state.strokeColor directly
+            strokeColor: state.strokeColor
         });
     }
 
@@ -5027,10 +5441,9 @@ class CrispSwContext {
                 radius: scaledRadius,
                 clippingOnly: true,
                 // These are not used for clippingOnly, but provided for shape consistency
-                // TODO: can these be omitted?
                 strokeWidth: 0,
-                strokeColor: { r: 0, g: 0, b: 0, a: 0 },
-                fillColor: { r: 0, g: 0, b: 0, a: 0 }
+                strokeColor: Color.transparent,
+                fillColor: Color.transparent
             });
         } else {
             throw new Error("CrispSwContext.arc() for path definition/clipping is only implemented for full circles. Use fillArc/outerStrokeArc for drawing partial arcs.");
@@ -5057,10 +5470,10 @@ class CrispSwContext {
             radius: scaledRadius,
             startAngle: startAngleDeg,
             endAngle: endAngleDeg,
-            anticlockwise: anticlockwise, // Pass to shape, SWRendererArc might use it or infer
-            fillColor: state.fillColor, 
-            strokeWidth: 0, // Explicitly no stroke for fillArc
-            strokeColor: { r: 0, g: 0, b: 0, a: 0 }
+            anticlockwise: anticlockwise,
+            fillColor: state.fillColor,
+            strokeWidth: 0,
+            strokeColor: Color.transparent
         });
     }
 
@@ -5084,12 +5497,12 @@ class CrispSwContext {
             startAngle: startAngleDeg,
             endAngle: endAngleDeg,
             anticlockwise: anticlockwise,
-            fillColor: { r: 0, g: 0, b: 0, a: 0 }, // Explicitly no fill for outerStrokeArc
+            fillColor: Color.transparent,
             strokeWidth: scaledLineWidth,
-            strokeColor: state.strokeColor 
+            strokeColor: state.strokeColor
         });
     }
-    
+
     /**
      * Draws a filled and stroked arc.
      * Angles are in radians.

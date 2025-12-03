@@ -142,7 +142,7 @@ if (isNodeEnvironment()) {
       start,
       end,
       thickness: lineWidth,
-      color: { r: 0, g: 0, b: 0, a: 255 }
+      color: new Color(0, 0, 0, 255)
     });
     log.innerHTML += `&#x2500; Black line from (${start.x}, ${start.y}) to (${end.x}, ${end.y}) thickness: ${lineWidth}<br>`;
   }
@@ -154,7 +154,7 @@ function addRandomLines(shapes, log, currentIterationNumber, count = 15) {
     const start = getRandomPoint(1);
     const end = getRandomPoint(1);
     const thickness = Math.floor(SeededRandom.getRandom() * 10) + 1;
-    const color = getRandomColor(150, 255);
+    const color = getRandomColor("mixed");
     shapes.push({
       type: 'line',
       start,
@@ -162,7 +162,7 @@ function addRandomLines(shapes, log, currentIterationNumber, count = 15) {
       thickness,
       color
     });
-    log.innerHTML += `&#x2500; Random line from (${start.x}, ${start.y}) to (${end.x}, ${end.y}) thickness: ${thickness} color: ${colorToString(color)}<br>`;
+    log.innerHTML += `&#x2500; Random line from (${start.x}, ${start.y}) to (${end.x}, ${end.y}) thickness: ${thickness} color: ${color.toCSS()}<br>`;
   }
 }
 
@@ -186,7 +186,7 @@ function add2PxVerticalLine(centerX, centerY, height, shapes, log) {
     start: { x: centerX, y: startY },
     end: { x: centerX, y: endY },
     thickness: 2,
-    color: { r: 255, g: 0, b: 0, a: 255 }
+    color: new Color(255, 0, 0, 255)
   });
 
   log.innerHTML += `&#x2500; 2px vertical line from (${centerX}, ${startY}) to (${centerX}, ${endY}) height: ${height}<br>`;
@@ -226,7 +226,7 @@ function add1PxVerticalLine(centerX, centerY, height, shapes, log) {
     start: { x: centerX, y: startY },
     end: { x: centerX, y: endY },
     thickness: 1,
-    color: { r: 255, g: 0, b: 0, a: 255 }
+    color: new Color(255, 0, 0, 255)
   });
 
   log.innerHTML += `&#x2500; 1px vertical line from (${centerX}, ${startY}) to (${centerX}, ${endY}) height: ${height}<br>`;
@@ -263,7 +263,7 @@ function add1PxHorizontalLine(centerX, centerY, width, shapes, log) {
     start: { x: startX, y: centerY },
     end: { x: endX, y: centerY },
     thickness: 1,
-    color: { r: 255, g: 0, b: 0, a: 255 }
+    color: new Color(255, 0, 0, 255)
   });
 
   log.innerHTML += `&#x2500; 1px horizontal line from (${startX}, ${centerY}) to (${endX}, ${centerY}) width: ${width}<br>`;
@@ -301,7 +301,7 @@ function add2PxHorizontalLine(centerX, centerY, width, shapes, log) {
     start: { x: startX, y: centerY },
     end: { x: endX, y: centerY },
     thickness: 2,
-    color: { r: 255, g: 0, b: 0, a: 255 }
+    color: new Color(255, 0, 0, 255)
   });
 
   log.innerHTML += `&#x2500; 2px horizontal line from (${startX}, ${centerY}) to (${endX}, ${centerY}) width: ${width}<br>`;
@@ -321,17 +321,17 @@ function addAxisAlignedRectangles(shapes, log, currentIterationNumber, count = 5
   SeededRandom.seedWithInteger(currentIterationNumber);
   for (let i = 0; i < count; i++) {
     var { center, adjustedDimensions, strokeWidth } = placeRoundedRectWithFillAndStrokeBothCrisp(10);
-    
+
     const xOffset = Math.floor(SeededRandom.getRandom() * 100) - 50;
     const yOffset = Math.floor(SeededRandom.getRandom() * 100) - 50;
-    
+
     center = {
       x: center.x + xOffset,
       y: center.y + yOffset
     };
-    
-    const strokeColor = getRandomColor(200, 255);
-    const fillColor = getRandomColor(100, 200);
+
+    const strokeColor = getRandomColor("mixed");
+    const fillColor = getRandomColor("semitransparent");
 
     shapes.push({
       type: 'rect',
@@ -344,7 +344,7 @@ function addAxisAlignedRectangles(shapes, log, currentIterationNumber, count = 5
       fillColor
     });
 
-    log.innerHTML += `&#x25A1; Axis-aligned rect at (${center.x}, ${center.y}) width: ${adjustedDimensions.width} height: ${adjustedDimensions.height} strokeWidth: ${strokeWidth} strokeColor: ${colorToString(strokeColor)} fillColor: ${colorToString(fillColor)}<br>`;
+    log.innerHTML += `&#x25A1; Axis-aligned rect at (${center.x}, ${center.y}) width: ${adjustedDimensions.width} height: ${adjustedDimensions.height} strokeWidth: ${strokeWidth} strokeColor: ${strokeColor.toCSS()} fillColor: ${fillColor.toCSS()}<br>`;
   }
 }
 
@@ -356,8 +356,8 @@ function addRotatedRectangles(shapes, log, currentIterationNumber, count = 5) {
     const height = 30 + SeededRandom.getRandom() * 100;
     const rotation = SeededRandom.getRandom() * Math.PI * 2;
     const strokeWidth = SeededRandom.getRandom() * 10 + 1;
-    const strokeColor = getRandomColor(200, 255);
-    const fillColor = getRandomColor(100, 200);
+    const strokeColor = getRandomColor("mixed");
+    const fillColor = getRandomColor("semitransparent");
 
     shapes.push({
       type: 'rect',
@@ -370,7 +370,7 @@ function addRotatedRectangles(shapes, log, currentIterationNumber, count = 5) {
       fillColor
     });
 
-    log.innerHTML += `&#x25A1; Rotated rect at (${center.x}, ${center.y}) width: ${width.toFixed(1)} height: ${height.toFixed(1)} rotation: ${(rotation * 180 / Math.PI).toFixed(1)}&deg; strokeWidth: ${strokeWidth.toFixed(1)} strokeColor: ${colorToString(strokeColor)} fillColor: ${colorToString(fillColor)}<br>`;
+    log.innerHTML += `&#x25A1; Rotated rect at (${center.x}, ${center.y}) width: ${width.toFixed(1)} height: ${height.toFixed(1)} rotation: ${(rotation * 180 / Math.PI).toFixed(1)}&deg; strokeWidth: ${strokeWidth.toFixed(1)} strokeColor: ${strokeColor.toCSS()} fillColor: ${fillColor.toCSS()}<br>`;
   }
 }
 
@@ -382,7 +382,7 @@ function add1PxStrokeCenteredRectAtGrid(shapes, log, currentIterationNumber) {
   let rectWidth = Math.floor(20 + SeededRandom.getRandom() * 130);
   let rectHeight = Math.floor(20 + SeededRandom.getRandom() * 130);
 
-  const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(rectWidth, rectHeight, 1, {x:centerX, y:centerY});
+  const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(rectWidth, rectHeight, 1, { x: centerX, y: centerY });
 
   return add1PxStrokeCenteredRect(centerX, centerY, adjustedDimensions.width, adjustedDimensions.height, shapes, log);
 }
@@ -394,18 +394,18 @@ function add1PxStrokeCenteredRectAtPixel(shapes, log, currentIterationNumber) {
 
   let rectWidth = Math.floor(20 + SeededRandom.getRandom() * 130);
   let rectHeight = Math.floor(20 + SeededRandom.getRandom() * 130);
-  
-  const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(rectWidth, rectHeight, 1, {x:centerX, y:centerY});
+
+  const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(rectWidth, rectHeight, 1, { x: centerX, y: centerY });
 
   return add1PxStrokeCenteredRect(centerX, centerY, adjustedDimensions.width, adjustedDimensions.height, shapes, log);
 }
 
 function add1PxStrokeCenteredRect(centerX, centerY, rectWidth, rectHeight, shapes, log) {
-  const leftX = Math.floor(centerX - rectWidth/2);
+  const leftX = Math.floor(centerX - rectWidth / 2);
   const rightX = leftX + rectWidth;
-  const topY = Math.floor(centerY - rectHeight/2);
+  const topY = Math.floor(centerY - rectHeight / 2);
   const bottomY = topY + rectHeight;
-  
+
   shapes.push({
     type: 'rect',
     center: { x: centerX, y: centerY },
@@ -413,12 +413,12 @@ function add1PxStrokeCenteredRect(centerX, centerY, rectWidth, rectHeight, shape
     height: rectHeight,
     rotation: 0,
     strokeWidth: 1,
-    strokeColor: { r: 255, g: 0, b: 0, a: 255 },
-    fillColor: { r: 0, g: 0, b: 0, a: 0 }
+    strokeColor: new Color(255, 0, 0, 255),
+    fillColor: Color.transparent
   });
-  
+
   log.innerHTML += `&#x25A1; 1px stroke centered rect at (${centerX}, ${centerY}) width: ${rectWidth} height: ${rectHeight}<br>`;
-  
+
   return { leftX, rightX, topY, bottomY };
 }
 function addAxisAlignedRoundedRectangles(shapes, log, currentIterationNumber, count = 10) {
@@ -426,19 +426,19 @@ function addAxisAlignedRoundedRectangles(shapes, log, currentIterationNumber, co
   for (let i = 0; i < count; i++) {
     // Use placeRoundedRectWithFillAndStrokeBothCrisp to get a properly positioned rectangle
     var { center, adjustedDimensions, strokeWidth } = placeRoundedRectWithFillAndStrokeBothCrisp(10);
-    
+
     // Move the center randomly by an integer amount in both x and y
     const xOffset = Math.floor(SeededRandom.getRandom() * 100) - 50; // Random integer between -50 and 49
     const yOffset = Math.floor(SeededRandom.getRandom() * 100) - 50; // Random integer between -50 and 49
-    
+
     center = {
       x: center.x + xOffset,
       y: center.y + yOffset
     };
-    
+
     const radius = Math.round(SeededRandom.getRandom() * Math.min(adjustedDimensions.width, adjustedDimensions.height) * 0.2);
-    const strokeColor = getRandomColor(200, 255);
-    const fillColor = getRandomColor(100, 200);
+    const strokeColor = getRandomColor("mixed");
+    const fillColor = getRandomColor("semitransparent");
 
     shapes.push({
       type: 'roundedRect',
@@ -452,7 +452,7 @@ function addAxisAlignedRoundedRectangles(shapes, log, currentIterationNumber, co
       fillColor
     });
 
-    log.innerHTML += `&#x25A2; Axis-aligned rounded rect at: (${center.x}, ${center.y}) width: ${adjustedDimensions.width} height: ${adjustedDimensions.height} radius: ${radius} strokeWidth: ${strokeWidth} strokeColor: ${colorToString(strokeColor)} fillColor: ${colorToString(fillColor)}<br>`;
+    log.innerHTML += `&#x25A2; Axis-aligned rounded rect at: (${center.x}, ${center.y}) width: ${adjustedDimensions.width} height: ${adjustedDimensions.height} radius: ${radius} strokeWidth: ${strokeWidth} strokeColor: ${strokeColor.toCSS()} fillColor: ${fillColor.toCSS()}<br>`;
   }
 }
 
@@ -461,7 +461,7 @@ function addThinOpaqueStrokeRoundedRectangles(shapes, log, currentIterationNumbe
   for (let i = 0; i < count; i++) {
     const width = Math.round(50 + SeededRandom.getRandom() * 100);
     const height = Math.round(50 + SeededRandom.getRandom() * 100);
-    
+
     // the starting initialisation of center is a random point at a grid crossing
     const center = roundPoint(getRandomPoint(1));
 
@@ -475,8 +475,8 @@ function addThinOpaqueStrokeRoundedRectangles(shapes, log, currentIterationNumbe
       radius: Math.round(SeededRandom.getRandom() * Math.min(width, height) * 0.2),
       rotation: 0,
       strokeWidth: 1,
-      strokeColor: getRandomColor(255, 255),
-      fillColor: getRandomColor(100, 200)
+      strokeColor: getRandomColor("opaque"),
+      fillColor: getRandomColor("semitransparent")
     });
 
     log.innerHTML += `&#x25A2; Thin opaque stroke rounded rect at: (${adjustedCenter.x}, ${adjustedCenter.y}) width: ${width} height: ${height} radius: ${Math.round(SeededRandom.getRandom() * Math.min(width, height) * 0.2)}<br>`;
@@ -488,18 +488,18 @@ function addLargeTransparentRoundedRectangles(shapes, log, currentIterationNumbe
   for (let i = 0; i < count; i++) {
     // Use placeRoundedRectWithFillAndStrokeBothCrisp to get a properly positioned rectangle
     var { center, adjustedDimensions, strokeWidth } = placeRoundedRectWithFillAndStrokeBothCrisp(40);
-    
+
     // Move the center randomly by an integer amount in both x and y
     const xOffset = Math.floor(SeededRandom.getRandom() * 100) - 50; // Random integer between -50 and 49
     const yOffset = Math.floor(SeededRandom.getRandom() * 100) - 50; // Random integer between -50 and 49
-    
+
     center = {
       x: center.x + xOffset,
       y: center.y + yOffset
     };
-    
-    const strokeColor = { r: 0, g: 0, b: 0, a: 50 };
-    const fillColor = getRandomColor(100, 200);
+
+    const strokeColor = new Color(0, 0, 0, 50);
+    const fillColor = getRandomColor("semitransparent");
 
     shapes.push({
       type: 'roundedRect',
@@ -513,7 +513,7 @@ function addLargeTransparentRoundedRectangles(shapes, log, currentIterationNumbe
       fillColor
     });
 
-    log.innerHTML += `&#x25A2; Large transparent rounded rect at: (${center.x}, ${center.y}) width: ${adjustedDimensions.width} height: ${adjustedDimensions.height} radius: 40 strokeWidth: ${strokeWidth} strokeColor: ${colorToString(strokeColor)} fillColor: ${colorToString(fillColor)}<br>`;
+    log.innerHTML += `&#x25A2; Large transparent rounded rect at: (${center.x}, ${center.y}) width: ${adjustedDimensions.width} height: ${adjustedDimensions.height} radius: 40 strokeWidth: ${strokeWidth} strokeColor: ${strokeColor.toCSS()} fillColor: ${fillColor.toCSS()}<br>`;
   }
 }
 
@@ -529,8 +529,8 @@ function addNoStrokeRoundedRectangles(shapes, log, currentIterationNumber, count
       radius: 40,
       rotation: 0,
       strokeWidth: 0,
-      strokeColor: { r: 0, g: 0, b: 0, a: 0 },
-      fillColor: getRandomColor(100, 200)
+      strokeColor: Color.transparent,
+      fillColor: getRandomColor("semitransparent")
     });
 
     log.innerHTML += `&#x25A2; No-stroke rounded rect at: (${center.x}, ${center.y}) width: 200 height: 200 radius: 40<br>`;
@@ -555,8 +555,8 @@ function addRotatedRoundedRectangles(shapes, log, currentIterationNumber, count 
       radius,
       rotation,
       strokeWidth,
-      strokeColor: getRandomColor(200, 255),
-      fillColor: getRandomColor(100, 200)
+      strokeColor: getRandomColor("mixed"),
+      fillColor: getRandomColor("semitransparent")
     });
 
     log.innerHTML += `&#x25A2; Rotated rounded rect at: (${center.x}, ${center.y}) width: ${width.toFixed(1)} height: ${height.toFixed(1)} radius: ${radius.toFixed(1)} rotation: ${(rotation * 180 / Math.PI).toFixed(1)}&deg; strokeWidth: ${strokeWidth.toFixed(1)}<br>`;
@@ -574,17 +574,17 @@ function addCenteredRoundedRectOpaqueStrokesRandomStrokeWidth(shapes, log, curre
 
   // center is an even number divided by 2, so it's an integer,
   // so the center is at a grid crossing.
-  const center = { x: renderTestWidth/2, y: renderTestHeight/2 };
+  const center = { x: renderTestWidth / 2, y: renderTestHeight / 2 };
 
-  
+
   let rectWidth = Math.round(50 + SeededRandom.getRandom() * maxWidth);
   let rectHeight = Math.round(50 + SeededRandom.getRandom() * maxHeight);
 
   const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(rectWidth, rectHeight, strokeWidth, center);
   const radius = Math.round(SeededRandom.getRandom() * Math.min(rectWidth, rectHeight) * 0.2);
-  const strokeColor = getRandomColor(255, 255, 0, 2);
-  const fillColor = getRandomColor(100, 200, 1, 2);
-  
+  const strokeColor = getRandomColor("opaque", 0, 2);
+  const fillColor = getRandomColor("semitransparent", 1, 2);
+
   shapes.push({
     type: 'roundedRect',
     center,
@@ -597,7 +597,7 @@ function addCenteredRoundedRectOpaqueStrokesRandomStrokeWidth(shapes, log, curre
     fillColor
   });
 
-  log.innerHTML += `&#x25A2; Centered rounded rect with opaque stroke at: (${center.x}, ${center.y}) width: ${adjustedDimensions.width} height: ${adjustedDimensions.height} radius: ${radius} strokeWidth: ${strokeWidth} strokeColor: ${colorToString(strokeColor)} fillColor: ${colorToString(fillColor)}`;
+  log.innerHTML += `&#x25A2; Centered rounded rect with opaque stroke at: (${center.x}, ${center.y}) width: ${adjustedDimensions.width} height: ${adjustedDimensions.height} radius: ${radius} strokeWidth: ${strokeWidth} strokeColor: ${strokeColor.toCSS()} fillColor: ${fillColor.toCSS()}`;
 }
 
 // TODO to work out exactly when the main features of the rounded rect
@@ -608,10 +608,10 @@ function addCenteredRoundedRectTransparentStrokesRandomStrokeWidth(shapes, log, 
 
   var { center, adjustedDimensions, strokeWidth } = placeRoundedRectWithFillAndStrokeBothCrisp(40);
 
-  const strokeColor = getRandomColor(50, 150);
-  const fillColor = getRandomColor(50, 150);
-  const radius = Math.round(SeededRandom.getRandom() * Math.min(adjustedDimensions.width , adjustedDimensions.height) * 0.2);
-  
+  const strokeColor = getRandomColor("semitransparent-light");
+  const fillColor = getRandomColor("semitransparent-light");
+  const radius = Math.round(SeededRandom.getRandom() * Math.min(adjustedDimensions.width, adjustedDimensions.height) * 0.2);
+
   shapes.push({
     type: 'roundedRect',
     center,
@@ -624,7 +624,7 @@ function addCenteredRoundedRectTransparentStrokesRandomStrokeWidth(shapes, log, 
     fillColor
   });
 
-  log.innerHTML += `&#x25A2; Centered rounded rect with transparent stroke at: (${center.x}, ${center.y}) width: ${adjustedDimensions.width} height: ${adjustedDimensions.height} radius: ${radius} strokeWidth: ${strokeWidth} strokeColor: ${colorToString(strokeColor)} fillColor: ${colorToString(fillColor)}`;
+  log.innerHTML += `&#x25A2; Centered rounded rect with transparent stroke at: (${center.x}, ${center.y}) width: ${adjustedDimensions.width} height: ${adjustedDimensions.height} radius: ${radius} strokeWidth: ${strokeWidth} strokeColor: ${strokeColor.toCSS()} fillColor: ${fillColor.toCSS()}`;
 }
 
 
@@ -671,7 +671,7 @@ function add1PxStrokeCenteredRoundedRectAtGrid(shapes, log, currentIterationNumb
   let rectWidth = Math.floor(20 + SeededRandom.getRandom() * 130);
   let rectHeight = Math.floor(20 + SeededRandom.getRandom() * 130);
 
-  const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(rectWidth, rectHeight, 1, {x:centerX, y:centerY});
+  const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(rectWidth, rectHeight, 1, { x: centerX, y: centerY });
 
   return add1PxStrokeCenteredRoundedRect(centerX, centerY, adjustedDimensions.width, adjustedDimensions.height, shapes, log);
 }
@@ -684,18 +684,18 @@ function add1PxStrokeCenteredRoundedRectAtPixel(shapes, log, currentIterationNum
 
   let rectWidth = Math.floor(20 + SeededRandom.getRandom() * 130);
   let rectHeight = Math.floor(20 + SeededRandom.getRandom() * 130);
-  
-  const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(rectWidth, rectHeight, 1, {x:centerX, y:centerY});
+
+  const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(rectWidth, rectHeight, 1, { x: centerX, y: centerY });
 
   return add1PxStrokeCenteredRoundedRect(centerX, centerY, adjustedDimensions.width, adjustedDimensions.height, shapes, log);
 }
 
 function add1PxStrokeCenteredRoundedRect(centerX, centerY, rectWidth, rectHeight, shapes, log) {
-  const leftX = Math.floor(centerX - rectWidth/2);
+  const leftX = Math.floor(centerX - rectWidth / 2);
   const rightX = leftX + rectWidth;
-  const topY = Math.floor(centerY - rectHeight/2);
+  const topY = Math.floor(centerY - rectHeight / 2);
   const bottomY = topY + rectHeight;
-  
+
   shapes.push({
     type: 'roundedRect',
     center: { x: centerX, y: centerY },
@@ -704,12 +704,12 @@ function add1PxStrokeCenteredRoundedRect(centerX, centerY, rectWidth, rectHeight
     radius: Math.round(SeededRandom.getRandom() * Math.min(rectWidth, rectHeight) * 0.2),
     rotation: 0,
     strokeWidth: 1,
-    strokeColor: { r: 255, g: 0, b: 0, a: 255 },
-    fillColor: { r: 0, g: 0, b: 0, a: 0 }
+    strokeColor: new Color(255, 0, 0, 255),
+    fillColor: Color.transparent
   });
 
   log.innerHTML += `&#x25A2; 1px stroke centered rounded rect at: (${centerX}, ${centerY}) width: ${rectWidth} height: ${rectHeight} radius: ${Math.round(SeededRandom.getRandom() * Math.min(rectWidth, rectHeight) * 0.2)}`;
-  
+
   return { leftX, rightX, topY, bottomY };
 }
 function getRandomArc() {
@@ -718,25 +718,25 @@ function getRandomArc() {
   const startAngle = SeededRandom.getRandom() * 360;
   const endAngle = startAngle + SeededRandom.getRandom() * 270 + 90;
   const strokeWidth = SeededRandom.getRandom() * 10 + 1;
-  const strokeColor = getRandomColor(200, 255);
-  const fillColor = getRandomColor(100, 200);
-  
+  const strokeColor = getRandomColor("mixed");
+  const fillColor = getRandomColor("semitransparent");
+
   return {
-      type: 'arc',
-      center,
-      radius,
-      startAngle,
-      endAngle,
-      strokeWidth,
-      strokeColor,
-      fillColor
+    type: 'arc',
+    center,
+    radius,
+    startAngle,
+    endAngle,
+    strokeWidth,
+    strokeColor,
+    fillColor
   };
 }
 
 function addNinetyDegreeArcs(shapes, log, currentIterationNumber) {
   // Not strictly needed as there is nothing random here
   SeededRandom.seedWithInteger(currentIterationNumber);
-  
+
   const strokeSizes = [1, 2, 3, 4];
   const radii = [20, 40, 60];
   let xOffset = 150;
@@ -751,8 +751,8 @@ function addNinetyDegreeArcs(shapes, log, currentIterationNumber) {
         startAngle: 0,
         endAngle: 90,
         strokeWidth,
-        strokeColor: { r: 200, g: 100, b: 100, a: 255 },
-        fillColor: { r: 0, g: 0, b: 0, a: 0 }
+        strokeColor: new Color(200, 100, 100, 255),
+        fillColor: Color.transparent
       });
       log.innerHTML += `&#x25DC; 90&deg; arc at (${xOffset}, ${yOffset}) radius: ${radius} strokeWidth: ${strokeWidth}<br>`;
       yOffset += radius * 2 + 20;
@@ -766,15 +766,15 @@ function addRandomArcs(shapes, log, currentIterationNumber, count = 3) {
   for (let i = 0; i < count; i++) {
     const arc = getRandomArc();
     shapes.push(arc);
-    log.innerHTML += `&#x25DC; Arc at (${arc.center.x}, ${arc.center.y}) radius: ${arc.radius} angles: ${arc.startAngle}&deg; to ${arc.endAngle}&deg; strokeWidth: ${arc.strokeWidth} strokeColor: ${colorToString(arc.strokeColor)} fillColor: ${colorToString(arc.fillColor)}<br>`;
+    log.innerHTML += `&#x25DC; Arc at (${arc.center.x}, ${arc.center.y}) radius: ${arc.radius} angles: ${arc.startAngle}&deg; to ${arc.endAngle}&deg; strokeWidth: ${arc.strokeWidth} strokeColor: ${arc.strokeColor.toCSS()} fillColor: ${arc.fillColor.toCSS()}<br>`;
   }
 }
 function getRandomCircle() {
   return {
-      ...getRandomArc(),
-      type: 'circle',
-      startAngle: 0,
-      endAngle: 360
+    ...getRandomArc(),
+    type: 'circle',
+    startAngle: 0,
+    endAngle: 360
   };
 }
 
@@ -790,12 +790,12 @@ function getRandomCircle() {
 function createRandomCircleTest(shapes, log, currentIterationNumber, count, description) {
   SeededRandom.seedWithInteger(currentIterationNumber);
   let extremes = null;
-  
+
   for (let i = 0; i < count; i++) {
     const circle = getRandomCircle();
     shapes.push(circle);
-    log.innerHTML += `&#x20DD; ${description} circle at (${circle.center.x}, ${circle.center.y}) radius: ${circle.radius} strokeWidth: ${circle.strokeWidth} strokeColor: ${colorToString(circle.strokeColor)} fillColor: ${colorToString(circle.fillColor)}<br>`;
-    
+    log.innerHTML += `&#x20DD; ${description} circle at (${circle.center.x}, ${circle.center.y}) radius: ${circle.radius} strokeWidth: ${circle.strokeWidth} strokeColor: ${circle.strokeColor.toCSS()} fillColor: ${circle.fillColor.toCSS()}<br>`;
+
     // Calculate extremes, but only for the single circle case
     if (count === 1) {
       const effectiveRadius = circle.radius + circle.strokeWidth / 2;
@@ -807,7 +807,7 @@ function createRandomCircleTest(shapes, log, currentIterationNumber, count, desc
       };
     }
   }
-  
+
   return extremes;
 }
 
@@ -846,32 +846,32 @@ function calculateCircleParameters(options) {
 
   // Randomly choose between grid-centered and pixel-centered
   const atPixel = SeededRandom.getRandom() < 0.5;
-  
+
   // Get initial center point
-  let {centerX, centerY} = atPixel
+  let { centerX, centerY } = atPixel
     ? placeCloseToCenterAtPixel(renderTestWidth, renderTestHeight)
     : placeCloseToCenterAtGrid(renderTestWidth, renderTestHeight);
-  
+
   // Calculate base diameter
   const diameter = Math.floor(minRadius * 2 + SeededRandom.getRandom() * (maxRadius * 2 - minRadius * 2));
   const baseRadius = diameter / 2;
-  
+
   // Calculate stroke width
   const maxAllowedStrokeWidth = Math.floor(baseRadius / 1);
-  const strokeWidth = hasStroke 
+  const strokeWidth = hasStroke
     ? (minStrokeWidth + Math.floor(SeededRandom.getRandom() * Math.min(maxStrokeWidth - minStrokeWidth + 1, maxAllowedStrokeWidth)))
     : 0;
-  
+
   // Handle random positioning if requested
   if (randomPosition) {
     const totalRadius = baseRadius + (strokeWidth / 2);
-    
+
     // Calculate safe bounds
     const minX = Math.ceil(totalRadius + marginX);
     const maxX = Math.floor(renderTestWidth - totalRadius - marginX);
     const minY = Math.ceil(totalRadius + marginY);
     const maxY = Math.floor(renderTestHeight - totalRadius - marginY);
-    
+
     // Adjust diameter if circle is too large
     let adjustedDiameter = diameter;
     if (maxX <= minX || maxY <= minY) {
@@ -880,14 +880,14 @@ function calculateCircleParameters(options) {
         Math.floor(renderTestWidth / 4),
         Math.floor(renderTestHeight / 4)
       );
-      
+
       // Recalculate bounds with reduced diameter
       const newTotalRadius = (adjustedDiameter / 2) + (strokeWidth / 2);
       const newMinX = Math.ceil(newTotalRadius + marginX);
       const newMaxX = Math.floor(renderTestWidth - newTotalRadius - marginX);
       const newMinY = Math.ceil(newTotalRadius + marginY);
       const newMaxY = Math.floor(renderTestHeight - newTotalRadius - marginY);
-      
+
       // Generate random position within new safe bounds
       centerX = newMinX + Math.floor(SeededRandom.getRandom() * (newMaxX - newMinX + 1));
       centerY = newMinY + Math.floor(SeededRandom.getRandom() * (newMaxY - newMinY + 1));
@@ -897,14 +897,14 @@ function calculateCircleParameters(options) {
       centerY = minY + Math.floor(SeededRandom.getRandom() * (maxY - minY + 1));
     }
   }
-  
+
   // Adjust dimensions for crisp rendering
   const adjustedDimensions = adjustDimensionsForCrispStrokeRendering(
     diameter, diameter, strokeWidth, { x: centerX, y: centerY }
   );
   const adjustedDiameter = adjustedDimensions.width;
   const radius = adjustedDiameter / 2;
-  
+
   return {
     centerX,
     centerY,
@@ -918,7 +918,7 @@ function calculateCircleParameters(options) {
 function createTestCircle(currentIterationNumber, hasStroke = true, randomPosition = false) {
   SeededRandom.seedWithInteger(currentIterationNumber);
   checkCanvasHasEvenDimensions();
-  
+
   const params = calculateCircleParameters({
     minRadius: 10,
     maxRadius: 225,
@@ -929,30 +929,30 @@ function createTestCircle(currentIterationNumber, hasStroke = true, randomPositi
     marginX: 10,
     marginY: 10
   });
-  
+
   const { centerX, centerY, radius, strokeWidth, adjustedDiameter, atPixel } = params;
-  
+
   const circle = {
     type: 'circle',
     center: { x: centerX, y: centerY },
     radius,
     strokeWidth,
-    strokeColor: hasStroke ? getRandomColor(150, 230) : { r: 0, g: 0, b: 0, a: 0 },
-    fillColor: getRandomColor(100, 200),
+    strokeColor: hasStroke ? getRandomColor("semitransparent") : Color.transparent,
+    fillColor: getRandomColor("semitransparent"),
     startAngle: 0,
     endAngle: 360
   };
-  
+
   // Calculate extremes for the circle
   const effectiveRadius = hasStroke ? (radius + strokeWidth / 2) : radius;
-  
+
   const extremes = {
     leftX: Math.floor(circle.center.x - effectiveRadius),
     rightX: Math.floor(circle.center.x - effectiveRadius) + effectiveRadius * 2 - 1,
     topY: Math.floor(circle.center.y - effectiveRadius),
     bottomY: Math.floor(circle.center.y - effectiveRadius) + effectiveRadius * 2 - 1
   };
-  
+
   return {
     circle,
     extremes,
@@ -968,66 +968,66 @@ function createTestCircle(currentIterationNumber, hasStroke = true, randomPositi
 function addSingleRandomCircle(shapes, log, currentIterationNumber) {
   const result = createTestCircle(currentIterationNumber, true, false);
   const { circle, extremes, centerX, centerY, radius, strokeWidth, adjustedDiameter, atPixel } = result;
-  
+
   // Add the circle to shapes
   shapes.push(circle);
-  
+
   // Log the circle details
-  log.innerHTML += `&#x20DD; Single random circle at (${centerX}, ${centerY}) radius: ${radius} ` + 
-                  `diameter: ${adjustedDiameter} strokeWidth: ${strokeWidth} ` +
-                  `centered at: ${atPixel ? 'pixel' : 'grid'} ` + 
-                  `strokeColor: ${colorToString(circle.strokeColor)} ` + 
-                  `fillColor: ${colorToString(circle.fillColor)}<br>`;
-  
+  log.innerHTML += `&#x20DD; Single random circle at (${centerX}, ${centerY}) radius: ${radius} ` +
+    `diameter: ${adjustedDiameter} strokeWidth: ${strokeWidth} ` +
+    `centered at: ${atPixel ? 'pixel' : 'grid'} ` +
+    `strokeColor: ${circle.strokeColor.toCSS()} ` +
+    `fillColor: ${circle.fillColor.toCSS()}<br>`;
+
   return extremes;
 }
 
 function addSingleNoStrokeCircle(shapes, log, currentIterationNumber) {
   const result = createTestCircle(currentIterationNumber, false, false);
   const { circle, extremes, centerX, centerY, radius, adjustedDiameter, atPixel } = result;
-  
+
   // Add the circle to shapes
   shapes.push(circle);
-  
+
   // Log the circle details
-  log.innerHTML += `&#x20DD; Single circle with no stroke at (${centerX}, ${centerY}) radius: ${radius} ` + 
-                  `diameter: ${adjustedDiameter} ` +
-                  `centered at: ${atPixel ? 'pixel' : 'grid'} ` + 
-                  `fillColor: ${colorToString(circle.fillColor)}<br>`;
-  
+  log.innerHTML += `&#x20DD; Single circle with no stroke at (${centerX}, ${centerY}) radius: ${radius} ` +
+    `diameter: ${adjustedDiameter} ` +
+    `centered at: ${atPixel ? 'pixel' : 'grid'} ` +
+    `fillColor: ${circle.fillColor.toCSS()}<br>`;
+
   return extremes;
 }
 
 function addRandomPositionCircle(shapes, log, currentIterationNumber) {
   const result = createTestCircle(currentIterationNumber, true, true);
   const { circle, extremes, centerX, centerY, radius, strokeWidth, adjustedDiameter, atPixel } = result;
-  
+
   // Add the circle to shapes
   shapes.push(circle);
-  
+
   // Log the circle details
-  log.innerHTML += `&#x20DD; Random position circle at (${centerX}, ${centerY}) radius: ${radius} ` + 
-                  `diameter: ${adjustedDiameter} strokeWidth: ${strokeWidth} ` +
-                  `centered at: ${atPixel ? 'pixel' : 'grid'} ` + 
-                  `strokeColor: ${colorToString(circle.strokeColor)} ` + 
-                  `fillColor: ${colorToString(circle.fillColor)}<br>`;
-  
+  log.innerHTML += `&#x20DD; Random position circle at (${centerX}, ${centerY}) radius: ${radius} ` +
+    `diameter: ${adjustedDiameter} strokeWidth: ${strokeWidth} ` +
+    `centered at: ${atPixel ? 'pixel' : 'grid'} ` +
+    `strokeColor: ${circle.strokeColor.toCSS()} ` +
+    `fillColor: ${circle.fillColor.toCSS()}<br>`;
+
   return extremes;
 }
 
 function addRandomPositionNoStrokeCircle(shapes, log, currentIterationNumber) {
   const result = createTestCircle(currentIterationNumber, false, true);
   const { circle, extremes, centerX, centerY, radius, adjustedDiameter, atPixel } = result;
-  
+
   // Add the circle to shapes
   shapes.push(circle);
-  
+
   // Log the circle details
-  log.innerHTML += `&#x20DD; Random position circle with no stroke at (${centerX}, ${centerY}) radius: ${radius} ` + 
-                  `diameter: ${adjustedDiameter} ` +
-                  `centered at: ${atPixel ? 'pixel' : 'grid'} ` + 
-                  `fillColor: ${colorToString(circle.fillColor)}<br>`;
-  
+  log.innerHTML += `&#x20DD; Random position circle with no stroke at (${centerX}, ${centerY}) radius: ${radius} ` +
+    `diameter: ${adjustedDiameter} ` +
+    `centered at: ${atPixel ? 'pixel' : 'grid'} ` +
+    `fillColor: ${circle.fillColor.toCSS()}<br>`;
+
   return extremes;
 }
 
@@ -1043,9 +1043,9 @@ function addRandomPositionNoStrokeCircle(shapes, log, currentIterationNumber) {
 function generateMultiplePreciseCircles(shapes, log, currentIterationNumber, count, includeStrokes, description) {
   SeededRandom.seedWithInteger(currentIterationNumber);
   checkCanvasHasEvenDimensions();
-  
+
   log.innerHTML += `${description} (${count} circles)<br>`;
-  
+
   for (let i = 0; i < count; i++) {
     const params = calculateCircleParameters({
       minRadius: 8,
@@ -1057,9 +1057,9 @@ function generateMultiplePreciseCircles(shapes, log, currentIterationNumber, cou
       marginX: 60,
       marginY: 60
     });
-    
+
     const { centerX, centerY, radius, strokeWidth, atPixel } = params;
-    
+
     // Create the circle with distinct colors (using partitioning to ensure variety)
     const circle = {
       type: 'circle',
@@ -1067,30 +1067,29 @@ function generateMultiplePreciseCircles(shapes, log, currentIterationNumber, cou
       radius,
       strokeWidth,
       // If not including strokes, use transparent stroke color
-      strokeColor: includeStrokes ? 
-                  getRandomColor(200, 255, i, count) : 
-                  { r: 0, g: 0, b: 0, a: 0 },
+      strokeColor: includeStrokes ?
+        getRandomColor("mixed", i, count) :
+        Color.transparent,
       // Use more opaque fills if no stroke to make them more visible
-      fillColor: getRandomColor(includeStrokes ? 150 : 200, 
-                              includeStrokes ? 200 : 255, 
-                              count - i - 1, count),
+      fillColor: getRandomColor(includeStrokes ? "semitransparent" : "mixed",
+        count - i - 1, count),
       startAngle: 0,
       endAngle: 360
     };
-    
+
     // Add the circle to shapes
     shapes.push(circle);
-    
+
     // Log only the first few circles to avoid cluttering the log
     if (i < 3) {
-      log.innerHTML += `&#x20DD; Circle ${i} at (${centerX}, ${centerY}) radius: ${radius} ` + 
-                      (includeStrokes ? `strokeWidth: ${strokeWidth} ` : `no stroke `) +
-                      `center type: ${atPixel ? 'pixel' : 'grid'} ` +
-                      (includeStrokes ? `strokeColor: ${colorToString(circle.strokeColor)} ` : ``) +
-                      `fillColor: ${colorToString(circle.fillColor)}<br>`;
+      log.innerHTML += `&#x20DD; Circle ${i} at (${centerX}, ${centerY}) radius: ${radius} ` +
+        (includeStrokes ? `strokeWidth: ${strokeWidth} ` : `no stroke `) +
+        `center type: ${atPixel ? 'pixel' : 'grid'} ` +
+        (includeStrokes ? `strokeColor: ${circle.strokeColor.toCSS()} ` : ``) +
+        `fillColor: ${circle.fillColor.toCSS()}<br>`;
     }
   }
-  
+
   // Log message if we truncated the output
   if (count > 3) {
     log.innerHTML += `... and ${count - 3} more circles<br>`;
@@ -1102,11 +1101,11 @@ function generateMultiplePreciseCircles(shapes, log, currentIterationNumber, cou
  */
 function addMultiplePreciseRandomCircles(shapes, log, currentIterationNumber, count = 10) {
   generateMultiplePreciseCircles(
-    shapes, 
-    log, 
-    currentIterationNumber, 
-    count, 
-    true, 
+    shapes,
+    log,
+    currentIterationNumber,
+    count,
+    true,
     "Adding multiple precise random circles with strokes"
   );
 }
@@ -1116,11 +1115,11 @@ function addMultiplePreciseRandomCircles(shapes, log, currentIterationNumber, co
  */
 function addMultiplePreciseNoStrokeCircles(shapes, log, currentIterationNumber, count = 10) {
   generateMultiplePreciseCircles(
-    shapes, 
-    log, 
-    currentIterationNumber, 
-    count, 
-    false, 
+    shapes,
+    log,
+    currentIterationNumber,
+    count,
+    false,
     "Adding multiple precise random circles without strokes (fill only)"
   );
 }
@@ -1147,14 +1146,14 @@ function add1PxStrokeCenteredCircleAtGrid(shapes, log, currentIterationNumber) {
     center: { x: centerX, y: centerY },
     radius,
     strokeWidth: 1,
-    strokeColor: { r: 255, g: 0, b: 0, a: 255 },
-    fillColor: { r: 0, g: 0, b: 0, a: 0 },
+    strokeColor: new Color(255, 0, 0, 255),
+    fillColor: Color.transparent,
     startAngle: 0,
     endAngle: 360
   });
 
   log.innerHTML += `&#x20DD; 1px stroke centered circle at: (${centerX}, ${centerY}) diameter: ${adjustedDiameter} radius: ${radius}`;
-  
+
   const leftX = centerX - radius - 0.5;
   const rightX = centerX + radius - 0.5;
   const topY = centerY - radius - 0.5;
@@ -1186,8 +1185,8 @@ function add1PxStrokeCenteredCircleAtPixel(shapes, log, currentIterationNumber) 
     center: { x: centerX, y: centerY },
     radius,
     strokeWidth: 1,
-    strokeColor: { r: 255, g: 0, b: 0, a: 255 },
-    fillColor: { r: 0, g: 0, b: 0, a: 0 },
+    strokeColor: new Color(255, 0, 0, 255),
+    fillColor: Color.transparent,
     startAngle: 0,
     endAngle: 360
   });
@@ -1444,14 +1443,38 @@ function getBitsPerChannel(numberOfPartitions) {
 //
 // Note that whichPartition is 0-indexed. E.g. if numberOfPartitions is 4, whichPartition
 // should be in the range [0, 3].
-function getRandomColor(minAlpha = 0, maxAlpha = 255, whichPartition = null, numberOfPartitions = null) {
-  // Clamp alpha values to valid range
-  minAlpha = Math.max(0, Math.min(255, minAlpha));
-  maxAlpha = Math.max(0, Math.min(255, maxAlpha));
-
-  // Ensure minAlpha <= maxAlpha
-  if (minAlpha > maxAlpha) {
-      [minAlpha, maxAlpha] = [maxAlpha, minAlpha];
+//
+// alphaMode: "opaque" (255), "semitransparent" (100-200), "semitransparent-light" (50-150), or "mixed" (50% opaque, 50% semitransparent)
+function getRandomColor(alphaMode, whichPartition = null, numberOfPartitions = null) {
+  // Validate alphaMode
+  const validModes = ["opaque", "semitransparent", "semitransparent-light", "mixed"];
+  if (!validModes.includes(alphaMode)) {
+    throw new Error(`Invalid alpha mode: ${alphaMode}. Valid modes: ${validModes.join(", ")}`);
+  }
+  
+  let minAlpha, maxAlpha;
+  
+  switch(alphaMode) {
+    case "opaque":
+      minAlpha = maxAlpha = 255;
+      break;
+    case "semitransparent": 
+      minAlpha = 100; 
+      maxAlpha = 200;
+      break;
+    case "semitransparent-light":
+      minAlpha = 50;
+      maxAlpha = 150;
+      break;
+    case "mixed":
+      // 50% chance opaque, 50% chance semitransparent
+      if (SeededRandom.getRandom() < 0.5) {
+        minAlpha = maxAlpha = 255;
+      } else {
+        minAlpha = 100; 
+        maxAlpha = 200;
+      }
+      break;
   }
 
   // Generate random alpha value between minAlpha and maxAlpha (inclusive)
@@ -1460,12 +1483,12 @@ function getRandomColor(minAlpha = 0, maxAlpha = 255, whichPartition = null, num
   // If numberOfPartitions is null or whichPartition is null and numberOfPartitions is 1,
   // generate completely random RGB values
   if (numberOfPartitions == null || (whichPartition == null && numberOfPartitions === 1)) {
-      return {
-          r: Math.floor(SeededRandom.getRandom() * 256),
-          g: Math.floor(SeededRandom.getRandom() * 256),
-          b: Math.floor(SeededRandom.getRandom() * 256),
-          a: alpha
-      };
+      return new Color(
+          Math.floor(SeededRandom.getRandom() * 256),
+          Math.floor(SeededRandom.getRandom() * 256),
+          Math.floor(SeededRandom.getRandom() * 256),
+          alpha
+      );
   }
 
   // Ensure numberOfPartitions is at least 1
@@ -1505,12 +1528,7 @@ function getRandomColor(minAlpha = 0, maxAlpha = 255, whichPartition = null, num
       channels[i] |= randomBits;
   }
   
-  return {
-      r: channels[0],
-      g: channels[1],
-      b: channels[2],
-      a: alpha
-  };
+  return new Color(channels[0], channels[1], channels[2], alpha);
 }
 class PixelSet {
   constructor(pixelRenderer) {
@@ -1682,76 +1700,495 @@ function getScaleFactors(matrix) {
     const scaleY = Math.sqrt(matrix[3] * matrix[3] + matrix[4] * matrix[4]);
     return { scaleX, scaleY };
 }
-// Color parsing and normalization
-function parseColor(colorStr) {
-    if (!colorStr || typeof colorStr !== 'string') {
+/**
+ * Color class for SWCanvas
+ * 
+ * Encapsulates color operations, conversions, and alpha blending math.
+ * Follows Joshua Bloch's principle of making classes immutable where practical.
+ * 
+ * Internally uses premultiplied sRGB for consistency with HTML5 Canvas behavior.
+ * Provides methods for converting between premultiplied and non-premultiplied forms.
+ */
+class Color {
+    /**
+     * Create a Color instance
+     * @param {number} r - Red component (0-255)
+     * @param {number} g - Green component (0-255)  
+     * @param {number} b - Blue component (0-255)
+     * @param {number} a - Alpha component (0-255)
+     * @param {boolean} isPremultiplied - Whether values are already premultiplied
+     */
+    constructor(r, g, b, a = 255, isPremultiplied = false) {
+        // Validate input ranges
+        if (r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255 || a < 0 || a > 255) {
+            throw new Error('Color components must be in range 0-255');
+        }
+
+        if (isPremultiplied) {
+            this._r = Math.round(r);
+            this._g = Math.round(g);
+            this._b = Math.round(b);
+            this._a = Math.round(a);
+        } else {
+            // Convert to premultiplied form
+            const alpha = a / 255;
+            this._r = Math.round(r * alpha);
+            this._g = Math.round(g * alpha);
+            this._b = Math.round(b * alpha);
+            this._a = Math.round(a);
+        }
+    }
+
+    // Getters for premultiplied components (internal storage format)
+    get premultipliedR() { return this._r; }
+    get premultipliedG() { return this._g; }
+    get premultipliedB() { return this._b; }
+    get premultipliedA() { return this._a; }
+
+    // Getters for non-premultiplied components (API-friendly)
+    get r() {
+        if (this._a === 0) return 0;
+        if (this._a === 255) return this._r;
+        return Math.round((this._r * 255) / this._a);
+    }
+
+    get g() {
+        if (this._a === 0) return 0;
+        if (this._a === 255) return this._g;
+        return Math.round((this._g * 255) / this._a);
+    }
+
+    get b() {
+        if (this._a === 0) return 0;
+        if (this._a === 255) return this._b;
+        return Math.round((this._b * 255) / this._a);
+    }
+
+    get a() {
+        return this._a;
+    }
+
+    /**
+     * Get non-premultiplied RGBA array
+     * @returns {number[]} [r, g, b, a] array
+     */
+    toRGBA() {
+        return [this.r, this.g, this.b, this.a];
+    }
+
+    /**
+     * Get premultiplied RGBA array (internal storage format)
+     * @returns {number[]} [r, g, b, a] array with RGB premultiplied
+     */
+    toPremultipliedRGBA() {
+        return [this._r, this._g, this._b, this._a];
+    }
+
+    /**
+     * Get alpha as normalized value (0-1)
+     * @returns {number} Alpha in 0-1 range
+     */
+    get normalizedAlpha() {
+        return this._a / 255;
+    }
+
+    /**
+     * Check if color is fully transparent
+     * @returns {boolean} True if alpha is 0
+     */
+    get isTransparent() {
+        return this._a === 0;
+    }
+
+    /**
+     * Check if color is fully opaque
+     * @returns {boolean} True if alpha is 255
+     */
+    get isOpaque() {
+        return this._a === 255;
+    }
+
+    /**
+     * Apply global alpha to this color (immutable operation)
+     * @param {number} globalAlpha - Alpha multiplier (0-1)
+     * @returns {Color} New Color with applied global alpha
+     */
+    withGlobalAlpha(globalAlpha) {
+        if (globalAlpha < 0 || globalAlpha > 1) {
+            throw new Error('Global alpha must be in range 0-1');
+        }
+
+        // Work with non-premultiplied values to apply global alpha correctly
+        const nonPremultR = this.r;
+        const nonPremultG = this.g;
+        const nonPremultB = this.b;
+        const nonPremultA = this.a;
+
+        const newAlpha = Math.round(nonPremultA * globalAlpha);
+        return new Color(nonPremultR, nonPremultG, nonPremultB, newAlpha, false);
+    }
+
+    /**
+     * Blend this color over another color using source-over composition
+     * @param {Color} background - Background color to blend over
+     * @returns {Color} New Color representing the blended result
+     */
+    blendOver(background) {
+        if (this._a === 255) {
+            // Source is opaque - return source
+            return this;
+        }
+
+        if (this._a === 0) {
+            // Source is transparent - return background
+            return background;
+        }
+
+        // Standard premultiplied alpha blending
+        const srcAlpha = this.normalizedAlpha;
+        const invSrcAlpha = 1 - srcAlpha;
+
+        const newR = Math.round(this._r + background._r * invSrcAlpha);
+        const newG = Math.round(this._g + background._g * invSrcAlpha);
+        const newB = Math.round(this._b + background._b * invSrcAlpha);
+        const newA = Math.round(this._a + background._a * invSrcAlpha);
+
+        return new Color(newR, newG, newB, newA, true);
+    }
+
+    /**
+     * Convert color for BMP output (non-premultiplied RGB)
+     * @returns {Object} {r, g, b} object for BMP encoding
+     */
+    toBMP() {
+        return {
+            r: this.r,
+            g: this.g,
+            b: this.b
+        };
+    }
+
+    /**
+     * Convert to CSS rgba() string
+     * @returns {string} CSS rgba() format string
+     */
+    toCSS() {
+        const alpha = (this.a / 255).toFixed(3).replace(/\.?0+$/, '');
+        return `rgba(${this.r}, ${this.g}, ${this.b}, ${alpha})`;
+    }
+
+    /**
+     * String representation for debugging
+     * @returns {string} Color description
+     */
+    toString() {
+        return `Color(${this.r}, ${this.g}, ${this.b}, ${this.a})`;
+    }
+
+    /**
+     * Check equality with another Color
+     * @param {Color} other - Color to compare with
+     * @returns {boolean} True if colors are equal
+     */
+    equals(other) {
+        return other instanceof Color &&
+            this._r === other._r &&
+            this._g === other._g &&
+            this._b === other._b &&
+            this._a === other._a;
+    }
+}
+
+// Static constant: transparent black
+Color.transparent = new Color(0, 0, 0, 0);
+
+// Static constant: opaque black
+Color.black = new Color(0, 0, 0, 255);
+
+/**
+ * Create Color from CSS string using provided parser
+ * @param {string} cssString - CSS color string
+ * @param {ColorParser} parser - ColorParser instance
+ * @returns {Color} New Color instance
+ */
+Color.fromCSS = function (cssString, parser) {
+    if (!cssString || typeof cssString !== 'string') {
         throw new Error("Invalid color format: must be a string");
     }
-    
-    colorStr = colorStr.trim().replace(/\s+/g, '');
-
-    // Handle hex colors
-    if (colorStr.startsWith('#')) {
-        let r, g, b;
+    const parsed = parser.parse(cssString);
+    return new Color(parsed.r, parsed.g, parsed.b, parsed.a, false);
+};/**
+ * ColorParser for SWCanvas
+ * 
+ * Parses CSS color strings into RGBA values for use with Core API.
+ * Supports hex, RGB/RGBA functions, and named colors.
+ * Includes caching for performance optimization.
+ */
+class ColorParser {
+    constructor() {
+        this._cache = new Map();
         
-        if (colorStr.length === 4) {
-            // #RGB format
-            r = parseInt(colorStr[1] + colorStr[1], 16);
-            g = parseInt(colorStr[2] + colorStr[2], 16);
-            b = parseInt(colorStr[3] + colorStr[3], 16);
-            return normalizeColor(r, g, b, 1);
-        } else if (colorStr.length === 7) {
-            // #RRGGBB format
-            r = parseInt(colorStr.substring(1, 3), 16);
-            g = parseInt(colorStr.substring(3, 5), 16);
-            b = parseInt(colorStr.substring(5, 7), 16);
-            return normalizeColor(r, g, b, 1);
-        }
-    }
-
-    // Handle rgb/rgba formats
-    const rgbMatch = colorStr.match(/^rgb\((\d+),(\d+),(\d+)\)$/i);
-    const rgbaMatch = colorStr.match(/^rgba\((\d+),(\d+),(\d+),([0-9]*\.?[0-9]+)\)$/i);
-
-    if (rgbMatch) {
-        const [_, r, g, b] = rgbMatch;
-        if (r > 255 || g > 255 || b > 255) {
-            throw new Error("RGB values must be between 0-255");
-        }
-        return normalizeColor(+r, +g, +b, 1);
-    } else if (rgbaMatch) {
-        const [_, r, g, b, a] = rgbaMatch;
-        if (r > 255 || g > 255 || b > 255) {
-            throw new Error("RGB values must be between 0-255");
-        }
-        return normalizeColor(+r, +g, +b, +a);
+        // CSS Color names to RGB mapping - Complete MDN specification
+        this._namedColors = {
+            // CSS Level 1 colors
+            black: { r: 0, g: 0, b: 0 },
+            silver: { r: 192, g: 192, b: 192 },
+            gray: { r: 128, g: 128, b: 128 },
+            white: { r: 255, g: 255, b: 255 },
+            maroon: { r: 128, g: 0, b: 0 },
+            red: { r: 255, g: 0, b: 0 },
+            purple: { r: 128, g: 0, b: 128 },
+            fuchsia: { r: 255, g: 0, b: 255 },
+            green: { r: 0, g: 128, b: 0 },
+            lime: { r: 0, g: 255, b: 0 },
+            olive: { r: 128, g: 128, b: 0 },
+            yellow: { r: 255, g: 255, b: 0 },
+            navy: { r: 0, g: 0, b: 128 },
+            blue: { r: 0, g: 0, b: 255 },
+            teal: { r: 0, g: 128, b: 128 },
+            aqua: { r: 0, g: 255, b: 255 },
+            
+            // CSS Level 2 (X11) colors  
+            aliceblue: { r: 240, g: 248, b: 255 },
+            antiquewhite: { r: 250, g: 235, b: 215 },
+            aquamarine: { r: 127, g: 255, b: 212 },
+            azure: { r: 240, g: 255, b: 255 },
+            beige: { r: 245, g: 245, b: 220 },
+            bisque: { r: 255, g: 228, b: 196 },
+            blanchedalmond: { r: 255, g: 235, b: 205 },
+            blueviolet: { r: 138, g: 43, b: 226 },
+            brown: { r: 165, g: 42, b: 42 },
+            burlywood: { r: 222, g: 184, b: 135 },
+            cadetblue: { r: 95, g: 158, b: 160 },
+            chartreuse: { r: 127, g: 255, b: 0 },
+            chocolate: { r: 210, g: 105, b: 30 },
+            coral: { r: 255, g: 127, b: 80 },
+            cornflowerblue: { r: 100, g: 149, b: 237 },
+            cornsilk: { r: 255, g: 248, b: 220 },
+            crimson: { r: 220, g: 20, b: 60 },
+            cyan: { r: 0, g: 255, b: 255 }, // synonym of aqua
+            darkblue: { r: 0, g: 0, b: 139 },
+            darkcyan: { r: 0, g: 139, b: 139 },
+            darkgoldenrod: { r: 184, g: 134, b: 11 },
+            darkgray: { r: 169, g: 169, b: 169 },
+            darkgreen: { r: 0, g: 100, b: 0 },
+            darkgrey: { r: 169, g: 169, b: 169 }, // synonym of darkgray
+            darkkhaki: { r: 189, g: 183, b: 107 },
+            darkmagenta: { r: 139, g: 0, b: 139 },
+            darkolivegreen: { r: 85, g: 107, b: 47 },
+            darkorange: { r: 255, g: 140, b: 0 },
+            darkorchid: { r: 153, g: 50, b: 204 },
+            darkred: { r: 139, g: 0, b: 0 },
+            darksalmon: { r: 233, g: 150, b: 122 },
+            darkseagreen: { r: 143, g: 188, b: 143 },
+            darkslateblue: { r: 72, g: 61, b: 139 },
+            darkslategray: { r: 47, g: 79, b: 79 },
+            darkslategrey: { r: 47, g: 79, b: 79 }, // synonym of darkslategray
+            darkturquoise: { r: 0, g: 206, b: 209 },
+            darkviolet: { r: 148, g: 0, b: 211 },
+            deeppink: { r: 255, g: 20, b: 147 },
+            deepskyblue: { r: 0, g: 191, b: 255 },
+            dimgray: { r: 105, g: 105, b: 105 },
+            dimgrey: { r: 105, g: 105, b: 105 }, // synonym of dimgray
+            dodgerblue: { r: 30, g: 144, b: 255 },
+            firebrick: { r: 178, g: 34, b: 34 },
+            floralwhite: { r: 255, g: 250, b: 240 },
+            forestgreen: { r: 34, g: 139, b: 34 },
+            gainsboro: { r: 220, g: 220, b: 220 },
+            ghostwhite: { r: 248, g: 248, b: 255 },
+            gold: { r: 255, g: 215, b: 0 },
+            goldenrod: { r: 218, g: 165, b: 32 },
+            grey: { r: 128, g: 128, b: 128 }, // synonym of gray
+            greenyellow: { r: 173, g: 255, b: 47 },
+            honeydew: { r: 240, g: 255, b: 240 },
+            hotpink: { r: 255, g: 105, b: 180 },
+            indianred: { r: 205, g: 92, b: 92 },
+            indigo: { r: 75, g: 0, b: 130 },
+            ivory: { r: 255, g: 255, b: 240 },
+            khaki: { r: 240, g: 230, b: 140 },
+            lavender: { r: 230, g: 230, b: 250 },
+            lavenderblush: { r: 255, g: 240, b: 245 },
+            lawngreen: { r: 124, g: 252, b: 0 },
+            lemonchiffon: { r: 255, g: 250, b: 205 },
+            lightblue: { r: 173, g: 216, b: 230 },
+            lightcoral: { r: 240, g: 128, b: 128 },
+            lightcyan: { r: 224, g: 255, b: 255 },
+            lightgoldenrodyellow: { r: 250, g: 250, b: 210 },
+            lightgray: { r: 211, g: 211, b: 211 },
+            lightgreen: { r: 144, g: 238, b: 144 },
+            lightgrey: { r: 211, g: 211, b: 211 }, // synonym of lightgray
+            lightpink: { r: 255, g: 182, b: 193 },
+            lightsalmon: { r: 255, g: 160, b: 122 },
+            lightseagreen: { r: 32, g: 178, b: 170 },
+            lightskyblue: { r: 135, g: 206, b: 250 },
+            lightslategray: { r: 119, g: 136, b: 153 },
+            lightslategrey: { r: 119, g: 136, b: 153 }, // synonym of lightslategray
+            lightsteelblue: { r: 176, g: 196, b: 222 },
+            lightyellow: { r: 255, g: 255, b: 224 },
+            limegreen: { r: 50, g: 205, b: 50 },
+            linen: { r: 250, g: 240, b: 230 },
+            magenta: { r: 255, g: 0, b: 255 }, // synonym of fuchsia
+            mediumaquamarine: { r: 102, g: 205, b: 170 },
+            mediumblue: { r: 0, g: 0, b: 205 },
+            mediumorchid: { r: 186, g: 85, b: 211 },
+            mediumpurple: { r: 147, g: 112, b: 219 },
+            mediumseagreen: { r: 60, g: 179, b: 113 },
+            mediumslateblue: { r: 123, g: 104, b: 238 },
+            mediumspringgreen: { r: 0, g: 250, b: 154 },
+            mediumturquoise: { r: 72, g: 209, b: 204 },
+            mediumvioletred: { r: 199, g: 21, b: 133 },
+            midnightblue: { r: 25, g: 25, b: 112 },
+            mintcream: { r: 245, g: 255, b: 250 },
+            mistyrose: { r: 255, g: 228, b: 225 },
+            moccasin: { r: 255, g: 228, b: 181 },
+            navajowhite: { r: 255, g: 222, b: 173 },
+            oldlace: { r: 253, g: 245, b: 230 },
+            olivedrab: { r: 107, g: 142, b: 35 },
+            orange: { r: 255, g: 165, b: 0 },
+            orangered: { r: 255, g: 69, b: 0 },
+            orchid: { r: 218, g: 112, b: 214 },
+            palegoldenrod: { r: 238, g: 232, b: 170 },
+            palegreen: { r: 152, g: 251, b: 152 },
+            paleturquoise: { r: 175, g: 238, b: 238 },
+            palevioletred: { r: 219, g: 112, b: 147 },
+            papayawhip: { r: 255, g: 239, b: 213 },
+            peachpuff: { r: 255, g: 218, b: 185 },
+            peru: { r: 205, g: 133, b: 63 },
+            pink: { r: 255, g: 192, b: 203 },
+            plum: { r: 221, g: 160, b: 221 },
+            powderblue: { r: 176, g: 224, b: 230 },
+            rebeccapurple: { r: 102, g: 51, b: 153 }, // CSS Level 4
+            rosybrown: { r: 188, g: 143, b: 143 },
+            royalblue: { r: 65, g: 105, b: 225 },
+            saddlebrown: { r: 139, g: 69, b: 19 },
+            salmon: { r: 250, g: 128, b: 114 },
+            sandybrown: { r: 244, g: 164, b: 96 },
+            seagreen: { r: 46, g: 139, b: 87 },
+            seashell: { r: 255, g: 245, b: 238 },
+            sienna: { r: 160, g: 82, b: 45 },
+            skyblue: { r: 135, g: 206, b: 235 },
+            slateblue: { r: 106, g: 90, b: 205 },
+            slategray: { r: 112, g: 128, b: 144 },
+            slategrey: { r: 112, g: 128, b: 144 }, // synonym of slategray
+            snow: { r: 255, g: 250, b: 250 },
+            springgreen: { r: 0, g: 255, b: 127 },
+            steelblue: { r: 70, g: 130, b: 180 },
+            tan: { r: 210, g: 180, b: 140 },
+            thistle: { r: 216, g: 191, b: 216 },
+            tomato: { r: 255, g: 99, b: 71 },
+            turquoise: { r: 64, g: 224, b: 208 },
+            violet: { r: 238, g: 130, b: 238 },
+            wheat: { r: 245, g: 222, b: 179 },
+            whitesmoke: { r: 245, g: 245, b: 245 },
+            yellowgreen: { r: 154, g: 205, b: 50 }
+        };
     }
     
-    throw new Error(`Invalid color format: ${colorStr}`);
-}
-
-function normalizeColor(r, g, b, a) {
-    return {
-        r: Math.round(Math.max(0, Math.min(255, r))),
-        g: Math.round(Math.max(0, Math.min(255, g))),
-        b: Math.round(Math.max(0, Math.min(255, b))),
-        // the a must be now transformed to 0-255
-        a: Math.max(0, Math.min(255, a * 255))
-    };
-}
-
-function colorToString(colorOrR, g, b, a) {
-    // if a color object is passed, convert it to a string
-    // like `rgba(${color.r}, ${color.g}, ${color.b}, ${(color.a/255).toFixed(3)})`;
-    // otherwise, if the four r,g,b,a parameters are passed, convert them to a string
-    // like `rgba(${r}, ${g}, ${b}, ${(a/255).toFixed(3)})`;
-    // Note that 3 decimal places should be enough, because the alpha is still 8 bits anyways
-    // and 1/255 is the smallest increment for the alpha channel and that is 0.003921....
-    // the .replace(/\.?0+$/, '') removes any trailing zeros so that we don't have things like "1.000"
-    if (typeof colorOrR === 'object') {
-        return `rgba(${colorOrR.r}, ${colorOrR.g}, ${colorOrR.b}, ${(colorOrR.a/255).toFixed(3).replace(/\.?0+$/, '')})`;
-    } else {
-        return `rgba(${colorOrR}, ${g}, ${b}, ${(a/255).toFixed(3).replace(/\.?0+$/, '')})`;
+    /**
+     * Parse a CSS color string to RGBA values
+     * @param {string} color - CSS color string
+     * @returns {Object} {r, g, b, a} with values 0-255
+     */
+    parse(color) {
+        // Check cache first
+        if (this._cache.has(color)) {
+            return this._cache.get(color);
+        }
+        
+        let result;
+        
+        if (typeof color !== 'string') {
+            result = { r: 0, g: 0, b: 0, a: 255 };
+        } else {
+            const trimmed = color.trim().toLowerCase();
+            
+            if (trimmed.startsWith('#')) {
+                result = this._parseHex(trimmed);
+            } else if (trimmed.startsWith('rgb')) {
+                result = this._parseRGB(trimmed);
+            } else if (this._namedColors[trimmed]) {
+                const named = this._namedColors[trimmed];
+                result = { r: named.r, g: named.g, b: named.b, a: 255 };
+            } else {
+                // Unknown color - default to black
+                result = { r: 0, g: 0, b: 0, a: 255 };
+            }
+        }
+        
+        // Cache the result
+        this._cache.set(color, result);
+        return result;
+    }
+    
+    /**
+     * Parse hex color (#RGB, #RRGGBB, #RRGGBBAA)
+     * @private
+     */
+    _parseHex(hex) {
+        // Remove the #
+        hex = hex.substring(1);
+        
+        if (hex.length === 3) {
+            // #RGB -> #RRGGBB
+            hex = hex.split('').map(c => c + c).join('');
+        }
+        
+        if (hex.length === 6) {
+            // #RRGGBB
+            const r = parseInt(hex.substring(0, 2), 16);
+            const g = parseInt(hex.substring(2, 4), 16);
+            const b = parseInt(hex.substring(4, 6), 16);
+            return { r, g, b, a: 255 };
+        } else if (hex.length === 8) {
+            // #RRGGBBAA
+            const r = parseInt(hex.substring(0, 2), 16);
+            const g = parseInt(hex.substring(2, 4), 16);
+            const b = parseInt(hex.substring(4, 6), 16);
+            const a = parseInt(hex.substring(6, 8), 16);
+            return { r, g, b, a };
+        }
+        
+        // Invalid hex - default to black
+        return { r: 0, g: 0, b: 0, a: 255 };
+    }
+    
+    /**
+     * Parse RGB/RGBA function notation
+     * @private
+     */
+    _parseRGB(rgb) {
+        // Extract the content inside parentheses
+        const match = rgb.match(/rgba?\s*\(\s*([^)]+)\s*\)/);
+        if (!match) {
+            return { r: 0, g: 0, b: 0, a: 255 };
+        }
+        
+        const parts = match[1].split(',').map(s => s.trim());
+        
+        if (parts.length < 3) {
+            return { r: 0, g: 0, b: 0, a: 255 };
+        }
+        
+        const r = Math.max(0, Math.min(255, parseInt(parts[0]) || 0));
+        const g = Math.max(0, Math.min(255, parseInt(parts[1]) || 0));
+        const b = Math.max(0, Math.min(255, parseInt(parts[2]) || 0));
+        
+        let a = 255;
+        if (parts.length >= 4) {
+            const alpha = parseFloat(parts[3]);
+            if (!isNaN(alpha)) {
+                a = Math.max(0, Math.min(255, Math.round(alpha * 255)));
+            }
+        }
+        
+        return { r, g, b, a };
+    }
+    
+    /**
+     * Clear the color cache
+     */
+    clearCache() {
+        this._cache.clear();
     }
 }/**
  * Represents the state of a CrispSwContext at a point in time.
@@ -1763,8 +2200,9 @@ class ContextState {
         this.canvasHeight = canvasHeight;
         this.lineWidth = lineWidth || 1;
         this.transform = transform || new TransformationMatrix();
-        this.strokeColor = strokeColor || { r: 0, g: 0, b: 0, a: 1 };
-        this.fillColor = fillColor || { r: 0, g: 0, b: 0, a: 1 };
+        // Store Color instances (default: opaque black)
+        this.strokeColor = strokeColor || Color.black;
+        this.fillColor = fillColor || Color.black;
         this.globalAlpha = globalAlpha || 1.0;
         this.clippingMask = clippingMask || new Uint8Array(Math.ceil(canvasWidth * canvasHeight / 8)).fill(255);
     }
@@ -1775,11 +2213,11 @@ class ContextState {
             this.canvasWidth, this.canvasHeight,
             this.lineWidth,
             this.transform.clone(),
-            { ...this.strokeColor }, { ...this.fillColor },
+            // Color is immutable - can reuse same instance
+            this.strokeColor, this.fillColor,
             this.globalAlpha,
             clippingMaskCopy
         );
-
     }
 }
 // Main CrispSwCanvas class
@@ -1812,6 +2250,9 @@ class CrispSwCanvas {
 }
 // Check for Node.js environment and load polyfills if needed
 const isNode = typeof window === 'undefined' && typeof process !== 'undefined';
+
+// Global ColorParser instance for parsing CSS color strings
+const _colorParser = new ColorParser();
 
 /**
  * Software-based Canvas 2D rendering context
@@ -1894,13 +2335,21 @@ class CrispSwContext {
         this.currentState.transform.reset();
     }
 
-    // Style setters
+    // Style setters and getters
     set fillStyle(style) {
-        this.currentState.fillColor = parseColor(style);
+        this.currentState.fillColor = Color.fromCSS(style, _colorParser);
+    }
+
+    get fillStyle() {
+        return this.currentState.fillColor.toCSS();
     }
 
     set strokeStyle(style) {
-        this.currentState.strokeColor = parseColor(style);
+        this.currentState.strokeColor = Color.fromCSS(style, _colorParser);
+    }
+
+    get strokeStyle() {
+        return this.currentState.strokeColor.toCSS();
     }
 
     set lineWidth(width) {
@@ -2003,7 +2452,7 @@ class CrispSwContext {
             rotation: rotation,
             clippingOnly: false,
             strokeWidth: 0,
-            strokeColor: { r: 0, g: 0, b: 0, a: 0 },
+            strokeColor: Color.transparent,
             fillColor: state.fillColor
         });
     }
@@ -2024,7 +2473,7 @@ class CrispSwContext {
             clippingOnly: false,
             strokeWidth: scaledLineWidth,
             strokeColor: state.strokeColor,
-            fillColor: { r: 0, g: 0, b: 0, a: 0 }
+            fillColor: Color.transparent
         });
     }
 
@@ -2041,30 +2490,27 @@ class CrispSwContext {
      * @param {number} centerX - X coordinate of the circle center
      * @param {number} centerY - Y coordinate of the circle center
      * @param {number} radius - Radius of the circle
-     * @param {number} fillR - Red component of fill color (0-255)
-     * @param {number} fillG - Green component of fill color (0-255)
-     * @param {number} fillB - Blue component of fill color (0-255)
-     * @param {number} fillA - Alpha component of fill color (0-255)
+     * @param {Color} fillColor - Fill color as a Color instance
      */
-    fillCircle(centerX, centerY, radius, fillR, fillG, fillB, fillA) {
+    fillCircle(centerX, centerY, radius, fillColor) {
         const state = this.currentState;
-        
+
         // Transform center point according to current transformation matrix
         const center = transformPoint(centerX, centerY, state.transform.elements);
-        
+
         // Apply scale factor to radius
         const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
         const scaledRadius = radius * Math.max(scaleX, scaleY);
-        
+
         // Create shape object for the circle
         const circleShape = {
             center: { x: center.tx, y: center.ty },
             radius: scaledRadius,
             strokeWidth: 0,
-            strokeColor: { r: 0, g: 0, b: 0, a: 0 }, // No stroke
-            fillColor: { r: fillR, g: fillG, b: fillB, a: fillA }
+            strokeColor: Color.transparent,
+            fillColor: fillColor
         };
-        
+
         // Call the circle renderer with our shape
         this.circleRenderer.drawCircle(circleShape);
     }
@@ -2075,31 +2521,28 @@ class CrispSwContext {
      * @param {number} centerY - Y coordinate of the circle center
      * @param {number} radius - Radius of the circle
      * @param {number} strokeWidth - Width of the stroke
-     * @param {number} strokeR - Red component of stroke color (0-255)
-     * @param {number} strokeG - Green component of stroke color (0-255)
-     * @param {number} strokeB - Blue component of stroke color (0-255)
-     * @param {number} strokeA - Alpha component of stroke color (0-255)
+     * @param {Color} strokeColor - Stroke color as a Color instance
      */
-    strokeCircle(centerX, centerY, radius, strokeWidth, strokeR, strokeG, strokeB, strokeA) {
+    strokeCircle(centerX, centerY, radius, strokeWidth, strokeColor) {
         const state = this.currentState;
-        
+
         // Transform center point according to current transformation matrix
         const center = transformPoint(centerX, centerY, state.transform.elements);
-        
+
         // Apply scale factor to radius and stroke width
         const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
         const scaledRadius = radius * Math.max(scaleX, scaleY);
         const scaledStrokeWidth = getScaledLineWidth(state.transform.elements, strokeWidth);
-        
+
         // Create shape object for the circle
         const circleShape = {
             center: { x: center.tx, y: center.ty },
             radius: scaledRadius,
             strokeWidth: scaledStrokeWidth,
-            strokeColor: { r: strokeR, g: strokeG, b: strokeB, a: strokeA },
-            fillColor: { r: 0, g: 0, b: 0, a: 0 } // No fill
+            strokeColor: strokeColor,
+            fillColor: Color.transparent
         };
-        
+
         // Call the circle renderer with our shape
         this.circleRenderer.drawCircle(circleShape);
     }
@@ -2109,41 +2552,30 @@ class CrispSwContext {
      * @param {number} centerX - X coordinate of the circle center
      * @param {number} centerY - Y coordinate of the circle center
      * @param {number} radius - Radius of the circle
-     * @param {number} fillR - Red component of fill color (0-255)
-     * @param {number} fillG - Green component of fill color (0-255)
-     * @param {number} fillB - Blue component of fill color (0-255)
-     * @param {number} fillA - Alpha component of fill color (0-255)
+     * @param {Color} fillColor - Fill color as a Color instance
      * @param {number} strokeWidth - Width of the stroke
-     * @param {number} strokeR - Red component of stroke color (0-255)
-     * @param {number} strokeG - Green component of stroke color (0-255)
-     * @param {number} strokeB - Blue component of stroke color (0-255)
-     * @param {number} strokeA - Alpha component of stroke color (0-255)
+     * @param {Color} strokeColor - Stroke color as a Color instance
      */
-    fillAndStrokeCircle(
-        centerX, centerY, radius,
-        fillR, fillG, fillB, fillA,
-        strokeWidth,
-        strokeR, strokeG, strokeB, strokeA
-    ) {
+    fillAndStrokeCircle(centerX, centerY, radius, fillColor, strokeWidth, strokeColor) {
         const state = this.currentState;
-        
+
         // Transform center point according to current transformation matrix
         const center = transformPoint(centerX, centerY, state.transform.elements);
-        
+
         // Apply scale factor to radius and stroke width
         const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
         const scaledRadius = radius * Math.max(scaleX, scaleY);
         const scaledStrokeWidth = getScaledLineWidth(state.transform.elements, strokeWidth);
-        
+
         // Create shape object for the circle
         const circleShape = {
             center: { x: center.tx, y: center.ty },
             radius: scaledRadius,
             strokeWidth: scaledStrokeWidth,
-            strokeColor: { r: strokeR, g: strokeG, b: strokeB, a: strokeA },
-            fillColor: { r: fillR, g: fillG, b: fillB, a: fillA }
+            strokeColor: strokeColor,
+            fillColor: fillColor
         };
-        
+
         // Call the circle renderer with our shape
         this.circleRenderer.drawCircle(circleShape);
     }
@@ -2270,9 +2702,9 @@ class CrispSwContext {
             height: height * scaleY,
             radius: scaledRadius,
             rotation: rotation,
-            fillColor: state.fillColor, // Use state.fillColor directly
+            fillColor: state.fillColor,
             strokeWidth: 0,
-            strokeColor: { r: 0, g: 0, b: 0, a: 0 }
+            strokeColor: Color.transparent
         });
     }
 
@@ -2300,9 +2732,9 @@ class CrispSwContext {
             height: height * scaleY,
             radius: scaledRadius,
             rotation: rotation,
-            fillColor: { r: 0, g: 0, b: 0, a: 0 },
+            fillColor: Color.transparent,
             strokeWidth: scaledLineWidth,
-            strokeColor: state.strokeColor // Use state.strokeColor directly
+            strokeColor: state.strokeColor
         });
     }
 
@@ -2336,10 +2768,9 @@ class CrispSwContext {
                 radius: scaledRadius,
                 clippingOnly: true,
                 // These are not used for clippingOnly, but provided for shape consistency
-                // TODO: can these be omitted?
                 strokeWidth: 0,
-                strokeColor: { r: 0, g: 0, b: 0, a: 0 },
-                fillColor: { r: 0, g: 0, b: 0, a: 0 }
+                strokeColor: Color.transparent,
+                fillColor: Color.transparent
             });
         } else {
             throw new Error("CrispSwContext.arc() for path definition/clipping is only implemented for full circles. Use fillArc/outerStrokeArc for drawing partial arcs.");
@@ -2366,10 +2797,10 @@ class CrispSwContext {
             radius: scaledRadius,
             startAngle: startAngleDeg,
             endAngle: endAngleDeg,
-            anticlockwise: anticlockwise, // Pass to shape, SWRendererArc might use it or infer
-            fillColor: state.fillColor, 
-            strokeWidth: 0, // Explicitly no stroke for fillArc
-            strokeColor: { r: 0, g: 0, b: 0, a: 0 }
+            anticlockwise: anticlockwise,
+            fillColor: state.fillColor,
+            strokeWidth: 0,
+            strokeColor: Color.transparent
         });
     }
 
@@ -2393,12 +2824,12 @@ class CrispSwContext {
             startAngle: startAngleDeg,
             endAngle: endAngleDeg,
             anticlockwise: anticlockwise,
-            fillColor: { r: 0, g: 0, b: 0, a: 0 }, // Explicitly no fill for outerStrokeArc
+            fillColor: Color.transparent,
             strokeWidth: scaledLineWidth,
-            strokeColor: state.strokeColor 
+            strokeColor: state.strokeColor
         });
     }
-    
+
     /**
      * Draws a filled and stroked arc.
      * Angles are in radians.
@@ -2480,16 +2911,7 @@ const drawShapesImplFn = function(shapes, isCanvas, ctx = null, frameBufferUint8
   }
 }
 
-// Define colorToString for Node environment if it's missing
-if (typeof colorToString !== 'function') {
-  function colorToString(r, g, b, a) {
-    if (a === 255 || a === undefined) {
-      return `rgb(${r}, ${g}, ${b})`;
-    } else {
-      return `rgba(${r}, ${g}, ${b}, ${a / 255})`;
-    }
-  }
-}
+// Color instances have toCSS() method for CSS rgba() string conversion
 
 // Assign the function to the global name expected by the codebase
 const drawShapesImpl = drawShapesImplFn;
@@ -2500,13 +2922,12 @@ const drawShapesImpl = drawShapesImplFn;
 if (isNodeEnv && typeof module !== 'undefined' && module.exports) {
   // Node.js - use module.exports
   module.exports = {
-    drawShapesImpl: drawShapesImplFn,  // Export the function with the expected name
-    colorToString
+    drawShapesImpl: drawShapesImplFn  // Export the function with the expected name
   };
-  
+
   // Also assign to global for Node.js
   global.drawShapesImpl = drawShapesImplFn;
-  
+
   // Make sure renderers are available globally in Node
   // Note: These are needed for add-tests.js to work correctly
   global.SWRendererPixel = global.SWRendererPixel || {};
@@ -2515,13 +2936,13 @@ if (isNodeEnv && typeof module !== 'undefined' && module.exports) {
   global.SWRendererRoundedRect = global.SWRendererRoundedRect || {};
   global.SWRendererCircle = global.SWRendererCircle || {};
   global.SWRendererArc = global.SWRendererArc || {};
-  
+
   global.drawLineCanvas = global.drawLineCanvas || function() {};
   global.drawRectCanvas = global.drawRectCanvas || function() {};
   global.drawCircleCanvas = global.drawCircleCanvas || function() {};
   global.drawArcCanvas = global.drawArcCanvas || function() {};
   global.drawRoundedRectCanvas = global.drawRoundedRectCanvas || function() {};
-  
+
   // In Node.js, we also need to define SeededRandom if it's not already available
   if (typeof global.SeededRandom === 'undefined') {
     global.SeededRandom = global.SeededRandom || {
@@ -2531,11 +2952,6 @@ if (isNodeEnv && typeof module !== 'undefined' && module.exports) {
 } else {
   // Browser - add to window explicitly
   window.drawShapesImpl = drawShapesImplFn;
-  
-  // Only add colorToString if it's not already defined
-  if (typeof window.colorToString === 'undefined') {
-    window.colorToString = colorToString;
-  }
 }// Tolerance for considering an angle to be equivalent to a multiple of 90 degrees
 const ANGLE_TOLERANCE = 0.001; // Radians (~0.057 degrees)
 
@@ -8588,7 +9004,7 @@ class RenderTest {
             const g = imageData.data[i + 1];
             const b = imageData.data[i + 2];
             const a = imageData.data[i + 3];
-            this.canvasCtxOfComparison.fillStyle = colorToString(r, g, b, a);
+            this.canvasCtxOfComparison.fillStyle = new Color(r, g, b, a).toCSS();
           }
 
           this.canvasCtxOfComparison.fillRect(
@@ -8633,10 +9049,10 @@ class RenderTest {
       localMouseY = Math.min(Math.floor(localMouseY), RenderTest.GRID_ROWS - 1);
       const idx = (localMouseY * RenderTest.GRID_COLUMNS + localMouseX) * 4;
       const r = imageData.data[idx];
-      const g = imageData.data[idx + 1]; 
+      const g = imageData.data[idx + 1];
       const b = imageData.data[idx + 2];
       const a = imageData.data[idx + 3];
-      const rgbaText = colorToString(r, g, b, a);
+      const rgbaText = new Color(r, g, b, a).toCSS();
 
       // Draw color text below grid
       this.canvasCtxOfComparison.font = '12px monospace';
@@ -9524,8 +9940,8 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
         const strokeSizes = [1, 2, 3, 4];
         const radii = [20, 40, 60];
         let xOffset = 150;
-        const fixedStrokeColorObj = { r: 200, g: 100, b: 100, a: 255 };
-        const fixedStrokeColorStr = fixedStrokeColorObj ? colorToString(fixedStrokeColorObj) : 'rgba(0,0,0,0)';
+        const fixedStrokeColor = new Color(200, 100, 100, 255);
+        const fixedStrokeColorStr = fixedStrokeColor.toCSS();
 
         for (const strokeWidth of strokeSizes) {
             let yOffset = 150;
@@ -9561,8 +9977,8 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
             const startAngleRad = quadrants[Math.floor(SeededRandom.getRandom() * 4)];
             const endAngleRad = startAngleRad + Math.PI / 2;
 
-            const strokeColorObj = getRandomColor(200, 255); // Opaque or semi-transparent random color
-            const strokeColorStr = strokeColorObj ? colorToString(strokeColorObj) : 'rgba(0,0,0,0)';
+            const strokeColorObj = getRandomColor("mixed"); // Opaque or semi-transparent random color
+            const strokeColorStr = strokeColorObj ? strokeColorObj.toCSS() : 'rgba(0,0,0,0)';
 
             // Base position from SeededRandom
             let drawCenterX = SeededRandom.getRandom() * canvasWidth;
@@ -9674,13 +10090,10 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
         const endAngleDeg = startAngleDeg + SeededRandom.getRandom() * 270 + 90;
         // SeededRandom Call 6: strokeWidth
         const strokeWidth = SeededRandom.getRandom() * 10 + 1;
-        // SeededRandom Call 7: strokeColor 
-        const strokeColorObj = getRandomColor(200, 255); 
+        // SeededRandom Call 7: strokeColor
+        const strokeColor = getRandomColor("mixed");
         // SeededRandom Call 8: fillColor
-        const fillColorObj = getRandomColor(100, 200);
-
-        const strokeColorForRender = { r: strokeColorObj.r, g: strokeColorObj.g, b: strokeColorObj.b, a: strokeColorObj.a };
-        const fillColorForRender = { r: fillColorObj.r, g: fillColorObj.g, b: fillColorObj.b, a: fillColorObj.a };
+        const fillColor = getRandomColor("semitransparent");
 
         // Convert angles to radians for context arc methods
         const startAngleRad = startAngleDeg * Math.PI / 180;
@@ -9691,9 +10104,9 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
 
         // The getRandomPoint already randomizes position for each arc.
         // No additional Math.random() offset needed for performance mode spreading for this test.
-        
-        ctx.fillStyle = fillColorForRender ? colorToString(fillColorForRender) : 'rgba(0,0,0,0)'; // Set for fillAndOuterStrokeArc
-        ctx.strokeStyle = strokeColorForRender ? colorToString(strokeColorForRender) : 'rgba(0,0,0,0)'; // Set for fillAndOuterStrokeArc
+
+        ctx.fillStyle = fillColor.toCSS();
+        ctx.strokeStyle = strokeColor.toCSS();
         ctx.lineWidth = strokeWidth;
 
         // Use fillAndOuterStrokeArc as both fill and stroke are defined with random colors
@@ -9743,7 +10156,7 @@ registerHighLevelTest(
  * | Shape category         | circles        | The test exclusively renders circles using `ctx.fillCircle()`.
  * | Count                  | multi-12       | The test draws 12 separate circle instances in its standard (non-performance) mode.
  * | SizeCategory           | mixed          | The radius is randomized in the range [8, 42), which spans the XS (5-15), S (16-39), and M (40-79) size categories.
- * | FillStyle              | opaque         | Fill colors are generated by `getRandomColor(200, 255)`, ensuring they are fully opaque.
+ * | FillStyle              | mixed         | Fill colors are generated by `getRandomColor("mixed")`, ensuring they are fully opaque.
  * | StrokeStyle            | none           | The test is designed to be "fill-only," and `strokeWidth` is explicitly set to 0.
  * | StrokeThickness        | none           | Consistent with `StrokeStyle` being `none`.
  * | Layout                 | spread         | The 12 circles are positioned independently and randomly across a wide area of the canvas.
@@ -9814,17 +10227,12 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
         let { centerX, centerY, radius, finalDiameter, atPixel } = params;
         
         // SR Call 5: fillColor (opaque or semi-transparent, original used palette indexing)
-        const fillColorObj = getRandomColor(200, 255); 
-
-        const fillColorForRender = { r: fillColorObj.r, g: fillColorObj.g, b: fillColorObj.b, a: fillColorObj.a };
+        const fillColor = getRandomColor("mixed");
 
         let drawCenterX = centerX;
         let drawCenterY = centerY;
-        
-        ctx.fillCircle(
-            drawCenterX, drawCenterY, radius, 
-            fillColorForRender.r, fillColorForRender.g, fillColorForRender.b, fillColorForRender.a
-        );
+
+        ctx.fillCircle(drawCenterX, drawCenterY, radius, fillColor);
 
         if (!isPerformanceRun) { 
             logs.push(
@@ -9870,8 +10278,8 @@ registerHighLevelTest(
  * | Shape category         | circles        | The test renders circles using `ctx.fillAndStrokeCircle`.
  * | Count                  | multi-12       | The code loops 12 times in its visual test mode (`numToDraw` is 12).
  * | SizeCategory           | mixed          | The base radius is randomized in the range [8, 41], spanning XS, S, and M size categories.
- * | FillStyle              | semitransparent| Fill alpha is randomized via `getRandomColor(150, 200)`, which is always semi-transparent.
- * | StrokeStyle            | mixed          | Stroke alpha is randomized via `getRandomColor(200, 255)`, resulting in both opaque and semi-transparent strokes.
+ * | FillStyle              | semitransparent| Fill alpha is randomized via `getRandomColor("semitransparent")`, which is always semi-transparent.
+ * | StrokeStyle            | mixed          | Stroke alpha is randomized via `getRandomColor("mixed")`, resulting in both opaque and semi-transparent strokes.
  * | StrokeThickness        | 1px-4px        | `strokeWidth` is calculated as an integer in the range [1, 4].
  * | Layout                 | spread         | Each circle is given a unique, randomized position within the canvas, distributing them.
  * | CenteredAt             | random         | The final center coordinates for each circle are randomized integers, not snapped to a grid or pixel center.
@@ -9943,28 +10351,20 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
         let { centerX, centerY, radius, strokeWidth, finalDiameter, atPixel } = params;
         
         // SR Call 6: strokeColor (opaque)
-        // The original used palette indexing (i, count) for getRandomColor. 
+        // The original used palette indexing (i, count) for getRandomColor.
         // Using simpler version here; adjust if color checks (if any were added) fail.
-        const strokeColorObj = getRandomColor(200, 255);
+        const strokeColor = getRandomColor("mixed");
         // SR Call 7: fillColor (semi-transparent)
-        const fillColorObj = getRandomColor(150, 200); 
-
-        const strokeColorForRender = { r: strokeColorObj.r, g: strokeColorObj.g, b: strokeColorObj.b, a: strokeColorObj.a };
-        const fillColorForRender = { r: fillColorObj.r, g: fillColorObj.g, b: fillColorObj.b, a: fillColorObj.a };
+        const fillColor = getRandomColor("semitransparent");
 
         let drawCenterX = centerX;
         let drawCenterY = centerY;
-        
+
         // The _calculate... function already handles random positioning for each call.
         // In performance mode, each of the `instances` circles will have unique, random parameters.
         // No need for Math.random() here to further offset, as positions are already varied.
 
-        ctx.fillAndStrokeCircle(
-            drawCenterX, drawCenterY, radius, 
-            fillColorForRender.r, fillColorForRender.g, fillColorForRender.b, fillColorForRender.a,
-            strokeWidth, 
-            strokeColorForRender.r, strokeColorForRender.g, strokeColorForRender.b, strokeColorForRender.a
-        );
+        ctx.fillAndStrokeCircle(drawCenterX, drawCenterY, radius, fillColor, strokeWidth, strokeColor);
 
         if (!isPerformanceRun) { 
             logs.push(
@@ -10068,13 +10468,10 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
         // SeededRandom Call 4 & 5 for angles are skipped as we draw a full circle.
         // SeededRandom Call 6: strokeWidth
         const strokeWidth = SeededRandom.getRandom() * 10 + 1;
-        // SeededRandom Call 7: strokeColor 
-        const strokeColorObj = getRandomColor(200, 255); 
+        // SeededRandom Call 7: strokeColor
+        const strokeColor = getRandomColor("mixed");
         // SeededRandom Call 8: fillColor
-        const fillColorObj = getRandomColor(100, 200);
-
-        const strokeColorForRender = { r: strokeColorObj.r, g: strokeColorObj.g, b: strokeColorObj.b, a: strokeColorObj.a };
-        const fillColorForRender = { r: fillColorObj.r, g: fillColorObj.g, b: fillColorObj.b, a: fillColorObj.a };
+        const fillColor = getRandomColor("semitransparent");
 
         // In performance mode, getRandomPoint already ensures positions are varied across the canvas for each instance.
         // For visual regression, the 8 circles will also be randomly placed by getRandomPoint.
@@ -10088,13 +10485,8 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
             // additional Math.random() for position is not strictly necessary as in fixed-center tests.
             // The existing SR calls make each circle unique in all aspects.
         }
-        
-        ctx.fillAndStrokeCircle(
-            drawCenterX, drawCenterY, radius, 
-            fillColorForRender.r, fillColorForRender.g, fillColorForRender.b, fillColorForRender.a,
-            strokeWidth, 
-            strokeColorForRender.r, strokeColorForRender.g, strokeColorForRender.b, strokeColorForRender.a
-        );
+
+        ctx.fillAndStrokeCircle(drawCenterX, drawCenterY, radius, fillColor, strokeWidth, strokeColor);
 
         if (!isPerformanceRun) { // Log all 8 circles in visual regression mode
             logs.push(
@@ -10211,7 +10603,7 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
         const radius = finalDiameter / 2;
         
         // Stroke color is fixed red, opaque. Fill is transparent.
-        const r = 255, g = 0, b = 0, a = 255;
+        const strokeColor = new Color(255, 0, 0, 255);
 
         let drawCenterX = centerX;
         let drawCenterY = centerY;
@@ -10220,10 +10612,8 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
             drawCenterX = Math.random() * canvasWidth;
             drawCenterY = Math.random() * canvasHeight;
         }
-        
-        // Use the dedicated strokeCircle method
-        // strokeCircle(centerX, centerY, radius, strokeWidth, strokeR, strokeG, strokeB, strokeA)
-        ctx.strokeCircle(drawCenterX, drawCenterY, radius, 1, r, g, b, a);
+
+        ctx.strokeCircle(drawCenterX, drawCenterY, radius, 1, strokeColor);
 
         if (!isPerformanceRun || i === 0) { 
             const currentLogs = [
@@ -10360,7 +10750,7 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
         const radius = finalDiameter / 2;
         
         // Stroke color is fixed red, opaque. Fill is transparent.
-        const r = 255, g = 0, b = 0, a = 255;
+        const strokeColor = new Color(255, 0, 0, 255);
 
         let drawCenterX = centerX;
         let drawCenterY = centerY;
@@ -10369,9 +10759,8 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
             drawCenterX = Math.random() * canvasWidth;
             drawCenterY = Math.random() * canvasHeight;
         }
-        
-        // Use the dedicated strokeCircle method
-        ctx.strokeCircle(drawCenterX, drawCenterY, radius, 1, r, g, b, a);
+
+        ctx.strokeCircle(drawCenterX, drawCenterY, radius, 1, strokeColor);
 
         if (!isPerformanceRun || i === 0) { 
             const currentLogs = [
@@ -10502,9 +10891,8 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
         });
         let { centerX, centerY, radius, finalDiameter, atPixel } = params;
         
-        // SR Call 3: fillColor 
-        const fillColorObj = getRandomColor(100, 200);
-        const fillColorForRender = { r: fillColorObj.r, g: fillColorObj.g, b: fillColorObj.b, a: fillColorObj.a };
+        // SR Call 3: fillColor
+        const fillColor = getRandomColor("semitransparent");
 
         let drawCenterX = centerX;
         let drawCenterY = centerY;
@@ -10513,12 +10901,8 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
             drawCenterX = Math.random() * canvasWidth;
             drawCenterY = Math.random() * canvasHeight;
         }
-        
-        // Use the dedicated fillCircle method
-        ctx.fillCircle(
-            drawCenterX, drawCenterY, radius, 
-            fillColorForRender.r, fillColorForRender.g, fillColorForRender.b, fillColorForRender.a
-        );
+
+        ctx.fillCircle(drawCenterX, drawCenterY, radius, fillColor);
 
         if (!isPerformanceRun || i === 0) { 
             const currentLogs = [
@@ -10580,7 +10964,7 @@ registerHighLevelTest(
  * | Shape category         | circles        | The test calls `ctx.fillCircle()` to draw the shape.
  * | Count                  | single         | The test logic is designed to draw one primary shape instance per iteration.
  * | SizeCategory           | mixed          | The radius is randomized in the range [10, 225], which spans the S, M, L, and XL size categories.
- * | FillStyle              | opaque         | `getRandomColor(100, 200)` is called for the fill, which by default returns a fully opaque color.
+ * | FillStyle              | semitransparent| `getRandomColor("semitransparent")` is called for the fill, which returns a semitransparent color.
  * | StrokeStyle            | none           | The `strokeWidth` variable is explicitly set to 0 and no stroke operation is performed.
  * | StrokeThickness        | none           | Consistent with `StrokeStyle: none` as `strokeWidth` is 0.
  * | Layout                 | random         | A single shape is placed at a random (x, y) position within calculated canvas margins.
@@ -10651,9 +11035,8 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
         });
         let { centerX, centerY, radius, finalDiameter, atPixel } = params;
         
-        // SR Call 5: fillColor 
-        const fillColorObj = getRandomColor(100, 200);
-        const fillColorForRender = { r: fillColorObj.r, g: fillColorObj.g, b: fillColorObj.b, a: fillColorObj.a };
+        // SR Call 5: fillColor
+        const fillColor = getRandomColor("semitransparent");
 
         let drawCenterX = centerX;
         let drawCenterY = centerY;
@@ -10661,10 +11044,7 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
         // The _calculate... function already handles random positioning for each call.
         // No additional Math.random() needed for spreading in performance mode unless overriding SR logic.
 
-        ctx.fillCircle(
-            drawCenterX, drawCenterY, radius, 
-            fillColorForRender.r, fillColorForRender.g, fillColorForRender.b, fillColorForRender.a
-        );
+        ctx.fillCircle(drawCenterX, drawCenterY, radius, fillColor);
 
         if (!isPerformanceRun || i === 0) { 
             const currentLogs = [
@@ -10781,13 +11161,10 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
         // SeededRandom Call 4 & 5 for angles are skipped as we draw a full circle.
         // SeededRandom Call 6: strokeWidth
         const strokeWidth = SeededRandom.getRandom() * 10 + 1;
-        // SeededRandom Call 7: strokeColor 
-        const strokeColorObj = getRandomColor(100, 200); 
+        // SeededRandom Call 7: strokeColor
+        const strokeColor = getRandomColor("semitransparent");
         // SeededRandom Call 8: fillColor
-        const fillColorObj = getRandomColor(100, 200);
-
-        const strokeColorForRender = { r: strokeColorObj.r, g: strokeColorObj.g, b: strokeColorObj.b, a: strokeColorObj.a };
-        const fillColorForRender = { r: fillColorObj.r, g: fillColorObj.g, b: fillColorObj.b, a: fillColorObj.a };
+        const fillColor = getRandomColor("semitransparent");
 
         let drawCenterX = center.x;
         let drawCenterY = center.y;
@@ -10797,13 +11174,8 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
             // No additional Math.random() needed to spread if each SR sequence produces a different center.
             // However, getRandomPoint(1, canvasWidth, canvasHeight) will ensure they are spread.
         }
-        
-        ctx.fillAndStrokeCircle(
-            drawCenterX, drawCenterY, radius, 
-            fillColorForRender.r, fillColorForRender.g, fillColorForRender.b, fillColorForRender.a,
-            strokeWidth, 
-            strokeColorForRender.r, strokeColorForRender.g, strokeColorForRender.b, strokeColorForRender.a
-        );
+
+        ctx.fillAndStrokeCircle(drawCenterX, drawCenterY, radius, fillColor, strokeWidth, strokeColor);
 
         if (!isPerformanceRun || i === 0) { 
             logs.push(
@@ -10928,12 +11300,9 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
         let { centerX, centerY, radius, strokeWidth, finalDiameter, atPixel } = params;
         
         // SR Call 4: strokeColor
-        const strokeColorObj = getRandomColor(150, 230);
-        // SR Call 5: fillColor 
-        const fillColorObj = getRandomColor(100, 200);
-
-        const strokeColorForRender = { r: strokeColorObj.r, g: strokeColorObj.g, b: strokeColorObj.b, a: strokeColorObj.a };
-        const fillColorForRender = { r: fillColorObj.r, g: fillColorObj.g, b: fillColorObj.b, a: fillColorObj.a };
+        const strokeColor = getRandomColor("semitransparent");
+        // SR Call 5: fillColor
+        const fillColor = getRandomColor("semitransparent");
 
         let drawCenterX = centerX;
         let drawCenterY = centerY;
@@ -10942,13 +11311,8 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
             drawCenterX = Math.random() * canvasWidth;
             drawCenterY = Math.random() * canvasHeight;
         }
-        
-        ctx.fillAndStrokeCircle(
-            drawCenterX, drawCenterY, radius, 
-            fillColorForRender.r, fillColorForRender.g, fillColorForRender.b, fillColorForRender.a,
-            strokeWidth, 
-            strokeColorForRender.r, strokeColorForRender.g, strokeColorForRender.b, strokeColorForRender.a
-        );
+
+        ctx.fillAndStrokeCircle(drawCenterX, drawCenterY, radius, fillColor, strokeWidth, strokeColor);
 
         if (!isPerformanceRun || i === 0) { 
             const currentLogs = [
@@ -11085,12 +11449,9 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
         let { centerX, centerY, radius, strokeWidth, finalDiameter, atPixel } = params;
         
         // SR Call 6: strokeColor
-        const strokeColorObj = getRandomColor(150, 230);
-        // SR Call 7: fillColor 
-        const fillColorObj = getRandomColor(100, 200);
-
-        const strokeColorForRender = { r: strokeColorObj.r, g: strokeColorObj.g, b: strokeColorObj.b, a: strokeColorObj.a };
-        const fillColorForRender = { r: fillColorObj.r, g: fillColorObj.g, b: fillColorObj.b, a: fillColorObj.a };
+        const strokeColor = getRandomColor("semitransparent");
+        // SR Call 7: fillColor
+        const fillColor = getRandomColor("semitransparent");
 
         // The centerX, centerY from params are already the final random positions for drawing.
         let drawCenterX = centerX;
@@ -11101,12 +11462,7 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
         // So, no additional Math.random() for x/y offset needed here unless we want to override the SR-based random positioning.
         // The current setup already provides good distribution and varied parameters per instance.
 
-        ctx.fillAndStrokeCircle(
-            drawCenterX, drawCenterY, radius, 
-            fillColorForRender.r, fillColorForRender.g, fillColorForRender.b, fillColorForRender.a,
-            strokeWidth, 
-            strokeColorForRender.r, strokeColorForRender.g, strokeColorForRender.b, strokeColorForRender.a
-        );
+        ctx.fillAndStrokeCircle(drawCenterX, drawCenterY, radius, fillColor, strokeWidth, strokeColor);
 
         if (!isPerformanceRun || i === 0) { 
             const currentLogs = [
@@ -11239,13 +11595,13 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
 
     // Use the existing getRandomPoint function with no margin to get points anywhere within canvas boundaries
 
-    // Use existing getRandomColor and colorToString functions instead of duplicate code
+    // Use existing getRandomColor function - Color instances have toCSS() method
 
     for (let i = 0; i < lineCount; i++) {
         const start = getRandomPoint(null, canvasWidth, canvasHeight, 0);
         const end = getRandomPoint(null, canvasWidth, canvasHeight, 0);
         const thickness = Math.floor(SeededRandom.getRandom() * 10) + 1; // Thickness 1 to 10
-        const colorStr = colorToString(getRandomColor(150, 255));
+        const colorStr = getRandomColor("mixed").toCSS();
 
         ctx.lineWidth = thickness;
         ctx.strokeStyle = colorStr;
@@ -12847,12 +13203,12 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
         let finalDrawCenterY = rectCenter.y + yOffset;
 
         // Call 7: strokeColor (getRandomColor uses SeededRandom internally)
-        const strokeColorObj = getRandomColor(200, 255); // Opaque or semi-transparent stroke
+        const strokeColorObj = getRandomColor("mixed"); // Opaque or semi-transparent stroke
         // Call 8: fillColor (getRandomColor uses SeededRandom internally)
-        const fillColorObj = getRandomColor(100, 200);   // Semi-transparent fill
+        const fillColorObj = getRandomColor("semitransparent");   // Semi-transparent fill
 
-        const strokeColorStr = strokeColorObj ? colorToString(strokeColorObj) : 'rgba(0,0,0,0)';
-        const fillColorStr = fillColorObj ? colorToString(fillColorObj) : 'rgba(0,0,0,0)';
+        const strokeColorStr = strokeColorObj ? strokeColorObj.toCSS() : 'rgba(0,0,0,0)';
+        const fillColorStr = fillColorObj ? fillColorObj.toCSS() : 'rgba(0,0,0,0)';
 
         let geomX = finalDrawCenterX - rectWidth / 2;
         let geomY = finalDrawCenterY - rectHeight / 2;
@@ -12986,7 +13342,7 @@ registerHighLevelTest(
  * Converts a color object to an rgba string.
  * Assumes _colorObjectToString is available from a shared utility or defined in a previous script.
  * If not, it should be defined here:
- * function colorObj ? colorToString(colorObj) : 'rgba(0,0,0,0)' {
+ * function colorObj ? colorObj.toCSS() : 'rgba(0,0,0,0)' {
  *     if (!colorObj) return 'rgba(0,0,0,0)';
  *     const alpha = (typeof colorObj.a === 'number') ? (colorObj.a / 255).toFixed(3) : 1;
  *     return `rgba(${colorObj.r},${colorObj.g},${colorObj.b},${alpha})`;
@@ -13012,9 +13368,6 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
     const canvasWidth = ctx.canvas.width;
     const canvasHeight = ctx.canvas.height;
 
-    // getRandomColor is assumed to be globally available from random-utils.js or similar and use SeededRandom
-    // const getRandomColor = (minAlpha, maxAlpha) => ({ r: Math.floor(SeededRandom.getRandom()*256), g: Math.floor(SeededRandom.getRandom()*256), b: Math.floor(SeededRandom.getRandom()*256), a: Math.floor(SeededRandom.getRandom()*(maxAlpha-minAlpha+1)+minAlpha) });
-
     for (let i = 0; i < numToDraw; i++) {
         // Preserve SeededRandom sequence from original addRotatedRectangles:
         // 1. center (via getRandomPoint which uses SeededRandom)
@@ -13030,12 +13383,12 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
         const strokeWidth = SeededRandom.getRandom() * 10 + 1;
         
         // 6. strokeColor (getRandomColor uses SeededRandom)
-        const strokeColorObj = getRandomColor(200, 255); // Opaque or semi-transparent stroke
+        const strokeColorObj = getRandomColor("mixed"); // Opaque or semi-transparent stroke
         // 7. fillColor (getRandomColor uses SeededRandom)
-        const fillColorObj = getRandomColor(100, 200);   // Semi-transparent fill
+        const fillColorObj = getRandomColor("semitransparent");   // Semi-transparent fill
 
-        const strokeColorStr = strokeColorObj ? colorToString(strokeColorObj) : 'rgba(0,0,0,0)';
-        const fillColorStr = fillColorObj ? colorToString(fillColorObj) : 'rgba(0,0,0,0)';
+        const strokeColorStr = strokeColorObj ? strokeColorObj.toCSS() : 'rgba(0,0,0,0)';
+        const fillColorStr = fillColorObj ? fillColorObj.toCSS() : 'rgba(0,0,0,0)';
 
         let drawAtX = center.x;
         let drawAtY = center.y;
@@ -13469,7 +13822,7 @@ registerHighLevelTest(
  * - Performance: Draws multiple instances at random positions in performance mode.
  */
 
-// Helper function colorToString is already available from color-utils.js
+// Color instances from getRandomColor have toCSS() method
 
 /**
  * Draws a single axis-aligned rectangle based on original low-level test logic, or multiple for performance.
@@ -13519,10 +13872,10 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
         currentCenter.x += xOffset;
         currentCenter.y += yOffset;
 
-        const fillObj = getRandomColor(100, 200);
-        const strokeObj = getRandomColor(200, 255);
-        const currentFillColor = colorToString(fillObj);
-        const currentStrokeColor = colorToString(strokeObj);
+        const fillObj = getRandomColor("semitransparent");
+        const strokeObj = getRandomColor("mixed");
+        const currentFillColor = fillObj.toCSS();
+        const currentStrokeColor = strokeObj.toCSS();
         // --- End property generation for this instance ---
 
         let finalDrawX = currentCenter.x - currentDrawWidth / 2;
@@ -13604,8 +13957,8 @@ registerHighLevelTest(
  * | Shape category         | rounded-rects  | The test draws rounded rectangles using `ctx.fillRoundRect` and `ctx.strokeRoundRect`.
  * | Count                  | multi-10       | The test draws 10 instances in a loop for visual regression.
  * | SizeCategory           | mixed          | `width` and `height` are randomized in `[50, 150]`, which spans 'M' (40-79px) and 'L' (80-159px) size categories.
- * | FillStyle              | semitransparent| `fillColorObj` is created via `getRandomColor(100, 200)`, resulting in an alpha channel between 100-200.
- * | StrokeStyle            | opaque         | `strokeColorObj` is created via `getRandomColor(255, 255)`, resulting in a fixed alpha of 255.
+ * | FillStyle              | semitransparent| `fillColorObj` is created via `getRandomColor("semitransparent")`, resulting in an alpha channel between 100-200.
+ * | StrokeStyle            | opaque         | `strokeColorObj` is created via `getRandomColor("opaque")`, resulting in a fixed alpha of 255.
  * | StrokeThickness        | 1px            | `ctx.lineWidth` is hardcoded to `1`.
  * | Layout                 | spread         | The 10 shapes are positioned independently at randomized locations, distributing them across the canvas.
  * | CenteredAt             | mixed-pixel-grid| The center is first rounded to an integer grid, then adjusted by `adjustCenterForCrispStrokeRendering` to a pixel center (`*.5`).
@@ -13673,12 +14026,12 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
         const radius = Math.round(SeededRandom.getRandom() * Math.min(width, height) * 0.2);
         
         // SeededRandom Call 6: strokeColor (opaque)
-        const strokeColorObj = getRandomColor(255, 255); 
+        const strokeColorObj = getRandomColor("opaque"); 
         // SeededRandom Call 7: fillColor (semi-transparent)
-        const fillColorObj = getRandomColor(100, 200);
+        const fillColorObj = getRandomColor("semitransparent");
 
-        const strokeColorStr = strokeColorObj ? colorToString(strokeColorObj) : 'rgba(0,0,0,0)';
-        const fillColorStr = fillColorObj ? colorToString(fillColorObj) : 'rgba(0,0,0,0)';
+        const strokeColorStr = strokeColorObj ? strokeColorObj.toCSS() : 'rgba(0,0,0,0)';
+        const fillColorStr = fillColorObj ? fillColorObj.toCSS() : 'rgba(0,0,0,0)';
 
         // For drawing, use the adjusted center and original width/height
         let geomX = adjustedCenter.x - width / 2;
@@ -13745,7 +14098,7 @@ registerHighLevelTest(
  * | Shape category         | `rounded-rects`    | Code calls `ctx.fillRoundRect` and `ctx.strokeRoundRect`.
  * | Count                  | `multi-6`          | The test draws 6 instances in its default visual regression mode.
  * | SizeCategory           | `mixed`            | Rectangle dimensions are randomized in a range `[50, ~410)`, spanning the M, L, and XL size categories.
- * | FillStyle              | `semitransparent`  | Fill color is generated by `getRandomColor(100, 200)`, resulting in an alpha < 255.
+ * | FillStyle              | `semitransparent`  | Fill color is generated by `getRandomColor("semitransparent")`, resulting in an alpha < 255.
  * | StrokeStyle            | `semitransparent`  | Stroke color is hardcoded to `rgba(0, 0, 0, 50)`, which is semi-transparent.
  * | StrokeThickness        | `mixed`            | Stroke width is a randomized even integer between 2 and 42. As it's a set of discrete values, it's `mixed`.
  * | Layout                 | `spread`           | The 6 rectangles are positioned with random offsets, spreading them across the canvas.
@@ -13829,12 +14182,12 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
             y: currentCenter.y + yOffset
         };
 
-        const strokeColorObj = { r: 0, g: 0, b: 0, a: 50 }; // Fixed: Black, very transparent
-        // SeededRandom Call 7: fillColor (can be semi-transparent)
-        const fillColorObj = getRandomColor(100, 200);
+        const strokeColorObj = new Color(0, 0, 0, 50); // Fixed: Black, very transparent
+        // SeededRandom Call 7: fillColor (semi-transparent)
+        const fillColorObj = getRandomColor("semitransparent");
 
-        const strokeColorStr = strokeColorObj ? colorToString(strokeColorObj) : 'rgba(0,0,0,0)';
-        const fillColorStr = fillColorObj ? colorToString(fillColorObj) : 'rgba(0,0,0,0)';
+        const strokeColorStr = strokeColorObj ? strokeColorObj.toCSS() : 'rgba(0,0,0,0)';
+        const fillColorStr = fillColorObj ? fillColorObj.toCSS() : 'rgba(0,0,0,0)';
 
         let geomX = finalCenter.x - finalRectWidth / 2;
         let geomY = finalCenter.y - finalRectHeight / 2;
@@ -13897,8 +14250,8 @@ registerHighLevelTest(
  * | Shape category         | rounded-rects  | The test draws rounded rectangles using `ctx.fillRoundRect` and `ctx.strokeRoundRect`.
  * | Count                  | multi-8        | The test draws 8 instances when not in performance mode.
  * | SizeCategory           | mixed          | Width/Height are randomized in a range of [50, ~530] which spans M, L, and XL size categories.
- * | FillStyle              | semitransparent| `getRandomColor(100, 200)` is called for fill, which produces an alpha value in that range.
- * | StrokeStyle            | mixed          | `getRandomColor(200, 255)` is called for stroke, producing alpha values that can be opaque (255) or semitransparent.
+ * | FillStyle              | semitransparent| `getRandomColor("semitransparent")` is called for fill, which produces an alpha value in that range.
+ * | StrokeStyle            | mixed          | `getRandomColor("mixed")` is called for stroke, producing alpha values that can be opaque (255) or semitransparent.
  * | StrokeThickness        | mixed          | `strokeWidth` is randomized to a discrete set of even integers: 2, 4, 6, 8, 10, 12.
  * | Layout                 | spread         | Positions are randomized within the canvas to distribute the shapes.
  * | CenteredAt             | mixed-pixel-grid | The `initialCenter` has a 50% chance of being on a pixel center (+0.5) or a grid integer coordinate.
@@ -13981,12 +14334,12 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
         // SeededRandom Call 7: radius
         const radius = Math.round(SeededRandom.getRandom() * Math.min(finalRectWidth, finalRectHeight) * 0.2);
         // SeededRandom Call 8: strokeColor (semi-transparent or also opaque)
-        const strokeColorObj = getRandomColor(200, 255); 
+        const strokeColorObj = getRandomColor("mixed"); 
         // SeededRandom Call 9: fillColor (semi-transparent)
-        const fillColorObj = getRandomColor(100, 200);
+        const fillColorObj = getRandomColor("semitransparent");
 
-        const strokeColorStr = strokeColorObj ? colorToString(strokeColorObj) : 'rgba(0,0,0,0)';
-        const fillColorStr = fillColorObj ? colorToString(fillColorObj) : 'rgba(0,0,0,0)';
+        const strokeColorStr = strokeColorObj ? strokeColorObj.toCSS() : 'rgba(0,0,0,0)';
+        const fillColorStr = fillColorObj ? fillColorObj.toCSS() : 'rgba(0,0,0,0)';
 
         let geomX = finalCenter.x - finalRectWidth / 2;
         let geomY = finalCenter.y - finalRectHeight / 2;
@@ -14054,7 +14407,7 @@ registerHighLevelTest(
  * | Shape category         | rounded-rects   | Uses `ctx.fillRoundRect` to draw the shapes.
  * | Count                  | multi-8         | The test draws 8 instances in a loop for the visual regression test.
  * | SizeCategory           | XL              | The fixed side length of 200px falls into the Unified T-Shirt Size Scale's XL range (160-400px).
- * | FillStyle              | semitransparent | Fill color is generated by `getRandomColor(100, 200)`, resulting in an alpha between ~0.39 and ~0.78.
+ * | FillStyle              | semitransparent | Fill color is generated by `getRandomColor("semitransparent")`, resulting in an alpha between ~0.39 and ~0.78.
  * | StrokeStyle            | none            | No stroke is applied; `ctx.strokeRoundRect` is not called and no `strokeStyle` is set.
  * | StrokeThickness        | none            | Follows from `StrokeStyle` being `none`.
  * | Layout                 | spread          | The 8 shapes are distributed across the canvas with randomized center points.
@@ -14116,8 +14469,8 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
         const center = roundPoint(randomCenter); // Ensures integer coords for grid alignment
 
         // SeededRandom Call 3: fillColor (semi-transparent)
-        const fillColorObj = getRandomColor(100, 200);
-        const fillColorStr = fillColorObj ? colorToString(fillColorObj) : 'rgba(0,0,0,0)';
+        const fillColorObj = getRandomColor("semitransparent");
+        const fillColorStr = fillColorObj ? fillColorObj.toCSS() : 'rgba(0,0,0,0)';
 
         let geomX = center.x - fixedWidth / 2;
         let geomY = center.y - fixedHeight / 2;
@@ -14501,8 +14854,8 @@ registerHighLevelTest(
  * | Shape category         | rounded-rects  | The test draws using `ctx.fillRoundRect()` and `ctx.strokeRoundRect()`.
  * | Count                  | single         | The test is designed to draw one shape in its visual regression mode (`instances = null`).
  * | SizeCategory           | mixed          | `baseRectWidth` is randomized in `[50, 50 + 0.6 * canvasWidth]`. With a typical 800px canvas, this spans M, L, and XL size categories.
- * | FillStyle              | semitransparent| Fill color alpha is randomized in `[100, 200]` via `getRandomColor(100, 200)`.
- * | StrokeStyle            | opaque         | Stroke color alpha is fixed at 255 via `getRandomColor(255, 255)`.
+ * | FillStyle              | semitransparent| Fill color alpha is randomized in `[100, 200]` via `getRandomColor("semitransparent")`.
+ * | StrokeStyle            | opaque         | Stroke color alpha is fixed at 255 via `getRandomColor("opaque")`.
  * | StrokeThickness        | 1px-11px       | `strokeWidth` is `Math.round(SeededRandom.getRandom() * 10 + 1)`, which results in an integer range of 1 to 11.
  * | Layout                 | centered       | The shape's reference point is calculated at the canvas center (`Math.floor(canvasWidth / 2)`).
  * | CenteredAt             | grid           | The center coordinates are snapped to integer values (`Math.floor`), aligning them with grid intersections.
@@ -14583,12 +14936,12 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
         const radius = Math.round(SeededRandom.getRandom() * Math.min(finalRectWidth, finalRectHeight) * 0.2);
         
         // SeededRandom Call 5 (potentially multiple inside getRandomColor): strokeColor (opaque)
-        const strokeColorObj = getRandomColor(255, 255); 
+        const strokeColorObj = getRandomColor("opaque"); 
         // SeededRandom Call 6 (potentially multiple inside getRandomColor): fillColor (semi-transparent)
-        const fillColorObj = getRandomColor(100, 200);
+        const fillColorObj = getRandomColor("semitransparent");
 
-        const strokeColorStr = strokeColorObj ? colorToString(strokeColorObj) : 'rgba(0,0,0,0)';
-        const fillColorStr = fillColorObj ? colorToString(fillColorObj) : 'rgba(0,0,0,0)';
+        const strokeColorStr = strokeColorObj ? strokeColorObj.toCSS() : 'rgba(0,0,0,0)';
+        const fillColorStr = fillColorObj ? fillColorObj.toCSS() : 'rgba(0,0,0,0)';
 
         let geomX = centerX - finalRectWidth / 2;
         let geomY = centerY - finalRectHeight / 2;
@@ -14660,8 +15013,8 @@ registerHighLevelTest(
  * | Shape category         | `rounded-rects`     | The test renders a rounded rectangle using `ctx.fillRoundRect()` and `ctx.strokeRoundRect()`.
  * | Count                  | `single`            | The test logic draws only one shape instance in visual test mode.
  * | SizeCategory           | `mixed`             | The rectangle's width/height are randomized (e.g., from `50` to `~530px`), spanning M, L, and XL size categories.
- * | FillStyle              | `semitransparent`   | Fill color is set with a random alpha between 50 and 150 (out of 255) using `getRandomColor(50, 150)`.
- * | StrokeStyle            | `semitransparent`   | Stroke color is set with a random alpha between 50 and 150 (out of 255) using `getRandomColor(50, 150)`.
+ * | FillStyle              | `semitransparent`   | Fill color is set with a random alpha between 50 and 150 (out of 255) using `getRandomColor("semitransparent-light")`.
+ * | StrokeStyle            | `semitransparent`   | Stroke color is set with a random alpha between 50 and 150 (out of 255) using `getRandomColor("semitransparent-light")`.
  * | StrokeThickness        | `mixed`             | Stroke width is randomized to be an even number between 2 and 42. A discrete set of values is categorized as 'mixed'.
  * | Layout                 | `centered`          | The shape's position is calculated relative to the canvas center.
  * | CenteredAt             | `mixed-pixel-grid`  | The center has a 50% chance of being on a grid intersection (integer coordinates) or a pixel center (`*.5` coordinates).
@@ -14739,14 +15092,14 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
         const strokeWidth = placement.strokeWidth;
 
         // SeededRandom Call 5: strokeColor (semi-transparent)
-        const strokeColorObj = getRandomColor(50, 150); 
+        const strokeColorObj = getRandomColor("semitransparent-light"); 
         // SeededRandom Call 6: fillColor (semi-transparent)
-        const fillColorObj = getRandomColor(50, 150);
+        const fillColorObj = getRandomColor("semitransparent-light");
         // SeededRandom Call 7: radius
         const radius = Math.round(SeededRandom.getRandom() * Math.min(finalRectWidth, finalRectHeight) * 0.2);
 
-        const strokeColorStr = strokeColorObj ? colorToString(strokeColorObj) : 'rgba(0,0,0,0)';
-        const fillColorStr = fillColorObj ? colorToString(fillColorObj) : 'rgba(0,0,0,0)';
+        const strokeColorStr = strokeColorObj ? strokeColorObj.toCSS() : 'rgba(0,0,0,0)';
+        const fillColorStr = fillColorObj ? fillColorObj.toCSS() : 'rgba(0,0,0,0)';
 
         let geomX = center.x - finalRectWidth / 2;
         let geomY = center.y - finalRectHeight / 2;
@@ -14871,8 +15224,8 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
     // Helper to draw shapes from the array populated by original add... functions
     function drawShapesFromArray(shapesArray, context) {
         shapesArray.forEach(shape => {
-            const fillColorStr = shape.fillColor ? colorToString(shape.fillColor) : 'rgba(0,0,0,0)'    ;
-            const strokeColorStr = shape.strokeColor ? colorToString(shape.strokeColor) : 'rgba(0,0,0,0)'    ;
+            const fillColorStr = shape.fillColor ? shape.fillColor.toCSS() : 'rgba(0,0,0,0)'    ;
+            const strokeColorStr = shape.strokeColor ? shape.strokeColor.toCSS() : 'rgba(0,0,0,0)'    ;
             context.fillStyle = fillColorStr;
             context.strokeStyle = strokeColorStr;
             context.lineWidth = shape.strokeWidth || (shape.thickness || 0); // Use thickness for lines
@@ -14910,16 +15263,12 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
                 }
             } else if (shape.type === 'circle') {
                 if (shape.fillColor && shape.fillColor.a > 0 && shape.strokeColor && shape.strokeColor.a > 0 && shape.strokeWidth > 0) {
-                     context.fillAndStrokeCircle(shape.center.x, shape.center.y, shape.radius,
-                        shape.fillColor.r, shape.fillColor.g, shape.fillColor.b, shape.fillColor.a,
-                        shape.strokeWidth,
-                        shape.strokeColor.r, shape.strokeColor.g, shape.strokeColor.b, shape.strokeColor.a);
+                    context.fillAndStrokeCircle(shape.center.x, shape.center.y, shape.radius,
+                        shape.fillColor, shape.strokeWidth, shape.strokeColor);
                 } else if (shape.fillColor && shape.fillColor.a > 0) {
-                    context.fillCircle(shape.center.x, shape.center.y, shape.radius,
-                        shape.fillColor.r, shape.fillColor.g, shape.fillColor.b, shape.fillColor.a);
+                    context.fillCircle(shape.center.x, shape.center.y, shape.radius, shape.fillColor);
                 } else if (shape.strokeColor && shape.strokeColor.a > 0 && shape.strokeWidth > 0) {
-                     context.strokeCircle(shape.center.x, shape.center.y, shape.radius, shape.strokeWidth,
-                        shape.strokeColor.r, shape.strokeColor.g, shape.strokeColor.b, shape.strokeColor.a);
+                    context.strokeCircle(shape.center.x, shape.center.y, shape.radius, shape.strokeWidth, shape.strokeColor);
                 }
             } else if (shape.type === 'line') {
                 context.strokeLine(shape.start.x, shape.start.y, shape.end.x, shape.end.y);
