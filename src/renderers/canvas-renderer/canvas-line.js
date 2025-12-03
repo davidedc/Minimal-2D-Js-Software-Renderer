@@ -1,15 +1,10 @@
 function drawLineCanvas(ctx, shape) {
-  const {
-    start: { x: x1, y: y1 },
-    end: { x: x2, y: y2 },
-    thickness: strokeWidth,
-    color: { r: strokeR, g: strokeG, b: strokeB, a: strokeA }
-  } = shape;
+  const { start, end, thickness: strokeWidth, color } = shape;
 
   ctx.beginPath();
-  ctx.moveTo(x1, y1);
-  ctx.lineTo(x2, y2);
+  ctx.moveTo(start.x, start.y);
+  ctx.lineTo(end.x, end.y);
   ctx.lineWidth = strokeWidth;
-  ctx.strokeStyle = colorToString(strokeR, strokeG, strokeB, strokeA);
+  ctx.strokeStyle = color.toCSS();
   ctx.stroke();
 }

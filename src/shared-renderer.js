@@ -50,8 +50,7 @@ const drawShapesImplFn = function(shapes, isCanvas, ctx = null, frameBufferUint8
   }
 }
 
-// colorToString is now provided by color-bridge.js
-// No fallback definition needed
+// Color instances have toCSS() method for CSS rgba() string conversion
 
 // Assign the function to the global name expected by the codebase
 const drawShapesImpl = drawShapesImplFn;
@@ -62,13 +61,12 @@ const drawShapesImpl = drawShapesImplFn;
 if (isNodeEnv && typeof module !== 'undefined' && module.exports) {
   // Node.js - use module.exports
   module.exports = {
-    drawShapesImpl: drawShapesImplFn,  // Export the function with the expected name
-    colorToString
+    drawShapesImpl: drawShapesImplFn  // Export the function with the expected name
   };
-  
+
   // Also assign to global for Node.js
   global.drawShapesImpl = drawShapesImplFn;
-  
+
   // Make sure renderers are available globally in Node
   // Note: These are needed for add-tests.js to work correctly
   global.SWRendererPixel = global.SWRendererPixel || {};
@@ -77,13 +75,13 @@ if (isNodeEnv && typeof module !== 'undefined' && module.exports) {
   global.SWRendererRoundedRect = global.SWRendererRoundedRect || {};
   global.SWRendererCircle = global.SWRendererCircle || {};
   global.SWRendererArc = global.SWRendererArc || {};
-  
+
   global.drawLineCanvas = global.drawLineCanvas || function() {};
   global.drawRectCanvas = global.drawRectCanvas || function() {};
   global.drawCircleCanvas = global.drawCircleCanvas || function() {};
   global.drawArcCanvas = global.drawArcCanvas || function() {};
   global.drawRoundedRectCanvas = global.drawRoundedRectCanvas || function() {};
-  
+
   // In Node.js, we also need to define SeededRandom if it's not already available
   if (typeof global.SeededRandom === 'undefined') {
     global.SeededRandom = global.SeededRandom || {
@@ -93,9 +91,4 @@ if (isNodeEnv && typeof module !== 'undefined' && module.exports) {
 } else {
   // Browser - add to window explicitly
   window.drawShapesImpl = drawShapesImplFn;
-  
-  // Only add colorToString if it's not already defined
-  if (typeof window.colorToString === 'undefined') {
-    window.colorToString = colorToString;
-  }
 }

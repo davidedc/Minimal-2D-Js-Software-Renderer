@@ -1,11 +1,7 @@
 // TODO anyone calling drawRoundedRectCanvas should rather do some call to
 // canvas.roundRect() instead !
 function drawRoundedRectCanvas(ctx, shape) {
-  const {
-      center, width, height, radius, rotation,
-      strokeWidth, strokeColor: { r: strokeR, g: strokeG, b: strokeB, a: strokeA },
-      fillColor: { r: fillR, g: fillG, b: fillB, a: fillA }
-  } = shape;
+  const { center, width, height, radius, rotation, strokeWidth, strokeColor, fillColor } = shape;
 
   if (isNearMultipleOf90Degrees(rotation)) {
       // Create a modified shape with adjusted width and height
@@ -24,13 +20,13 @@ function drawRoundedRectCanvas(ctx, shape) {
       ctx.beginPath();
       roundedRectPath(ctx, -width/2, -height/2, width, height, radius);
 
-      if (fillA > 0) {
-          ctx.fillStyle = colorToString(fillR, fillG, fillB, fillA);
+      if (fillColor.a > 0) {
+          ctx.fillStyle = fillColor.toCSS();
           ctx.fill();
       }
-      if (strokeA > 0 && strokeWidth > 0) {
+      if (strokeColor.a > 0 && strokeWidth > 0) {
           ctx.lineWidth = strokeWidth;
-          ctx.strokeStyle = colorToString(strokeR, strokeG, strokeB, strokeA);
+          ctx.strokeStyle = strokeColor.toCSS();
           ctx.stroke();
       }
       ctx.restore();
@@ -46,15 +42,9 @@ function drawRoundedRectCanvas(ctx, shape) {
 // from those arcs).
 
 function drawCrispAxisAlignedRoundedRectCanvas(ctx, shape) {
-  const { 
-      center: {x: centerX, y: centerY}, 
-      width: rectWidth, 
-      height: rectHeight, 
-      radius, 
-      strokeWidth, 
-      strokeColor: { r: strokeR, g: strokeG, b: strokeB, a: strokeA },
-      fillColor: { r: fillR, g: fillG, b: fillB, a: fillA }
-  } = shape;
+  const { center, width: rectWidth, height: rectHeight, radius, strokeWidth, strokeColor, fillColor } = shape;
+  const centerX = center.x;
+  const centerY = center.y;
 
   // to drow a crisp rectangle-like shape, while centerX and centerY could be non-integer,
   // the width and height must be integers, so let's throw an error if they are not
@@ -86,20 +76,20 @@ function drawCrispAxisAlignedRoundedRectCanvas(ctx, shape) {
   };
 
   // Draw fill first (if needed)
-  if (fillA > 0) {
+  if (fillColor.a > 0) {
     let pos = getRectangularFillGeometry(centerX, centerY, rectWidth, rectHeight);
     let r = Math.round(Math.min(radius, Math.min(pos.w, pos.h) / 2));
     createPath(pos, r);
-    ctx.fillStyle = colorToString(fillR, fillG, fillB, fillA);
+    ctx.fillStyle = fillColor.toCSS();
     ctx.fill();
   }
-  
+
   // Draw stroke (if needed)
-  if (strokeWidth > 0 && strokeA > 0) {
+  if (strokeWidth > 0 && strokeColor.a > 0) {
     let pos = getRectangularStrokeGeometry(centerX, centerY, rectWidth, rectHeight);
     let r = Math.round(Math.min(radius, Math.min(pos.w, pos.h) / 2));
     createPath(pos, r);
-    ctx.strokeStyle = colorToString(strokeR, strokeG, strokeB, strokeA);
+    ctx.strokeStyle = strokeColor.toCSS();
     ctx.lineWidth = strokeWidth;
     ctx.stroke();
   }

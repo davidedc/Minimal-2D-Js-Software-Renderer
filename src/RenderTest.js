@@ -1120,7 +1120,7 @@ class RenderTest {
             const g = imageData.data[i + 1];
             const b = imageData.data[i + 2];
             const a = imageData.data[i + 3];
-            this.canvasCtxOfComparison.fillStyle = colorToString(r, g, b, a);
+            this.canvasCtxOfComparison.fillStyle = new Color(r, g, b, a).toCSS();
           }
 
           this.canvasCtxOfComparison.fillRect(
@@ -1165,10 +1165,10 @@ class RenderTest {
       localMouseY = Math.min(Math.floor(localMouseY), RenderTest.GRID_ROWS - 1);
       const idx = (localMouseY * RenderTest.GRID_COLUMNS + localMouseX) * 4;
       const r = imageData.data[idx];
-      const g = imageData.data[idx + 1]; 
+      const g = imageData.data[idx + 1];
       const b = imageData.data[idx + 2];
       const a = imageData.data[idx + 3];
-      const rgbaText = colorToString(r, g, b, a);
+      const rgbaText = new Color(r, g, b, a).toCSS();
 
       // Draw color text below grid
       this.canvasCtxOfComparison.font = '12px monospace';

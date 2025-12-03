@@ -1,6 +1,9 @@
 // Check for Node.js environment and load polyfills if needed
 const isNode = typeof window === 'undefined' && typeof process !== 'undefined';
 
+// Global ColorParser instance for parsing CSS color strings
+const _colorParser = new ColorParser();
+
 /**
  * Software-based Canvas 2D rendering context
  * This provides a subset of the CanvasRenderingContext2D API that runs
@@ -84,19 +87,19 @@ class CrispSwContext {
 
     // Style setters and getters
     set fillStyle(style) {
-        this.currentState.fillColor = parseColor(style);
+        this.currentState.fillColor = Color.fromCSS(style, _colorParser);
     }
 
     get fillStyle() {
-        return colorToString(this.currentState.fillColor);
+        return this.currentState.fillColor.toCSS();
     }
 
     set strokeStyle(style) {
-        this.currentState.strokeColor = parseColor(style);
+        this.currentState.strokeColor = Color.fromCSS(style, _colorParser);
     }
 
     get strokeStyle() {
-        return colorToString(this.currentState.strokeColor);
+        return this.currentState.strokeColor.toCSS();
     }
 
     set lineWidth(width) {

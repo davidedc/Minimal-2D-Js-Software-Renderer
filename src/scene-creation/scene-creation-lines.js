@@ -8,7 +8,7 @@ function addBlackLines(shapes, log, currentIterationNumber, lineWidth, count) {
       start,
       end,
       thickness: lineWidth,
-      color: { r: 0, g: 0, b: 0, a: 255 }
+      color: new Color(0, 0, 0, 255)
     });
     log.innerHTML += `&#x2500; Black line from (${start.x}, ${start.y}) to (${end.x}, ${end.y}) thickness: ${lineWidth}<br>`;
   }
@@ -28,7 +28,7 @@ function addRandomLines(shapes, log, currentIterationNumber, count = 15) {
       thickness,
       color
     });
-    log.innerHTML += `&#x2500; Random line from (${start.x}, ${start.y}) to (${end.x}, ${end.y}) thickness: ${thickness} color: ${colorToString(color)}<br>`;
+    log.innerHTML += `&#x2500; Random line from (${start.x}, ${start.y}) to (${end.x}, ${end.y}) thickness: ${thickness} color: ${color.toCSS()}<br>`;
   }
 }
 
@@ -52,7 +52,7 @@ function add2PxVerticalLine(centerX, centerY, height, shapes, log) {
     start: { x: centerX, y: startY },
     end: { x: centerX, y: endY },
     thickness: 2,
-    color: { r: 255, g: 0, b: 0, a: 255 }
+    color: new Color(255, 0, 0, 255)
   });
 
   log.innerHTML += `&#x2500; 2px vertical line from (${centerX}, ${startY}) to (${centerX}, ${endY}) height: ${height}<br>`;
@@ -92,7 +92,7 @@ function add1PxVerticalLine(centerX, centerY, height, shapes, log) {
     start: { x: centerX, y: startY },
     end: { x: centerX, y: endY },
     thickness: 1,
-    color: { r: 255, g: 0, b: 0, a: 255 }
+    color: new Color(255, 0, 0, 255)
   });
 
   log.innerHTML += `&#x2500; 1px vertical line from (${centerX}, ${startY}) to (${centerX}, ${endY}) height: ${height}<br>`;
@@ -129,7 +129,7 @@ function add1PxHorizontalLine(centerX, centerY, width, shapes, log) {
     start: { x: startX, y: centerY },
     end: { x: endX, y: centerY },
     thickness: 1,
-    color: { r: 255, g: 0, b: 0, a: 255 }
+    color: new Color(255, 0, 0, 255)
   });
 
   log.innerHTML += `&#x2500; 1px horizontal line from (${startX}, ${centerY}) to (${endX}, ${centerY}) width: ${width}<br>`;
@@ -167,7 +167,7 @@ function add2PxHorizontalLine(centerX, centerY, width, shapes, log) {
     start: { x: startX, y: centerY },
     end: { x: endX, y: centerY },
     thickness: 2,
-    color: { r: 255, g: 0, b: 0, a: 255 }
+    color: new Color(255, 0, 0, 255)
   });
 
   log.innerHTML += `&#x2500; 2px horizontal line from (${startX}, ${centerY}) to (${endX}, ${centerY}) width: ${width}<br>`;

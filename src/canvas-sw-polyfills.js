@@ -3,10 +3,8 @@
  * as CrispSwCanvas / CrispSwContext.
  */
 
-// Helper function to convert Color object to RGBA string
-function colorObjToString(color) {
-    return `rgba(${color.r}, ${color.g}, ${color.b}, ${color.a / 255})`;
-}
+// Global ColorParser instance for polyfills
+const _polyfillColorParser = new ColorParser();
 
 // Add strokeLine to CanvasRenderingContext2D
 if (!CanvasRenderingContext2D.prototype.strokeLine) {
@@ -25,7 +23,7 @@ if (!CanvasRenderingContext2D.prototype.fillCircle) {
 
         this.beginPath();
         this.arc(centerX, centerY, radius, 0, Math.PI * 2);
-        this.fillStyle = colorObjToString(fillColor);
+        this.fillStyle = fillColor.toCSS();
         this.fill();
 
         this.fillStyle = originalFillStyle;
@@ -40,7 +38,7 @@ if (!CanvasRenderingContext2D.prototype.strokeCircle) {
 
         this.beginPath();
         this.arc(centerX, centerY, radius, 0, Math.PI * 2);
-        this.strokeStyle = colorObjToString(strokeColor);
+        this.strokeStyle = strokeColor.toCSS();
         if (strokeWidth !== undefined) {
             this.lineWidth = strokeWidth;
         }
@@ -64,12 +62,12 @@ if (!CanvasRenderingContext2D.prototype.fillAndStrokeCircle) {
         this.arc(centerX, centerY, radius, 0, Math.PI * 2);
 
         if (fillColor.a > 0) {
-            this.fillStyle = colorObjToString(fillColor);
+            this.fillStyle = fillColor.toCSS();
             this.fill();
         }
 
         if (strokeColor.a > 0 && (strokeWidth === undefined || strokeWidth > 0)) {
-            this.strokeStyle = colorObjToString(strokeColor);
+            this.strokeStyle = strokeColor.toCSS();
             if (strokeWidth !== undefined) {
                 this.lineWidth = strokeWidth;
             }
@@ -128,12 +126,12 @@ if (typeof CanvasRenderingContext2D.prototype.fillRoundRect === 'undefined') {
             radius: radius,
             rotation: 0, // Assuming no rotation for this direct method
             strokeWidth: 0,
-            strokeColor: { r: 0, g: 0, b: 0, a: 0 },
-            fillColor: parseColor(this.fillStyle) // parseColor needs to be available
+            strokeColor: Color.transparent,
+            fillColor: Color.fromCSS(this.fillStyle, _polyfillColorParser)
         };
         // Assumes drawRoundedRectCanvas is loaded and available globally
         // TODO this should use some call to canvas.roundRect() instead of drawRoundedRectCanvas
-        drawRoundedRectCanvas(this, shape); 
+        drawRoundedRectCanvas(this, shape);
     };
 }
 
@@ -155,12 +153,12 @@ if (typeof CanvasRenderingContext2D.prototype.strokeRoundRect === 'undefined') {
             radius: radius,
             rotation: 0, // Assuming no rotation for this direct method
             strokeWidth: this.lineWidth,
-            strokeColor: parseColor(this.strokeStyle), // parseColor needs to be available
-            fillColor: { r: 0, g: 0, b: 0, a: 0 }
+            strokeColor: Color.fromCSS(this.strokeStyle, _polyfillColorParser),
+            fillColor: Color.transparent
         };
         // Assumes drawRoundedRectCanvas is loaded and available globally
         // TODO this should use some call to canvas.roundRect() instead of drawRoundedRectCanvas
-        drawRoundedRectCanvas(this, shape); 
+        drawRoundedRectCanvas(this, shape);
     };
 }
 
