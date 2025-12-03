@@ -199,7 +199,7 @@ class CrispSwContext {
             rotation: rotation,
             clippingOnly: false,
             strokeWidth: 0,
-            strokeColor: Color.transparent(),
+            strokeColor: Color.transparent,
             fillColor: state.fillColor
         });
     }
@@ -220,7 +220,7 @@ class CrispSwContext {
             clippingOnly: false,
             strokeWidth: scaledLineWidth,
             strokeColor: state.strokeColor,
-            fillColor: Color.transparent()
+            fillColor: Color.transparent
         });
     }
 
@@ -254,7 +254,7 @@ class CrispSwContext {
             center: { x: center.tx, y: center.ty },
             radius: scaledRadius,
             strokeWidth: 0,
-            strokeColor: Color.transparent(),
+            strokeColor: Color.transparent,
             fillColor: fillColor
         };
 
@@ -287,7 +287,7 @@ class CrispSwContext {
             radius: scaledRadius,
             strokeWidth: scaledStrokeWidth,
             strokeColor: strokeColor,
-            fillColor: Color.transparent()
+            fillColor: Color.transparent
         };
 
         // Call the circle renderer with our shape
@@ -451,7 +451,7 @@ class CrispSwContext {
             rotation: rotation,
             fillColor: state.fillColor,
             strokeWidth: 0,
-            strokeColor: Color.transparent()
+            strokeColor: Color.transparent
         });
     }
 
@@ -479,7 +479,7 @@ class CrispSwContext {
             height: height * scaleY,
             radius: scaledRadius,
             rotation: rotation,
-            fillColor: Color.transparent(),
+            fillColor: Color.transparent,
             strokeWidth: scaledLineWidth,
             strokeColor: state.strokeColor
         });
@@ -516,8 +516,8 @@ class CrispSwContext {
                 clippingOnly: true,
                 // These are not used for clippingOnly, but provided for shape consistency
                 strokeWidth: 0,
-                strokeColor: Color.transparent(),
-                fillColor: Color.transparent()
+                strokeColor: Color.transparent,
+                fillColor: Color.transparent
             });
         } else {
             throw new Error("CrispSwContext.arc() for path definition/clipping is only implemented for full circles. Use fillArc/outerStrokeArc for drawing partial arcs.");
@@ -547,7 +547,7 @@ class CrispSwContext {
             anticlockwise: anticlockwise,
             fillColor: state.fillColor,
             strokeWidth: 0,
-            strokeColor: Color.transparent()
+            strokeColor: Color.transparent
         });
     }
 
@@ -571,7 +571,7 @@ class CrispSwContext {
             startAngle: startAngleDeg,
             endAngle: endAngleDeg,
             anticlockwise: anticlockwise,
-            fillColor: Color.transparent(),
+            fillColor: Color.transparent,
             strokeWidth: scaledLineWidth,
             strokeColor: state.strokeColor
         });
