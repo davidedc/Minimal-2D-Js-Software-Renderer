@@ -87,12 +87,9 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
         let { centerX, centerY, radius, strokeWidth, finalDiameter, atPixel } = params;
         
         // SR Call 6: strokeColor
-        const strokeColorObj = getRandomColor("semitransparent");
-        // SR Call 7: fillColor 
-        const fillColorObj = getRandomColor("semitransparent");
-
-        const strokeColorForRender = { r: strokeColorObj.r, g: strokeColorObj.g, b: strokeColorObj.b, a: strokeColorObj.a };
-        const fillColorForRender = { r: fillColorObj.r, g: fillColorObj.g, b: fillColorObj.b, a: fillColorObj.a };
+        const strokeColor = getRandomColor("semitransparent");
+        // SR Call 7: fillColor
+        const fillColor = getRandomColor("semitransparent");
 
         // The centerX, centerY from params are already the final random positions for drawing.
         let drawCenterX = centerX;
@@ -103,12 +100,7 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
         // So, no additional Math.random() for x/y offset needed here unless we want to override the SR-based random positioning.
         // The current setup already provides good distribution and varied parameters per instance.
 
-        ctx.fillAndStrokeCircle(
-            drawCenterX, drawCenterY, radius, 
-            fillColorForRender.r, fillColorForRender.g, fillColorForRender.b, fillColorForRender.a,
-            strokeWidth, 
-            strokeColorForRender.r, strokeColorForRender.g, strokeColorForRender.b, strokeColorForRender.a
-        );
+        ctx.fillAndStrokeCircle(drawCenterX, drawCenterY, radius, fillColor, strokeWidth, strokeColor);
 
         if (!isPerformanceRun || i === 0) { 
             const currentLogs = [

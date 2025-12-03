@@ -68,13 +68,10 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
         // SeededRandom Call 4 & 5 for angles are skipped as we draw a full circle.
         // SeededRandom Call 6: strokeWidth
         const strokeWidth = SeededRandom.getRandom() * 10 + 1;
-        // SeededRandom Call 7: strokeColor 
-        const strokeColorObj = getRandomColor("semitransparent"); 
+        // SeededRandom Call 7: strokeColor
+        const strokeColor = getRandomColor("semitransparent");
         // SeededRandom Call 8: fillColor
-        const fillColorObj = getRandomColor("semitransparent");
-
-        const strokeColorForRender = { r: strokeColorObj.r, g: strokeColorObj.g, b: strokeColorObj.b, a: strokeColorObj.a };
-        const fillColorForRender = { r: fillColorObj.r, g: fillColorObj.g, b: fillColorObj.b, a: fillColorObj.a };
+        const fillColor = getRandomColor("semitransparent");
 
         let drawCenterX = center.x;
         let drawCenterY = center.y;
@@ -84,13 +81,8 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
             // No additional Math.random() needed to spread if each SR sequence produces a different center.
             // However, getRandomPoint(1, canvasWidth, canvasHeight) will ensure they are spread.
         }
-        
-        ctx.fillAndStrokeCircle(
-            drawCenterX, drawCenterY, radius, 
-            fillColorForRender.r, fillColorForRender.g, fillColorForRender.b, fillColorForRender.a,
-            strokeWidth, 
-            strokeColorForRender.r, strokeColorForRender.g, strokeColorForRender.b, strokeColorForRender.a
-        );
+
+        ctx.fillAndStrokeCircle(drawCenterX, drawCenterY, radius, fillColor, strokeWidth, strokeColor);
 
         if (!isPerformanceRun || i === 0) { 
             logs.push(

@@ -83,9 +83,8 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
         });
         let { centerX, centerY, radius, finalDiameter, atPixel } = params;
         
-        // SR Call 5: fillColor 
-        const fillColorObj = getRandomColor("semitransparent");
-        const fillColorForRender = { r: fillColorObj.r, g: fillColorObj.g, b: fillColorObj.b, a: fillColorObj.a };
+        // SR Call 5: fillColor
+        const fillColor = getRandomColor("semitransparent");
 
         let drawCenterX = centerX;
         let drawCenterY = centerY;
@@ -93,10 +92,7 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
         // The _calculate... function already handles random positioning for each call.
         // No additional Math.random() needed for spreading in performance mode unless overriding SR logic.
 
-        ctx.fillCircle(
-            drawCenterX, drawCenterY, radius, 
-            fillColorForRender.r, fillColorForRender.g, fillColorForRender.b, fillColorForRender.a
-        );
+        ctx.fillCircle(drawCenterX, drawCenterY, radius, fillColor);
 
         if (!isPerformanceRun || i === 0) { 
             const currentLogs = [

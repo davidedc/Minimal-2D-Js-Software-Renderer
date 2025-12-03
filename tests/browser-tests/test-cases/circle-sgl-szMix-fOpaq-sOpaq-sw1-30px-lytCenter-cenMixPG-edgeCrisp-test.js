@@ -88,12 +88,9 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
         let { centerX, centerY, radius, strokeWidth, finalDiameter, atPixel } = params;
         
         // SR Call 4: strokeColor
-        const strokeColorObj = getRandomColor("semitransparent");
-        // SR Call 5: fillColor 
-        const fillColorObj = getRandomColor("semitransparent");
-
-        const strokeColorForRender = { r: strokeColorObj.r, g: strokeColorObj.g, b: strokeColorObj.b, a: strokeColorObj.a };
-        const fillColorForRender = { r: fillColorObj.r, g: fillColorObj.g, b: fillColorObj.b, a: fillColorObj.a };
+        const strokeColor = getRandomColor("semitransparent");
+        // SR Call 5: fillColor
+        const fillColor = getRandomColor("semitransparent");
 
         let drawCenterX = centerX;
         let drawCenterY = centerY;
@@ -102,13 +99,8 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
             drawCenterX = Math.random() * canvasWidth;
             drawCenterY = Math.random() * canvasHeight;
         }
-        
-        ctx.fillAndStrokeCircle(
-            drawCenterX, drawCenterY, radius, 
-            fillColorForRender.r, fillColorForRender.g, fillColorForRender.b, fillColorForRender.a,
-            strokeWidth, 
-            strokeColorForRender.r, strokeColorForRender.g, strokeColorForRender.b, strokeColorForRender.a
-        );
+
+        ctx.fillAndStrokeCircle(drawCenterX, drawCenterY, radius, fillColor, strokeWidth, strokeColor);
 
         if (!isPerformanceRun || i === 0) { 
             const currentLogs = [

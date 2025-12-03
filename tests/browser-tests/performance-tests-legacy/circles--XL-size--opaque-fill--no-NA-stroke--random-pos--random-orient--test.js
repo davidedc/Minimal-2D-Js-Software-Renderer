@@ -14,9 +14,6 @@ function draw_circles__XL_size__opaque_fill__no_NA_stroke__random_pos__random_or
     const a = 255; // Fully opaque fill
     
     // No stroke - using fillCircle instead of fillAndStrokeCircle
-    ctx.fillCircle(
-      centerX, centerY, radius,
-      r, g, b, a
-    );
+    ctx.fillCircle(centerX, centerY, radius, new Color(r, g, b, a));
   }
 }

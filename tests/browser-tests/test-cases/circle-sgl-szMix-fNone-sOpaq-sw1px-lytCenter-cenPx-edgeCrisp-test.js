@@ -87,7 +87,7 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
         const radius = finalDiameter / 2;
         
         // Stroke color is fixed red, opaque. Fill is transparent.
-        const r = 255, g = 0, b = 0, a = 255;
+        const strokeColor = new Color(255, 0, 0, 255);
 
         let drawCenterX = centerX;
         let drawCenterY = centerY;
@@ -96,9 +96,8 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
             drawCenterX = Math.random() * canvasWidth;
             drawCenterY = Math.random() * canvasHeight;
         }
-        
-        // Use the dedicated strokeCircle method
-        ctx.strokeCircle(drawCenterX, drawCenterY, radius, 1, r, g, b, a);
+
+        ctx.strokeCircle(drawCenterX, drawCenterY, radius, 1, strokeColor);
 
         if (!isPerformanceRun || i === 0) { 
             const currentLogs = [

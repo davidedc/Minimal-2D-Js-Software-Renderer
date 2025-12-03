@@ -49,7 +49,7 @@
  * Converts a color object to an rgba string.
  * Assumes _colorObjectToString is available from a shared utility or defined in a previous script.
  * If not, it should be defined here:
- * function colorObj ? colorToString(colorObj) : 'rgba(0,0,0,0)' {
+ * function colorObj ? colorObj.toCSS() : 'rgba(0,0,0,0)' {
  *     if (!colorObj) return 'rgba(0,0,0,0)';
  *     const alpha = (typeof colorObj.a === 'number') ? (colorObj.a / 255).toFixed(3) : 1;
  *     return `rgba(${colorObj.r},${colorObj.g},${colorObj.b},${alpha})`;
@@ -94,8 +94,8 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
         // 7. fillColor (getRandomColor uses SeededRandom)
         const fillColorObj = getRandomColor("semitransparent");   // Semi-transparent fill
 
-        const strokeColorStr = strokeColorObj ? colorToString(strokeColorObj) : 'rgba(0,0,0,0)';
-        const fillColorStr = fillColorObj ? colorToString(fillColorObj) : 'rgba(0,0,0,0)';
+        const strokeColorStr = strokeColorObj ? strokeColorObj.toCSS() : 'rgba(0,0,0,0)';
+        const fillColorStr = fillColorObj ? fillColorObj.toCSS() : 'rgba(0,0,0,0)';
 
         let drawAtX = center.x;
         let drawAtY = center.y;

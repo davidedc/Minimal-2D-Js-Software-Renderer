@@ -96,12 +96,12 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
             y: currentCenter.y + yOffset
         };
 
-        const strokeColorObj = { r: 0, g: 0, b: 0, a: 50 }; // Fixed: Black, very transparent
+        const strokeColorObj = new Color(0, 0, 0, 50); // Fixed: Black, very transparent
         // SeededRandom Call 7: fillColor (semi-transparent)
         const fillColorObj = getRandomColor("semitransparent");
 
-        const strokeColorStr = strokeColorObj ? colorToString(strokeColorObj) : 'rgba(0,0,0,0)';
-        const fillColorStr = fillColorObj ? colorToString(fillColorObj) : 'rgba(0,0,0,0)';
+        const strokeColorStr = strokeColorObj ? strokeColorObj.toCSS() : 'rgba(0,0,0,0)';
+        const fillColorStr = fillColorObj ? fillColorObj.toCSS() : 'rgba(0,0,0,0)';
 
         let geomX = finalCenter.x - finalRectWidth / 2;
         let geomY = finalCenter.y - finalRectHeight / 2;

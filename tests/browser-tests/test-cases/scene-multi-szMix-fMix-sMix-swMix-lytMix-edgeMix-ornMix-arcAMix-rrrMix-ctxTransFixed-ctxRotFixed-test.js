@@ -68,8 +68,8 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
     // Helper to draw shapes from the array populated by original add... functions
     function drawShapesFromArray(shapesArray, context) {
         shapesArray.forEach(shape => {
-            const fillColorStr = shape.fillColor ? colorToString(shape.fillColor) : 'rgba(0,0,0,0)'    ;
-            const strokeColorStr = shape.strokeColor ? colorToString(shape.strokeColor) : 'rgba(0,0,0,0)'    ;
+            const fillColorStr = shape.fillColor ? shape.fillColor.toCSS() : 'rgba(0,0,0,0)'    ;
+            const strokeColorStr = shape.strokeColor ? shape.strokeColor.toCSS() : 'rgba(0,0,0,0)'    ;
             context.fillStyle = fillColorStr;
             context.strokeStyle = strokeColorStr;
             context.lineWidth = shape.strokeWidth || (shape.thickness || 0); // Use thickness for lines
@@ -107,16 +107,12 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
                 }
             } else if (shape.type === 'circle') {
                 if (shape.fillColor && shape.fillColor.a > 0 && shape.strokeColor && shape.strokeColor.a > 0 && shape.strokeWidth > 0) {
-                     context.fillAndStrokeCircle(shape.center.x, shape.center.y, shape.radius,
-                        shape.fillColor.r, shape.fillColor.g, shape.fillColor.b, shape.fillColor.a,
-                        shape.strokeWidth,
-                        shape.strokeColor.r, shape.strokeColor.g, shape.strokeColor.b, shape.strokeColor.a);
+                    context.fillAndStrokeCircle(shape.center.x, shape.center.y, shape.radius,
+                        shape.fillColor, shape.strokeWidth, shape.strokeColor);
                 } else if (shape.fillColor && shape.fillColor.a > 0) {
-                    context.fillCircle(shape.center.x, shape.center.y, shape.radius,
-                        shape.fillColor.r, shape.fillColor.g, shape.fillColor.b, shape.fillColor.a);
+                    context.fillCircle(shape.center.x, shape.center.y, shape.radius, shape.fillColor);
                 } else if (shape.strokeColor && shape.strokeColor.a > 0 && shape.strokeWidth > 0) {
-                     context.strokeCircle(shape.center.x, shape.center.y, shape.radius, shape.strokeWidth,
-                        shape.strokeColor.r, shape.strokeColor.g, shape.strokeColor.b, shape.strokeColor.a);
+                    context.strokeCircle(shape.center.x, shape.center.y, shape.radius, shape.strokeWidth, shape.strokeColor);
                 }
             } else if (shape.type === 'line') {
                 context.strokeLine(shape.start.x, shape.start.y, shape.end.x, shape.end.y);

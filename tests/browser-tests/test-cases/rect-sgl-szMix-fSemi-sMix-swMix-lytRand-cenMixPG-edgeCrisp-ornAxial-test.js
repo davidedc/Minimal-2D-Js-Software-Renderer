@@ -51,7 +51,7 @@
  * - Performance: Draws multiple instances at random positions in performance mode.
  */
 
-// Helper function colorToString is already available from color-bridge.js
+// Color instances from getRandomColor have toCSS() method
 
 /**
  * Draws a single axis-aligned rectangle based on original low-level test logic, or multiple for performance.
@@ -103,8 +103,8 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
 
         const fillObj = getRandomColor("semitransparent");
         const strokeObj = getRandomColor("mixed");
-        const currentFillColor = colorToString(fillObj);
-        const currentStrokeColor = colorToString(strokeObj);
+        const currentFillColor = fillObj.toCSS();
+        const currentStrokeColor = strokeObj.toCSS();
         // --- End property generation for this instance ---
 
         let finalDrawX = currentCenter.x - currentDrawWidth / 2;

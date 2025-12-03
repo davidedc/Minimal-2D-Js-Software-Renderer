@@ -84,13 +84,13 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
 
     // Use the existing getRandomPoint function with no margin to get points anywhere within canvas boundaries
 
-    // Use existing getRandomColor and colorToString functions instead of duplicate code
+    // Use existing getRandomColor function - Color instances have toCSS() method
 
     for (let i = 0; i < lineCount; i++) {
         const start = getRandomPoint(null, canvasWidth, canvasHeight, 0);
         const end = getRandomPoint(null, canvasWidth, canvasHeight, 0);
         const thickness = Math.floor(SeededRandom.getRandom() * 10) + 1; // Thickness 1 to 10
-        const colorStr = colorToString(getRandomColor("mixed"));
+        const colorStr = getRandomColor("mixed").toCSS();
 
         ctx.lineWidth = thickness;
         ctx.strokeStyle = colorStr;

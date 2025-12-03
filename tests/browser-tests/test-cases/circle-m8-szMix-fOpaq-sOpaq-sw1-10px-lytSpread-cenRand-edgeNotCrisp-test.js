@@ -70,13 +70,10 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
         // SeededRandom Call 4 & 5 for angles are skipped as we draw a full circle.
         // SeededRandom Call 6: strokeWidth
         const strokeWidth = SeededRandom.getRandom() * 10 + 1;
-        // SeededRandom Call 7: strokeColor 
-        const strokeColorObj = getRandomColor("mixed"); 
+        // SeededRandom Call 7: strokeColor
+        const strokeColor = getRandomColor("mixed");
         // SeededRandom Call 8: fillColor
-        const fillColorObj = getRandomColor("semitransparent");
-
-        const strokeColorForRender = { r: strokeColorObj.r, g: strokeColorObj.g, b: strokeColorObj.b, a: strokeColorObj.a };
-        const fillColorForRender = { r: fillColorObj.r, g: fillColorObj.g, b: fillColorObj.b, a: fillColorObj.a };
+        const fillColor = getRandomColor("semitransparent");
 
         // In performance mode, getRandomPoint already ensures positions are varied across the canvas for each instance.
         // For visual regression, the 8 circles will also be randomly placed by getRandomPoint.
@@ -90,13 +87,8 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
             // additional Math.random() for position is not strictly necessary as in fixed-center tests.
             // The existing SR calls make each circle unique in all aspects.
         }
-        
-        ctx.fillAndStrokeCircle(
-            drawCenterX, drawCenterY, radius, 
-            fillColorForRender.r, fillColorForRender.g, fillColorForRender.b, fillColorForRender.a,
-            strokeWidth, 
-            strokeColorForRender.r, strokeColorForRender.g, strokeColorForRender.b, strokeColorForRender.a
-        );
+
+        ctx.fillAndStrokeCircle(drawCenterX, drawCenterY, radius, fillColor, strokeWidth, strokeColor);
 
         if (!isPerformanceRun) { // Log all 8 circles in visual regression mode
             logs.push(

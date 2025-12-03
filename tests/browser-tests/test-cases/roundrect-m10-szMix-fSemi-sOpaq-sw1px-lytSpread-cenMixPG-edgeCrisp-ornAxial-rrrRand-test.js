@@ -85,8 +85,8 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
         // SeededRandom Call 7: fillColor (semi-transparent)
         const fillColorObj = getRandomColor("semitransparent");
 
-        const strokeColorStr = strokeColorObj ? colorToString(strokeColorObj) : 'rgba(0,0,0,0)';
-        const fillColorStr = fillColorObj ? colorToString(fillColorObj) : 'rgba(0,0,0,0)';
+        const strokeColorStr = strokeColorObj ? strokeColorObj.toCSS() : 'rgba(0,0,0,0)';
+        const fillColorStr = fillColorObj ? fillColorObj.toCSS() : 'rgba(0,0,0,0)';
 
         // For drawing, use the adjusted center and original width/height
         let geomX = adjustedCenter.x - width / 2;

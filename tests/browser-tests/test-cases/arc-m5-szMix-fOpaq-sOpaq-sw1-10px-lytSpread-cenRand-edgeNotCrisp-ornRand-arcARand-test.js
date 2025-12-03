@@ -72,13 +72,10 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
         const endAngleDeg = startAngleDeg + SeededRandom.getRandom() * 270 + 90;
         // SeededRandom Call 6: strokeWidth
         const strokeWidth = SeededRandom.getRandom() * 10 + 1;
-        // SeededRandom Call 7: strokeColor 
-        const strokeColorObj = getRandomColor("mixed"); 
+        // SeededRandom Call 7: strokeColor
+        const strokeColor = getRandomColor("mixed");
         // SeededRandom Call 8: fillColor
-        const fillColorObj = getRandomColor("semitransparent");
-
-        const strokeColorForRender = { r: strokeColorObj.r, g: strokeColorObj.g, b: strokeColorObj.b, a: strokeColorObj.a };
-        const fillColorForRender = { r: fillColorObj.r, g: fillColorObj.g, b: fillColorObj.b, a: fillColorObj.a };
+        const fillColor = getRandomColor("semitransparent");
 
         // Convert angles to radians for context arc methods
         const startAngleRad = startAngleDeg * Math.PI / 180;
@@ -89,9 +86,9 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
 
         // The getRandomPoint already randomizes position for each arc.
         // No additional Math.random() offset needed for performance mode spreading for this test.
-        
-        ctx.fillStyle = fillColorForRender ? colorToString(fillColorForRender) : 'rgba(0,0,0,0)'; // Set for fillAndOuterStrokeArc
-        ctx.strokeStyle = strokeColorForRender ? colorToString(strokeColorForRender) : 'rgba(0,0,0,0)'; // Set for fillAndOuterStrokeArc
+
+        ctx.fillStyle = fillColor.toCSS();
+        ctx.strokeStyle = strokeColor.toCSS();
         ctx.lineWidth = strokeWidth;
 
         // Use fillAndOuterStrokeArc as both fill and stroke are defined with random colors

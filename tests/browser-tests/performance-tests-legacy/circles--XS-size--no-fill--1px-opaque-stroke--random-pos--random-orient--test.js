@@ -15,10 +15,6 @@ function draw_circles__XS_size__no_fill__1px_opaque_stroke__random_pos__random_o
     const sb = Math.floor(SeededRandom.getRandom() * 256);
     const sa = 255; // Fully opaque stroke
     
-    ctx.strokeCircle(
-      centerX, centerY, radius,
-      strokeWidth,
-      sr, sg, sb, sa
-    );
+    ctx.strokeCircle(centerX, centerY, radius, strokeWidth, new Color(sr, sg, sb, sa));
   }
 }

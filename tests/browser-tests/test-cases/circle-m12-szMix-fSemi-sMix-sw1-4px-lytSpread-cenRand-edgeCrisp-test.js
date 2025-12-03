@@ -85,28 +85,20 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
         let { centerX, centerY, radius, strokeWidth, finalDiameter, atPixel } = params;
         
         // SR Call 6: strokeColor (opaque)
-        // The original used palette indexing (i, count) for getRandomColor. 
+        // The original used palette indexing (i, count) for getRandomColor.
         // Using simpler version here; adjust if color checks (if any were added) fail.
-        const strokeColorObj = getRandomColor("mixed");
+        const strokeColor = getRandomColor("mixed");
         // SR Call 7: fillColor (semi-transparent)
-        const fillColorObj = getRandomColor("semitransparent"); 
-
-        const strokeColorForRender = { r: strokeColorObj.r, g: strokeColorObj.g, b: strokeColorObj.b, a: strokeColorObj.a };
-        const fillColorForRender = { r: fillColorObj.r, g: fillColorObj.g, b: fillColorObj.b, a: fillColorObj.a };
+        const fillColor = getRandomColor("semitransparent");
 
         let drawCenterX = centerX;
         let drawCenterY = centerY;
-        
+
         // The _calculate... function already handles random positioning for each call.
         // In performance mode, each of the `instances` circles will have unique, random parameters.
         // No need for Math.random() here to further offset, as positions are already varied.
 
-        ctx.fillAndStrokeCircle(
-            drawCenterX, drawCenterY, radius, 
-            fillColorForRender.r, fillColorForRender.g, fillColorForRender.b, fillColorForRender.a,
-            strokeWidth, 
-            strokeColorForRender.r, strokeColorForRender.g, strokeColorForRender.b, strokeColorForRender.a
-        );
+        ctx.fillAndStrokeCircle(drawCenterX, drawCenterY, radius, fillColor, strokeWidth, strokeColor);
 
         if (!isPerformanceRun) { 
             logs.push(

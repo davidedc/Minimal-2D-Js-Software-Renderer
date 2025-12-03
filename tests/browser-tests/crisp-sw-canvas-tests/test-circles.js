@@ -17,7 +17,7 @@ function drawCirclesTestScene(ctx) {
   for (let i = 0; i < colors.length; i++) {
     const x = 80 + i * 120;
     const [r, g, b, a] = colors[i];
-    ctx.fillCircle(x, row1Y, 40, r, g, b, a);
+    ctx.fillCircle(x, row1Y, 40, new Color(r, g, b, a));
   }
   
   // Test 2: strokeCircle with different widths
@@ -28,7 +28,7 @@ function drawCirclesTestScene(ctx) {
   for (let i = 0; i < strokeWidths.length; i++) {
     const x = 80 + i * 120;
     const strokeWidth = strokeWidths[i];
-    ctx.strokeCircle(x, row2Y, 40, strokeWidth, 0, 0, 0, 255);
+    ctx.strokeCircle(x, row2Y, 40, strokeWidth, Color.black);
   }
   
   // Test 3: strokeCircle with different colors and alpha
@@ -38,7 +38,7 @@ function drawCirclesTestScene(ctx) {
   for (let i = 0; i < colors.length; i++) {
     const x = 80 + i * 120;
     const [r, g, b, a] = colors[i];
-    ctx.strokeCircle(x, row3Y, 40, 4, r, g, b, a);
+    ctx.strokeCircle(x, row3Y, 40, 4, new Color(r, g, b, a));
   }
   
   // Test 4: fillAndStrokeCircle with different combinations
@@ -51,9 +51,9 @@ function drawCirclesTestScene(ctx) {
     const strokeColor = colors[(i + 3) % colors.length];
     ctx.fillAndStrokeCircle(
       x, row4Y, 40,
-      fillColor[0], fillColor[1], fillColor[2], 128, // Semi-transparent fill
+      new Color(fillColor[0], fillColor[1], fillColor[2], 128), // Semi-transparent fill
       4,
-      strokeColor[0], strokeColor[1], strokeColor[2], 255 // Solid stroke
+      new Color(strokeColor[0], strokeColor[1], strokeColor[2], 255) // Solid stroke
     );
   }
   
@@ -65,35 +65,35 @@ function drawCirclesTestScene(ctx) {
   
   // Translated circle
   ctx.translate(80, row5Y);
-  ctx.fillCircle(0, 0, 30, 255, 0, 0, 128);
-  ctx.strokeCircle(0, 0, 30, 2, 0, 0, 0, 255);
+  ctx.fillCircle(0, 0, 30, new Color(255, 0, 0, 128));
+  ctx.strokeCircle(0, 0, 30, 2, Color.black);
   
   // Rotated and translated circle (rotation doesn't affect circles visually)
   ctx.translate(120, 0);
   ctx.rotate(Math.PI / 4);
-  ctx.fillCircle(0, 0, 30, 0, 255, 0, 128);
-  ctx.strokeCircle(0, 0, 30, 2, 0, 0, 0, 255);
+  ctx.fillCircle(0, 0, 30, new Color(0, 255, 0, 128));
+  ctx.strokeCircle(0, 0, 30, 2, Color.black);
   
   // Scaled circle (larger)
   ctx.resetTransform();
   ctx.translate(320, row5Y);
   ctx.scale(1.5, 1.5);
-  ctx.fillCircle(0, 0, 30, 0, 0, 255, 128);
-  ctx.strokeCircle(0, 0, 30, 2, 0, 0, 0, 255);
+  ctx.fillCircle(0, 0, 30, new Color(0, 0, 255, 128));
+  ctx.strokeCircle(0, 0, 30, 2, Color.black);
   
   // Scaled circle (smaller)
   ctx.resetTransform();
   ctx.translate(440, row5Y);
   ctx.scale(0.5, 0.5);
-  ctx.fillCircle(0, 0, 30, 255, 255, 0, 128);
-  ctx.strokeCircle(0, 0, 30, 4, 0, 0, 0, 255);
+  ctx.fillCircle(0, 0, 30, new Color(255, 255, 0, 128));
+  ctx.strokeCircle(0, 0, 30, 4, Color.black);
   
   // Scaled circle (larger)
   ctx.resetTransform();
   ctx.translate(560, row5Y);
   ctx.scale(1.5, 1.5);
-  ctx.fillCircle(0, 0, 30, 255, 0, 255, 128);
-  ctx.strokeCircle(0, 0, 30, 3, 0, 0, 0, 255);
+  ctx.fillCircle(0, 0, 30, new Color(255, 0, 255, 128));
+  ctx.strokeCircle(0, 0, 30, 3, Color.black);
   
   // Combined transforms
   ctx.resetTransform();
@@ -102,9 +102,9 @@ function drawCirclesTestScene(ctx) {
   ctx.scale(1.2, 1.2);
   ctx.fillAndStrokeCircle(
     0, 0, 30,
-    0, 255, 255, 128,
+    new Color(0, 255, 255, 128),
     4,
-    255, 0, 0, 255
+    new Color(255, 0, 0, 255)
   );
   
   ctx.restore();

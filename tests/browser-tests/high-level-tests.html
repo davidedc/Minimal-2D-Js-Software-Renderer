@@ -5,10 +5,14 @@
   <link rel="stylesheet" href="styles/main.css">
 </head>
 <body>
+  <!-- Color primitives from SWCanvas-primitives sibling directory (must load first) -->
+  <script src="../../../SWCanvas-primitives/Color.js"></script>
+  <script src="../../../SWCanvas-primitives/ColorParser.js"></script>
+
   <!-- Core Libs and Polyfills -->
   <script src="../../src/canvas-sw-polyfills.js"></script>
   <script src="test-utils/test-registration-utils.js"></script>
-  
+
   <!-- Utilities -->
   <script src="../../src/utils/canvas-extensions.js"></script>
   <script src="../../src/utils/geometry.js"></script>
@@ -24,10 +28,6 @@
   <script src="../../src/scene-creation/scene-creation-arcs.js"></script>
 
   <!-- Crisp SW Canvas Implementation (Needed for runCanvasCode) -->
-  <!-- Color primitives from SWCanvas-primitives sibling directory -->
-  <script src="../../../SWCanvas-primitives/Color.js"></script>
-  <script src="../../../SWCanvas-primitives/ColorParser.js"></script>
-  <script src="../../src/crisp-sw-canvas/color-bridge.js"></script>
   <script src="../../src/crisp-sw-canvas/ContextState.js"></script>
   <script src="../../src/crisp-sw-canvas/CrispSwCanvas.js"></script>
   <script src="../../src/crisp-sw-canvas/CrispSwContext.js"></script>

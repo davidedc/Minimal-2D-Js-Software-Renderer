@@ -22,11 +22,7 @@ function draw_circles__XL_size__no_fill__1px_semi_stroke__random_pos__random_ori
     const sb = Math.floor(SeededRandom.getRandom() * 256);
     const sa = 128; // Semi-transparent stroke (50%)
     
-    ctx.strokeCircle(
-      centerX, centerY, radius,
-      strokeWidth,
-      sr, sg, sb, sa
-    );
+    ctx.strokeCircle(centerX, centerY, radius, strokeWidth, new Color(sr, sg, sb, sa));
   }
 }
 

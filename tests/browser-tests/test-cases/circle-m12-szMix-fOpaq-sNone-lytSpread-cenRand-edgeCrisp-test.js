@@ -83,17 +83,12 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
         let { centerX, centerY, radius, finalDiameter, atPixel } = params;
         
         // SR Call 5: fillColor (opaque or semi-transparent, original used palette indexing)
-        const fillColorObj = getRandomColor("mixed"); 
-
-        const fillColorForRender = { r: fillColorObj.r, g: fillColorObj.g, b: fillColorObj.b, a: fillColorObj.a };
+        const fillColor = getRandomColor("mixed");
 
         let drawCenterX = centerX;
         let drawCenterY = centerY;
-        
-        ctx.fillCircle(
-            drawCenterX, drawCenterY, radius, 
-            fillColorForRender.r, fillColorForRender.g, fillColorForRender.b, fillColorForRender.a
-        );
+
+        ctx.fillCircle(drawCenterX, drawCenterY, radius, fillColor);
 
         if (!isPerformanceRun) { 
             logs.push(
