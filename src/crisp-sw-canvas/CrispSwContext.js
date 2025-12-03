@@ -84,12 +84,7 @@ class CrispSwContext {
 
     // Style setters and getters
     set fillStyle(style) {
-        // Accept string or Color instance
-        if (style instanceof Color) {
-            this.currentState.fillColor = style;
-        } else {
-            this.currentState.fillColor = parseColor(style);
-        }
+        this.currentState.fillColor = parseColor(style);
     }
 
     get fillStyle() {
@@ -97,12 +92,7 @@ class CrispSwContext {
     }
 
     set strokeStyle(style) {
-        // Accept string or Color instance
-        if (style instanceof Color) {
-            this.currentState.strokeColor = style;
-        } else {
-            this.currentState.strokeColor = parseColor(style);
-        }
+        this.currentState.strokeColor = parseColor(style);
     }
 
     get strokeStyle() {
@@ -247,12 +237,9 @@ class CrispSwContext {
      * @param {number} centerX - X coordinate of the circle center
      * @param {number} centerY - Y coordinate of the circle center
      * @param {number} radius - Radius of the circle
-     * @param {number|Color} fillROrColor - Red component (0-255) or Color instance
-     * @param {number} [fillG] - Green component of fill color (0-255)
-     * @param {number} [fillB] - Blue component of fill color (0-255)
-     * @param {number} [fillA] - Alpha component of fill color (0-255)
+     * @param {Color} fillColor - Fill color as a Color instance
      */
-    fillCircle(centerX, centerY, radius, fillROrColor, fillG, fillB, fillA) {
+    fillCircle(centerX, centerY, radius, fillColor) {
         const state = this.currentState;
 
         // Transform center point according to current transformation matrix
@@ -261,14 +248,6 @@ class CrispSwContext {
         // Apply scale factor to radius
         const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
         const scaledRadius = radius * Math.max(scaleX, scaleY);
-
-        // Handle Color instance or individual r,g,b,a
-        let fillColor;
-        if (fillROrColor instanceof Color) {
-            fillColor = fillROrColor;
-        } else {
-            fillColor = new Color(fillROrColor, fillG, fillB, fillA);
-        }
 
         // Create shape object for the circle
         const circleShape = {
@@ -289,12 +268,9 @@ class CrispSwContext {
      * @param {number} centerY - Y coordinate of the circle center
      * @param {number} radius - Radius of the circle
      * @param {number} strokeWidth - Width of the stroke
-     * @param {number|Color} strokeROrColor - Red component (0-255) or Color instance
-     * @param {number} [strokeG] - Green component of stroke color (0-255)
-     * @param {number} [strokeB] - Blue component of stroke color (0-255)
-     * @param {number} [strokeA] - Alpha component of stroke color (0-255)
+     * @param {Color} strokeColor - Stroke color as a Color instance
      */
-    strokeCircle(centerX, centerY, radius, strokeWidth, strokeROrColor, strokeG, strokeB, strokeA) {
+    strokeCircle(centerX, centerY, radius, strokeWidth, strokeColor) {
         const state = this.currentState;
 
         // Transform center point according to current transformation matrix
@@ -304,14 +280,6 @@ class CrispSwContext {
         const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
         const scaledRadius = radius * Math.max(scaleX, scaleY);
         const scaledStrokeWidth = getScaledLineWidth(state.transform.elements, strokeWidth);
-
-        // Handle Color instance or individual r,g,b,a
-        let strokeColor;
-        if (strokeROrColor instanceof Color) {
-            strokeColor = strokeROrColor;
-        } else {
-            strokeColor = new Color(strokeROrColor, strokeG, strokeB, strokeA);
-        }
 
         // Create shape object for the circle
         const circleShape = {
@@ -331,22 +299,11 @@ class CrispSwContext {
      * @param {number} centerX - X coordinate of the circle center
      * @param {number} centerY - Y coordinate of the circle center
      * @param {number} radius - Radius of the circle
-     * @param {number|Color} fillROrColor - Red component (0-255) or Color instance
-     * @param {number} fillG - Green component of fill color (0-255)
-     * @param {number} fillB - Blue component of fill color (0-255)
-     * @param {number} fillA - Alpha component of fill color (0-255)
+     * @param {Color} fillColor - Fill color as a Color instance
      * @param {number} strokeWidth - Width of the stroke
-     * @param {number|Color} strokeROrColor - Red component (0-255) or Color instance
-     * @param {number} [strokeG] - Green component of stroke color (0-255)
-     * @param {number} [strokeB] - Blue component of stroke color (0-255)
-     * @param {number} [strokeA] - Alpha component of stroke color (0-255)
+     * @param {Color} strokeColor - Stroke color as a Color instance
      */
-    fillAndStrokeCircle(
-        centerX, centerY, radius,
-        fillROrColor, fillG, fillB, fillA,
-        strokeWidth,
-        strokeROrColor, strokeG, strokeB, strokeA
-    ) {
+    fillAndStrokeCircle(centerX, centerY, radius, fillColor, strokeWidth, strokeColor) {
         const state = this.currentState;
 
         // Transform center point according to current transformation matrix
@@ -356,22 +313,6 @@ class CrispSwContext {
         const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
         const scaledRadius = radius * Math.max(scaleX, scaleY);
         const scaledStrokeWidth = getScaledLineWidth(state.transform.elements, strokeWidth);
-
-        // Handle Color instance or individual r,g,b,a for fill
-        let fillColor;
-        if (fillROrColor instanceof Color) {
-            fillColor = fillROrColor;
-        } else {
-            fillColor = new Color(fillROrColor, fillG, fillB, fillA);
-        }
-
-        // Handle Color instance or individual r,g,b,a for stroke
-        let strokeColor;
-        if (strokeROrColor instanceof Color) {
-            strokeColor = strokeROrColor;
-        } else {
-            strokeColor = new Color(strokeROrColor, strokeG, strokeB, strokeA);
-        }
 
         // Create shape object for the circle
         const circleShape = {

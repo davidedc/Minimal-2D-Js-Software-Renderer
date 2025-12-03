@@ -3,9 +3,9 @@
  * as CrispSwCanvas / CrispSwContext.
  */
 
-// Helper function to convert color components to RGBA string
-function colorToString(r, g, b, a) {
-    return `rgba(${r}, ${g}, ${b}, ${a / 255})`;
+// Helper function to convert Color object to RGBA string
+function colorObjToString(color) {
+    return `rgba(${color.r}, ${color.g}, ${color.b}, ${color.a / 255})`;
 }
 
 // Add strokeLine to CanvasRenderingContext2D
@@ -20,32 +20,32 @@ if (!CanvasRenderingContext2D.prototype.strokeLine) {
 
 // Add fillCircle to CanvasRenderingContext2D
 if (!CanvasRenderingContext2D.prototype.fillCircle) {
-    CanvasRenderingContext2D.prototype.fillCircle = function(centerX, centerY, radius, fillR, fillG, fillB, fillA) {
+    CanvasRenderingContext2D.prototype.fillCircle = function(centerX, centerY, radius, fillColor) {
         const originalFillStyle = this.fillStyle;
-        
+
         this.beginPath();
         this.arc(centerX, centerY, radius, 0, Math.PI * 2);
-        this.fillStyle = colorToString(fillR, fillG, fillB, fillA);
+        this.fillStyle = colorObjToString(fillColor);
         this.fill();
-        
+
         this.fillStyle = originalFillStyle;
     };
 }
 
 // Add strokeCircle to CanvasRenderingContext2D
 if (!CanvasRenderingContext2D.prototype.strokeCircle) {
-    CanvasRenderingContext2D.prototype.strokeCircle = function(centerX, centerY, radius, strokeWidth, strokeR, strokeG, strokeB, strokeA) {
+    CanvasRenderingContext2D.prototype.strokeCircle = function(centerX, centerY, radius, strokeWidth, strokeColor) {
         const originalStrokeStyle = this.strokeStyle;
         const originalLineWidth = this.lineWidth;
-        
+
         this.beginPath();
         this.arc(centerX, centerY, radius, 0, Math.PI * 2);
-        this.strokeStyle = colorToString(strokeR, strokeG, strokeB, strokeA);
+        this.strokeStyle = colorObjToString(strokeColor);
         if (strokeWidth !== undefined) {
             this.lineWidth = strokeWidth;
         }
         this.stroke();
-        
+
         this.strokeStyle = originalStrokeStyle;
         if (strokeWidth !== undefined) {
             this.lineWidth = originalLineWidth;
@@ -55,32 +55,27 @@ if (!CanvasRenderingContext2D.prototype.strokeCircle) {
 
 // Add fillAndStrokeCircle to CanvasRenderingContext2D
 if (!CanvasRenderingContext2D.prototype.fillAndStrokeCircle) {
-    CanvasRenderingContext2D.prototype.fillAndStrokeCircle = function(
-        centerX, centerY, radius,
-        fillR, fillG, fillB, fillA,
-        strokeWidth,
-        strokeR, strokeG, strokeB, strokeA
-    ) {
+    CanvasRenderingContext2D.prototype.fillAndStrokeCircle = function(centerX, centerY, radius, fillColor, strokeWidth, strokeColor) {
         const originalFillStyle = this.fillStyle;
         const originalStrokeStyle = this.strokeStyle;
         const originalLineWidth = this.lineWidth;
-        
+
         this.beginPath();
         this.arc(centerX, centerY, radius, 0, Math.PI * 2);
-        
-        if (fillA > 0) {
-            this.fillStyle = colorToString(fillR, fillG, fillB, fillA);
+
+        if (fillColor.a > 0) {
+            this.fillStyle = colorObjToString(fillColor);
             this.fill();
         }
-        
-        if (strokeA > 0 && (strokeWidth === undefined || strokeWidth > 0)) {
-            this.strokeStyle = colorToString(strokeR, strokeG, strokeB, strokeA);
+
+        if (strokeColor.a > 0 && (strokeWidth === undefined || strokeWidth > 0)) {
+            this.strokeStyle = colorObjToString(strokeColor);
             if (strokeWidth !== undefined) {
                 this.lineWidth = strokeWidth;
             }
             this.stroke();
         }
-        
+
         this.fillStyle = originalFillStyle;
         this.strokeStyle = originalStrokeStyle;
         if (strokeWidth !== undefined) {
