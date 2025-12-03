@@ -82,13 +82,31 @@ class CrispSwContext {
         this.currentState.transform.reset();
     }
 
-    // Style setters
+    // Style setters and getters
     set fillStyle(style) {
-        this.currentState.fillColor = parseColor(style);
+        // Accept string or Color instance
+        if (style instanceof Color) {
+            this.currentState.fillColor = style;
+        } else {
+            this.currentState.fillColor = parseColor(style);
+        }
+    }
+
+    get fillStyle() {
+        return colorToString(this.currentState.fillColor);
     }
 
     set strokeStyle(style) {
-        this.currentState.strokeColor = parseColor(style);
+        // Accept string or Color instance
+        if (style instanceof Color) {
+            this.currentState.strokeColor = style;
+        } else {
+            this.currentState.strokeColor = parseColor(style);
+        }
+    }
+
+    get strokeStyle() {
+        return colorToString(this.currentState.strokeColor);
     }
 
     set lineWidth(width) {
@@ -191,7 +209,7 @@ class CrispSwContext {
             rotation: rotation,
             clippingOnly: false,
             strokeWidth: 0,
-            strokeColor: { r: 0, g: 0, b: 0, a: 0 },
+            strokeColor: Color.transparent(),
             fillColor: state.fillColor
         });
     }
@@ -212,7 +230,7 @@ class CrispSwContext {
             clippingOnly: false,
             strokeWidth: scaledLineWidth,
             strokeColor: state.strokeColor,
-            fillColor: { r: 0, g: 0, b: 0, a: 0 }
+            fillColor: Color.transparent()
         });
     }
 
@@ -229,30 +247,38 @@ class CrispSwContext {
      * @param {number} centerX - X coordinate of the circle center
      * @param {number} centerY - Y coordinate of the circle center
      * @param {number} radius - Radius of the circle
-     * @param {number} fillR - Red component of fill color (0-255)
-     * @param {number} fillG - Green component of fill color (0-255)
-     * @param {number} fillB - Blue component of fill color (0-255)
-     * @param {number} fillA - Alpha component of fill color (0-255)
+     * @param {number|Color} fillROrColor - Red component (0-255) or Color instance
+     * @param {number} [fillG] - Green component of fill color (0-255)
+     * @param {number} [fillB] - Blue component of fill color (0-255)
+     * @param {number} [fillA] - Alpha component of fill color (0-255)
      */
-    fillCircle(centerX, centerY, radius, fillR, fillG, fillB, fillA) {
+    fillCircle(centerX, centerY, radius, fillROrColor, fillG, fillB, fillA) {
         const state = this.currentState;
-        
+
         // Transform center point according to current transformation matrix
         const center = transformPoint(centerX, centerY, state.transform.elements);
-        
+
         // Apply scale factor to radius
         const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
         const scaledRadius = radius * Math.max(scaleX, scaleY);
-        
+
+        // Handle Color instance or individual r,g,b,a
+        let fillColor;
+        if (fillROrColor instanceof Color) {
+            fillColor = fillROrColor;
+        } else {
+            fillColor = new Color(fillROrColor, fillG, fillB, fillA);
+        }
+
         // Create shape object for the circle
         const circleShape = {
             center: { x: center.tx, y: center.ty },
             radius: scaledRadius,
             strokeWidth: 0,
-            strokeColor: { r: 0, g: 0, b: 0, a: 0 }, // No stroke
-            fillColor: { r: fillR, g: fillG, b: fillB, a: fillA }
+            strokeColor: Color.transparent(),
+            fillColor: fillColor
         };
-        
+
         // Call the circle renderer with our shape
         this.circleRenderer.drawCircle(circleShape);
     }
@@ -263,31 +289,39 @@ class CrispSwContext {
      * @param {number} centerY - Y coordinate of the circle center
      * @param {number} radius - Radius of the circle
      * @param {number} strokeWidth - Width of the stroke
-     * @param {number} strokeR - Red component of stroke color (0-255)
-     * @param {number} strokeG - Green component of stroke color (0-255)
-     * @param {number} strokeB - Blue component of stroke color (0-255)
-     * @param {number} strokeA - Alpha component of stroke color (0-255)
+     * @param {number|Color} strokeROrColor - Red component (0-255) or Color instance
+     * @param {number} [strokeG] - Green component of stroke color (0-255)
+     * @param {number} [strokeB] - Blue component of stroke color (0-255)
+     * @param {number} [strokeA] - Alpha component of stroke color (0-255)
      */
-    strokeCircle(centerX, centerY, radius, strokeWidth, strokeR, strokeG, strokeB, strokeA) {
+    strokeCircle(centerX, centerY, radius, strokeWidth, strokeROrColor, strokeG, strokeB, strokeA) {
         const state = this.currentState;
-        
+
         // Transform center point according to current transformation matrix
         const center = transformPoint(centerX, centerY, state.transform.elements);
-        
+
         // Apply scale factor to radius and stroke width
         const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
         const scaledRadius = radius * Math.max(scaleX, scaleY);
         const scaledStrokeWidth = getScaledLineWidth(state.transform.elements, strokeWidth);
-        
+
+        // Handle Color instance or individual r,g,b,a
+        let strokeColor;
+        if (strokeROrColor instanceof Color) {
+            strokeColor = strokeROrColor;
+        } else {
+            strokeColor = new Color(strokeROrColor, strokeG, strokeB, strokeA);
+        }
+
         // Create shape object for the circle
         const circleShape = {
             center: { x: center.tx, y: center.ty },
             radius: scaledRadius,
             strokeWidth: scaledStrokeWidth,
-            strokeColor: { r: strokeR, g: strokeG, b: strokeB, a: strokeA },
-            fillColor: { r: 0, g: 0, b: 0, a: 0 } // No fill
+            strokeColor: strokeColor,
+            fillColor: Color.transparent()
         };
-        
+
         // Call the circle renderer with our shape
         this.circleRenderer.drawCircle(circleShape);
     }
@@ -297,41 +331,57 @@ class CrispSwContext {
      * @param {number} centerX - X coordinate of the circle center
      * @param {number} centerY - Y coordinate of the circle center
      * @param {number} radius - Radius of the circle
-     * @param {number} fillR - Red component of fill color (0-255)
+     * @param {number|Color} fillROrColor - Red component (0-255) or Color instance
      * @param {number} fillG - Green component of fill color (0-255)
      * @param {number} fillB - Blue component of fill color (0-255)
      * @param {number} fillA - Alpha component of fill color (0-255)
      * @param {number} strokeWidth - Width of the stroke
-     * @param {number} strokeR - Red component of stroke color (0-255)
-     * @param {number} strokeG - Green component of stroke color (0-255)
-     * @param {number} strokeB - Blue component of stroke color (0-255)
-     * @param {number} strokeA - Alpha component of stroke color (0-255)
+     * @param {number|Color} strokeROrColor - Red component (0-255) or Color instance
+     * @param {number} [strokeG] - Green component of stroke color (0-255)
+     * @param {number} [strokeB] - Blue component of stroke color (0-255)
+     * @param {number} [strokeA] - Alpha component of stroke color (0-255)
      */
     fillAndStrokeCircle(
         centerX, centerY, radius,
-        fillR, fillG, fillB, fillA,
+        fillROrColor, fillG, fillB, fillA,
         strokeWidth,
-        strokeR, strokeG, strokeB, strokeA
+        strokeROrColor, strokeG, strokeB, strokeA
     ) {
         const state = this.currentState;
-        
+
         // Transform center point according to current transformation matrix
         const center = transformPoint(centerX, centerY, state.transform.elements);
-        
+
         // Apply scale factor to radius and stroke width
         const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
         const scaledRadius = radius * Math.max(scaleX, scaleY);
         const scaledStrokeWidth = getScaledLineWidth(state.transform.elements, strokeWidth);
-        
+
+        // Handle Color instance or individual r,g,b,a for fill
+        let fillColor;
+        if (fillROrColor instanceof Color) {
+            fillColor = fillROrColor;
+        } else {
+            fillColor = new Color(fillROrColor, fillG, fillB, fillA);
+        }
+
+        // Handle Color instance or individual r,g,b,a for stroke
+        let strokeColor;
+        if (strokeROrColor instanceof Color) {
+            strokeColor = strokeROrColor;
+        } else {
+            strokeColor = new Color(strokeROrColor, strokeG, strokeB, strokeA);
+        }
+
         // Create shape object for the circle
         const circleShape = {
             center: { x: center.tx, y: center.ty },
             radius: scaledRadius,
             strokeWidth: scaledStrokeWidth,
-            strokeColor: { r: strokeR, g: strokeG, b: strokeB, a: strokeA },
-            fillColor: { r: fillR, g: fillG, b: fillB, a: fillA }
+            strokeColor: strokeColor,
+            fillColor: fillColor
         };
-        
+
         // Call the circle renderer with our shape
         this.circleRenderer.drawCircle(circleShape);
     }
@@ -458,9 +508,9 @@ class CrispSwContext {
             height: height * scaleY,
             radius: scaledRadius,
             rotation: rotation,
-            fillColor: state.fillColor, // Use state.fillColor directly
+            fillColor: state.fillColor,
             strokeWidth: 0,
-            strokeColor: { r: 0, g: 0, b: 0, a: 0 }
+            strokeColor: Color.transparent()
         });
     }
 
@@ -488,9 +538,9 @@ class CrispSwContext {
             height: height * scaleY,
             radius: scaledRadius,
             rotation: rotation,
-            fillColor: { r: 0, g: 0, b: 0, a: 0 },
+            fillColor: Color.transparent(),
             strokeWidth: scaledLineWidth,
-            strokeColor: state.strokeColor // Use state.strokeColor directly
+            strokeColor: state.strokeColor
         });
     }
 
@@ -524,10 +574,9 @@ class CrispSwContext {
                 radius: scaledRadius,
                 clippingOnly: true,
                 // These are not used for clippingOnly, but provided for shape consistency
-                // TODO: can these be omitted?
                 strokeWidth: 0,
-                strokeColor: { r: 0, g: 0, b: 0, a: 0 },
-                fillColor: { r: 0, g: 0, b: 0, a: 0 }
+                strokeColor: Color.transparent(),
+                fillColor: Color.transparent()
             });
         } else {
             throw new Error("CrispSwContext.arc() for path definition/clipping is only implemented for full circles. Use fillArc/outerStrokeArc for drawing partial arcs.");
@@ -554,10 +603,10 @@ class CrispSwContext {
             radius: scaledRadius,
             startAngle: startAngleDeg,
             endAngle: endAngleDeg,
-            anticlockwise: anticlockwise, // Pass to shape, SWRendererArc might use it or infer
-            fillColor: state.fillColor, 
-            strokeWidth: 0, // Explicitly no stroke for fillArc
-            strokeColor: { r: 0, g: 0, b: 0, a: 0 }
+            anticlockwise: anticlockwise,
+            fillColor: state.fillColor,
+            strokeWidth: 0,
+            strokeColor: Color.transparent()
         });
     }
 
@@ -581,12 +630,12 @@ class CrispSwContext {
             startAngle: startAngleDeg,
             endAngle: endAngleDeg,
             anticlockwise: anticlockwise,
-            fillColor: { r: 0, g: 0, b: 0, a: 0 }, // Explicitly no fill for outerStrokeArc
+            fillColor: Color.transparent(),
             strokeWidth: scaledLineWidth,
-            strokeColor: state.strokeColor 
+            strokeColor: state.strokeColor
         });
     }
-    
+
     /**
      * Draws a filled and stroked arc.
      * Angles are in radians.

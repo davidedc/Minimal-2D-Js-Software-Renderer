@@ -79,12 +79,12 @@ function getRandomColor(alphaMode, whichPartition = null, numberOfPartitions = n
   // If numberOfPartitions is null or whichPartition is null and numberOfPartitions is 1,
   // generate completely random RGB values
   if (numberOfPartitions == null || (whichPartition == null && numberOfPartitions === 1)) {
-      return {
-          r: Math.floor(SeededRandom.getRandom() * 256),
-          g: Math.floor(SeededRandom.getRandom() * 256),
-          b: Math.floor(SeededRandom.getRandom() * 256),
-          a: alpha
-      };
+      return new Color(
+          Math.floor(SeededRandom.getRandom() * 256),
+          Math.floor(SeededRandom.getRandom() * 256),
+          Math.floor(SeededRandom.getRandom() * 256),
+          alpha
+      );
   }
 
   // Ensure numberOfPartitions is at least 1
@@ -124,10 +124,5 @@ function getRandomColor(alphaMode, whichPartition = null, numberOfPartitions = n
       channels[i] |= randomBits;
   }
   
-  return {
-      r: channels[0],
-      g: channels[1],
-      b: channels[2],
-      a: alpha
-  };
+  return new Color(channels[0], channels[1], channels[2], alpha);
 }

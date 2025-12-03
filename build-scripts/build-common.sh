@@ -50,10 +50,17 @@ function create_version_comment() {
 # Common files for both browser and node builds
 function get_common_core_files() {
     local PROJECT_ROOT="$(get_project_root)"
+
+    # Get primitive files from sibling directory
+    get_primitive_files || return 1
+
     COMMON_CORE_FILES=(
         "$PROJECT_ROOT/src/crisp-sw-canvas/TransformationMatrix.js"
         "$PROJECT_ROOT/src/crisp-sw-canvas/transform-utils.js"
-        "$PROJECT_ROOT/src/crisp-sw-canvas/color-utils.js"
+        # Color primitives from SWCanvas-primitives (replaces color-utils.js)
+        "${PRIMITIVE_FILES[@]}"
+        # Color bridge - adapter for API compatibility
+        "$PROJECT_ROOT/src/crisp-sw-canvas/color-bridge.js"
         "$PROJECT_ROOT/src/crisp-sw-canvas/ContextState.js"
         "$PROJECT_ROOT/src/utils/geometry.js"
         "$PROJECT_ROOT/src/utils/PixelSet.js"
@@ -80,6 +87,39 @@ function get_node_specific_files() {
 
 # Browser-specific files (if any)
 BROWSER_SPECIFIC_FILES=()
+
+# Function to get SWCanvas-primitives directory path
+function get_primitives_dir() {
+    local PROJECT_ROOT="$(get_project_root)"
+    # Check sibling directory (go up one level, then into SWCanvas-primitives)
+    local PRIMITIVES_DIR="$(cd "$PROJECT_ROOT/.." && pwd)/SWCanvas-primitives"
+
+    if [ ! -d "$PRIMITIVES_DIR" ]; then
+        echo "Error: SWCanvas-primitives directory not found at $PRIMITIVES_DIR" >&2
+        echo "Please ensure SWCanvas-primitives is a sibling directory of Minimal-2D-Js-Software-Renderer" >&2
+        return 1
+    fi
+    echo "$PRIMITIVES_DIR"
+}
+
+# Function to get primitive color files from sibling directory
+function get_primitive_files() {
+    local PRIMITIVES_DIR
+    PRIMITIVES_DIR="$(get_primitives_dir)" || return 1
+
+    PRIMITIVE_FILES=(
+        "$PRIMITIVES_DIR/Color.js"
+        "$PRIMITIVES_DIR/ColorParser.js"
+    )
+
+    # Verify files exist
+    for file in "${PRIMITIVE_FILES[@]}"; do
+        if [ ! -f "$file" ]; then
+            echo "Error: Required file not found: $file" >&2
+            return 1
+        fi
+    done
+}
 
 # Function to concatenate files
 function concatenate_files() {

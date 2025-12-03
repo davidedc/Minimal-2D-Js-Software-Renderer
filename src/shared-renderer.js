@@ -50,16 +50,8 @@ const drawShapesImplFn = function(shapes, isCanvas, ctx = null, frameBufferUint8
   }
 }
 
-// Define colorToString for Node environment if it's missing
-if (typeof colorToString !== 'function') {
-  function colorToString(r, g, b, a) {
-    if (a === 255 || a === undefined) {
-      return `rgb(${r}, ${g}, ${b})`;
-    } else {
-      return `rgba(${r}, ${g}, ${b}, ${a / 255})`;
-    }
-  }
-}
+// colorToString is now provided by color-bridge.js
+// No fallback definition needed
 
 // Assign the function to the global name expected by the codebase
 const drawShapesImpl = drawShapesImplFn;

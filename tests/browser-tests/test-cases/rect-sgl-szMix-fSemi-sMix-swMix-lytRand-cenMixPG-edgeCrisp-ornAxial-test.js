@@ -51,7 +51,7 @@
  * - Performance: Draws multiple instances at random positions in performance mode.
  */
 
-// Helper function colorToString is already available from color-utils.js
+// Helper function colorToString is already available from color-bridge.js
 
 /**
  * Draws a single axis-aligned rectangle based on original low-level test logic, or multiple for performance.

@@ -9,6 +9,9 @@ PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 BUILD_DIR="$PROJECT_ROOT/build"
 OUTPUT_FILE="$BUILD_DIR/node-high-level-test-runner.js"
 
+# Source build-common.sh to get access to primitive files functions
+source "$SCRIPT_DIR/build-common.sh"
+
 # --- Ensure Build Directory Exists ---
 echo "[Build Script] Ensuring build directory exists: $BUILD_DIR"
 mkdir -p "$BUILD_DIR"
@@ -98,9 +101,15 @@ echo "  Added: src/crisp-sw-canvas/TransformationMatrix.js"
 ## Now transform-utils.js
 cat "$PROJECT_ROOT/src/crisp-sw-canvas/transform-utils.js" >> "$OUTPUT_FILE"
 echo "  Added: src/crisp-sw-canvas/transform-utils.js"
-## Now color-utils.js
-cat "$PROJECT_ROOT/src/crisp-sw-canvas/color-utils.js" >> "$OUTPUT_FILE"
-echo "  Added: src/crisp-sw-canvas/color-utils.js"
+## Now Color primitives from SWCanvas-primitives sibling directory
+get_primitive_files || exit 1
+for pfile in "${PRIMITIVE_FILES[@]}"; do
+  cat "$pfile" >> "$OUTPUT_FILE"
+  echo "  Added: $(basename "$pfile") (from SWCanvas-primitives)"
+done
+## Now color-bridge.js
+cat "$PROJECT_ROOT/src/crisp-sw-canvas/color-bridge.js" >> "$OUTPUT_FILE"
+echo "  Added: src/crisp-sw-canvas/color-bridge.js"
 ## now ContextState.js
 cat "$PROJECT_ROOT/src/crisp-sw-canvas/ContextState.js" >> "$OUTPUT_FILE"
 echo "  Added: src/crisp-sw-canvas/ContextState.js"

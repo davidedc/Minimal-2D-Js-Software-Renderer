@@ -8,8 +8,9 @@ class ContextState {
         this.canvasHeight = canvasHeight;
         this.lineWidth = lineWidth || 1;
         this.transform = transform || new TransformationMatrix();
-        this.strokeColor = strokeColor || { r: 0, g: 0, b: 0, a: 1 };
-        this.fillColor = fillColor || { r: 0, g: 0, b: 0, a: 1 };
+        // Store Color instances (default: opaque black)
+        this.strokeColor = strokeColor || new Color(0, 0, 0, 255);
+        this.fillColor = fillColor || new Color(0, 0, 0, 255);
         this.globalAlpha = globalAlpha || 1.0;
         this.clippingMask = clippingMask || new Uint8Array(Math.ceil(canvasWidth * canvasHeight / 8)).fill(255);
     }
@@ -20,10 +21,10 @@ class ContextState {
             this.canvasWidth, this.canvasHeight,
             this.lineWidth,
             this.transform.clone(),
-            { ...this.strokeColor }, { ...this.fillColor },
+            // Color is immutable - can reuse same instance
+            this.strokeColor, this.fillColor,
             this.globalAlpha,
             clippingMaskCopy
         );
-
     }
 }
