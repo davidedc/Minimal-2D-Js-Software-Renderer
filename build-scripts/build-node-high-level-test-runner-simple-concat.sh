@@ -107,9 +107,6 @@ for pfile in "${PRIMITIVE_FILES[@]}"; do
   cat "$pfile" >> "$OUTPUT_FILE"
   echo "  Added: $(basename "$pfile") (from SWCanvas-primitives)"
 done
-## Now color-bridge.js
-cat "$PROJECT_ROOT/src/crisp-sw-canvas/color-bridge.js" >> "$OUTPUT_FILE"
-echo "  Added: src/crisp-sw-canvas/color-bridge.js"
 ## now ContextState.js
 cat "$PROJECT_ROOT/src/crisp-sw-canvas/ContextState.js" >> "$OUTPUT_FILE"
 echo "  Added: src/crisp-sw-canvas/ContextState.js"

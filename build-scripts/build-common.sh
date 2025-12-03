@@ -59,8 +59,6 @@ function get_common_core_files() {
         "$PROJECT_ROOT/src/crisp-sw-canvas/transform-utils.js"
         # Color primitives from SWCanvas-primitives (replaces color-utils.js)
         "${PRIMITIVE_FILES[@]}"
-        # Color bridge - adapter for API compatibility
-        "$PROJECT_ROOT/src/crisp-sw-canvas/color-bridge.js"
         "$PROJECT_ROOT/src/crisp-sw-canvas/ContextState.js"
         "$PROJECT_ROOT/src/utils/geometry.js"
         "$PROJECT_ROOT/src/utils/PixelSet.js"
