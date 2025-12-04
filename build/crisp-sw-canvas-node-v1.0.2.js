@@ -28,11 +28,11 @@ class ImageData {
       // First signature: new ImageData(width, height)
       const w = data;
       const h = width;
-
+      
       if (w <= 0 || h <= 0) {
         throw new RangeError('Width and height must be positive numbers');
       }
-
+      
       this.width = w;
       this.height = h;
       this.data = new Uint8ClampedArray(w * h * 4);
@@ -41,17 +41,17 @@ class ImageData {
       if (!(data instanceof Uint8ClampedArray)) {
         data = new Uint8ClampedArray(data);
       }
-
+      
       if (width <= 0) {
         throw new RangeError('Width must be a positive number');
       }
-
+      
       const expectedLength = width * (height || (data.length / (4 * width))) * 4;
-
+      
       if (data.length !== expectedLength) {
         throw new Error(`Data length (${data.length}) doesn't match dimensions (${width}x${height || (data.length / (4 * width))})`);
       }
-
+      
       this.width = width;
       this.height = height || (data.length / (4 * width));
       this.data = data;
@@ -67,18 +67,18 @@ class ImageData {
     if (typeof Buffer === 'undefined') {
       throw new Error('toBMP is only available in Node.js environment');
     }
-
+    
     const width = this.width;
     const height = this.height;
     const fileSize = 54 + 3 * width * height;
     const buf = Buffer.alloc(fileSize);
-
+    
     // BMP header
     buf.write('BM', 0);
     buf.writeUInt32LE(fileSize, 2);
     buf.writeUInt32LE(0, 6);
     buf.writeUInt32LE(54, 10);
-
+    
     // DIB header
     buf.writeUInt32LE(40, 14);
     buf.writeInt32LE(width, 18);
@@ -91,31 +91,31 @@ class ImageData {
     buf.writeInt32LE(0, 42);
     buf.writeUInt32LE(0, 46);
     buf.writeUInt32LE(0, 50);
-
+    
     // Write pixel data (BGR format, row padding to 4 bytes)
     let offset = 54;
     const padding = (4 - ((width * 3) % 4)) % 4;
-
+    
     // Background color (white) for blending with transparent pixels
     const bgR = 255, bgG = 255, bgB = 255;
-
+    
     for (let y = 0; y < height; y++) {
       for (let x = 0; x < width; x++) {
         const i = (y * width + x) * 4;
         const alpha = this.data[i + 3] / 255; // Normalize alpha to 0-1
-
+        
         // Alpha blending: result = (source * alpha) + (background * (1 - alpha))
         const r = Math.round((this.data[i] * alpha) + (bgR * (1 - alpha)));
         const g = Math.round((this.data[i + 1] * alpha) + (bgG * (1 - alpha)));
         const b = Math.round((this.data[i + 2] * alpha) + (bgB * (1 - alpha)));
-
+        
         buf[offset++] = b; // Blue
         buf[offset++] = g; // Green
         buf[offset++] = r; // Red
       }
       offset += padding; // Add padding
     }
-
+    
     return buf;
   }
 }
@@ -134,117 +134,265 @@ function isNodeEnvironment() {
 if (isNodeEnvironment()) {
   // Make polyfills available globally in node, mimicking browser globals
   global.ImageData = ImageData;
-} class TransformationMatrix {
-  constructor() {
-    this.elements = new Float64Array([
-      1, 0, 0, // first column
-      0, 1, 0, // second column
-      0, 0, 1 // third column
-    ]);
-  }
-
-  clone() {
-    const clonedMatrix = new TransformationMatrix();
-    clonedMatrix.elements.set(this.elements);
-    return clonedMatrix;
-  }
-
-  /**
-   * Resets the transformation matrix to the identity matrix
-   * @returns {TransformationMatrix} The identity matrix
-   */
-  reset() {
-    this.elements.set([
-      1, 0, 0, // first column
-      0, 1, 0, // second column
-      0, 0, 1 // third column
-    ]);
-    return this;
-  }
-
-  get(row, col) {
-    return this.elements[col * 3 + row];
-  }
-
-  set(row, col, value) {
-    this.elements[col * 3 + row] = value;
-  }
-
-  multiply(other) {
-    const result = new TransformationMatrix();
-    for (let col = 0; col < 3; col++) {
-      for (let row = 0; row < 3; row++) {
-        let sum = 0;
-        for (let i = 0; i < 3; i++) {
-          sum += this.get(row, i) * other.get(i, col);
+}/**
+ * Transform2D class for SWCanvas
+ * 
+ * Represents a 2D affine transformation matrix using homogeneous coordinates.
+ * Immutable value object following Joshua Bloch's effective design principles.
+ * 
+ * Transform2D format (2x3 affine transformation):
+ * | a  c  e |   | x |   | ax + cy + e |
+ * | b  d  f | × | y | = | bx + dy + f |
+ * | 0  0  1 |   | 1 |   |      1      |
+ */
+class Transform2D {
+    /**
+     * Create a Transform2D matrix
+     * @param {number[]|undefined} init - Optional [a, b, c, d, e, f] array
+     */
+    constructor(init) {
+        if (init && Array.isArray(init) && init.length === 6) {
+            // Validate input values
+            for (let i = 0; i < 6; i++) {
+                if (typeof init[i] !== 'number' || !isFinite(init[i])) {
+                    throw new Error(`Transform2D component ${i} must be a finite number`);
+                }
+            }
+            
+            this.a = init[0];
+            this.b = init[1]; 
+            this.c = init[2];
+            this.d = init[3];
+            this.e = init[4];
+            this.f = init[5];
+        } else if (init && init.length !== undefined) {
+            throw new Error('Transform2D initialization array must have exactly 6 elements');
+        } else {
+            // Identity transformation
+            this.a = 1; this.b = 0;
+            this.c = 0; this.d = 1;
+            this.e = 0; this.f = 0;
         }
-        result.set(row, col, sum);
-      }
+        
+        // Make transformation immutable
+        Object.freeze(this);
     }
-    return result;
-  }
 
-  translate(x, y) {
-    const translationMatrix = new TransformationMatrix();
-    translationMatrix.elements.set([
-      1, 0, 0,
-      0, 1, 0,
-      x, y, 1
-    ]);
-    return this.multiply(translationMatrix);
-  }
+    
+    /**
+     * Create translation transform
+     * @param {number} x - X translation
+     * @param {number} y - Y translation
+     * @returns {Transform2D} Translation transformation
+     */
+    static translation(x, y) {
+        return new Transform2D([1, 0, 0, 1, x, y]);
+    }
+    
+    /**
+     * Create scaling transform
+     * @param {number} sx - X scale factor
+     * @param {number} sy - Y scale factor  
+     * @returns {Transform2D} Scaling transformation
+     */
+    static scaling(sx, sy) {
+        return new Transform2D([sx, 0, 0, sy, 0, 0]);
+    }
+    
+    /**
+     * Create rotation transform
+     * @param {number} angleInRadians - Rotation angle in radians
+     * @returns {Transform2D} Rotation transformation
+     */
+    static rotation(angleInRadians) {
+        const cos = Math.cos(angleInRadians);
+        const sin = Math.sin(angleInRadians);
+        return new Transform2D([cos, sin, -sin, cos, 0, 0]);
+    }
 
-  scale(sx, sy) {
-    const scaleMatrix = new TransformationMatrix();
-    scaleMatrix.elements.set([
-      sx, 0, 0,
-      0, sy, 0,
-      0, 0, 1
-    ]);
-    return this.multiply(scaleMatrix);
-  }
+    /**
+     * Multiply this transform with another (immutable)
+     * @param {Transform2D} other - Transform to multiply with
+     * @returns {Transform2D} Result of multiplication
+     */
+    multiply(other) {
+        if (!(other instanceof Transform2D)) {
+            throw new Error('Can only multiply with another Transform2D');
+        }
+        
+        return new Transform2D([
+            this.a * other.a + this.c * other.b,
+            this.b * other.a + this.d * other.b,
+            this.a * other.c + this.c * other.d,
+            this.b * other.c + this.d * other.d,
+            this.a * other.e + this.c * other.f + this.e,
+            this.b * other.e + this.d * other.f + this.f
+        ]);
+    }
 
-  rotate(angleInRadians) {
-    const rotationMatrix = new TransformationMatrix();
-    const cos = Math.cos(angleInRadians);
-    const sin = Math.sin(angleInRadians);
-    rotationMatrix.elements.set([
-      cos, sin, 0,
-      -sin, cos, 0,
-      0, 0, 1
-    ]);
-    return this.multiply(rotationMatrix);
-  }
+    /**
+     * Apply translation to this transform (immutable)
+     * @param {number} x - X translation
+     * @param {number} y - Y translation
+     * @returns {Transform2D} New transformed matrix
+     */
+    translate(x, y) {
+        const t = Transform2D.translation(x, y);
+        return this.multiply(t);
+    }
+
+    /**
+     * Apply scaling to this transform (immutable)
+     * @param {number} sx - X scale factor
+     * @param {number} sy - Y scale factor
+     * @returns {Transform2D} New transformed matrix
+     */
+    scale(sx, sy) {
+        const s = Transform2D.scaling(sx, sy);
+        return this.multiply(s);
+    }
+
+    /**
+     * Apply rotation to this transform (immutable)
+     * @param {number} angleInRadians - Rotation angle in radians
+     * @returns {Transform2D} New transformed matrix
+     */
+    rotate(angleInRadians) {
+        const r = Transform2D.rotation(angleInRadians);
+        return this.multiply(r);
+    }
+
+    /**
+     * Calculate inverse transformation (immutable)
+     * @returns {Transform2D} Inverse transformation
+     */
+    invert() {
+        const det = this.a * this.d - this.b * this.c;
+        
+        if (Math.abs(det) < 1e-10) {
+            throw new Error('Transform2D matrix is not invertible (determinant ≈ 0)');
+        }
+        
+        return new Transform2D([
+            this.d / det,
+            -this.b / det,
+            -this.c / det,
+            this.a / det,
+            (this.c * this.f - this.d * this.e) / det,
+            (this.b * this.e - this.a * this.f) / det
+        ]);
+    }
+
+    /**
+     * Transform a point using this matrix
+     * @param {Object|Point} point - Point with x,y properties
+     * @returns {Object} Transformed point {x, y}
+     */
+    transformPoint(point) {
+        if (!point || typeof point.x !== 'number' || typeof point.y !== 'number') {
+            throw new Error('Point must have numeric x and y properties');
+        }
+        
+        return {
+            x: this.a * point.x + this.c * point.y + this.e,
+            y: this.b * point.x + this.d * point.y + this.f
+        };
+    }
+    
+    /**
+     * Transform multiple points efficiently
+     * @param {Array} points - Array of points to transform
+     * @returns {Array} Array of transformed points
+     */
+    transformPoints(points) {
+        return points.map(point => this.transformPoint(point));
+    }
+    
+    /**
+     * Get transformation as array
+     * @returns {number[]} [a, b, c, d, e, f] array
+     */
+    toArray() {
+        return [this.a, this.b, this.c, this.d, this.e, this.f];
+    }
+    
+    /**
+     * Check if this is the identity transformation
+     * @returns {boolean} True if identity
+     */
+    get isIdentity() {
+        return this.a === 1 && this.b === 0 && this.c === 0 && 
+               this.d === 1 && this.e === 0 && this.f === 0;
+    }
+    
+    /**
+     * Get transformation determinant
+     * @returns {number} Transform2D determinant
+     */
+    get determinant() {
+        return this.a * this.d - this.b * this.c;
+    }
+
+    /**
+     * Get the rotation angle from the transformation matrix
+     * @returns {number} Rotation angle in radians
+     */
+    get rotationAngle() {
+        return Math.atan2(-this.c, this.a);
+    }
+
+    /**
+     * Get the X scale factor from the transformation matrix
+     * @returns {number} Scale factor along X axis
+     */
+    get scaleX() {
+        return Math.sqrt(this.a * this.a + this.b * this.b);
+    }
+
+    /**
+     * Get the Y scale factor from the transformation matrix
+     * @returns {number} Scale factor along Y axis
+     */
+    get scaleY() {
+        return Math.sqrt(this.c * this.c + this.d * this.d);
+    }
+
+    /**
+     * Calculate the scaled line width based on the current transformation
+     * Uses the geometric mean of scale factors, clamped to avoid zero
+     * @param {number} baseWidth - The base line width before transformation
+     * @returns {number} The scaled line width
+     */
+    getScaledLineWidth(baseWidth) {
+        const scale = Math.max(Math.sqrt(this.scaleX * this.scaleY), 0.0001);
+        return baseWidth * scale;
+    }
+
+    /**
+     * Check equality with another transform
+     * @param {Transform2D} other - Transform to compare
+     * @param {number} tolerance - Floating point tolerance
+     * @returns {boolean} True if transforms are equal within tolerance
+     */
+    equals(other, tolerance = 1e-10) {
+        return other instanceof Transform2D &&
+               Math.abs(this.a - other.a) < tolerance &&
+               Math.abs(this.b - other.b) < tolerance &&
+               Math.abs(this.c - other.c) < tolerance &&
+               Math.abs(this.d - other.d) < tolerance &&
+               Math.abs(this.e - other.e) < tolerance &&
+               Math.abs(this.f - other.f) < tolerance;
+    }
+
+    /**
+     * String representation for debugging
+     * @returns {string} Transform2D description
+     */
+    toString() {
+        return `Transform2D([${this.a}, ${this.b}, ${this.c}, ${this.d}, ${this.e}, ${this.f}])`;
+    }
 }
-// Helper function to get scaled line width
-function getScaledLineWidth(matrix, baseWidth) {
-  const scaleX = Math.sqrt(matrix[0] * matrix[0] + matrix[1] * matrix[1]);
-  const scaleY = Math.sqrt(matrix[3] * matrix[3] + matrix[4] * matrix[4]);
-  const scale = Math.max(Math.sqrt(scaleX * scaleY), 0.0001);
-  return baseWidth * scale;
-}
-// Helper function to transform point
-function transformPoint(x, y, matrix) {
-  const tx = matrix[0] * x + matrix[3] * y + matrix[6];
-  const ty = matrix[1] * x + matrix[4] * y + matrix[7];
-  return { tx, ty };
-}
-// Add this helper function to extract rotation angle from transformation matrix
-function getRotationAngle(matrix) {
-  // For a 2D transformation matrix [a d 0, b e 0, c f 1],
-  // the rotation angle can be extracted using atan2(-b, a)
-  // matrix[3] is b, matrix[0] is a in column-major order
-  return Math.atan2(-matrix[3], matrix[0]);
-}
-// Add this helper function to get scale factors from matrix
-function getScaleFactors(matrix) {
-  // For column-major [a d 0, b e 0, c f 1]
-  // First column (x-axis): [a, d, 0]
-  const scaleX = Math.sqrt(matrix[0] * matrix[0] + matrix[1] * matrix[1]);
-  // Second column (y-axis): [b, e, 0]
-  const scaleY = Math.sqrt(matrix[3] * matrix[3] + matrix[4] * matrix[4]);
-  return { scaleX, scaleY };
-}
+
 /**
  * Color class for SWCanvas
  * 
@@ -255,195 +403,214 @@ function getScaleFactors(matrix) {
  * Provides methods for converting between premultiplied and non-premultiplied forms.
  */
 class Color {
-  /**
-   * Create a Color instance
-   * @param {number} r - Red component (0-255)
-   * @param {number} g - Green component (0-255)  
-   * @param {number} b - Blue component (0-255)
-   * @param {number} a - Alpha component (0-255)
-   * @param {boolean} isPremultiplied - Whether values are already premultiplied
-   */
-  constructor(r, g, b, a = 255, isPremultiplied = false) {
-    // Validate input ranges
-    if (r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255 || a < 0 || a > 255) {
-      throw new Error('Color components must be in range 0-255');
+    /**
+     * Create a Color instance
+     * @param {number} r - Red component (0-255)
+     * @param {number} g - Green component (0-255)  
+     * @param {number} b - Blue component (0-255)
+     * @param {number} a - Alpha component (0-255)
+     * @param {boolean} isPremultiplied - Whether values are already premultiplied
+     */
+    constructor(r, g, b, a = 255, isPremultiplied = false) {
+        // Validate input ranges
+        if (r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255 || a < 0 || a > 255) {
+            throw new Error('Color components must be in range 0-255');
+        }
+
+        if (isPremultiplied) {
+            this._r = Math.round(r);
+            this._g = Math.round(g);
+            this._b = Math.round(b);
+            this._a = Math.round(a);
+        } else {
+            // Convert to premultiplied form
+            const alpha = a / 255;
+            this._r = Math.round(r * alpha);
+            this._g = Math.round(g * alpha);
+            this._b = Math.round(b * alpha);
+            this._a = Math.round(a);
+        }
     }
 
-    if (isPremultiplied) {
-      this._r = Math.round(r);
-      this._g = Math.round(g);
-      this._b = Math.round(b);
-      this._a = Math.round(a);
-    } else {
-      // Convert to premultiplied form
-      const alpha = a / 255;
-      this._r = Math.round(r * alpha);
-      this._g = Math.round(g * alpha);
-      this._b = Math.round(b * alpha);
-      this._a = Math.round(a);
-    }
-  }
+    // Getters for premultiplied components (internal storage format)
+    get premultipliedR() { return this._r; }
+    get premultipliedG() { return this._g; }
+    get premultipliedB() { return this._b; }
+    get premultipliedA() { return this._a; }
 
-
-  /**
-   * Create transparent black color
-   * @returns {Color} Transparent color
-   */
-  static transparent() {
-    return Color.transparent;
-  }
-
-
-  // Getters for premultiplied components (internal storage format)
-  get premultipliedR() { return this._r; }
-  get premultipliedG() { return this._g; }
-  get premultipliedB() { return this._b; }
-  get premultipliedA() { return this._a; }
-
-  // Getters for non-premultiplied components (API-friendly)
-  get r() {
-    if (this._a === 0) return 0;
-    if (this._a === 255) return this._r;
-    return Math.round((this._r * 255) / this._a);
-  }
-
-  get g() {
-    if (this._a === 0) return 0;
-    if (this._a === 255) return this._g;
-    return Math.round((this._g * 255) / this._a);
-  }
-
-  get b() {
-    if (this._a === 0) return 0;
-    if (this._a === 255) return this._b;
-    return Math.round((this._b * 255) / this._a);
-  }
-
-  get a() {
-    return this._a;
-  }
-
-  /**
-   * Get non-premultiplied RGBA array
-   * @returns {number[]} [r, g, b, a] array
-   */
-  toRGBA() {
-    return [this.r, this.g, this.b, this.a];
-  }
-
-  /**
-   * Get premultiplied RGBA array (internal storage format)
-   * @returns {number[]} [r, g, b, a] array with RGB premultiplied
-   */
-  toPremultipliedRGBA() {
-    return [this._r, this._g, this._b, this._a];
-  }
-
-  /**
-   * Get alpha as normalized value (0-1)
-   * @returns {number} Alpha in 0-1 range
-   */
-  get normalizedAlpha() {
-    return this._a / 255;
-  }
-
-  /**
-   * Check if color is fully transparent
-   * @returns {boolean} True if alpha is 0
-   */
-  get isTransparent() {
-    return this._a === 0;
-  }
-
-  /**
-   * Check if color is fully opaque
-   * @returns {boolean} True if alpha is 255
-   */
-  get isOpaque() {
-    return this._a === 255;
-  }
-
-  /**
-   * Apply global alpha to this color (immutable operation)
-   * @param {number} globalAlpha - Alpha multiplier (0-1)
-   * @returns {Color} New Color with applied global alpha
-   */
-  withGlobalAlpha(globalAlpha) {
-    if (globalAlpha < 0 || globalAlpha > 1) {
-      throw new Error('Global alpha must be in range 0-1');
+    // Getters for non-premultiplied components (API-friendly)
+    get r() {
+        if (this._a === 0) return 0;
+        if (this._a === 255) return this._r;
+        return Math.round((this._r * 255) / this._a);
     }
 
-    // Work with non-premultiplied values to apply global alpha correctly
-    const nonPremultR = this.r;
-    const nonPremultG = this.g;
-    const nonPremultB = this.b;
-    const nonPremultA = this.a;
-
-    const newAlpha = Math.round(nonPremultA * globalAlpha);
-    return new Color(nonPremultR, nonPremultG, nonPremultB, newAlpha, false);
-  }
-
-  /**
-   * Blend this color over another color using source-over composition
-   * @param {Color} background - Background color to blend over
-   * @returns {Color} New Color representing the blended result
-   */
-  blendOver(background) {
-    if (this._a === 255) {
-      // Source is opaque - return source
-      return this;
+    get g() {
+        if (this._a === 0) return 0;
+        if (this._a === 255) return this._g;
+        return Math.round((this._g * 255) / this._a);
     }
 
-    if (this._a === 0) {
-      // Source is transparent - return background
-      return background;
+    get b() {
+        if (this._a === 0) return 0;
+        if (this._a === 255) return this._b;
+        return Math.round((this._b * 255) / this._a);
     }
 
-    // Standard premultiplied alpha blending
-    const srcAlpha = this.normalizedAlpha;
-    const invSrcAlpha = 1 - srcAlpha;
+    get a() {
+        return this._a;
+    }
 
-    const newR = Math.round(this._r + background._r * invSrcAlpha);
-    const newG = Math.round(this._g + background._g * invSrcAlpha);
-    const newB = Math.round(this._b + background._b * invSrcAlpha);
-    const newA = Math.round(this._a + background._a * invSrcAlpha);
+    /**
+     * Get non-premultiplied RGBA array
+     * @returns {number[]} [r, g, b, a] array
+     */
+    toRGBA() {
+        return [this.r, this.g, this.b, this.a];
+    }
 
-    return new Color(newR, newG, newB, newA, true);
-  }
+    /**
+     * Get premultiplied RGBA array (internal storage format)
+     * @returns {number[]} [r, g, b, a] array with RGB premultiplied
+     */
+    toPremultipliedRGBA() {
+        return [this._r, this._g, this._b, this._a];
+    }
 
-  /**
-   * Convert color for BMP output (non-premultiplied RGB)
-   * @returns {Object} {r, g, b} object for BMP encoding
-   */
-  toBMP() {
-    return {
-      r: this.r,
-      g: this.g,
-      b: this.b
-    };
-  }
+    /**
+     * Get alpha as normalized value (0-1)
+     * @returns {number} Alpha in 0-1 range
+     */
+    get normalizedAlpha() {
+        return this._a / 255;
+    }
 
-  /**
-   * String representation for debugging
-   * @returns {string} Color description
-   */
-  toString() {
-    return `Color(${this.r}, ${this.g}, ${this.b}, ${this.a})`;
-  }
+    /**
+     * Check if color is fully transparent
+     * @returns {boolean} True if alpha is 0
+     */
+    get isTransparent() {
+        return this._a === 0;
+    }
 
-  /**
-   * Check equality with another Color
-   * @param {Color} other - Color to compare with
-   * @returns {boolean} True if colors are equal
-   */
-  equals(other) {
-    return other instanceof Color &&
-      this._r === other._r &&
-      this._g === other._g &&
-      this._b === other._b &&
-      this._a === other._a;
-  }
-}/**
+    /**
+     * Check if color is fully opaque
+     * @returns {boolean} True if alpha is 255
+     */
+    get isOpaque() {
+        return this._a === 255;
+    }
+
+    /**
+     * Apply global alpha to this color (immutable operation)
+     * @param {number} globalAlpha - Alpha multiplier (0-1)
+     * @returns {Color} New Color with applied global alpha
+     */
+    withGlobalAlpha(globalAlpha) {
+        if (globalAlpha < 0 || globalAlpha > 1) {
+            throw new Error('Global alpha must be in range 0-1');
+        }
+
+        // Work with non-premultiplied values to apply global alpha correctly
+        const nonPremultR = this.r;
+        const nonPremultG = this.g;
+        const nonPremultB = this.b;
+        const nonPremultA = this.a;
+
+        const newAlpha = Math.round(nonPremultA * globalAlpha);
+        return new Color(nonPremultR, nonPremultG, nonPremultB, newAlpha, false);
+    }
+
+    /**
+     * Blend this color over another color using source-over composition
+     * @param {Color} background - Background color to blend over
+     * @returns {Color} New Color representing the blended result
+     */
+    blendOver(background) {
+        if (this._a === 255) {
+            // Source is opaque - return source
+            return this;
+        }
+
+        if (this._a === 0) {
+            // Source is transparent - return background
+            return background;
+        }
+
+        // Standard premultiplied alpha blending
+        const srcAlpha = this.normalizedAlpha;
+        const invSrcAlpha = 1 - srcAlpha;
+
+        const newR = Math.round(this._r + background._r * invSrcAlpha);
+        const newG = Math.round(this._g + background._g * invSrcAlpha);
+        const newB = Math.round(this._b + background._b * invSrcAlpha);
+        const newA = Math.round(this._a + background._a * invSrcAlpha);
+
+        return new Color(newR, newG, newB, newA, true);
+    }
+
+    /**
+     * Convert color for BMP output (non-premultiplied RGB)
+     * @returns {Object} {r, g, b} object for BMP encoding
+     */
+    toBMP() {
+        return {
+            r: this.r,
+            g: this.g,
+            b: this.b
+        };
+    }
+
+    /**
+     * Convert to CSS rgba() string
+     * @returns {string} CSS rgba() format string
+     */
+    toCSS() {
+        const alpha = (this.a / 255).toFixed(3).replace(/\.?0+$/, '');
+        return `rgba(${this.r}, ${this.g}, ${this.b}, ${alpha})`;
+    }
+
+    /**
+     * String representation for debugging
+     * @returns {string} Color description
+     */
+    toString() {
+        return `Color(${this.r}, ${this.g}, ${this.b}, ${this.a})`;
+    }
+
+    /**
+     * Check equality with another Color
+     * @param {Color} other - Color to compare with
+     * @returns {boolean} True if colors are equal
+     */
+    equals(other) {
+        return other instanceof Color &&
+            this._r === other._r &&
+            this._g === other._g &&
+            this._b === other._b &&
+            this._a === other._a;
+    }
+}
+
+// Static constant: transparent black
+Color.transparent = new Color(0, 0, 0, 0);
+
+// Static constant: opaque black
+Color.black = new Color(0, 0, 0, 255);
+
+/**
+ * Create Color from CSS string using provided parser
+ * @param {string} cssString - CSS color string
+ * @param {ColorParser} parser - ColorParser instance
+ * @returns {Color} New Color instance
+ */
+Color.fromCSS = function (cssString, parser) {
+    if (!cssString || typeof cssString !== 'string') {
+        throw new Error("Invalid color format: must be a string");
+    }
+    const parsed = parser.parse(cssString);
+    return new Color(parsed.r, parsed.g, parsed.b, parsed.a, false);
+};/**
  * ColorParser for SWCanvas
  * 
  * Parses CSS color strings into RGBA values for use with Core API.
@@ -451,354 +618,300 @@ class Color {
  * Includes caching for performance optimization.
  */
 class ColorParser {
-  constructor() {
-    this._cache = new Map();
-
-    // CSS Color names to RGB mapping - Complete MDN specification
-    this._namedColors = {
-      // CSS Level 1 colors
-      black: { r: 0, g: 0, b: 0 },
-      silver: { r: 192, g: 192, b: 192 },
-      gray: { r: 128, g: 128, b: 128 },
-      white: { r: 255, g: 255, b: 255 },
-      maroon: { r: 128, g: 0, b: 0 },
-      red: { r: 255, g: 0, b: 0 },
-      purple: { r: 128, g: 0, b: 128 },
-      fuchsia: { r: 255, g: 0, b: 255 },
-      green: { r: 0, g: 128, b: 0 },
-      lime: { r: 0, g: 255, b: 0 },
-      olive: { r: 128, g: 128, b: 0 },
-      yellow: { r: 255, g: 255, b: 0 },
-      navy: { r: 0, g: 0, b: 128 },
-      blue: { r: 0, g: 0, b: 255 },
-      teal: { r: 0, g: 128, b: 128 },
-      aqua: { r: 0, g: 255, b: 255 },
-
-      // CSS Level 2 (X11) colors  
-      aliceblue: { r: 240, g: 248, b: 255 },
-      antiquewhite: { r: 250, g: 235, b: 215 },
-      aquamarine: { r: 127, g: 255, b: 212 },
-      azure: { r: 240, g: 255, b: 255 },
-      beige: { r: 245, g: 245, b: 220 },
-      bisque: { r: 255, g: 228, b: 196 },
-      blanchedalmond: { r: 255, g: 235, b: 205 },
-      blueviolet: { r: 138, g: 43, b: 226 },
-      brown: { r: 165, g: 42, b: 42 },
-      burlywood: { r: 222, g: 184, b: 135 },
-      cadetblue: { r: 95, g: 158, b: 160 },
-      chartreuse: { r: 127, g: 255, b: 0 },
-      chocolate: { r: 210, g: 105, b: 30 },
-      coral: { r: 255, g: 127, b: 80 },
-      cornflowerblue: { r: 100, g: 149, b: 237 },
-      cornsilk: { r: 255, g: 248, b: 220 },
-      crimson: { r: 220, g: 20, b: 60 },
-      cyan: { r: 0, g: 255, b: 255 }, // synonym of aqua
-      darkblue: { r: 0, g: 0, b: 139 },
-      darkcyan: { r: 0, g: 139, b: 139 },
-      darkgoldenrod: { r: 184, g: 134, b: 11 },
-      darkgray: { r: 169, g: 169, b: 169 },
-      darkgreen: { r: 0, g: 100, b: 0 },
-      darkgrey: { r: 169, g: 169, b: 169 }, // synonym of darkgray
-      darkkhaki: { r: 189, g: 183, b: 107 },
-      darkmagenta: { r: 139, g: 0, b: 139 },
-      darkolivegreen: { r: 85, g: 107, b: 47 },
-      darkorange: { r: 255, g: 140, b: 0 },
-      darkorchid: { r: 153, g: 50, b: 204 },
-      darkred: { r: 139, g: 0, b: 0 },
-      darksalmon: { r: 233, g: 150, b: 122 },
-      darkseagreen: { r: 143, g: 188, b: 143 },
-      darkslateblue: { r: 72, g: 61, b: 139 },
-      darkslategray: { r: 47, g: 79, b: 79 },
-      darkslategrey: { r: 47, g: 79, b: 79 }, // synonym of darkslategray
-      darkturquoise: { r: 0, g: 206, b: 209 },
-      darkviolet: { r: 148, g: 0, b: 211 },
-      deeppink: { r: 255, g: 20, b: 147 },
-      deepskyblue: { r: 0, g: 191, b: 255 },
-      dimgray: { r: 105, g: 105, b: 105 },
-      dimgrey: { r: 105, g: 105, b: 105 }, // synonym of dimgray
-      dodgerblue: { r: 30, g: 144, b: 255 },
-      firebrick: { r: 178, g: 34, b: 34 },
-      floralwhite: { r: 255, g: 250, b: 240 },
-      forestgreen: { r: 34, g: 139, b: 34 },
-      gainsboro: { r: 220, g: 220, b: 220 },
-      ghostwhite: { r: 248, g: 248, b: 255 },
-      gold: { r: 255, g: 215, b: 0 },
-      goldenrod: { r: 218, g: 165, b: 32 },
-      grey: { r: 128, g: 128, b: 128 }, // synonym of gray
-      greenyellow: { r: 173, g: 255, b: 47 },
-      honeydew: { r: 240, g: 255, b: 240 },
-      hotpink: { r: 255, g: 105, b: 180 },
-      indianred: { r: 205, g: 92, b: 92 },
-      indigo: { r: 75, g: 0, b: 130 },
-      ivory: { r: 255, g: 255, b: 240 },
-      khaki: { r: 240, g: 230, b: 140 },
-      lavender: { r: 230, g: 230, b: 250 },
-      lavenderblush: { r: 255, g: 240, b: 245 },
-      lawngreen: { r: 124, g: 252, b: 0 },
-      lemonchiffon: { r: 255, g: 250, b: 205 },
-      lightblue: { r: 173, g: 216, b: 230 },
-      lightcoral: { r: 240, g: 128, b: 128 },
-      lightcyan: { r: 224, g: 255, b: 255 },
-      lightgoldenrodyellow: { r: 250, g: 250, b: 210 },
-      lightgray: { r: 211, g: 211, b: 211 },
-      lightgreen: { r: 144, g: 238, b: 144 },
-      lightgrey: { r: 211, g: 211, b: 211 }, // synonym of lightgray
-      lightpink: { r: 255, g: 182, b: 193 },
-      lightsalmon: { r: 255, g: 160, b: 122 },
-      lightseagreen: { r: 32, g: 178, b: 170 },
-      lightskyblue: { r: 135, g: 206, b: 250 },
-      lightslategray: { r: 119, g: 136, b: 153 },
-      lightslategrey: { r: 119, g: 136, b: 153 }, // synonym of lightslategray
-      lightsteelblue: { r: 176, g: 196, b: 222 },
-      lightyellow: { r: 255, g: 255, b: 224 },
-      limegreen: { r: 50, g: 205, b: 50 },
-      linen: { r: 250, g: 240, b: 230 },
-      magenta: { r: 255, g: 0, b: 255 }, // synonym of fuchsia
-      mediumaquamarine: { r: 102, g: 205, b: 170 },
-      mediumblue: { r: 0, g: 0, b: 205 },
-      mediumorchid: { r: 186, g: 85, b: 211 },
-      mediumpurple: { r: 147, g: 112, b: 219 },
-      mediumseagreen: { r: 60, g: 179, b: 113 },
-      mediumslateblue: { r: 123, g: 104, b: 238 },
-      mediumspringgreen: { r: 0, g: 250, b: 154 },
-      mediumturquoise: { r: 72, g: 209, b: 204 },
-      mediumvioletred: { r: 199, g: 21, b: 133 },
-      midnightblue: { r: 25, g: 25, b: 112 },
-      mintcream: { r: 245, g: 255, b: 250 },
-      mistyrose: { r: 255, g: 228, b: 225 },
-      moccasin: { r: 255, g: 228, b: 181 },
-      navajowhite: { r: 255, g: 222, b: 173 },
-      oldlace: { r: 253, g: 245, b: 230 },
-      olivedrab: { r: 107, g: 142, b: 35 },
-      orange: { r: 255, g: 165, b: 0 },
-      orangered: { r: 255, g: 69, b: 0 },
-      orchid: { r: 218, g: 112, b: 214 },
-      palegoldenrod: { r: 238, g: 232, b: 170 },
-      palegreen: { r: 152, g: 251, b: 152 },
-      paleturquoise: { r: 175, g: 238, b: 238 },
-      palevioletred: { r: 219, g: 112, b: 147 },
-      papayawhip: { r: 255, g: 239, b: 213 },
-      peachpuff: { r: 255, g: 218, b: 185 },
-      peru: { r: 205, g: 133, b: 63 },
-      pink: { r: 255, g: 192, b: 203 },
-      plum: { r: 221, g: 160, b: 221 },
-      powderblue: { r: 176, g: 224, b: 230 },
-      rebeccapurple: { r: 102, g: 51, b: 153 }, // CSS Level 4
-      rosybrown: { r: 188, g: 143, b: 143 },
-      royalblue: { r: 65, g: 105, b: 225 },
-      saddlebrown: { r: 139, g: 69, b: 19 },
-      salmon: { r: 250, g: 128, b: 114 },
-      sandybrown: { r: 244, g: 164, b: 96 },
-      seagreen: { r: 46, g: 139, b: 87 },
-      seashell: { r: 255, g: 245, b: 238 },
-      sienna: { r: 160, g: 82, b: 45 },
-      skyblue: { r: 135, g: 206, b: 235 },
-      slateblue: { r: 106, g: 90, b: 205 },
-      slategray: { r: 112, g: 128, b: 144 },
-      slategrey: { r: 112, g: 128, b: 144 }, // synonym of slategray
-      snow: { r: 255, g: 250, b: 250 },
-      springgreen: { r: 0, g: 255, b: 127 },
-      steelblue: { r: 70, g: 130, b: 180 },
-      tan: { r: 210, g: 180, b: 140 },
-      thistle: { r: 216, g: 191, b: 216 },
-      tomato: { r: 255, g: 99, b: 71 },
-      turquoise: { r: 64, g: 224, b: 208 },
-      violet: { r: 238, g: 130, b: 238 },
-      wheat: { r: 245, g: 222, b: 179 },
-      whitesmoke: { r: 245, g: 245, b: 245 },
-      yellowgreen: { r: 154, g: 205, b: 50 }
-    };
-  }
-
-  /**
-   * Parse a CSS color string to RGBA values
-   * @param {string} color - CSS color string
-   * @returns {Object} {r, g, b, a} with values 0-255
-   */
-  parse(color) {
-    // Check cache first
-    if (this._cache.has(color)) {
-      return this._cache.get(color);
+    constructor() {
+        this._cache = new Map();
+        
+        // CSS Color names to RGB mapping - Complete MDN specification
+        this._namedColors = {
+            // CSS Level 1 colors
+            black: { r: 0, g: 0, b: 0 },
+            silver: { r: 192, g: 192, b: 192 },
+            gray: { r: 128, g: 128, b: 128 },
+            white: { r: 255, g: 255, b: 255 },
+            maroon: { r: 128, g: 0, b: 0 },
+            red: { r: 255, g: 0, b: 0 },
+            purple: { r: 128, g: 0, b: 128 },
+            fuchsia: { r: 255, g: 0, b: 255 },
+            green: { r: 0, g: 128, b: 0 },
+            lime: { r: 0, g: 255, b: 0 },
+            olive: { r: 128, g: 128, b: 0 },
+            yellow: { r: 255, g: 255, b: 0 },
+            navy: { r: 0, g: 0, b: 128 },
+            blue: { r: 0, g: 0, b: 255 },
+            teal: { r: 0, g: 128, b: 128 },
+            aqua: { r: 0, g: 255, b: 255 },
+            
+            // CSS Level 2 (X11) colors  
+            aliceblue: { r: 240, g: 248, b: 255 },
+            antiquewhite: { r: 250, g: 235, b: 215 },
+            aquamarine: { r: 127, g: 255, b: 212 },
+            azure: { r: 240, g: 255, b: 255 },
+            beige: { r: 245, g: 245, b: 220 },
+            bisque: { r: 255, g: 228, b: 196 },
+            blanchedalmond: { r: 255, g: 235, b: 205 },
+            blueviolet: { r: 138, g: 43, b: 226 },
+            brown: { r: 165, g: 42, b: 42 },
+            burlywood: { r: 222, g: 184, b: 135 },
+            cadetblue: { r: 95, g: 158, b: 160 },
+            chartreuse: { r: 127, g: 255, b: 0 },
+            chocolate: { r: 210, g: 105, b: 30 },
+            coral: { r: 255, g: 127, b: 80 },
+            cornflowerblue: { r: 100, g: 149, b: 237 },
+            cornsilk: { r: 255, g: 248, b: 220 },
+            crimson: { r: 220, g: 20, b: 60 },
+            cyan: { r: 0, g: 255, b: 255 }, // synonym of aqua
+            darkblue: { r: 0, g: 0, b: 139 },
+            darkcyan: { r: 0, g: 139, b: 139 },
+            darkgoldenrod: { r: 184, g: 134, b: 11 },
+            darkgray: { r: 169, g: 169, b: 169 },
+            darkgreen: { r: 0, g: 100, b: 0 },
+            darkgrey: { r: 169, g: 169, b: 169 }, // synonym of darkgray
+            darkkhaki: { r: 189, g: 183, b: 107 },
+            darkmagenta: { r: 139, g: 0, b: 139 },
+            darkolivegreen: { r: 85, g: 107, b: 47 },
+            darkorange: { r: 255, g: 140, b: 0 },
+            darkorchid: { r: 153, g: 50, b: 204 },
+            darkred: { r: 139, g: 0, b: 0 },
+            darksalmon: { r: 233, g: 150, b: 122 },
+            darkseagreen: { r: 143, g: 188, b: 143 },
+            darkslateblue: { r: 72, g: 61, b: 139 },
+            darkslategray: { r: 47, g: 79, b: 79 },
+            darkslategrey: { r: 47, g: 79, b: 79 }, // synonym of darkslategray
+            darkturquoise: { r: 0, g: 206, b: 209 },
+            darkviolet: { r: 148, g: 0, b: 211 },
+            deeppink: { r: 255, g: 20, b: 147 },
+            deepskyblue: { r: 0, g: 191, b: 255 },
+            dimgray: { r: 105, g: 105, b: 105 },
+            dimgrey: { r: 105, g: 105, b: 105 }, // synonym of dimgray
+            dodgerblue: { r: 30, g: 144, b: 255 },
+            firebrick: { r: 178, g: 34, b: 34 },
+            floralwhite: { r: 255, g: 250, b: 240 },
+            forestgreen: { r: 34, g: 139, b: 34 },
+            gainsboro: { r: 220, g: 220, b: 220 },
+            ghostwhite: { r: 248, g: 248, b: 255 },
+            gold: { r: 255, g: 215, b: 0 },
+            goldenrod: { r: 218, g: 165, b: 32 },
+            grey: { r: 128, g: 128, b: 128 }, // synonym of gray
+            greenyellow: { r: 173, g: 255, b: 47 },
+            honeydew: { r: 240, g: 255, b: 240 },
+            hotpink: { r: 255, g: 105, b: 180 },
+            indianred: { r: 205, g: 92, b: 92 },
+            indigo: { r: 75, g: 0, b: 130 },
+            ivory: { r: 255, g: 255, b: 240 },
+            khaki: { r: 240, g: 230, b: 140 },
+            lavender: { r: 230, g: 230, b: 250 },
+            lavenderblush: { r: 255, g: 240, b: 245 },
+            lawngreen: { r: 124, g: 252, b: 0 },
+            lemonchiffon: { r: 255, g: 250, b: 205 },
+            lightblue: { r: 173, g: 216, b: 230 },
+            lightcoral: { r: 240, g: 128, b: 128 },
+            lightcyan: { r: 224, g: 255, b: 255 },
+            lightgoldenrodyellow: { r: 250, g: 250, b: 210 },
+            lightgray: { r: 211, g: 211, b: 211 },
+            lightgreen: { r: 144, g: 238, b: 144 },
+            lightgrey: { r: 211, g: 211, b: 211 }, // synonym of lightgray
+            lightpink: { r: 255, g: 182, b: 193 },
+            lightsalmon: { r: 255, g: 160, b: 122 },
+            lightseagreen: { r: 32, g: 178, b: 170 },
+            lightskyblue: { r: 135, g: 206, b: 250 },
+            lightslategray: { r: 119, g: 136, b: 153 },
+            lightslategrey: { r: 119, g: 136, b: 153 }, // synonym of lightslategray
+            lightsteelblue: { r: 176, g: 196, b: 222 },
+            lightyellow: { r: 255, g: 255, b: 224 },
+            limegreen: { r: 50, g: 205, b: 50 },
+            linen: { r: 250, g: 240, b: 230 },
+            magenta: { r: 255, g: 0, b: 255 }, // synonym of fuchsia
+            mediumaquamarine: { r: 102, g: 205, b: 170 },
+            mediumblue: { r: 0, g: 0, b: 205 },
+            mediumorchid: { r: 186, g: 85, b: 211 },
+            mediumpurple: { r: 147, g: 112, b: 219 },
+            mediumseagreen: { r: 60, g: 179, b: 113 },
+            mediumslateblue: { r: 123, g: 104, b: 238 },
+            mediumspringgreen: { r: 0, g: 250, b: 154 },
+            mediumturquoise: { r: 72, g: 209, b: 204 },
+            mediumvioletred: { r: 199, g: 21, b: 133 },
+            midnightblue: { r: 25, g: 25, b: 112 },
+            mintcream: { r: 245, g: 255, b: 250 },
+            mistyrose: { r: 255, g: 228, b: 225 },
+            moccasin: { r: 255, g: 228, b: 181 },
+            navajowhite: { r: 255, g: 222, b: 173 },
+            oldlace: { r: 253, g: 245, b: 230 },
+            olivedrab: { r: 107, g: 142, b: 35 },
+            orange: { r: 255, g: 165, b: 0 },
+            orangered: { r: 255, g: 69, b: 0 },
+            orchid: { r: 218, g: 112, b: 214 },
+            palegoldenrod: { r: 238, g: 232, b: 170 },
+            palegreen: { r: 152, g: 251, b: 152 },
+            paleturquoise: { r: 175, g: 238, b: 238 },
+            palevioletred: { r: 219, g: 112, b: 147 },
+            papayawhip: { r: 255, g: 239, b: 213 },
+            peachpuff: { r: 255, g: 218, b: 185 },
+            peru: { r: 205, g: 133, b: 63 },
+            pink: { r: 255, g: 192, b: 203 },
+            plum: { r: 221, g: 160, b: 221 },
+            powderblue: { r: 176, g: 224, b: 230 },
+            rebeccapurple: { r: 102, g: 51, b: 153 }, // CSS Level 4
+            rosybrown: { r: 188, g: 143, b: 143 },
+            royalblue: { r: 65, g: 105, b: 225 },
+            saddlebrown: { r: 139, g: 69, b: 19 },
+            salmon: { r: 250, g: 128, b: 114 },
+            sandybrown: { r: 244, g: 164, b: 96 },
+            seagreen: { r: 46, g: 139, b: 87 },
+            seashell: { r: 255, g: 245, b: 238 },
+            sienna: { r: 160, g: 82, b: 45 },
+            skyblue: { r: 135, g: 206, b: 235 },
+            slateblue: { r: 106, g: 90, b: 205 },
+            slategray: { r: 112, g: 128, b: 144 },
+            slategrey: { r: 112, g: 128, b: 144 }, // synonym of slategray
+            snow: { r: 255, g: 250, b: 250 },
+            springgreen: { r: 0, g: 255, b: 127 },
+            steelblue: { r: 70, g: 130, b: 180 },
+            tan: { r: 210, g: 180, b: 140 },
+            thistle: { r: 216, g: 191, b: 216 },
+            tomato: { r: 255, g: 99, b: 71 },
+            turquoise: { r: 64, g: 224, b: 208 },
+            violet: { r: 238, g: 130, b: 238 },
+            wheat: { r: 245, g: 222, b: 179 },
+            whitesmoke: { r: 245, g: 245, b: 245 },
+            yellowgreen: { r: 154, g: 205, b: 50 }
+        };
     }
-
-    let result;
-
-    if (typeof color !== 'string') {
-      result = { r: 0, g: 0, b: 0, a: 255 };
-    } else {
-      const trimmed = color.trim().toLowerCase();
-
-      if (trimmed.startsWith('#')) {
-        result = this._parseHex(trimmed);
-      } else if (trimmed.startsWith('rgb')) {
-        result = this._parseRGB(trimmed);
-      } else if (this._namedColors[trimmed]) {
-        const named = this._namedColors[trimmed];
-        result = { r: named.r, g: named.g, b: named.b, a: 255 };
-      } else {
-        // Unknown color - default to black
-        result = { r: 0, g: 0, b: 0, a: 255 };
-      }
+    
+    /**
+     * Parse a CSS color string to RGBA values
+     * @param {string} color - CSS color string
+     * @returns {Object} {r, g, b, a} with values 0-255
+     */
+    parse(color) {
+        // Check cache first
+        if (this._cache.has(color)) {
+            return this._cache.get(color);
+        }
+        
+        let result;
+        
+        if (typeof color !== 'string') {
+            result = { r: 0, g: 0, b: 0, a: 255 };
+        } else {
+            const trimmed = color.trim().toLowerCase();
+            
+            if (trimmed.startsWith('#')) {
+                result = this._parseHex(trimmed);
+            } else if (trimmed.startsWith('rgb')) {
+                result = this._parseRGB(trimmed);
+            } else if (this._namedColors[trimmed]) {
+                const named = this._namedColors[trimmed];
+                result = { r: named.r, g: named.g, b: named.b, a: 255 };
+            } else {
+                // Unknown color - default to black
+                result = { r: 0, g: 0, b: 0, a: 255 };
+            }
+        }
+        
+        // Cache the result
+        this._cache.set(color, result);
+        return result;
     }
-
-    // Cache the result
-    this._cache.set(color, result);
-    return result;
-  }
-
-  /**
-   * Parse hex color (#RGB, #RRGGBB, #RRGGBBAA)
-   * @private
-   */
-  _parseHex(hex) {
-    // Remove the #
-    hex = hex.substring(1);
-
-    if (hex.length === 3) {
-      // #RGB -> #RRGGBB
-      hex = hex.split('').map(c => c + c).join('');
+    
+    /**
+     * Parse hex color (#RGB, #RRGGBB, #RRGGBBAA)
+     * @private
+     */
+    _parseHex(hex) {
+        // Remove the #
+        hex = hex.substring(1);
+        
+        if (hex.length === 3) {
+            // #RGB -> #RRGGBB
+            hex = hex.split('').map(c => c + c).join('');
+        }
+        
+        if (hex.length === 6) {
+            // #RRGGBB
+            const r = parseInt(hex.substring(0, 2), 16);
+            const g = parseInt(hex.substring(2, 4), 16);
+            const b = parseInt(hex.substring(4, 6), 16);
+            return { r, g, b, a: 255 };
+        } else if (hex.length === 8) {
+            // #RRGGBBAA
+            const r = parseInt(hex.substring(0, 2), 16);
+            const g = parseInt(hex.substring(2, 4), 16);
+            const b = parseInt(hex.substring(4, 6), 16);
+            const a = parseInt(hex.substring(6, 8), 16);
+            return { r, g, b, a };
+        }
+        
+        // Invalid hex - default to black
+        return { r: 0, g: 0, b: 0, a: 255 };
     }
-
-    if (hex.length === 6) {
-      // #RRGGBB
-      const r = parseInt(hex.substring(0, 2), 16);
-      const g = parseInt(hex.substring(2, 4), 16);
-      const b = parseInt(hex.substring(4, 6), 16);
-      return { r, g, b, a: 255 };
-    } else if (hex.length === 8) {
-      // #RRGGBBAA
-      const r = parseInt(hex.substring(0, 2), 16);
-      const g = parseInt(hex.substring(2, 4), 16);
-      const b = parseInt(hex.substring(4, 6), 16);
-      const a = parseInt(hex.substring(6, 8), 16);
-      return { r, g, b, a };
+    
+    /**
+     * Parse RGB/RGBA function notation
+     * @private
+     */
+    _parseRGB(rgb) {
+        // Extract the content inside parentheses
+        const match = rgb.match(/rgba?\s*\(\s*([^)]+)\s*\)/);
+        if (!match) {
+            return { r: 0, g: 0, b: 0, a: 255 };
+        }
+        
+        const parts = match[1].split(',').map(s => s.trim());
+        
+        if (parts.length < 3) {
+            return { r: 0, g: 0, b: 0, a: 255 };
+        }
+        
+        const r = Math.max(0, Math.min(255, parseInt(parts[0]) || 0));
+        const g = Math.max(0, Math.min(255, parseInt(parts[1]) || 0));
+        const b = Math.max(0, Math.min(255, parseInt(parts[2]) || 0));
+        
+        let a = 255;
+        if (parts.length >= 4) {
+            const alpha = parseFloat(parts[3]);
+            if (!isNaN(alpha)) {
+                a = Math.max(0, Math.min(255, Math.round(alpha * 255)));
+            }
+        }
+        
+        return { r, g, b, a };
     }
-
-    // Invalid hex - default to black
-    return { r: 0, g: 0, b: 0, a: 255 };
-  }
-
-  /**
-   * Parse RGB/RGBA function notation
-   * @private
-   */
-  _parseRGB(rgb) {
-    // Extract the content inside parentheses
-    const match = rgb.match(/rgba?\s*\(\s*([^)]+)\s*\)/);
-    if (!match) {
-      return { r: 0, g: 0, b: 0, a: 255 };
+    
+    /**
+     * Clear the color cache
+     */
+    clearCache() {
+        this._cache.clear();
     }
-
-    const parts = match[1].split(',').map(s => s.trim());
-
-    if (parts.length < 3) {
-      return { r: 0, g: 0, b: 0, a: 255 };
-    }
-
-    const r = Math.max(0, Math.min(255, parseInt(parts[0]) || 0));
-    const g = Math.max(0, Math.min(255, parseInt(parts[1]) || 0));
-    const b = Math.max(0, Math.min(255, parseInt(parts[2]) || 0));
-
-    let a = 255;
-    if (parts.length >= 4) {
-      const alpha = parseFloat(parts[3]);
-      if (!isNaN(alpha)) {
-        a = Math.max(0, Math.min(255, Math.round(alpha * 255)));
-      }
-    }
-
-    return { r, g, b, a };
-  }
-
-  /**
-   * Clear the color cache
-   */
-  clearCache() {
-    this._cache.clear();
-  }
 }/**
- * Color Bridge - API compatibility layer using Color and ColorParser classes
- *
- * This file provides backward-compatible functions that use the new ColorParser
- * while returning Color instances for deep integration throughout the rendering pipeline.
- */
-
-// Global ColorParser instance (singleton pattern for caching benefits)
-const _colorParser = new ColorParser();
-
-/**
- * Parse a CSS color string into a Color instance
- * @param {string} colorStr - CSS color string (hex, rgb, rgba, named colors)
- * @returns {Color} Color instance
- * @throws {Error} If colorStr is not a string
- */
-function parseColor(colorStr) {
-  if (!colorStr || typeof colorStr !== 'string') {
-    throw new Error("Invalid color format: must be a string");
-  }
-
-  // ColorParser.parse() returns {r, g, b, a} with all values 0-255
-  const parsed = _colorParser.parse(colorStr);
-  return new Color(parsed.r, parsed.g, parsed.b, parsed.a, false);
-}
-
-/**
- * Convert a Color instance or RGBA components to CSS rgba() string
- * @param {Color|object|number} colorOrR - Color instance, color object, or red component
- * @param {number} [g] - Green component (if first arg is number)
- * @param {number} [b] - Blue component (if first arg is number)
- * @param {number} [a] - Alpha component 0-255 (if first arg is number)
- * @returns {string} CSS rgba() string
- */
-function colorToString(colorOrR, g, b, a) {
-  if (colorOrR instanceof Color) {
-    const alpha = (colorOrR.a / 255).toFixed(3).replace(/\.?0+$/, '');
-    return `rgba(${colorOrR.r}, ${colorOrR.g}, ${colorOrR.b}, ${alpha})`;
-  } else if (typeof colorOrR === 'object') {
-    // Support plain {r, g, b, a} objects for backwards compatibility
-    const alpha = (colorOrR.a / 255).toFixed(3).replace(/\.?0+$/, '');
-    return `rgba(${colorOrR.r}, ${colorOrR.g}, ${colorOrR.b}, ${alpha})`;
-  } else {
-    const alpha = (a / 255).toFixed(3).replace(/\.?0+$/, '');
-    return `rgba(${colorOrR}, ${g}, ${b}, ${alpha})`;
-  }
-}
-
-/**
- * Clear the color parser cache (useful for memory management in long-running apps)
- */
-function clearColorCache() {
-  _colorParser.clearCache();
-}
-/**
  * Represents the state of a CrispSwContext at a point in time.
  * Used for save() and restore() operations.
  */
 class ContextState {
-  constructor(canvasWidth, canvasHeight, lineWidth, transform, strokeColor, fillColor, globalAlpha, clippingMask) {
-    this.canvasWidth = canvasWidth;
-    this.canvasHeight = canvasHeight;
-    this.lineWidth = lineWidth || 1;
-    this.transform = transform || new TransformationMatrix();
-    // Store Color instances (default: opaque black)
-    this.strokeColor = strokeColor || new Color(0, 0, 0, 255);
-    this.fillColor = fillColor || new Color(0, 0, 0, 255);
-    this.globalAlpha = globalAlpha || 1.0;
-    this.clippingMask = clippingMask || new Uint8Array(Math.ceil(canvasWidth * canvasHeight / 8)).fill(255);
-  }
+    constructor(canvasWidth, canvasHeight, lineWidth, transform, strokeColor, fillColor, globalAlpha, clippingMask) {
+        this.canvasWidth = canvasWidth;
+        this.canvasHeight = canvasHeight;
+        this.lineWidth = lineWidth || 1;
+        this.transform = transform || new Transform2D();
+        // Store Color instances (default: opaque black)
+        this.strokeColor = strokeColor || Color.black;
+        this.fillColor = fillColor || Color.black;
+        this.globalAlpha = globalAlpha || 1.0;
+        this.clippingMask = clippingMask || new Uint8Array(Math.ceil(canvasWidth * canvasHeight / 8)).fill(255);
+    }
 
-  clone() {
-    const clippingMaskCopy = new Uint8Array(this.clippingMask);
-    return new ContextState(
-      this.canvasWidth, this.canvasHeight,
-      this.lineWidth,
-      this.transform.clone(),
-      // Color is immutable - can reuse same instance
-      this.strokeColor, this.fillColor,
-      this.globalAlpha,
-      clippingMaskCopy
-    );
-  }
+    clone() {
+        const clippingMaskCopy = new Uint8Array(this.clippingMask);
+        return new ContextState(
+            this.canvasWidth, this.canvasHeight,
+            this.lineWidth,
+            this.transform,  // Transform2D is immutable - safe to share reference
+            // Color is immutable - can reuse same instance
+            this.strokeColor, this.fillColor,
+            this.globalAlpha,
+            clippingMaskCopy
+        );
+    }
 }
 // THIS IS NOT USED SO FAR BECAUSE WE FILL (ROTATED) RECTANGLES SO FAR, FOR WHICH WE
 // USE THE Edge Function Method (Half-Space Method), WHICH SHOULD BE FASTER.
@@ -813,9 +926,9 @@ function pointInPolygon(x, y, points) {
   for (let i = 0, j = points.length - 1; i < points.length; j = i++) {
     const xi = points[i].x, yi = points[i].y;
     const xj = points[j].x, yj = points[j].y;
-
+    
     const intersect = ((yi > y) !== (yj > y))
-      && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+        && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
     if (intersect) inside = !inside;
   }
   return inside;
@@ -825,12 +938,12 @@ function extendLine(p1, p2, amount) {
   const dx = p2.x - p1.x;
   const dy = p2.y - p1.y;
   const len = Math.sqrt(dx * dx + dy * dy);
-
+  
   if (len === 0) return { start: p1, end: p2 };
-
+  
   const dirX = dx / len;
   const dirY = dy / len;
-
+  
   return {
     start: {
       x: p1.x - dirX * amount,
@@ -847,12 +960,12 @@ function shortenLine(p1, p2, amount) {
   const dx = p2.x - p1.x;
   const dy = p2.y - p1.y;
   const len = Math.sqrt(dx * dx + dy * dy);
-
+  
   if (len === 0) return { start: p1, end: p2 };
-
+  
   const dirX = dx / len;
   const dirY = dy / len;
-
+  
   return {
     start: {
       x: p1.x + dirX * amount,
@@ -887,7 +1000,7 @@ function toIntegerPoint(point) {
 
 
 function roundCornerOfRectangularGeometry(rectGeometry) {
-  const { x, y, w, h } = rectGeometry;
+  const {x, y, w, h} = rectGeometry;
   // round x, y , while leaving w and h as they are
   return {
     x: Math.round(x),
@@ -909,8 +1022,8 @@ function roundCornerOfRectangularGeometryWithWarning(rectGeometry) {
 // If the user knows what they are doing, they pass centerX and width such that
 // they produce a whole origin x.
 function getRectangularFillGeometry(centerX, centerY, width, height) {
-  const x = centerX - width / 2;
-  const y = centerY - height / 2;
+  const x = centerX - width/2;
+  const y = centerY - height/2;
   return { x, y, w: width, h: height };
 }
 
@@ -944,7 +1057,7 @@ function checkBasicConditionsForCrispRendering(centerX, centerY, width, height, 
   if (!Number.isInteger(centerY) && centerY % 1 !== 0.5) {
     console.warn("Center Y must be an integer or *.5 for crisp rendering ");
   }
-} class PixelSet {
+}class PixelSet {
   constructor(pixelRenderer) {
     this.pixels = new Map();
     this.pixelRenderer = pixelRenderer;
@@ -960,7 +1073,7 @@ function checkBasicConditionsForCrispRendering(centerX, centerY, width, height, 
       this.pixelRenderer.setPixel(pixel.x, pixel.y, pixel.r, pixel.g, pixel.b, pixel.a);
     }
   }
-} class ScanlineSpans {
+}class ScanlineSpans {
   constructor() {
     // Map y-coordinate to [min_x, max_x]
     this.spans = new Map();
@@ -970,7 +1083,7 @@ function checkBasicConditionsForCrispRendering(centerX, centerY, width, height, 
     if (x1 > x2) {
       [x1, x2] = [x2, x1];
     }
-
+    
     if (!this.spans.has(y)) {
       this.spans.set(y, [x1, x2]);
     } else {
@@ -983,7 +1096,7 @@ function checkBasicConditionsForCrispRendering(centerX, centerY, width, height, 
   addPixel(x, y) {
     y = Math.round(y);
     x = Math.round(x);
-
+    
     if (!this.spans.has(y)) {
       this.spans.set(y, [x, x]); // Initialize with same min/max
     } else {
@@ -1012,14 +1125,14 @@ const ANGLE_TOLERANCE = 0.001; // Radians (~0.057 degrees)
 function isNearMultipleOf90Degrees(angle) {
   // Normalize angle to [0, 2π)
   const normalizedAngle = ((angle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
-
+  
   // Check if angle is close to 0, π/2, π, or 3π/2
   return (
     Math.abs(normalizedAngle) < ANGLE_TOLERANCE ||
-    Math.abs(normalizedAngle - Math.PI / 2) < ANGLE_TOLERANCE ||
+    Math.abs(normalizedAngle - Math.PI/2) < ANGLE_TOLERANCE ||
     Math.abs(normalizedAngle - Math.PI) < ANGLE_TOLERANCE ||
-    Math.abs(normalizedAngle - 3 * Math.PI / 2) < ANGLE_TOLERANCE ||
-    Math.abs(normalizedAngle - 2 * Math.PI) < ANGLE_TOLERANCE
+    Math.abs(normalizedAngle - 3*Math.PI/2) < ANGLE_TOLERANCE ||
+    Math.abs(normalizedAngle - 2*Math.PI) < ANGLE_TOLERANCE
   );
 }
 
@@ -1034,18 +1147,18 @@ function isNearMultipleOf90Degrees(angle) {
 function getRotatedDimensionsIfTheCase(width, height, angle) {
   // Normalize angle to [0, 2π)
   const normalizedAngle = ((angle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
-
+  
   // For angles near 90° or 270°, swap width and height
   if (
-    Math.abs(normalizedAngle - Math.PI / 2) < ANGLE_TOLERANCE ||
-    Math.abs(normalizedAngle - 3 * Math.PI / 2) < ANGLE_TOLERANCE
+    Math.abs(normalizedAngle - Math.PI/2) < ANGLE_TOLERANCE ||
+    Math.abs(normalizedAngle - 3*Math.PI/2) < ANGLE_TOLERANCE
   ) {
     return { adjustedWidth: height, adjustedHeight: width };
   }
-
+  
   // For angles near 0° or 180°, keep original dimensions
   return { adjustedWidth: width, adjustedHeight: height };
-} class SWRendererPixel {
+}class SWRendererPixel {
   constructor(frameBufferUint8ClampedView, frameBufferUint32View, width, height, context) {
     this.frameBufferUint8ClampedView = frameBufferUint8ClampedView;
     this.frameBufferUint32View = frameBufferUint32View;
@@ -1066,19 +1179,19 @@ function getRotatedDimensionsIfTheCase(width, height, angle) {
     // Convert to integer with bitwise OR
     x = x | 0;
     y = y | 0;
-
+    
     // Cache width for performance
     const width = this.width;
-
+    
     if (x < 0 || x >= width || y < 0 || y >= this.height) return;
-
+    
     // Pre-calculate pixel position
     const pixelPos = y * width + x;
-
+    
     // Use bit shifting for division and modulo
     const byteIndex = pixelPos >> 3; // Faster than Math.floor(pixelPos / 8)
     const bitIndex = pixelPos & 7;   // Faster than pixelPos % 8
-
+    
     // OR the bit in the tempClippingMask
     this.tempClippingMask[byteIndex] |= (1 << (7 - bitIndex));
   }
@@ -1094,35 +1207,35 @@ function getRotatedDimensionsIfTheCase(width, height, angle) {
     // fix x and y to be integers using bitwise OR (faster than Math.round)
     x = x | 0;
     y = y | 0;
-
+    
     // Cache frequently used constants
     const width = this.width;
     const globalAlpha = this.context.globalAlpha;
-
+    
     // Early bounds check
     if (x < 0 || x >= width || y < 0 || y >= this.height) return;
-
+    
     // Pre-calculate pixel position (used multiple times)
     const pixelPos = y * width + x;
     const index = pixelPos * 4;
-
+    
     // Check for clipping with optimized path
     if (this.context.currentState) {
       const clippingMask = this.context.currentState.clippingMask;
       const clippingMaskByteIndex = pixelPos >> 3; // Faster than Math.floor(pixelPos / 8)
       const bitIndex = pixelPos & 7; // Faster than pixelPos % 8
-
+      
       // Quick check for common case (fully clipped byte)
       if (clippingMask[clippingMaskByteIndex] === 0) return;
-
+      
       // Bit-level check only if needed
       if ((clippingMask[clippingMaskByteIndex] & (1 << (7 - bitIndex))) === 0) return;
     }
-
+    
     // Check for fast path with opaque colors
     const isOpaque = (a === 255) && (globalAlpha >= 1.0);
     let packedColor = 0;
-
+    
     if (isOpaque) {
       // Calculate packed color once
       packedColor = (255 << 24) | (b << 16) | (g << 8) | r;
@@ -1130,7 +1243,7 @@ function getRotatedDimensionsIfTheCase(width, height, angle) {
       this.frameBufferUint32View[pixelPos] = packedColor;
       return;
     }
-
+    
     // Standard path with alpha blending
     // Batch alpha calculations to reduce divisions
     const incomingAlpha = (a / 255) * globalAlpha;
@@ -1138,13 +1251,13 @@ function getRotatedDimensionsIfTheCase(width, height, angle) {
     const inverseIncomingAlpha = 1 - incomingAlpha;
     const oldAlphaScaled = oldAlpha * inverseIncomingAlpha;
     const newAlpha = incomingAlpha + oldAlphaScaled;
-
+    
     // Avoid division if possible
     if (newAlpha <= 0) return;
-
+    
     // Pre-calculate division factor once
     const blendFactor = 1 / newAlpha;
-
+    
     // Apply color blending
     this.frameBufferUint8ClampedView[index] = (r * incomingAlpha + this.frameBufferUint8ClampedView[index] * oldAlphaScaled) * blendFactor;
     this.frameBufferUint8ClampedView[index + 1] = (g * incomingAlpha + this.frameBufferUint8ClampedView[index + 1] * oldAlphaScaled) * blendFactor;
@@ -1156,15 +1269,15 @@ function getRotatedDimensionsIfTheCase(width, height, angle) {
     // Convert to integer with bitwise OR
     x = x | 0;
     y = y | 0;
-
+    
     // Cache width for performance
     const width = this.width;
-
+    
     if (x < 0 || x >= width || y < 0 || y >= this.height) return;
-
+    
     // Pre-calculate pixel position
     const index = (y * width + x) * 4;
-
+    
     // Set all pixel values to 0 
     this.frameBufferUint8ClampedView[index] = 0;
     this.frameBufferUint8ClampedView[index + 1] = 0;
@@ -1189,47 +1302,47 @@ function getRotatedDimensionsIfTheCase(width, height, angle) {
     const globalAlpha = this.context.globalAlpha;
     const hasClipping = this.context.currentState;
     const clippingMask = hasClipping ? this.context.currentState.clippingMask : null;
-
+    
     // Check for fast path with opaque colors
     const isOpaque = (a === 255) && (globalAlpha >= 1.0);
     let packedColor = 0;
     if (isOpaque) {
       packedColor = (255 << 24) | (b << 16) | (g << 8) | r;
     }
-
+    
     // For non-opaque colors, we need alpha calculations
     const incomingAlpha = isOpaque ? 1.0 : (a / 255) * globalAlpha;
     const inverseIncomingAlpha = isOpaque ? 0.0 : 1 - incomingAlpha;
-
+    
     // Skip processing if fully transparent
     if (incomingAlpha <= 0) return;
 
     for (let i = 0; i < runs.length; i += 3) {
       // Get run parameters and convert to integers
       let x = runs[i] | 0;
-      const y = runs[i + 1] | 0;
-      let length = runs[i + 2] | 0;
-
+      const y = runs[i+1] | 0;
+      let length = runs[i+2] | 0;
+      
       // Skip if y is out of bounds
       if (y < 0 || y >= height) continue;
-
+      
       // Handle horizontal clipping
       if (x < 0) {
         length += x; // Reduce length by the amount x is negative
         x = 0;       // Start at left edge
         if (length <= 0) continue; // Skip if nothing to draw
       }
-
+      
       // Clip to right edge
       if (x + length > width) {
         length = width - x;
         if (length <= 0) continue; // Skip if nothing to draw
       }
-
+      
       // Calculate base position for this scanline
       let pixelPos = y * width + x;
       let index = pixelPos * 4;
-
+      
       // Draw the run
       if (isOpaque) {
         // --- Opaque Path --- 
@@ -1237,7 +1350,7 @@ function getRotatedDimensionsIfTheCase(width, height, angle) {
           // Check clipping if needed
           if (hasClipping) {
             const clippingMaskByteIndex = pixelPos >> 3;
-
+            
             // Quick check for fully clipped byte
             if (clippingMask[clippingMaskByteIndex] === 0) {
               // Skip to the end of this byte boundary
@@ -1248,14 +1361,14 @@ function getRotatedDimensionsIfTheCase(width, height, angle) {
               index += (pixelsToSkip - 1) * 4;
               continue;
             }
-
+            
             // Bit-level check
             const bitIndex = pixelPos & 7;
             if ((clippingMask[clippingMaskByteIndex] & (1 << (7 - bitIndex))) === 0) {
               continue;
             }
           }
-
+          
           // Direct 32-bit write
           frameBufferUint32View[pixelPos] = packedColor;
         }
@@ -1265,7 +1378,7 @@ function getRotatedDimensionsIfTheCase(width, height, angle) {
           // Check clipping if needed
           if (hasClipping) {
             const clippingMaskByteIndex = pixelPos >> 3;
-
+            
             // Quick check for fully clipped byte
             if (clippingMask[clippingMaskByteIndex] === 0) {
               // Skip to the end of this byte boundary
@@ -1276,26 +1389,26 @@ function getRotatedDimensionsIfTheCase(width, height, angle) {
               index += (pixelsToSkip - 1) * 4;
               continue;
             }
-
+            
             // Bit-level check
             const bitIndex = pixelPos & 7;
             if ((clippingMask[clippingMaskByteIndex] & (1 << (7 - bitIndex))) === 0) {
               continue;
             }
           }
-
+          
           // Standard path with alpha blending
           // Get existing pixel alpha
           const oldAlpha = frameBufferUint8ClampedView[index + 3] / 255;
           const oldAlphaScaled = oldAlpha * inverseIncomingAlpha;
           const newAlpha = incomingAlpha + oldAlphaScaled;
-
+          
           // Skip fully transparent pixels
           if (newAlpha <= 0) continue;
-
+          
           // Pre-calculate division factor once for this pixel
           const blendFactor = 1 / newAlpha;
-
+          
           // Apply color blending
           frameBufferUint8ClampedView[index] = (r * incomingAlpha + frameBufferUint8ClampedView[index] * oldAlphaScaled) * blendFactor;
           frameBufferUint8ClampedView[index + 1] = (g * incomingAlpha + frameBufferUint8ClampedView[index + 1] * oldAlphaScaled) * blendFactor;
@@ -1372,11 +1485,11 @@ function getRotatedDimensionsIfTheCase(width, height, angle) {
       // Extract segment data
       // Use | 0 for potential float to integer conversion, though input should be int
       let xFill = runs[i] !== -1 ? runs[i] | 0 : -1;
-      let fillLen = runs[i + 1] !== -1 ? runs[i + 1] | 0 : -1;
-      let xStroke1 = runs[i + 2] !== -1 ? runs[i + 2] | 0 : -1;
-      let stroke1Len = runs[i + 3] !== -1 ? runs[i + 3] | 0 : -1;
-      let xStroke2 = runs[i + 4] !== -1 ? runs[i + 4] | 0 : -1;
-      let stroke2Len = runs[i + 5] !== -1 ? runs[i + 5] | 0 : -1;
+      let fillLen = runs[i+1] !== -1 ? runs[i+1] | 0 : -1;
+      let xStroke1 = runs[i+2] !== -1 ? runs[i+2] | 0 : -1;
+      let stroke1Len = runs[i+3] !== -1 ? runs[i+3] | 0 : -1;
+      let xStroke2 = runs[i+4] !== -1 ? runs[i+4] | 0 : -1;
+      let stroke2Len = runs[i+5] !== -1 ? runs[i+5] | 0 : -1;
 
       // Process segments for this scanline
       const hasFill = xFill !== -1 && fillLen > 0 && fillIncomingAlpha > 0;
@@ -1455,7 +1568,7 @@ function getRotatedDimensionsIfTheCase(width, height, angle) {
 
         // Segment type: 0 = fill, 1 = stroke1, 2 = stroke2
         if (segmentType === 0) {
-          // Re-check hasFill and validity after clipping
+           // Re-check hasFill and validity after clipping
           if (!hasFill || xFill === -1 || fillLen <= 0) continue;
           x = xFill;
           length = fillLen;
@@ -1504,10 +1617,10 @@ function getRotatedDimensionsIfTheCase(width, height, angle) {
 
             // Check if byte index is potentially outside the mask bounds (shouldn't happen with y/x clipping)
             // Though adding a check might be safer depending on mask generation guarantees.
-            if (clippingMaskByteIndex >= clippingMask.length) {
-              // This pixel is outside the drawable area defined by the mask dimensions
-              continue;
-            }
+             if (clippingMaskByteIndex >= clippingMask.length) {
+                 // This pixel is outside the drawable area defined by the mask dimensions
+                 continue;
+             }
 
             // Quick check for fully clipped byte
             if (clippingMask[clippingMaskByteIndex] === 0) {
@@ -1561,10 +1674,10 @@ function getRotatedDimensionsIfTheCase(width, height, angle) {
     } // End runs loop (i)
   } // End setPixelFillAndStrokeRuns
 
-} class SWRendererLine {
+}class SWRendererLine {
   constructor(pixelRenderer) {
     this.pixelRenderer = pixelRenderer;
-
+    
     // Pre-allocated arrays for the polygon scan algorithm
     this._corners = [
       { x: 0, y: 0 }, { x: 0, y: 0 }, { x: 0, y: 0 }, { x: 0, y: 0 }
@@ -1592,9 +1705,9 @@ function getRotatedDimensionsIfTheCase(width, height, angle) {
       this.drawLineThick(x1, y1, x2, y2, strokeWidth, strokeR, strokeG, strokeB, strokeA);
       return;
     }
-
+    
     // 1px line path follows
-
+    
     // Tweaks to make the sw render match more closely the canvas render.
     // -----------------------------------------------------------------
     // For an intuition about why this works, imagine a thin vertical line.
@@ -1614,7 +1727,7 @@ function getRotatedDimensionsIfTheCase(width, height, angle) {
     let floorY1 = Math.floor(y1);
     let floorX2 = Math.floor(x2);
     let floorY2 = Math.floor(y2);
-
+    
     // MOREOVER, in Canvas you reason in terms of grid lines, so
     // in case of a vertical line, where you want the two renders to be
     // identical, for example three grid lines actually cover the span
@@ -1708,47 +1821,47 @@ function getRotatedDimensionsIfTheCase(width, height, angle) {
 
     // Early bounds check
     if (y < 0 || y >= height) return;
-
+    
     // Fast path for opaque colors
     const isOpaque = (a === 255) && (globalAlpha >= 1.0);
     let packedColor = 0;
     if (isOpaque) {
       packedColor = (255 << 24) | (b << 16) | (g << 8) | r;
     }
-
+    
     // For non-opaque colors, pre-compute alpha values
     const incomingAlpha = isOpaque ? 1.0 : (a / 255) * globalAlpha;
     const inverseIncomingAlpha = isOpaque ? 0.0 : 1 - incomingAlpha;
-
+    
     // Ensure x1 < x2 for simpler logic
     if (x1 > x2) {
       let temp = x1;
       x1 = x2;
       x2 = temp;
     }
-
+    
     // Clip to canvas boundaries
     if (x1 < 0) x1 = 0;
     if (x2 >= width) x2 = width - 1;
     if (x1 > x2) return;
-
+    
     // Calculate base index for the row
     const baseIndex = (y * width + x1) * 4;
-
+    
     // Draw the horizontal line
     for (let x = x1; x <= x2; x++) {
       const index = baseIndex + (x - x1) * 4;
       const pixelPos = y * width + x;
-
+      
       // Check clipping if needed
       if (hasClipping) {
         const clippingMaskByteIndex = pixelPos >> 3;
         const bitIndex = pixelPos & 7;
-
+        
         if (clippingMask[clippingMaskByteIndex] === 0) continue;
         if ((clippingMask[clippingMaskByteIndex] & (1 << (7 - bitIndex))) === 0) continue;
       }
-
+      
       if (isOpaque) {
         // Fast path for opaque pixels - Direct 32-bit write
         frameBufferUint32View[pixelPos] = packedColor;
@@ -1757,9 +1870,9 @@ function getRotatedDimensionsIfTheCase(width, height, angle) {
         const oldAlpha = frameBufferUint8ClampedView[index + 3] / 255;
         const oldAlphaScaled = oldAlpha * inverseIncomingAlpha;
         const newAlpha = incomingAlpha + oldAlphaScaled;
-
+        
         if (newAlpha <= 0) continue;
-
+        
         const blendFactor = 1 / newAlpha;
         frameBufferUint8ClampedView[index] = (r * incomingAlpha + frameBufferUint8ClampedView[index] * oldAlphaScaled) * blendFactor;
         frameBufferUint8ClampedView[index + 1] = (g * incomingAlpha + frameBufferUint8ClampedView[index + 1] * oldAlphaScaled) * blendFactor;
@@ -1781,44 +1894,44 @@ function getRotatedDimensionsIfTheCase(width, height, angle) {
 
     // Early bounds check
     if (x < 0 || x >= width) return;
-
+    
     // Fast path for opaque colors
     const isOpaque = (a === 255) && (globalAlpha >= 1.0);
     let packedColor = 0;
     if (isOpaque) {
       packedColor = (255 << 24) | (b << 16) | (g << 8) | r;
     }
-
+    
     // For non-opaque colors, pre-compute alpha values
     const incomingAlpha = isOpaque ? 1.0 : (a / 255) * globalAlpha;
     const inverseIncomingAlpha = isOpaque ? 0.0 : 1 - incomingAlpha;
-
+    
     // Ensure y1 < y2 for simpler logic
     if (y1 > y2) {
       let temp = y1;
       y1 = y2;
       y2 = temp;
     }
-
+    
     // Clip to canvas boundaries
     if (y1 < 0) y1 = 0;
     if (y2 >= height) y2 = height - 1;
     if (y1 > y2) return;
-
+    
     // Draw the vertical line
     for (let y = y1; y <= y2; y++) {
       const index = (y * width + x) * 4;
       const pixelPos = y * width + x;
-
+      
       // Check clipping if needed
       if (hasClipping) {
         const clippingMaskByteIndex = pixelPos >> 3;
         const bitIndex = pixelPos & 7;
-
+        
         if (clippingMask[clippingMaskByteIndex] === 0) continue;
         if ((clippingMask[clippingMaskByteIndex] & (1 << (7 - bitIndex))) === 0) continue;
       }
-
+      
       if (isOpaque) {
         // Fast path for opaque pixels - Direct 32-bit write
         frameBufferUint32View[pixelPos] = packedColor;
@@ -1827,9 +1940,9 @@ function getRotatedDimensionsIfTheCase(width, height, angle) {
         const oldAlpha = frameBufferUint8ClampedView[index + 3] / 255;
         const oldAlphaScaled = oldAlpha * inverseIncomingAlpha;
         const newAlpha = incomingAlpha + oldAlphaScaled;
-
+        
         if (newAlpha <= 0) continue;
-
+        
         const blendFactor = 1 / newAlpha;
         frameBufferUint8ClampedView[index] = (r * incomingAlpha + frameBufferUint8ClampedView[index] * oldAlphaScaled) * blendFactor;
         frameBufferUint8ClampedView[index + 1] = (g * incomingAlpha + frameBufferUint8ClampedView[index + 1] * oldAlphaScaled) * blendFactor;
@@ -1855,20 +1968,20 @@ function getRotatedDimensionsIfTheCase(width, height, angle) {
     if (isOpaque) {
       packedColor = (255 << 24) | (b << 16) | (g << 8) | r;
     }
-
+    
     // For non-opaque colors, pre-compute alpha values
     const incomingAlpha = isOpaque ? 1.0 : (a / 255) * globalAlpha;
     const inverseIncomingAlpha = isOpaque ? 0.0 : 1 - incomingAlpha;
-
+    
     // Direction of movement (1 or -1) in each axis
     const sx = x1 < x2 ? 1 : -1;
     const sy = y1 < y2 ? 1 : -1;
-
+    
     // Since this is a 45-degree line, we always step diagonally
     // No error tracking needed as with Bresenham algorithm
     let x = x1;
     let y = y1;
-
+    
     // Draw the 45-degree line
     while (true) {
       // Break if we've gone out of bounds entirely
@@ -1876,27 +1989,27 @@ function getRotatedDimensionsIfTheCase(width, height, angle) {
       if (x >= width && sx > 0) break; // Moving right and already off right edge
       if (y < 0 && sy < 0) break; // Moving up and already off top edge
       if (y >= height && sy > 0) break; // Moving down and already off bottom edge
-
+      
       // Check if we're in bounds for this pixel
       if (x >= 0 && x < width && y >= 0 && y < height) {
         const index = (y * width + x) * 4;
         const pixelPos = y * width + x;
-
+        
         // Check clipping if needed
         let drawPixel = true;
-
+        
         if (hasClipping) {
           const clippingMaskByteIndex = pixelPos >> 3;
           const bitIndex = pixelPos & 7;
-
+          
           // Skip if clipping mask indicates pixel should be clipped
           if (clippingMaskByteIndex >= clippingMask.length ||
-            clippingMask[clippingMaskByteIndex] === 0 ||
-            (clippingMask[clippingMaskByteIndex] & (1 << (7 - bitIndex))) === 0) {
+              clippingMask[clippingMaskByteIndex] === 0 || 
+              (clippingMask[clippingMaskByteIndex] & (1 << (7 - bitIndex))) === 0) {
             drawPixel = false;
           }
         }
-
+        
         if (drawPixel) {
           if (isOpaque) {
             // Fast path for opaque pixels - Direct 32-bit write
@@ -1906,7 +2019,7 @@ function getRotatedDimensionsIfTheCase(width, height, angle) {
             const oldAlpha = frameBufferUint8ClampedView[index + 3] / 255;
             const oldAlphaScaled = oldAlpha * inverseIncomingAlpha;
             const newAlpha = incomingAlpha + oldAlphaScaled;
-
+            
             if (newAlpha > 0) {
               const blendFactor = 1 / newAlpha;
               frameBufferUint8ClampedView[index] = (r * incomingAlpha + frameBufferUint8ClampedView[index] * oldAlphaScaled) * blendFactor;
@@ -1917,10 +2030,10 @@ function getRotatedDimensionsIfTheCase(width, height, angle) {
           }
         }
       }
-
+      
       // Check if we've reached the end point
       if (x === x2 && y === y2) break;
-
+      
       // Move diagonally - for 45-degree lines, we move by 1 in both directions each time
       x += sx;
       y += sy;
@@ -1943,18 +2056,18 @@ function getRotatedDimensionsIfTheCase(width, height, angle) {
     if (isOpaque) {
       packedColor = (255 << 24) | (b << 16) | (g << 8) | r;
     }
-
+    
     // For non-opaque colors, pre-compute alpha values
     const incomingAlpha = isOpaque ? 1.0 : (a / 255) * globalAlpha;
     const inverseIncomingAlpha = isOpaque ? 0.0 : 1 - incomingAlpha;
-
+    
     // Direction of movement in each axis
     const sx = x1 < x2 ? 1 : -1;
     const sy = y1 < y2 ? 1 : -1;
-
+    
     // Initialize Bresenham algorithm state
     let err = dx - dy;
-
+    
     // We prefer to do bounds checking inside the loop for generic orientations
     // Since they can enter and exit the viewable area multiple times
     while (true) {
@@ -1962,21 +2075,21 @@ function getRotatedDimensionsIfTheCase(width, height, angle) {
       if (x1 >= 0 && x1 < width && y1 >= 0 && y1 < height) {
         const index = (y1 * width + x1) * 4;
         const pixelPos = y1 * width + x1;
-
+        
         // Check clipping if needed
         let drawPixel = true;
-
+        
         if (hasClipping) {
           const clippingMaskByteIndex = pixelPos >> 3;
           const bitIndex = pixelPos & 7;
-
+          
           if (clippingMaskByteIndex >= clippingMask.length ||
-            clippingMask[clippingMaskByteIndex] === 0 ||
-            (clippingMask[clippingMaskByteIndex] & (1 << (7 - bitIndex))) === 0) {
+              clippingMask[clippingMaskByteIndex] === 0 || 
+              (clippingMask[clippingMaskByteIndex] & (1 << (7 - bitIndex))) === 0) {
             drawPixel = false;
           }
         }
-
+        
         if (drawPixel) {
           if (isOpaque) {
             // Fast path for opaque pixels - Direct 32-bit write
@@ -1986,7 +2099,7 @@ function getRotatedDimensionsIfTheCase(width, height, angle) {
             const oldAlpha = frameBufferUint8ClampedView[index + 3] / 255;
             const oldAlphaScaled = oldAlpha * inverseIncomingAlpha;
             const newAlpha = incomingAlpha + oldAlphaScaled;
-
+            
             if (newAlpha > 0) {
               const blendFactor = 1 / newAlpha;
               frameBufferUint8ClampedView[index] = (r * incomingAlpha + frameBufferUint8ClampedView[index] * oldAlphaScaled) * blendFactor;
@@ -1997,10 +2110,10 @@ function getRotatedDimensionsIfTheCase(width, height, angle) {
           }
         }
       }
-
+      
       // Break after processing the last pixel
       if (x1 === x2 && y1 === y2) break;
-
+      
       // Calculate next pixel position using Bresenham algorithm
       const e2 = 2 * err;
       if (e2 > -dy) { err -= dy; x1 += sx; }
@@ -2011,7 +2124,7 @@ function getRotatedDimensionsIfTheCase(width, height, angle) {
   drawLineThick(x1, y1, x2, y2, thickness, r, g, b, a) {
     // Original algorithm - bounding box with distance check
     //this._drawLineThickBoundingBox(x1, y1, x2, y2, thickness, r, g, b, a);
-
+    
     // Uncomment one of these to use a different algorithm:
     // this._drawLineThickModifiedBresenham(x1, y1, x2, y2, thickness, r, g, b, a);
     // this._drawLineThickDistanceOptimized(x1, y1, x2, y2, thickness, r, g, b, a);
@@ -2035,18 +2148,18 @@ function getRotatedDimensionsIfTheCase(width, height, angle) {
     const dx = x2 - x1;
     const dy = y2 - y1;
     const length = Math.sqrt(dx * dx + dy * dy);
-
+    
     // Skip empty lines
     if (length === 0) return;
-
+    
     // Calculate a perpendicular unit vector to the line
     // This vector points 90 degrees to the line direction
     const perpX = -dy / length;
     const perpY = dx / length;
-
+    
     // Calculate half the thickness to offset from the line center
     const halfThickness = thickness / 2;
-
+    
     // Calculate the four corners of the rectangle formed by the thick line
     // These are the endpoints offset perpendicular to the line by half thickness
     const corners = [
@@ -2055,34 +2168,34 @@ function getRotatedDimensionsIfTheCase(width, height, angle) {
       [x2 + perpX * halfThickness, y2 + perpY * halfThickness], // Top-right
       [x2 - perpX * halfThickness, y2 - perpY * halfThickness]  // Bottom-right
     ];
-
+    
     // Determine the bounding box of the thick line
     // This optimizes rendering by only checking pixels within this box
     const minX = Math.floor(Math.min(...corners.map(c => c[0])));
     const maxX = Math.ceil(Math.max(...corners.map(c => c[0])));
     const minY = Math.floor(Math.min(...corners.map(c => c[1])));
     const maxY = Math.ceil(Math.max(...corners.map(c => c[1])));
-
+    
     // For each pixel in the bounding box, check if it should be colored
     for (let y = minY; y <= maxY; y++) {
       for (let x = minX; x <= maxX; x++) {
         // Calculate the vector from the line start to the current pixel
         const px = x - x1;
         const py = y - y1;
-
+        
         // Calculate the projection of pixel position onto the line
         // The dot product tells us how far along the line the closest point is
         const dot = (px * dx + py * dy) / length;
-
+        
         // Calculate the coordinates of the projected point on the line
         const projX = (dx / length) * dot;
         const projY = (dy / length) * dot;
-
+        
         // Calculate the distance from the pixel to its closest point on the line
         const distX = px - projX;
         const distY = py - projY;
         const dist = Math.sqrt(distX * distX + distY * distY);
-
+        
         // If the pixel is both:
         // 1. Within the line segment (not beyond endpoints)
         // 2. Within the specified thickness from the line
@@ -2104,16 +2217,16 @@ function getRotatedDimensionsIfTheCase(width, height, angle) {
     y1 = Math.floor(y1 - 0.5);
     x2 = Math.floor(x2 - 0.5);
     y2 = Math.floor(y2 - 0.5);
-
+    
     const dx = Math.abs(x2 - x1);
     const dy = Math.abs(y2 - y1);
     const sx = x1 < x2 ? 1 : -1;
     const sy = y1 < y2 ? 1 : -1;
-
+    
     // Calculate perpendicular direction
     let perpX, perpY;
     const lineLength = Math.sqrt(dx * dx + dy * dy);
-
+    
     if (lineLength === 0) {
       // Handle zero-length line case (draw a square)
       const halfThick = Math.floor(thickness / 2);
@@ -2124,45 +2237,45 @@ function getRotatedDimensionsIfTheCase(width, height, angle) {
       }
       return;
     }
-
+    
     perpX = -dy / lineLength;
     perpY = dx / lineLength;
-
+    
     // Half thickness for extending in both directions
     const halfThick = thickness / 2;
-
+    
     let err = dx - dy;
     let x = x1;
     let y = y1;
-
+    
     // For each point along the line
     while (true) {
       // Draw perpendicular segment at each point
       this._drawPerpendicularSegment(x, y, perpX, perpY, halfThick, r, g, b, a);
-
+      
       if (x === x2 && y === y2) break;
-
+      
       const e2 = 2 * err;
       if (e2 > -dy) { err -= dy; x += sx; }
       if (e2 < dx) { err += dx; y += sy; }
     }
-
+    
     // Draw square caps at endpoints
     const dirX1 = (x2 - x1) / lineLength;
     const dirY1 = (y2 - y1) / lineLength;
     this._drawSquareCap(x1, y1, perpX, perpY, halfThick, -dirX1, -dirY1, r, g, b, a);
     this._drawSquareCap(x2, y2, perpX, perpY, halfThick, dirX1, dirY1, r, g, b, a);
   }
-
+  
   /**
    * Helper method to draw a perpendicular segment at a point
    */
   _drawPerpendicularSegment(x, y, perpX, perpY, halfThick, r, g, b, a) {
     const steps = Math.ceil(halfThick);
-
+    
     // Draw center pixel
     this.pixelRenderer.setPixel(x, y, r, g, b, a);
-
+    
     // Draw pixels along the perpendicular direction
     for (let i = 1; i <= steps; i++) {
       const ratio = i / steps * halfThick;
@@ -2171,24 +2284,24 @@ function getRotatedDimensionsIfTheCase(width, height, angle) {
       const py1 = Math.round(y + perpY * ratio);
       const px2 = Math.round(x - perpX * ratio);
       const py2 = Math.round(y - perpY * ratio);
-
+      
       this.pixelRenderer.setPixel(px1, py1, r, g, b, a);
       this.pixelRenderer.setPixel(px2, py2, r, g, b, a);
     }
   }
-
+  
   /**
    * Draw a square cap at the endpoint of a line
    */
   _drawSquareCap(x, y, perpX, perpY, halfThick, dirX, dirY, r, g, b, a) {
     const steps = Math.ceil(halfThick);
-
+    
     for (let i = 1; i <= steps; i++) {
       const ratio = i / steps * halfThick;
       // Draw in the direction of the line extension
       const extX = Math.round(x + dirX * ratio);
       const extY = Math.round(y + dirY * ratio);
-
+      
       // Draw perpendicular segment at this extended point
       this._drawPerpendicularSegment(extX, extY, perpX, perpY, halfThick, r, g, b, a);
     }
@@ -2204,14 +2317,14 @@ function getRotatedDimensionsIfTheCase(width, height, angle) {
     y1 = Math.floor(y1 - 0.5);
     x2 = Math.floor(x2 - 0.5);
     y2 = Math.floor(y2 - 0.5);
-
+    
     const dx = Math.abs(x2 - x1);
     const dy = Math.abs(y2 - y1);
     const sx = x1 < x2 ? 1 : -1;
     const sy = y1 < y2 ? 1 : -1;
-
+    
     // For perpendicular spans
-    const lineLength = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+    const lineLength = Math.sqrt((x2-x1)**2 + (y2-y1)**2);
     if (lineLength === 0) {
       // Handle zero-length line case
       const radius = Math.floor(thickness / 2);
@@ -2222,30 +2335,30 @@ function getRotatedDimensionsIfTheCase(width, height, angle) {
       }
       return;
     }
-
+    
     // Unit vector perpendicular to the line
     const perpX = -((y2 - y1) / lineLength);
     const perpY = ((x2 - x1) / lineLength);
-
+    
     // Half thickness for extending in both directions
     const halfThick = Math.floor(thickness / 2);
-
+    
     // Draw the center line using Bresenham's algorithm
     let err = dx - dy;
     let x = x1;
     let y = y1;
-
+    
     // Collect center line points
     const centerPoints = [];
     while (true) {
       centerPoints.push({ x, y });
       if (x === x2 && y === y2) break;
-
+      
       const e2 = 2 * err;
       if (e2 > -dy) { err -= dy; x += sx; }
       if (e2 < dx) { err += dx; y += sy; }
     }
-
+    
     // Draw horizontal spans at each center point
     for (const point of centerPoints) {
       for (let t = -halfThick; t <= halfThick; t++) {
@@ -2254,7 +2367,7 @@ function getRotatedDimensionsIfTheCase(width, height, angle) {
         this.pixelRenderer.setPixel(px, py, r, g, b, a);
       }
     }
-
+    
     // Draw square caps
     // For start cap
     const dirX1 = -(x2 - x1) / lineLength;
@@ -2262,7 +2375,7 @@ function getRotatedDimensionsIfTheCase(width, height, angle) {
     for (let i = 1; i <= halfThick; i++) {
       const capX = Math.round(x1 + dirX1 * i);
       const capY = Math.round(y1 + dirY1 * i);
-
+      
       // Draw horizontal span at this cap point
       for (let t = -halfThick; t <= halfThick; t++) {
         const px = Math.round(capX + perpX * t);
@@ -2270,14 +2383,14 @@ function getRotatedDimensionsIfTheCase(width, height, angle) {
         this.pixelRenderer.setPixel(px, py, r, g, b, a);
       }
     }
-
+    
     // For end cap
     const dirX2 = (x2 - x1) / lineLength;
     const dirY2 = (y2 - y1) / lineLength;
     for (let i = 1; i <= halfThick; i++) {
       const capX = Math.round(x2 + dirX2 * i);
       const capY = Math.round(y2 + dirY2 * i);
-
+      
       // Draw horizontal span at this cap point
       for (let t = -halfThick; t <= halfThick; t++) {
         const px = Math.round(capX + perpX * t);
@@ -2297,8 +2410,8 @@ function getRotatedDimensionsIfTheCase(width, height, angle) {
     y1 = Math.floor(y1 - 0.5);
     x2 = Math.floor(x2 - 0.5);
     y2 = Math.floor(y2 - 0.5);
-
-    const lineLength = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+    
+    const lineLength = Math.sqrt((x2-x1)**2 + (y2-y1)**2);
     if (lineLength === 0) {
       // Handle zero-length line case
       const radius = Math.floor(thickness / 2);
@@ -2309,52 +2422,52 @@ function getRotatedDimensionsIfTheCase(width, height, angle) {
       }
       return;
     }
-
+    
     // Calculate perpendicular vector
     const perpX = -((y2 - y1) / lineLength);
     const perpY = ((x2 - x1) / lineLength);
-
+    
     // Line direction unit vector for caps
     const dirX = (x2 - x1) / lineLength;
     const dirY = (y2 - y1) / lineLength;
-
+    
     // Half thickness
     const halfThick = thickness / 2;
-
+    
     // Draw offset lines
     const offsetCount = Math.ceil(halfThick);
     for (let offset = -offsetCount; offset <= offsetCount; offset++) {
       // Calculate offset ratio to ensure even coverage
       const offsetRatio = offset / offsetCount * halfThick;
-
+      
       // Calculate offset points
       const ox1 = x1 + perpX * offsetRatio;
       const oy1 = y1 + perpY * offsetRatio;
       const ox2 = x2 + perpX * offsetRatio;
       const oy2 = y2 + perpY * offsetRatio;
-
+      
       // Draw the offset line using Bresenham's algorithm
-      this._drawBresenhamLine(Math.round(ox1), Math.round(oy1),
-        Math.round(ox2), Math.round(oy2),
-        r, g, b, a);
+      this._drawBresenhamLine(Math.round(ox1), Math.round(oy1), 
+                           Math.round(ox2), Math.round(oy2), 
+                           r, g, b, a);
     }
-
+    
     // Draw square caps
     // For start cap
     for (let offset = -offsetCount; offset <= offsetCount; offset++) {
       const offsetRatio = offset / offsetCount * halfThick;
-
+      
       for (let i = 1; i <= halfThick; i++) {
         const capX = Math.round(x1 - dirX * i + perpX * offsetRatio);
         const capY = Math.round(y1 - dirY * i + perpY * offsetRatio);
         this.pixelRenderer.setPixel(capX, capY, r, g, b, a);
       }
     }
-
+    
     // For end cap
     for (let offset = -offsetCount; offset <= offsetCount; offset++) {
       const offsetRatio = offset / offsetCount * halfThick;
-
+      
       for (let i = 1; i <= halfThick; i++) {
         const capX = Math.round(x2 + dirX * i + perpX * offsetRatio);
         const capY = Math.round(y2 + dirY * i + perpY * offsetRatio);
@@ -2362,7 +2475,7 @@ function getRotatedDimensionsIfTheCase(width, height, angle) {
       }
     }
   }
-
+  
   /**
    * Helper function: Standard Bresenham line algorithm
    */
@@ -2372,11 +2485,11 @@ function getRotatedDimensionsIfTheCase(width, height, angle) {
     const sx = x1 < x2 ? 1 : -1;
     const sy = y1 < y2 ? 1 : -1;
     let err = dx - dy;
-
+    
     while (true) {
       this.pixelRenderer.setPixel(x1, y1, r, g, b, a);
       if (x1 === x2 && y1 === y2) break;
-
+      
       const e2 = 2 * err;
       if (e2 > -dy) { err -= dy; x1 += sx; }
       if (e2 < dx) { err += dx; y1 += sy; }
@@ -2393,66 +2506,66 @@ function getRotatedDimensionsIfTheCase(width, height, angle) {
     const dx = x2 - x1;
     const dy = y2 - y1;
     const lineLength = Math.sqrt(dx * dx + dy * dy);
-
+    
     // Reuse the pre-allocated pixel runs array, but clear it first
     const pixelRuns = this._pixelRuns;
     pixelRuns.length = 0;
-
+    
     if (lineLength === 0) {
       // Handle zero-length line case
       const radius = thickness >> 1; // Bitwise right shift by 1 = divide by 2 and floor
       const centerX = x1 | 0; // Faster rounding using bitwise OR
       const centerY = y1 | 0;
-
+      
       for (let py = -radius; py <= radius; py++) {
         // Add a complete horizontal run for each row
         pixelRuns.push(centerX - radius, centerY + py, (radius << 1) + 1); // (radius * 2) + 1
       }
-
+      
       // Render all runs in a single batch
       this.pixelRenderer.setPixelRuns(pixelRuns, r, g, b, a);
       return;
     }
-
+    
     // Cache common calculations - inverse line length to avoid division
     const invLineLength = 1 / lineLength;
-
+    
     // Calculate perpendicular vector using multiplication instead of division
     const perpX = -dy * invLineLength;
     const perpY = dx * invLineLength;
-
+    
     // Calculate half thickness
     const halfThick = thickness * 0.5;
-
+    
     // Reuse pre-allocated corner objects
     const corners = this._corners;
-
+    
     // Cache perpendicular offsets for corner calculations
     const perpXHalfThick = perpX * halfThick;
     const perpYHalfThick = perpY * halfThick;
-
+    
     // Update the corners in-place to avoid allocations
-    corners[0].x = x1 + perpXHalfThick; corners[0].y = y1 + perpYHalfThick;  // top-left
-    corners[1].x = x1 - perpXHalfThick; corners[1].y = y1 - perpYHalfThick;  // bottom-left
-    corners[2].x = x2 - perpXHalfThick; corners[2].y = y2 - perpYHalfThick;  // bottom-right
-    corners[3].x = x2 + perpXHalfThick; corners[3].y = y2 + perpYHalfThick;  // top-right
-
+    corners[0].x = x1 + perpXHalfThick;  corners[0].y = y1 + perpYHalfThick;  // top-left
+    corners[1].x = x1 - perpXHalfThick;  corners[1].y = y1 - perpYHalfThick;  // bottom-left
+    corners[2].x = x2 - perpXHalfThick;  corners[2].y = y2 - perpYHalfThick;  // bottom-right
+    corners[3].x = x2 + perpXHalfThick;  corners[3].y = y2 + perpYHalfThick;  // top-right
+    
     // Find bounding box using bitwise operations for faster floor/ceil
     const minY = (Math.min(corners[0].y, corners[1].y, corners[2].y, corners[3].y)) | 0;
     const maxY = (Math.max(corners[0].y, corners[1].y, corners[2].y, corners[3].y) + 0.999) | 0;
-
+    
     // Pre-compute edge data to avoid recalculating slopes
     const edges = this._edges;
-
+    
     for (let i = 0; i < 4; i++) {
       const edge = edges[i];
       const p1 = corners[i];
       const p2 = corners[(i + 1) & 3]; // Faster modulo for power of 2 using bitwise AND
-
+      
       // Update edge endpoints
       edge.p1 = p1;
       edge.p2 = p2;
-
+      
       // Pre-compute inverse delta Y to avoid division during scanline processing
       // Only update if not horizontal to avoid division by zero
       if (p1.y !== p2.y) {
@@ -2460,23 +2573,23 @@ function getRotatedDimensionsIfTheCase(width, height, angle) {
         edge.deltaX = p2.x - p1.x;
       }
     }
-
+    
     // Reuse pre-allocated intersections array
     const intersections = this._intersections;
-
+    
     // Scan each row
     for (let y = minY; y <= maxY; y++) {
       // Counter for intersections
       let intersectionCount = 0;
-
+      
       for (let i = 0; i < 4; i++) {
         const edge = edges[i];
         const p1 = edge.p1;
         const p2 = edge.p2;
-
+        
         // Skip horizontal edges
         if (p1.y === p2.y) continue;
-
+        
         // Check if scanline intersects this edge
         if ((y >= p1.y && y < p2.y) || (y >= p2.y && y < p1.y)) {
           // Use pre-computed values for x-intersection
@@ -2484,7 +2597,7 @@ function getRotatedDimensionsIfTheCase(width, height, angle) {
           intersections[intersectionCount++] = p1.x + t * edge.deltaX;
         }
       }
-
+      
       if (intersectionCount === 1) {
         // Single intersection case - just draw one pixel
         const x = intersections[0] | 0; // Faster floor using bitwise OR
@@ -2498,13 +2611,13 @@ function getRotatedDimensionsIfTheCase(width, height, angle) {
         const leftX = x1 < x2 ? x1 | 0 : x2 | 0; // Math.floor using bitwise OR
         const rightX = x1 > x2 ? (x1 + 0.999) | 0 : (x2 + 0.999) | 0; // Math.ceil approximation
         const spanLength = rightX - leftX;
-
+        
         if (spanLength > 0) {
           pixelRuns.push(leftX, y, spanLength);
         }
       }
     }
-
+    
     // Render all collected pixel runs in a single batch operation
     if (pixelRuns.length > 0) {
       this.pixelRenderer.setPixelRuns(pixelRuns, r, g, b, a);
@@ -2523,7 +2636,7 @@ class SWRendererRect {
   }
 
   drawRect(shape) {
-    if (shape.clippingOnly) {
+    if(shape.clippingOnly) {
       if (isNearMultipleOf90Degrees(shape.rotation)) {
         const { adjustedWidth, adjustedHeight } = getRotatedDimensionsIfTheCase(shape.width, shape.height, shape.rotation);
         this.drawAxisAlignedRect(shape.center.x, shape.center.y, adjustedWidth, adjustedHeight, true);
@@ -2559,8 +2672,8 @@ class SWRendererRect {
 
     if (isNearMultipleOf90Degrees(rotation)) {
       const { adjustedWidth, adjustedHeight } = getRotatedDimensionsIfTheCase(shapeWidth, shapeHeight, rotation);
-
-      if (adjustedWidth === this.width &&
+      
+      if (adjustedWidth === this.width && 
         adjustedHeight === this.height &&
         center.x === adjustedWidth / 2 &&
         center.y === adjustedHeight / 2) {
@@ -2643,16 +2756,16 @@ class SWRendererRect {
   drawAxisAlignedRect(centerX, centerY, rectWidth, rectHeight, clippingOnly,
     strokeWidth, strokeR, strokeG, strokeB, strokeA,
     fillR, fillG, fillB, fillA) {
-
+    
     // Round inputs for consistency
     //centerX = Math.round(centerX);
     //centerY = Math.round(centerY);
     //rectWidth = Math.round(rectWidth);
     //rectHeight = Math.round(rectHeight);
     //strokeWidth = Math.round(strokeWidth);
-    if (clippingOnly) { strokeWidth = 0; }
-
-
+    if (clippingOnly) {strokeWidth = 0;}
+  
+    
     // Draw fill first
     if (clippingOnly || fillA > 0) {
       // Get fill geometry
@@ -2676,49 +2789,49 @@ class SWRendererRect {
         }
         return;
       }
+  
+       // Check for fast path with opaque colors
+       const globalAlpha = this.pixelRenderer.context.globalAlpha;
+       const isOpaque = (fillA === 255) && (globalAlpha >= 1.0);
+       let packedColor = 0;
+       if (isOpaque) {
+         packedColor = (255 << 24) | (fillB << 16) | (fillG << 8) | fillR;
+       }
 
-      // Check for fast path with opaque colors
-      const globalAlpha = this.pixelRenderer.context.globalAlpha;
-      const isOpaque = (fillA === 255) && (globalAlpha >= 1.0);
-      let packedColor = 0;
-      if (isOpaque) {
-        packedColor = (255 << 24) | (fillB << 16) | (fillG << 8) | fillR;
-      }
+       for (let y = Math.floor(fillPos.y); y < Math.ceil(fillPos.y + fillPos.h); y++) {
+         for (let x = Math.floor(fillPos.x); x < Math.ceil(fillPos.x + fillPos.w); x++) {
+           // Perform bounds check
+           if (x < 0 || x >= this.width || y < 0 || y >= this.height) continue;
 
-      for (let y = Math.floor(fillPos.y); y < Math.ceil(fillPos.y + fillPos.h); y++) {
-        for (let x = Math.floor(fillPos.x); x < Math.ceil(fillPos.x + fillPos.w); x++) {
-          // Perform bounds check
-          if (x < 0 || x >= this.width || y < 0 || y >= this.height) continue;
+           // Pre-calculate pixel position
+           const pixelPos = y * this.width + x;
 
-          // Pre-calculate pixel position
-          const pixelPos = y * this.width + x;
+           // Check for clipping with optimized path
+           if (this.pixelRenderer.context.currentState) {
+             const clippingMask = this.pixelRenderer.context.currentState.clippingMask;
+             const clippingMaskByteIndex = pixelPos >> 3;
+             const bitIndex = pixelPos & 7;
+             if (clippingMask[clippingMaskByteIndex] === 0) continue;
+             if ((clippingMask[clippingMaskByteIndex] & (1 << (7 - bitIndex))) === 0) continue;
+           }
 
-          // Check for clipping with optimized path
-          if (this.pixelRenderer.context.currentState) {
-            const clippingMask = this.pixelRenderer.context.currentState.clippingMask;
-            const clippingMaskByteIndex = pixelPos >> 3;
-            const bitIndex = pixelPos & 7;
-            if (clippingMask[clippingMaskByteIndex] === 0) continue;
-            if ((clippingMask[clippingMaskByteIndex] & (1 << (7 - bitIndex))) === 0) continue;
-          }
-
-          if (isOpaque) {
-            // Fast path for opaque pixels - Direct 32-bit write
-            this.frameBufferUint32View[pixelPos] = packedColor;
-          } else {
-            // Standard path: Call setPixel for blending
-            this.pixelRenderer.setPixel(x, y, fillR, fillG, fillB, fillA);
-          }
-        }
-      }
+           if (isOpaque) {
+             // Fast path for opaque pixels - Direct 32-bit write
+             this.frameBufferUint32View[pixelPos] = packedColor;
+           } else {
+             // Standard path: Call setPixel for blending
+             this.pixelRenderer.setPixel(x, y, fillR, fillG, fillB, fillA);
+           }
+         }
+       }
     }
-
+  
     // Draw stroke if needed. Note that the stroke can't always be precisely centered on the fill
     // i.e. in case the stroke is larger by an odd number of pixels.
     if (strokeA > 0 && strokeWidth > 0) {
       let strokePos = getRectangularStrokeGeometry(centerX, centerY, rectWidth, rectHeight);
       const halfStroke = strokeWidth / 2;
-
+  
       // Draw horizontal strokes
       for (let x = Math.floor(strokePos.x - halfStroke); x < strokePos.x + strokePos.w + halfStroke; x++) {
         for (let t = -halfStroke; t < halfStroke; t++) {
@@ -2726,7 +2839,7 @@ class SWRendererRect {
           this.pixelRenderer.setPixel(x, strokePos.y + strokePos.h + t, strokeR, strokeG, strokeB, strokeA);
         }
       }
-
+  
       // Draw vertical strokes
       for (let y = Math.floor(strokePos.y + halfStroke); y < strokePos.y + strokePos.h - halfStroke; y++) {
         for (let t = -halfStroke; t < halfStroke; t++) {
@@ -2763,7 +2876,7 @@ class SWRendererRect {
     const sin = Math.sin(rotation);
     const hw = width / 2;
     const hh = height / 2;
-
+    
     // Calculate corners
     const corners = [
       { x: centerX + hw * cos - hh * sin, y: centerY + hw * sin + hh * cos },
@@ -2771,52 +2884,52 @@ class SWRendererRect {
       { x: centerX - hw * cos + hh * sin, y: centerY - hw * sin - hh * cos },
       { x: centerX - hw * cos - hh * sin, y: centerY - hw * sin + hh * cos }
     ];
-
+    
     // Create edge functions for each edge
     const edges = [];
-    for (let i = 0; i < 4; i++) {
+    for(let i = 0; i < 4; i++) {
       const p1 = corners[i];
       const p2 = corners[(i + 1) % 4];
-
+      
       // Edge equation coefficients
       const a = p2.y - p1.y;
       const b = p1.x - p2.x;
       const c = p2.x * p1.y - p1.x * p2.y;
-
-      edges.push({ a, b, c });
+      
+      edges.push({a, b, c});
     }
-
+    
     // Find bounding box
     const minX = Math.floor(Math.min(...corners.map(p => p.x)));
     const maxX = Math.ceil(Math.max(...corners.map(p => p.x)));
     const minY = Math.floor(Math.min(...corners.map(p => p.y)));
     const maxY = Math.ceil(Math.max(...corners.map(p => p.y)));
-
+    
     // Test each pixel using edge functions
     const globalAlpha = this.pixelRenderer.context.globalAlpha;
     if (clippingOnly) {
-      for (let y = minY; y <= maxY; y++) {
-        for (let x = minX; x <= maxX; x++) {
+      for(let y = minY; y <= maxY; y++) {
+        for(let x = minX; x <= maxX; x++) {
           // A point is inside if it's on the "inside" of all edges
-          const inside = edges.every(edge =>
+          const inside = edges.every(edge => 
             (edge.a * x + edge.b * y + edge.c) >= 0
           );
-
-          if (inside) {
+          
+          if(inside) {
             this.pixelRenderer.clipPixel(x, y);
           }
         }
       }
     }
     else if (clear) {
-      for (let y = minY; y <= maxY; y++) {
-        for (let x = minX; x <= maxX; x++) {
+      for(let y = minY; y <= maxY; y++) {
+        for(let x = minX; x <= maxX; x++) {
           // A point is inside if it's on the "inside" of all edges
-          const inside = edges.every(edge =>
+          const inside = edges.every(edge => 
             (edge.a * x + edge.b * y + edge.c) >= 0
           );
-
-          if (inside) {
+          
+          if(inside) {
             this.pixelRenderer.clearPixel(x, y);
           }
         }
@@ -2830,14 +2943,14 @@ class SWRendererRect {
         packedColor = (255 << 24) | (b << 16) | (g << 8) | r;
       }
 
-      for (let y = minY; y <= maxY; y++) {
-        for (let x = minX; x <= maxX; x++) {
+      for(let y = minY; y <= maxY; y++) {
+        for(let x = minX; x <= maxX; x++) {
           // A point is inside if it's on the "inside" of all edges
-          const inside = edges.every(edge =>
+          const inside = edges.every(edge => 
             (edge.a * x + edge.b * y + edge.c) >= 0
           );
-
-          if (inside) {
+          
+          if(inside) {
             // Perform bounds check
             if (x < 0 || x >= this.width || y < 0 || y >= this.height) continue;
 
@@ -2865,7 +2978,7 @@ class SWRendererRect {
       }
     }
   }
-} class SWRendererArc {
+}class SWRendererArc {
   constructor(pixelRenderer) {
     this.pixelRenderer = pixelRenderer;
   }
@@ -2876,7 +2989,7 @@ class SWRendererRect {
       strokeWidth, strokeColor: { r: strokeR, g: strokeG, b: strokeB, a: strokeA },
       fillColor: { r: fillR, g: fillG, b: fillB, a: fillA }
     } = shape;
-
+  
     if (fillA > 0) {
       this.drawArcHelper(center.x, center.y, radius, startAngle, endAngle,
         fillR, fillG, fillB, fillA, true);
@@ -2891,12 +3004,12 @@ class SWRendererRect {
     // Convert angles from degrees to radians
     startAngle = (startAngle % 360) * Math.PI / 180;
     endAngle = (endAngle % 360) * Math.PI / 180;
-
+    
     // Ensure endAngle is greater than startAngle
     if (endAngle < startAngle) {
-      endAngle += 2 * Math.PI;
+        endAngle += 2 * Math.PI;
     }
-
+    
     // Apply the same tweaks as in circle drawing
     if (thickness > 1)
       thickness *= 0.75;
@@ -2906,57 +3019,57 @@ class SWRendererRect {
 
     // Helper function to check if an angle is within the specified range
     function isAngleInRange(px, py) {
-      let angle = Math.atan2(py, px);
-      if (angle < 0) angle += 2 * Math.PI;
-      if (angle < startAngle) angle += 2 * Math.PI;
-      return angle >= startAngle && angle <= endAngle;
+        let angle = Math.atan2(py, px);
+        if (angle < 0) angle += 2 * Math.PI;
+        if (angle < startAngle) angle += 2 * Math.PI;
+        return angle >= startAngle && angle <= endAngle;
     }
 
     if (fill) {
-      const radiusSquared = (radius - 0.5) * (radius - 0.5);
-      for (let y = -radius; y <= radius; y++) {
-        for (let x = -radius; x <= radius; x++) {
-          if (x * x + y * y <= radiusSquared && isAngleInRange(x, y)) {
-            this.pixelRenderer.setPixel(Math.round(centerX + x), Math.round(centerY + y), Math.round(r), g, b, a);
-          }
+        const radiusSquared = (radius - 0.5) * (radius - 0.5);
+        for (let y = -radius; y <= radius; y++) {
+            for (let x = -radius; x <= radius; x++) {
+                if (x * x + y * y <= radiusSquared && isAngleInRange(x, y)) {
+                    this.pixelRenderer.setPixel(Math.round(centerX + x), Math.round(centerY + y), Math.round(r), g, b, a);
+                }
+            }
         }
-      }
     }
 
     if (!fill || thickness > 0) {
-      // Collect all stroke pixels first
-      const strokePixels = new Set();
-      let x = 0;
-      let y = radius;
-      let d = 3 - 2 * radius;
-
-      while (y >= x) {
-        const points = [
-          [x, y], [-x, y], [x, -y], [-x, -y],
-          [y, x], [-y, x], [y, -x], [-y, -x]
-        ];
-
-        points.forEach(([px, py]) => {
-          if (isAngleInRange(px, py)) {
-            // Pass center coordinates and angles to addThickArcPoint
-            this.addThickArcPoint(strokePixels, centerX, centerY, centerX + px, centerY + py, thickness, startAngle, endAngle);
-          }
-        });
-
-        x++;
-        if (d > 0) {
-          y--;
-          d = d + 4 * (x - y) + 10;
-        } else {
-          d = d + 4 * x + 6;
+        // Collect all stroke pixels first
+        const strokePixels = new Set();
+        let x = 0;
+        let y = radius;
+        let d = 3 - 2 * radius;
+        
+        while (y >= x) {
+            const points = [
+                [x, y], [-x, y], [x, -y], [-x, -y],
+                [y, x], [-y, x], [y, -x], [-y, -x]
+            ];
+            
+            points.forEach(([px, py]) => {
+                if (isAngleInRange(px, py)) {
+                    // Pass center coordinates and angles to addThickArcPoint
+                    this.addThickArcPoint(strokePixels, centerX, centerY, centerX + px, centerY + py, thickness, startAngle, endAngle);
+                }
+            });
+            
+            x++;
+            if (d > 0) {
+                y--;
+                d = d + 4 * (x - y) + 10;
+            } else {
+                d = d + 4 * x + 6;
+            }
         }
-      }
 
-      // Now render each pixel exactly once
-      for (let pixel of strokePixels) {
-        const [x, y] = pixel.split(',').map(Number);
-        this.pixelRenderer.setPixel(x, y, r, g, b, a);
-      }
+        // Now render each pixel exactly once
+        for (let pixel of strokePixels) {
+            const [x, y] = pixel.split(',').map(Number);
+            this.pixelRenderer.setPixel(x, y, r, g, b, a);
+        }
     }
   }
 
@@ -3002,7 +3115,7 @@ class SWRendererRect {
     center.x -= 0.5;
     center.y -= 0.5;
 
-
+    
     if (fillA > 0) {
       this.drawArcHQHelper(center.x, center.y, radius, startAngle, endAngle,
         fillR, fillG, fillB, fillA, true);
@@ -3017,9 +3130,9 @@ class SWRendererRect {
     // Convert angles to radians
     startAngle = (startAngle % 360) * Math.PI / 180;
     endAngle = (endAngle % 360) * Math.PI / 180;
-
+    
     if (endAngle < startAngle) {
-      endAngle += 2 * Math.PI;
+        endAngle += 2 * Math.PI;
     }
 
     // Apply the same adjustments as original HQ circle
@@ -3027,51 +3140,51 @@ class SWRendererRect {
     xc -= 0.5;
     yc -= 0.5;
     radius = Math.floor(radius) + 0.5;
-
+    
     xc = Math.round(xc);
     yc = Math.round(yc);
-
+    
     const minX = Math.floor(xc - radius - thickness);
     const maxX = Math.ceil(xc + radius + thickness);
     const minY = Math.floor(yc - radius - thickness);
     const maxY = Math.ceil(yc + radius + thickness);
-
+    
     function isAngleInRange(px, py) {
-      let angle = Math.atan2(py, px);
-      if (angle < 0) angle += 2 * Math.PI;
-      if (angle < startAngle) angle += 2 * Math.PI;
-      return angle >= startAngle && angle <= endAngle;
+        let angle = Math.atan2(py, px);
+        if (angle < 0) angle += 2 * Math.PI;
+        if (angle < startAngle) angle += 2 * Math.PI;
+        return angle >= startAngle && angle <= endAngle;
     }
-
+    
     const radiusSquared = radius * radius;
-
+    
     if (fill) {
-      for (let y = minY; y <= maxY; y++) {
-        for (let x = minX; x <= maxX; x++) {
-          const dx = x - xc;
-          const dy = y - yc;
-          const distSquared = dx * dx + dy * dy;
-
-          if (distSquared <= radiusSquared && isAngleInRange(dx, dy)) {
-            this.pixelRenderer.setPixel(x, y, r, g, b, a);
-          }
+        for (let y = minY; y <= maxY; y++) {
+            for (let x = minX; x <= maxX; x++) {
+                const dx = x - xc;
+                const dy = y - yc;
+                const distSquared = dx * dx + dy * dy;
+                
+                if (distSquared <= radiusSquared && isAngleInRange(dx, dy)) {
+                    this.pixelRenderer.setPixel(x, y, r, g, b, a);
+                }
+            }
         }
-      }
     }
-
+    
     if (thickness > 0) {
-      for (let y = minY; y <= maxY; y++) {
-        for (let x = minX; x <= maxX; x++) {
-          const dx = x - xc;
-          const dy = y - yc;
-          const distSquared = dx * dx + dy * dy;
-
-          const distFromPath = Math.abs(Math.sqrt(distSquared) - radius);
-          if (distFromPath <= thickness && isAngleInRange(dx, dy)) {
-            this.pixelRenderer.setPixel(x, y, r, g, b, a);
-          }
+        for (let y = minY; y <= maxY; y++) {
+            for (let x = minX; x <= maxX; x++) {
+                const dx = x - xc;
+                const dy = y - yc;
+                const distSquared = dx * dx + dy * dy;
+                
+                const distFromPath = Math.abs(Math.sqrt(distSquared) - radius);
+                if (distFromPath <= thickness && isAngleInRange(dx, dy)) {
+                    this.pixelRenderer.setPixel(x, y, r, g, b, a);
+                }
+            }
         }
-      }
     }
   }
 
@@ -3133,16 +3246,16 @@ class SWRendererCircle {
       // Optimize for 1px stroke with no fill using Bresenham circle algorithm
       // Dispatch to either opaque or semi-transparent version based on alpha
       const isOpaque = strokeA === 255 && this.pixelRenderer.context.globalAlpha >= 1.0;
-
+      
       if (isOpaque) {
         this.draw1PxStrokeFullCircleBresenhamOpaque(
-          center.x, center.y,
+          center.x, center.y, 
           radius,
           strokeR, strokeG, strokeB
         );
       } else {
         this.draw1PxStrokeFullCircleBresenhamAlpha(
-          center.x, center.y,
+          center.x, center.y, 
           radius,
           strokeR, strokeG, strokeB, strokeA
         );
@@ -3153,8 +3266,8 @@ class SWRendererCircle {
     // Check for opaque fill with no stroke case - special optimization
     const hasStroke = strokeWidth > 0 && strokeA > 0;
     const isOpaqueFill = fillA === 255 && this.pixelRenderer.context.globalAlpha >= 1.0;
-
-
+    
+    
     if (hasFill && !hasStroke && isOpaqueFill) {
       // Optimize for opaque fill with no stroke using Bresenham circle algorithm
       this.drawOpaqueFillFullCircleBresenham(
@@ -3166,14 +3279,14 @@ class SWRendererCircle {
     }
     // Check for semi-transparent fill with no stroke case
     else if (hasFill && !hasStroke && !isOpaqueFill) {
-      // Optimize for semi-transparent fill with no stroke using Bresenham circle algorithm
-      this.drawSemiTransparentFillFullCircleBresenham(
-        center.x, center.y,
-        radius,
-        fillR, fillG, fillB, fillA // Pass alpha
-      );
-      return;
-    }
+       // Optimize for semi-transparent fill with no stroke using Bresenham circle algorithm
+       this.drawSemiTransparentFillFullCircleBresenham(
+         center.x, center.y,
+         radius,
+         fillR, fillG, fillB, fillA // Pass alpha
+       );
+       return;
+     }
 
     // Fallback for cases not handled by optimized Bresenham methods:
     // 1. Circles with both fill and stroke.
@@ -3185,7 +3298,7 @@ class SWRendererCircle {
     // variants of this function to draw quarter-circles and arbitrary arcs in the
     // future.
     this.drawFullCircleFast(
-      center.x, center.y,
+      center.x, center.y, 
       innerRadius, outerRadius,
       fillR, fillG, fillB, fillA,
       strokeR, strokeG, strokeB, strokeA
@@ -3216,25 +3329,25 @@ class SWRendererCircle {
     // Use exact integer centers to avoid extra pixels at edges
     const cX = centerX - 0.5;
     const cY = centerY - 0.5;
-
+    
     // Calculate the bounds for processing with boundary checking
     const minY = Math.max(0, Math.floor(cY - outerRadius - 1));
     const maxY = Math.min(this.pixelRenderer.height - 1, Math.ceil(cY + outerRadius + 1));
     const minX = Math.max(0, Math.floor(cX - outerRadius - 1));
     const maxX = Math.min(this.pixelRenderer.width - 1, Math.ceil(cX + outerRadius + 1));
-
+    
     // The path is the true mathematical circle (centered between innerRadius and outerRadius)
     const pathRadius = (innerRadius + outerRadius) / 2;
     // The fill should extend exactly to the path
     const fillRadius = pathRadius;
     const fillRadiusSquared = fillRadius * fillRadius;
-
+    
     // Determine which rendering approach to use based on what we need to draw
     const hasFill = fillA > 0;
     const hasStroke = strokeA > 0 && outerRadius > innerRadius;
-
+    
     // OPTIMIZATION: Choose the best rendering approach based on what's needed
-
+    
     // Case 1: Fill only (no stroke)
     if (hasFill && !hasStroke) {
       // Fill the circle using row-by-row scanning with analytical edge detection
@@ -3242,60 +3355,60 @@ class SWRendererCircle {
         const dy = y - cY;
         const dySquared = dy * dy;
         const fillDistSquared = fillRadiusSquared - dySquared;
-
+        
         // Skip rows that don't intersect with the circle
         if (fillDistSquared < 0) continue;
-
+        
         // Calculate horizontal span for this row using a single sqrt operation
         const fillXDist = Math.sqrt(fillDistSquared);
-
+        
         // Calculate precise boundaries with small correction to prevent speckles
         const leftFillX = Math.max(minX, Math.ceil(cX - fillXDist + 0.0001));
         const rightFillX = Math.min(maxX, Math.floor(cX + fillXDist - 0.0001));
-
+        
         // Fill entire span without per-pixel distance check - much more efficient
         for (let x = leftFillX; x <= rightFillX; x++) {
           this.pixelRenderer.setPixel(x, y, fillR, fillG, fillB, fillA);
         }
       }
     }
-
+    
     // Case 2: Stroke only (no fill)
     else if (hasStroke && !hasFill) {
       const outerRadiusSquared = outerRadius * outerRadius;
       const innerRadiusSquared = innerRadius * innerRadius;
-
+      
       // Process each row from top to bottom
       for (let y = minY; y <= maxY; y++) {
         const dy = y - cY;
         const dySquared = dy * dy;
-
+        
         // Skip if outside outer circle
         if (dySquared > outerRadiusSquared) continue;
-
+        
         // Calculate outer intersections
         const outerXDist = Math.sqrt(outerRadiusSquared - dySquared);
         const outerLeftX = Math.max(minX, Math.ceil(cX - outerXDist));
         const outerRightX = Math.min(maxX, Math.floor(cX + outerXDist));
-
+        
         // Case: No inner intersection on this row
         if (innerRadius <= 0 || dySquared > innerRadiusSquared) {
           // Draw the entire horizontal line
           for (let x = outerLeftX; x <= outerRightX; x++) {
             this.pixelRenderer.setPixel(x, y, strokeR, strokeG, strokeB, strokeA);
           }
-        }
+        } 
         // Case: Intersects both inner and outer circles
         else {
           const innerXDist = Math.sqrt(innerRadiusSquared - dySquared);
           const innerLeftX = Math.min(outerRightX, Math.floor(cX - innerXDist));
           const innerRightX = Math.max(outerLeftX, Math.ceil(cX + innerXDist));
-
+          
           // Draw left segment (from outer left to inner left)
           for (let x = outerLeftX; x <= innerLeftX; x++) {
             this.pixelRenderer.setPixel(x, y, strokeR, strokeG, strokeB, strokeA);
           }
-
+          
           // Draw right segment (from inner right to outer right)
           for (let x = innerRightX; x <= outerRightX; x++) {
             this.pixelRenderer.setPixel(x, y, strokeR, strokeG, strokeB, strokeA);
@@ -3303,68 +3416,68 @@ class SWRendererCircle {
         }
       }
     }
-
+    
     // Case 3: Both fill and stroke - do them in a single scan for efficiency
     else if (hasFill && hasStroke) {
       const outerRadiusSquared = outerRadius * outerRadius;
       const innerRadiusSquared = innerRadius * innerRadius;
-
+      
       // Process each row from top to bottom
       for (let y = minY; y <= maxY; y++) {
         const dy = y - cY;
         const dySquared = dy * dy;
-
+        
         // Skip if outside outer circle
         if (dySquared > outerRadiusSquared) continue;
-
+                
         // Calculate outer circle intersections for this row (for stroke)
         const outerXDist = Math.sqrt(outerRadiusSquared - dySquared);
         const outerLeftX = Math.max(minX, Math.ceil(cX - outerXDist));
         const outerRightX = Math.min(maxX, Math.floor(cX + outerXDist));
-
+        
         // Calculate inner circle intersections if needed
         let innerLeftX = -1;
         let innerRightX = -1;
-
+        
         if (innerRadius > 0 && dySquared <= innerRadiusSquared) {
           const innerXDist = Math.sqrt(innerRadiusSquared - dySquared);
           innerLeftX = Math.min(outerRightX, Math.floor(cX - innerXDist));
           innerRightX = Math.max(outerLeftX, Math.ceil(cX + innerXDist));
         }
-
+        
         // Calculate fill circle intersections if this row passes through the fill area
         const fillDistSquared = fillRadiusSquared - dySquared;
         let leftFillX = -1;
         let rightFillX = -1;
-
+        
         if (fillDistSquared >= 0) {
           const fillXDist = Math.sqrt(fillDistSquared);
           leftFillX = Math.max(minX, Math.ceil(cX - fillXDist + 0.0001));
           rightFillX = Math.min(maxX, Math.floor(cX + fillXDist - 0.0001));
         }
-
+        
         // STEP 1: Draw the fill first (if this row intersects the fill circle)
         if (leftFillX >= 0) {
           for (let x = leftFillX; x <= rightFillX; x++) {
             this.pixelRenderer.setPixel(x, y, fillR, fillG, fillB, fillA);
           }
         }
-
+        
         // STEP 2: Draw the stroke on top
         if (innerRadius <= 0 || dySquared > innerRadiusSquared) {
           // No inner circle intersection - draw the entire stroke span
           for (let x = outerLeftX; x <= outerRightX; x++) {
             this.pixelRenderer.setPixel(x, y, strokeR, strokeG, strokeB, strokeA);
           }
-        }
+        } 
         else {
           // Intersects both inner and outer circles - draw two stroke spans
-
+          
           // Draw left segment of stroke (from outer left to inner left)
           for (let x = outerLeftX; x <= innerLeftX; x++) {
             this.pixelRenderer.setPixel(x, y, strokeR, strokeG, strokeB, strokeA);
           }
-
+          
           // Draw right segment of stroke (from inner right to outer right)
           for (let x = innerRightX; x <= outerRightX; x++) {
             this.pixelRenderer.setPixel(x, y, strokeR, strokeG, strokeB, strokeA);
@@ -3398,29 +3511,29 @@ class SWRendererCircle {
     // Use exact integer centers to avoid extra pixels at edges
     const cX = centerX - 0.5;
     const cY = centerY - 0.5;
-
+    
     // Calculate the bounds for processing with boundary checking
     const minY = Math.max(0, Math.floor(cY - outerRadius - 1));
     const maxY = Math.min(this.pixelRenderer.height - 1, Math.ceil(cY + outerRadius + 1));
     const minX = Math.max(0, Math.floor(cX - outerRadius - 1));
     const maxX = Math.min(this.pixelRenderer.width - 1, Math.ceil(cX + outerRadius + 1));
-
+    
     // The path is the true mathematical circle (centered between innerRadius and outerRadius)
     const pathRadius = (innerRadius + outerRadius) / 2;
     // The fill should extend exactly to the path
     const fillRadius = pathRadius;
     const fillRadiusSquared = fillRadius * fillRadius;
-
+    
     // Determine which rendering approach to use based on what we need to draw
     const hasFill = fillA > 0;
     const hasStroke = strokeA > 0 && outerRadius > innerRadius;
-
+    
     // Arrays to collect pixel runs for batch rendering
     const fillRuns = [];
     const strokeRuns = [];
-
+    
     // OPTIMIZATION: Choose the best rendering approach based on what's needed
-
+    
     // Case 1: Fill only (no stroke)
     if (hasFill && !hasStroke) {
       // Fill the circle using row-by-row scanning with analytical edge detection
@@ -3428,51 +3541,51 @@ class SWRendererCircle {
         const dy = y - cY;
         const dySquared = dy * dy;
         const fillDistSquared = fillRadiusSquared - dySquared;
-
+        
         // Skip rows that don't intersect with the circle
         if (fillDistSquared < 0) continue;
-
+        
         // Calculate horizontal span for this row using a single sqrt operation
         const fillXDist = Math.sqrt(fillDistSquared);
-
+        
         // Calculate precise boundaries with small correction to prevent speckles
         const leftFillX = Math.max(minX, Math.ceil(cX - fillXDist + 0.0001));
         const rightFillX = Math.min(maxX, Math.floor(cX + fillXDist - 0.0001));
-
+        
         // Calculate the length of the run
         const length = rightFillX - leftFillX + 1;
-
+        
         // Only add runs with positive length
         if (length > 0) {
           // Add the pixel run to the collection
           fillRuns.push(leftFillX, y, length);
         }
       }
-
+      
       // Render all fill runs in a single batch operation
       if (fillRuns.length > 0) {
         this.pixelRenderer.setPixelRuns(fillRuns, fillR, fillG, fillB, fillA);
       }
     }
-
+    
     // Case 2: Stroke only (no fill)
     else if (hasStroke && !hasFill) {
       const outerRadiusSquared = outerRadius * outerRadius;
       const innerRadiusSquared = innerRadius * innerRadius;
-
+      
       // Process each row from top to bottom
       for (let y = minY; y <= maxY; y++) {
         const dy = y - cY;
         const dySquared = dy * dy;
-
+        
         // Skip if outside outer circle
         if (dySquared > outerRadiusSquared) continue;
-
+        
         // Calculate outer intersections
         const outerXDist = Math.sqrt(outerRadiusSquared - dySquared);
         const outerLeftX = Math.max(minX, Math.ceil(cX - outerXDist));
         const outerRightX = Math.min(maxX, Math.floor(cX + outerXDist));
-
+        
         // Case: No inner intersection on this row
         if (innerRadius <= 0 || dySquared > innerRadiusSquared) {
           // Add the entire horizontal line as a single run
@@ -3480,19 +3593,19 @@ class SWRendererCircle {
           if (length > 0) {
             strokeRuns.push(outerLeftX, y, length);
           }
-        }
+        } 
         // Case: Intersects both inner and outer circles
         else {
           const innerXDist = Math.sqrt(innerRadiusSquared - dySquared);
           const innerLeftX = Math.min(outerRightX, Math.floor(cX - innerXDist));
           const innerRightX = Math.max(outerLeftX, Math.ceil(cX + innerXDist));
-
+          
           // Add left segment (from outer left to inner left)
           const leftLength = innerLeftX - outerLeftX + 1;
           if (leftLength > 0) {
             strokeRuns.push(outerLeftX, y, leftLength);
           }
-
+          
           // Add right segment (from inner right to outer right)
           const rightLength = outerRightX - innerRightX + 1;
           if (rightLength > 0) {
@@ -3500,52 +3613,52 @@ class SWRendererCircle {
           }
         }
       }
-
+      
       // Render all stroke runs in a single batch operation
       if (strokeRuns.length > 0) {
         this.pixelRenderer.setPixelRuns(strokeRuns, strokeR, strokeG, strokeB, strokeA);
       }
     }
-
+    
     // Case 3: Both fill and stroke - collect runs for both operations
     else if (hasFill && hasStroke) {
       const outerRadiusSquared = outerRadius * outerRadius;
       const innerRadiusSquared = innerRadius * innerRadius;
-
+      
       // Process each row from top to bottom
       for (let y = minY; y <= maxY; y++) {
         const dy = y - cY;
         const dySquared = dy * dy;
-
+        
         // Skip if outside outer circle
         if (dySquared > outerRadiusSquared) continue;
-
+                
         // Calculate outer circle intersections for this row (for stroke)
         const outerXDist = Math.sqrt(outerRadiusSquared - dySquared);
         const outerLeftX = Math.max(minX, Math.ceil(cX - outerXDist));
         const outerRightX = Math.min(maxX, Math.floor(cX + outerXDist));
-
+        
         // Calculate inner circle intersections if needed
         let innerLeftX = -1;
         let innerRightX = -1;
-
+        
         if (innerRadius > 0 && dySquared <= innerRadiusSquared) {
           const innerXDist = Math.sqrt(innerRadiusSquared - dySquared);
           innerLeftX = Math.min(outerRightX, Math.floor(cX - innerXDist));
           innerRightX = Math.max(outerLeftX, Math.ceil(cX + innerXDist));
         }
-
+        
         // Calculate fill circle intersections if this row passes through the fill area
         const fillDistSquared = fillRadiusSquared - dySquared;
         let leftFillX = -1;
         let rightFillX = -1;
-
+        
         if (fillDistSquared >= 0) {
           const fillXDist = Math.sqrt(fillDistSquared);
           leftFillX = Math.max(minX, Math.ceil(cX - fillXDist + 0.0001));
           rightFillX = Math.min(maxX, Math.floor(cX + fillXDist - 0.0001));
         }
-
+        
         // STEP 1: Collect fill runs if this row intersects the fill circle
         if (leftFillX >= 0) {
           const fillLength = rightFillX - leftFillX + 1;
@@ -3553,7 +3666,7 @@ class SWRendererCircle {
             fillRuns.push(leftFillX, y, fillLength);
           }
         }
-
+        
         // STEP 2: Collect stroke runs
         if (innerRadius <= 0 || dySquared > innerRadiusSquared) {
           // No inner circle intersection - collect the entire stroke span
@@ -3561,16 +3674,16 @@ class SWRendererCircle {
           if (strokeLength > 0) {
             strokeRuns.push(outerLeftX, y, strokeLength);
           }
-        }
+        } 
         else {
           // Intersects both inner and outer circles - collect two stroke spans
-
+          
           // Collect left segment of stroke (from outer left to inner left)
           const leftStrokeLength = innerLeftX - outerLeftX + 1;
           if (leftStrokeLength > 0) {
             strokeRuns.push(outerLeftX, y, leftStrokeLength);
           }
-
+          
           // Collect right segment of stroke (from inner right to outer right)
           const rightStrokeLength = outerRightX - innerRightX + 1;
           if (rightStrokeLength > 0) {
@@ -3578,12 +3691,12 @@ class SWRendererCircle {
           }
         }
       }
-
+      
       // Render all fill runs first (so stroke will be on top)
       if (fillRuns.length > 0) {
         this.pixelRenderer.setPixelRuns(fillRuns, fillR, fillG, fillB, fillA);
       }
-
+      
       // Render all stroke runs
       if (strokeRuns.length > 0) {
         this.pixelRenderer.setPixelRuns(strokeRuns, strokeR, strokeG, strokeB, strokeA);
@@ -3622,30 +3735,30 @@ class SWRendererCircle {
     // Use exact integer centers to avoid extra pixels at edges
     const cX = centerX - 0.5;
     const cY = centerY - 0.5;
-
+    
     // Calculate the bounds for processing with boundary checking
     const minY = Math.max(0, Math.floor(cY - outerRadius - 1));
     const maxY = Math.min(this.pixelRenderer.height - 1, Math.ceil(cY + outerRadius + 1));
     const minX = Math.max(0, Math.floor(cX - outerRadius - 1));
     const maxX = Math.min(this.pixelRenderer.width - 1, Math.ceil(cX + outerRadius + 1));
-
+    
     // The path is the true mathematical circle (centered between innerRadius and outerRadius)
     const pathRadius = (innerRadius + outerRadius) / 2;
     // The fill should extend exactly to the path
     const fillRadius = pathRadius;
     const fillRadiusSquared = fillRadius * fillRadius;
-
+    
     // Determine which rendering approach to use based on what we need to draw
     const hasFill = fillA > 0;
     const hasStroke = strokeA > 0 && outerRadius > innerRadius;
-
+    
     // Arrays to collect pixel runs for batch rendering
     const fillRuns = [];
     const strokeRuns = [];
     const combinedRuns = [];
-
+    
     // OPTIMIZATION: Choose the best rendering approach based on what's needed
-
+    
     // Case 1: Fill only (no stroke)
     if (hasFill && !hasStroke) {
       // Fill the circle using row-by-row scanning with analytical edge detection
@@ -3653,51 +3766,51 @@ class SWRendererCircle {
         const dy = y - cY;
         const dySquared = dy * dy;
         const fillDistSquared = fillRadiusSquared - dySquared;
-
+        
         // Skip rows that don't intersect with the circle
         if (fillDistSquared < 0) continue;
-
+        
         // Calculate horizontal span for this row using a single sqrt operation
         const fillXDist = Math.sqrt(fillDistSquared);
-
+        
         // Calculate precise boundaries with small correction to prevent speckles
         const leftFillX = Math.max(minX, Math.ceil(cX - fillXDist + 0.0001));
         const rightFillX = Math.min(maxX, Math.floor(cX + fillXDist - 0.0001));
-
+        
         // Calculate the length of the run
         const length = rightFillX - leftFillX + 1;
-
+        
         // Only add runs with positive length
         if (length > 0) {
           // Add the pixel run to the collection
           fillRuns.push(leftFillX, y, length);
         }
       }
-
+      
       // Render all fill runs in a single batch operation
       if (fillRuns.length > 0) {
         this.pixelRenderer.setPixelRuns(fillRuns, fillR, fillG, fillB, fillA);
       }
     }
-
+    
     // Case 2: Stroke only (no fill)
     else if (hasStroke && !hasFill) {
       const outerRadiusSquared = outerRadius * outerRadius;
       const innerRadiusSquared = innerRadius * innerRadius;
-
+      
       // Process each row from top to bottom
       for (let y = minY; y <= maxY; y++) {
         const dy = y - cY;
         const dySquared = dy * dy;
-
+        
         // Skip if outside outer circle
         if (dySquared > outerRadiusSquared) continue;
-
+        
         // Calculate outer intersections
         const outerXDist = Math.sqrt(outerRadiusSquared - dySquared);
         const outerLeftX = Math.max(minX, Math.ceil(cX - outerXDist));
         const outerRightX = Math.min(maxX, Math.floor(cX + outerXDist));
-
+        
         // Case: No inner intersection on this row
         if (innerRadius <= 0 || dySquared > innerRadiusSquared) {
           // Add the entire horizontal line as a single run
@@ -3705,19 +3818,19 @@ class SWRendererCircle {
           if (length > 0) {
             strokeRuns.push(outerLeftX, y, length);
           }
-        }
+        } 
         // Case: Intersects both inner and outer circles
         else {
           const innerXDist = Math.sqrt(innerRadiusSquared - dySquared);
           const innerLeftX = Math.min(outerRightX, Math.floor(cX - innerXDist));
           const innerRightX = Math.max(outerLeftX, Math.ceil(cX + innerXDist));
-
+          
           // Add left segment (from outer left to inner left)
           const leftLength = innerLeftX - outerLeftX + 1;
           if (leftLength > 0) {
             strokeRuns.push(outerLeftX, y, leftLength);
           }
-
+          
           // Add right segment (from inner right to outer right)
           const rightLength = outerRightX - innerRightX + 1;
           if (rightLength > 0) {
@@ -3725,78 +3838,78 @@ class SWRendererCircle {
           }
         }
       }
-
+      
       // Render all stroke runs in a single batch operation
       if (strokeRuns.length > 0) {
         this.pixelRenderer.setPixelRuns(strokeRuns, strokeR, strokeG, strokeB, strokeA);
       }
     }
-
+    
     // Case 3: Both fill and stroke - use the optimized combined method
     else if (hasFill && hasStroke) {
       const outerRadiusSquared = outerRadius * outerRadius;
       const innerRadiusSquared = innerRadius * innerRadius;
-
+      
       // Process each row from top to bottom
       for (let y = minY; y <= maxY; y++) {
         const dy = y - cY;
         const dySquared = dy * dy;
-
+        
         // Skip if outside outer circle
         if (dySquared > outerRadiusSquared) continue;
-
+                
         // Calculate outer circle intersections for this row (for stroke)
         const outerXDist = Math.sqrt(outerRadiusSquared - dySquared);
         const outerLeftX = Math.max(minX, Math.ceil(cX - outerXDist));
         const outerRightX = Math.min(maxX, Math.floor(cX + outerXDist));
-
+        
         // Calculate inner circle intersections if needed
         let innerLeftX = -1;
         let innerRightX = -1;
-
+        
         if (innerRadius > 0 && dySquared <= innerRadiusSquared) {
           const innerXDist = Math.sqrt(innerRadiusSquared - dySquared);
           innerLeftX = Math.min(outerRightX, Math.floor(cX - innerXDist));
           innerRightX = Math.max(outerLeftX, Math.ceil(cX + innerXDist));
         }
-
+        
         // Calculate fill circle intersections if this row passes through the fill area
         const fillDistSquared = fillRadiusSquared - dySquared;
         let leftFillX = -1;
         let rightFillX = -1;
         let fillLength = 0;
-
+        
         if (fillDistSquared >= 0) {
           const fillXDist = Math.sqrt(fillDistSquared);
           leftFillX = Math.max(minX, Math.ceil(cX - fillXDist + 0.0001));
           rightFillX = Math.min(maxX, Math.floor(cX + fillXDist - 0.0001));
           fillLength = rightFillX - leftFillX + 1;
         }
-
+        
         // Collect stroke segments
         let leftStrokeX = -1;
         let leftStrokeLength = 0;
         let rightStrokeX = -1;
         let rightStrokeLength = 0;
-
+        
         if (innerRadius < 0 || dySquared > innerRadiusSquared) {
           // No inner circle intersection - collect the entire stroke span
           leftStrokeX = outerLeftX;
           leftStrokeLength = outerRightX - outerLeftX + 1;
           // No right stroke in this case
-        }
+        } 
         else {
           // Intersects both inner and outer circles - collect two stroke spans
-
+          
           // Left segment of stroke (from outer left to inner left)
           leftStrokeX = outerLeftX;
           leftStrokeLength = innerLeftX - outerLeftX + 1;
-
+          
           // Right segment of stroke (from inner right to outer right)
           rightStrokeX = innerRightX;
           rightStrokeLength = outerRightX - innerRightX + 1;
         }
-
+        
         // Add entry to combined runs array: [xFill, fillLen, xStroke1, stroke1Len, xStroke2, stroke2Len]
         // If a segment doesn't exist, use -1 for both x and length
         combinedRuns.push(
@@ -3808,11 +3921,11 @@ class SWRendererCircle {
           rightStrokeLength > 0 ? rightStrokeLength : -1
         );
       }
-
+      
       // Render all runs in a single combined batch operation
       if (combinedRuns.length > 0) {
-        this.pixelRenderer.setPixelFillAndStrokeRuns(minY, combinedRuns,
-          fillR, fillG, fillB, fillA,
+        this.pixelRenderer.setPixelFillAndStrokeRuns(minY, combinedRuns, 
+          fillR, fillG, fillB, fillA, 
           strokeR, strokeG, strokeB, strokeA);
       }
     }
@@ -4138,8 +4251,8 @@ class SWRendererCircle {
 
     // Handle zero radius separately (returns valid structure for consistency)
     if (intRadius === 0) {
-      // Although no Bresenham runs, provide the structure expected by the filler
-      return { relativeExtents: [0], intRadius: 0, xOffset: xOffset, yOffset: yOffset };
+        // Although no Bresenham runs, provide the structure expected by the filler
+        return { relativeExtents: [0], intRadius: 0, xOffset: xOffset, yOffset: yOffset };
     }
 
     // --- Bresenham Initialization for Extents ---
@@ -4204,19 +4317,19 @@ class SWRendererCircle {
     // --- Handle Zero Radius Case (Single Pixel) ---
     // Note: generator returns intRadius=0 even for 0 <= radius < 1
     if (intRadius === 0 && radius >= 0) {
-      const centerPx = Math.round(centerX); // Use Math.round for single pixel placement
-      const centerPy = Math.round(centerY);
+        const centerPx = Math.round(centerX); // Use Math.round for single pixel placement
+        const centerPy = Math.round(centerY);
 
-      // Check bounds for the single pixel
-      if (centerPx >= 0 && centerPx < width && centerPy >= 0 && centerPy < height) {
-        const pixelPos = centerPy * width + centerPx;
-        // Check clipping mask for the single pixel
-        if (!clippingMask || ((clippingMask[pixelPos >> 3] !== 0) && ((clippingMask[pixelPos >> 3] & (1 << (7 - (pixelPos & 7)))) !== 0))) {
-          // Use the 32-bit write
-          frameBuffer32[pixelPos] = packedColor;
+        // Check bounds for the single pixel
+        if (centerPx >= 0 && centerPx < width && centerPy >= 0 && centerPy < height) {
+            const pixelPos = centerPy * width + centerPx;
+            // Check clipping mask for the single pixel
+             if (!clippingMask || ((clippingMask[pixelPos >> 3] !== 0) && ((clippingMask[pixelPos >> 3] & (1 << (7 - (pixelPos & 7)))) !== 0))) {
+                // Use the 32-bit write
+                frameBuffer32[pixelPos] = packedColor;
+            }
         }
-      }
-      return; // Done if radius effectively zero
+        return; // Done if radius effectively zero
     }
     // Now we know intRadius > 0
 
@@ -4256,9 +4369,9 @@ class SWRendererCircle {
           // Remove currentIndex, use currentPixelPos directly with frameBuffer32
           const endPixelPos = abs_y_bottom * width + endX;
           while (currentPixelPos <= endPixelPos) {
-            frameBuffer32[currentPixelPos] = packedColor; // Use 32-bit write
-            // Remove currentIndex update
-            currentPixelPos++;
+             frameBuffer32[currentPixelPos] = packedColor; // Use 32-bit write
+             // Remove currentIndex update
+             currentPixelPos++;
           }
         }
 
@@ -4273,9 +4386,9 @@ class SWRendererCircle {
           // Remove currentIndex
           const endPixelPos = abs_y_top * width + endX;
           while (currentPixelPos <= endPixelPos) {
-            frameBuffer32[currentPixelPos] = packedColor; // Use 32-bit write
-            // Remove currentIndex update
-            currentPixelPos++;
+             frameBuffer32[currentPixelPos] = packedColor; // Use 32-bit write
+             // Remove currentIndex update
+             currentPixelPos++;
           }
         }
       }
@@ -4309,8 +4422,8 @@ class SWRendererCircle {
                 // Draw 8 pixels directly using 32-bit writes
                 const loopEndPos = currentPixelPos + 7;
                 while (currentPixelPos <= loopEndPos) {
-                  frameBuffer32[currentPixelPos] = packedColor;
-                  currentPixelPos++;
+                    frameBuffer32[currentPixelPos] = packedColor;
+                    currentPixelPos++;
                 }
                 // Remove currentIndex update
                 continue; // Next iteration of while loop
@@ -4338,46 +4451,46 @@ class SWRendererCircle {
         // Skip if rel_y is 0 OR if it's the specific case (rel_y=1, yOffset=0) that would redraw the middle line.
         const drawTopClip = rel_y > 0 && !(rel_y === 1 && yOffset === 0) && abs_y_top >= 0 && abs_y_top < height;
         if (drawTopClip) {
-          // Use adjusted center and offsets
-          const startX = Math.max(0, abs_x_min);
-          const endX = Math.min(width - 1, abs_x_max);
-          const startPixelPos = abs_y_top * width + startX;
-          const endPixelPos = abs_y_top * width + endX;
-          let currentPixelPos = startPixelPos;
-          // Remove currentIndex
+            // Use adjusted center and offsets
+            const startX = Math.max(0, abs_x_min);
+            const endX = Math.min(width - 1, abs_x_max);
+            const startPixelPos = abs_y_top * width + startX;
+            const endPixelPos = abs_y_top * width + endX;
+            let currentPixelPos = startPixelPos;
+            // Remove currentIndex
 
-          while (currentPixelPos <= endPixelPos) {
-            const byteIndex = currentPixelPos >> 3;
-            const bitInByte = currentPixelPos & 7;
+            while (currentPixelPos <= endPixelPos) {
+              const byteIndex = currentPixelPos >> 3;
+              const bitInByte = currentPixelPos & 7;
 
-            // Can we check a full byte?
-            if (bitInByte === 0 && currentPixelPos + 7 <= endPixelPos) {
-              const maskByte = clippingMask[byteIndex];
-              if (maskByte === 0xFF) { // Fully opaque byte
-                const loopEndPos = currentPixelPos + 7;
-                while (currentPixelPos <= loopEndPos) {
-                  frameBuffer32[currentPixelPos] = packedColor;
-                  currentPixelPos++;
+              // Can we check a full byte?
+              if (bitInByte === 0 && currentPixelPos + 7 <= endPixelPos) {
+                const maskByte = clippingMask[byteIndex];
+                 if (maskByte === 0xFF) { // Fully opaque byte
+                  const loopEndPos = currentPixelPos + 7;
+                  while(currentPixelPos <= loopEndPos) {
+                    frameBuffer32[currentPixelPos] = packedColor;
+                    currentPixelPos++;
+                  }
+                  // Remove currentIndex update
+                  continue;
+                } else if (maskByte === 0x00) { // Fully transparent byte
+                  currentPixelPos += 8;
+                  // Remove currentIndex update
+                  continue;
+                } else {
+                  // Partial byte - fall through
                 }
-                // Remove currentIndex update
-                continue;
-              } else if (maskByte === 0x00) { // Fully transparent byte
-                currentPixelPos += 8;
-                // Remove currentIndex update
-                continue;
-              } else {
-                // Partial byte - fall through
               }
-            }
 
-            // Per-pixel check
-            const bitMask = 1 << (7 - bitInByte);
-            if ((clippingMask[byteIndex] & bitMask) !== 0) {
-              frameBuffer32[currentPixelPos] = packedColor; // Use 32-bit write
+              // Per-pixel check
+              const bitMask = 1 << (7 - bitInByte);
+              if ((clippingMask[byteIndex] & bitMask) !== 0) {
+                frameBuffer32[currentPixelPos] = packedColor; // Use 32-bit write
+              }
+              // Remove currentIndex update
+              currentPixelPos++;
             }
-            // Remove currentIndex update
-            currentPixelPos++;
-          }
         }
       }
     } // End of if (!clippingMask) / else
@@ -4426,12 +4539,12 @@ class SWRendererCircle {
     // --- Handle Zero Radius Case (Single Pixel) ---
     // Note: generator returns intRadius=0 even for 0 <= radius < 1
     if (intRadius === 0 && radius >= 0) {
-      const centerPx = Math.round(centerX); // Use Math.round for single pixel placement
-      const centerPy = Math.round(centerY);
+        const centerPx = Math.round(centerX); // Use Math.round for single pixel placement
+        const centerPy = Math.round(centerY);
 
-      // Use setPixel which handles bounds, clipping, and alpha blending correctly
-      renderer.setPixel(centerPx, centerPy, r, g, b, a);
-      return; // Done if radius effectively zero
+        // Use setPixel which handles bounds, clipping, and alpha blending correctly
+        renderer.setPixel(centerPx, centerPy, r, g, b, a);
+        return; // Done if radius effectively zero
     }
     // Now we know intRadius > 0
 
@@ -4454,18 +4567,18 @@ class SWRendererCircle {
     // --- Scanline Filling Loop ---
     // Function to perform alpha blending for a single pixel
     const blendPixel = (pixelPos) => {
-      const index = pixelPos * 4;
-      const oldAlpha = frameBufferUint8ClampedView[index + 3] / 255;
-      const oldAlphaScaled = oldAlpha * inverseIncomingAlpha;
-      const newAlpha = incomingAlpha + oldAlphaScaled;
+        const index = pixelPos * 4;
+        const oldAlpha = frameBufferUint8ClampedView[index + 3] / 255;
+        const oldAlphaScaled = oldAlpha * inverseIncomingAlpha;
+        const newAlpha = incomingAlpha + oldAlphaScaled;
 
-      if (newAlpha > 0) { // Avoid division by zero/negative
-        const blendFactor = 1 / newAlpha;
-        frameBufferUint8ClampedView[index] = (r * incomingAlpha + frameBufferUint8ClampedView[index] * oldAlphaScaled) * blendFactor;
-        frameBufferUint8ClampedView[index + 1] = (g * incomingAlpha + frameBufferUint8ClampedView[index + 1] * oldAlphaScaled) * blendFactor;
-        frameBufferUint8ClampedView[index + 2] = (b * incomingAlpha + frameBufferUint8ClampedView[index + 2] * oldAlphaScaled) * blendFactor;
-        frameBufferUint8ClampedView[index + 3] = newAlpha * 255;
-      }
+        if (newAlpha > 0) { // Avoid division by zero/negative
+            const blendFactor = 1 / newAlpha;
+            frameBufferUint8ClampedView[index]     = (r * incomingAlpha + frameBufferUint8ClampedView[index]     * oldAlphaScaled) * blendFactor;
+            frameBufferUint8ClampedView[index + 1] = (g * incomingAlpha + frameBufferUint8ClampedView[index + 1] * oldAlphaScaled) * blendFactor;
+            frameBufferUint8ClampedView[index + 2] = (b * incomingAlpha + frameBufferUint8ClampedView[index + 2] * oldAlphaScaled) * blendFactor;
+            frameBufferUint8ClampedView[index + 3] = newAlpha * 255;
+        }
     };
 
     if (!clippingMask) {
@@ -4485,8 +4598,8 @@ class SWRendererCircle {
           let currentPixelPos = abs_y_bottom * width + startX;
           const endPixelPos = abs_y_bottom * width + endX;
           while (currentPixelPos <= endPixelPos) {
-            blendPixel(currentPixelPos); // Use alpha blending
-            currentPixelPos++;
+             blendPixel(currentPixelPos); // Use alpha blending
+             currentPixelPos++;
           }
         }
 
@@ -4500,8 +4613,8 @@ class SWRendererCircle {
           let currentPixelPos = abs_y_top * width + startX;
           const endPixelPos = abs_y_top * width + endX;
           while (currentPixelPos <= endPixelPos) {
-            blendPixel(currentPixelPos); // Use alpha blending
-            currentPixelPos++;
+             blendPixel(currentPixelPos); // Use alpha blending
+             currentPixelPos++;
           }
         }
       }
@@ -4531,7 +4644,7 @@ class SWRendererCircle {
             // Can we check a full byte? (Only optimize skip for fully transparent byte)
             if (bitInByte === 0 && currentPixelPos + 7 <= endPixelPos) {
               const maskByte = clippingMask[byteIndex];
-              if (maskByte === 0x00) { // Fully transparent byte
+               if (maskByte === 0x00) { // Fully transparent byte
                 // Skip 8 pixels
                 currentPixelPos += 8;
                 continue; // Next iteration of while loop
@@ -4552,36 +4665,36 @@ class SWRendererCircle {
         // Skip if rel_y is 0 OR if it's the specific case (rel_y=1, yOffset=0) that would redraw the middle line.
         const drawTopClip = rel_y > 0 && !(rel_y === 1 && yOffset === 0) && abs_y_top >= 0 && abs_y_top < height;
         if (drawTopClip) {
-          // Use adjusted center and offsets
-          const startX = Math.max(0, abs_x_min);
-          const endX = Math.min(width - 1, abs_x_max);
-          const startPixelPos = abs_y_top * width + startX;
-          const endPixelPos = abs_y_top * width + endX;
-          let currentPixelPos = startPixelPos;
-          // Remove currentIndex
+            // Use adjusted center and offsets
+            const startX = Math.max(0, abs_x_min);
+            const endX = Math.min(width - 1, abs_x_max);
+            const startPixelPos = abs_y_top * width + startX;
+            const endPixelPos = abs_y_top * width + endX;
+            let currentPixelPos = startPixelPos;
+            // Remove currentIndex
 
-          while (currentPixelPos <= endPixelPos) {
-            const byteIndex = currentPixelPos >> 3;
-            const bitInByte = currentPixelPos & 7;
-            const bitMask = 1 << (7 - bitInByte);
+            while (currentPixelPos <= endPixelPos) {
+              const byteIndex = currentPixelPos >> 3;
+              const bitInByte = currentPixelPos & 7;
+              const bitMask = 1 << (7 - bitInByte);
 
-            // Can we check a full byte? (Optimize skip only)
-            if (bitInByte === 0 && currentPixelPos + 7 <= endPixelPos) {
-              const maskByte = clippingMask[byteIndex];
-              if (maskByte === 0x00) { // Fully transparent byte
-                currentPixelPos += 8;
-                continue;
-              } else {
-                // Partial or opaque byte - fall through
+              // Can we check a full byte? (Optimize skip only)
+              if (bitInByte === 0 && currentPixelPos + 7 <= endPixelPos) {
+                const maskByte = clippingMask[byteIndex];
+                 if (maskByte === 0x00) { // Fully transparent byte
+                  currentPixelPos += 8;
+                  continue;
+                } else {
+                  // Partial or opaque byte - fall through
+                }
               }
-            }
 
-            // Per-pixel check
-            if ((clippingMask[byteIndex] & bitMask) !== 0) {
-              blendPixel(currentPixelPos); // Use alpha blending
+              // Per-pixel check
+              if ((clippingMask[byteIndex] & bitMask) !== 0) {
+                blendPixel(currentPixelPos); // Use alpha blending
+              }
+              currentPixelPos++;
             }
-            currentPixelPos++;
-          }
         }
       }
     } // End of if (!clippingMask) / else
@@ -4603,18 +4716,18 @@ class SWRendererCircle {
 
     // --- Handle Zero Radius Case (Single Pixel) ---
     if (intRadius === 0 && radius >= 0) {
-      const centerPx = Math.round(center.x);
-      const centerPy = Math.round(center.y);
-      // Call clipPixel for the single pixel
-      renderer.clipPixel(centerPx, centerPy);
-      return; // Done if radius effectively zero
+        const centerPx = Math.round(center.x);
+        const centerPy = Math.round(center.y);
+        // Call clipPixel for the single pixel
+        renderer.clipPixel(centerPx, centerPy);
+        return; // Done if radius effectively zero
     }
     // Now we know intRadius > 0
 
     // --- Calculate Absolute Center ---
     const adjCenterX = Math.floor(center.x - 0.5);
     const adjCenterY = Math.floor(center.y - 0.5);
-
+    
     // --- Scanline Clipping Loop ---
     for (let rel_y = 0; rel_y <= intRadius; rel_y++) {
       const max_rel_x = relativeExtents[rel_y];
@@ -4644,7 +4757,7 @@ class SWRendererCircle {
     }
   }
 
-} class SWRendererRoundedRect {
+}class SWRendererRoundedRect {
   constructor(frameBufferUint8ClampedView, frameBufferUint32View, width, height, lineRenderer, pixelRenderer, swRectRenderer) {
     this.frameBufferUint8ClampedView = frameBufferUint8ClampedView;
     this.frameBufferUint32View = frameBufferUint32View;
@@ -4693,7 +4806,7 @@ class SWRendererCircle {
 
     // Handle fill
     if (fillA > 0) {
-      this.drawRoundedRectFill(centerX, centerY, rectWidth, rectHeight, cornerRadius, strokeWidth,
+      this.drawRoundedRectFill(centerX, centerY, rectWidth, rectHeight, cornerRadius, strokeWidth, 
         fillR, fillG, fillB, fillA, strokeA == 255 && strokeWidth > 0);
     }
 
@@ -4706,30 +4819,30 @@ class SWRendererCircle {
 
         // Draw horizontal strokes
         for (let xx = Math.floor(pos.x + r); xx < pos.x + pos.w - r; xx++) {
-          this.pixelRenderer.setPixel(xx, pos.y - 0.5, strokeR, strokeG, strokeB, strokeA);
-          this.pixelRenderer.setPixel(xx, pos.y + pos.h - 0.5, strokeR, strokeG, strokeB, strokeA);
+            this.pixelRenderer.setPixel(xx, pos.y - 0.5, strokeR, strokeG, strokeB, strokeA);
+            this.pixelRenderer.setPixel(xx, pos.y + pos.h - 0.5, strokeR, strokeG, strokeB, strokeA);
         }
-
+        
         // Draw vertical strokes
         for (let yy = Math.floor(pos.y + r); yy < pos.y + pos.h - r; yy++) {
-          this.pixelRenderer.setPixel(pos.x - 0.5, yy, strokeR, strokeG, strokeB, strokeA);
-          this.pixelRenderer.setPixel(pos.x + pos.w - 0.5, yy, strokeR, strokeG, strokeB, strokeA);
+            this.pixelRenderer.setPixel(pos.x - 0.5, yy, strokeR, strokeG, strokeB, strokeA);
+            this.pixelRenderer.setPixel(pos.x + pos.w - 0.5, yy, strokeR, strokeG, strokeB, strokeA);
         }
 
         // Draw corner strokes
         const drawCorner = (cx, cy, startAngle, endAngle) => {
-          for (let angle = startAngle; angle <= endAngle; angle += Math.PI / 180) {
-            const sr = r - 0.5;
-            const px = cx + sr * Math.cos(angle);
-            const py = cy + sr * Math.sin(angle);
-            this.pixelRenderer.setPixel(Math.floor(px), Math.floor(py), strokeR, strokeG, strokeB, strokeA);
+          for (let angle = startAngle; angle <= endAngle; angle += Math.PI/180) {
+              const sr = r - 0.5;
+              const px = cx + sr * Math.cos(angle);
+              const py = cy + sr * Math.sin(angle);
+              this.pixelRenderer.setPixel(Math.floor(px), Math.floor(py), strokeR, strokeG, strokeB, strokeA);
           }
         };
 
-        drawCorner(pos.x + r, pos.y + r, Math.PI, Math.PI * 3 / 2);
-        drawCorner(pos.x + pos.w - r, pos.y + r, Math.PI * 3 / 2, Math.PI * 2);
-        drawCorner(pos.x + pos.w - r, pos.y + pos.h - r, 0, Math.PI / 2);
-        drawCorner(pos.x + r, pos.y + pos.h - r, Math.PI / 2, Math.PI);
+        drawCorner(pos.x + r, pos.y + r, Math.PI, Math.PI * 3/2);
+        drawCorner(pos.x + pos.w - r, pos.y + r, Math.PI * 3/2, Math.PI * 2);
+        drawCorner(pos.x + pos.w - r, pos.y + pos.h - r, 0, Math.PI/2);
+        drawCorner(pos.x + r, pos.y + pos.h - r, Math.PI/2, Math.PI);
       } else {
         // For thicker strokes, use the same mechanism as thick transparent stroke
         this.drawRoundedRectStroke(centerX, centerY, rectWidth, rectHeight, cornerRadius, strokeWidth,
@@ -4738,8 +4851,8 @@ class SWRendererCircle {
     }
   }
 
-  drawCrispAxisAlignedRoundedRectThickOrSemitrasparentStroke(centerX, centerY, rectWidth, rectHeight, cornerRadius,
-    strokeWidth, strokeR, strokeG, strokeB, strokeA,
+  drawCrispAxisAlignedRoundedRectThickOrSemitrasparentStroke(centerX, centerY, rectWidth, rectHeight, cornerRadius, 
+    strokeWidth, strokeR, strokeG, strokeB, strokeA, 
     fillR, fillG, fillB, fillA) {
 
     if (rectWidth % 1 !== 0 || rectHeight % 1 !== 0) {
@@ -4778,17 +4891,17 @@ class SWRendererCircle {
         getRectangularFillGeometry(centerX, centerY, rectWidth, rectHeight)
       );
     }
-
+    
     let r = Math.round(Math.min(cornerRadius, Math.min(pos.w, pos.h) / 2));
 
     function isInsideRoundedRect(px, py) {
       // Test if point is inside main rectangle
-      if (px >= pos.x + r && px < pos.x + pos.w - r &&
-        py >= pos.y && py < pos.y + pos.h) {
+      if (px >= pos.x + r && px < pos.x + pos.w - r && 
+          py >= pos.y && py < pos.y + pos.h) {
         return true;
       }
-      if (px >= pos.x && px < pos.x + pos.w &&
-        py >= pos.y + r && py < pos.y + pos.h - r) {
+      if (px >= pos.x && px < pos.x + pos.w && 
+          py >= pos.y + r && py < pos.y + pos.h - r) {
         return true;
       }
 
@@ -4799,7 +4912,7 @@ class SWRendererCircle {
         { x: pos.x + pos.w - r, y: pos.y + pos.h - r },
         { x: pos.x + r, y: pos.y + pos.h - r }
       ];
-
+      
       for (const corner of corners) {
         const dx = px - corner.x + 1;
         const dy = py - corner.y + 1;
@@ -4807,7 +4920,7 @@ class SWRendererCircle {
           return true;
         }
       }
-
+      
       return false;
     }
 
@@ -4822,28 +4935,28 @@ class SWRendererCircle {
     for (let yy = Math.floor(pos.y); yy <= Math.ceil(pos.y + pos.h); yy++) {
       for (let xx = Math.floor(pos.x); xx <= Math.ceil(pos.x + pos.w); xx++) {
         if (isInsideRoundedRect(Math.ceil(xx), Math.ceil(yy))) {
-          // Perform bounds check
-          if (xx < 0 || xx >= this.width || yy < 0 || yy >= this.height) continue;
+           // Perform bounds check
+           if (xx < 0 || xx >= this.width || yy < 0 || yy >= this.height) continue;
 
-          // Pre-calculate pixel position
-          const pixelPos = yy * this.width + xx;
+           // Pre-calculate pixel position
+           const pixelPos = yy * this.width + xx;
 
-          // Check for clipping with optimized path
-          if (this.pixelRenderer.context.currentState) {
-            const clippingMask = this.pixelRenderer.context.currentState.clippingMask;
-            const clippingMaskByteIndex = pixelPos >> 3;
-            const bitIndex = pixelPos & 7;
-            if (clippingMask[clippingMaskByteIndex] === 0) continue;
-            if ((clippingMask[clippingMaskByteIndex] & (1 << (7 - bitIndex))) === 0) continue;
-          }
+           // Check for clipping with optimized path
+           if (this.pixelRenderer.context.currentState) {
+             const clippingMask = this.pixelRenderer.context.currentState.clippingMask;
+             const clippingMaskByteIndex = pixelPos >> 3;
+             const bitIndex = pixelPos & 7;
+             if (clippingMask[clippingMaskByteIndex] === 0) continue;
+             if ((clippingMask[clippingMaskByteIndex] & (1 << (7 - bitIndex))) === 0) continue;
+           }
 
-          if (isOpaque) {
-            // Fast path for opaque pixels - Direct 32-bit write
-            this.frameBufferUint32View[pixelPos] = packedColor;
-          } else {
-            // Standard path: Call setPixel for blending
-            this.pixelRenderer.setPixel(xx, yy, fillR, fillG, fillB, fillA);
-          }
+           if (isOpaque) {
+             // Fast path for opaque pixels - Direct 32-bit write
+             this.frameBufferUint32View[pixelPos] = packedColor;
+           } else {
+             // Standard path: Call setPixel for blending
+             this.pixelRenderer.setPixel(xx, yy, fillR, fillG, fillB, fillA);
+           }
         }
       }
     }
@@ -4863,7 +4976,7 @@ class SWRendererCircle {
 
     // Create a set to collect all stroke pixels before drawing
     const strokePixels = new PixelSet(this.pixelRenderer);
-
+    
     // Draw horizontal strokes (top and bottom edges)
     const horizontalStrokes = new ScanlineSpans();
     // Add spans for top edge
@@ -4879,7 +4992,7 @@ class SWRendererCircle {
     // Draw vertical strokes (left and right edges)
     const leftVerticalStrokes = new ScanlineSpans();
     const rightVerticalStrokes = new ScanlineSpans();
-
+    
     for (let y = pos.y + r; y < pos.y + pos.h - r; y++) {
       // Add pixels for left edge
       for (let x = pos.x - halfStroke; x < pos.x + halfStroke; x++) {
@@ -4899,7 +5012,7 @@ class SWRendererCircle {
       const angleStep = Math.PI / 180;  // 1 degree steps for smooth corners
       for (let angle = startAngle; angle <= endAngle; angle += angleStep) {
         // Add pixels along the stroke width
-        for (let t = -halfStroke; t < halfStroke; t++) {
+        for (let t = -halfStroke; t < halfStroke; t ++) {
           const sr = r + t;  // Radius adjusted for stroke width
           const px = cx + sr * Math.cos(angle);
           const py = cy + sr * Math.sin(angle);
@@ -4910,10 +5023,10 @@ class SWRendererCircle {
     };
 
     // Draw all four corners with appropriate arc angles
-    drawCornerSpans(pos.x + r, pos.y + r, Math.PI, Math.PI * 3 / 2);           // Top-left
-    drawCornerSpans(pos.x + pos.w - r, pos.y + r, Math.PI * 3 / 2, Math.PI * 2); // Top-right
-    drawCornerSpans(pos.x + pos.w - r, pos.y + pos.h - r, 0, Math.PI / 2);     // Bottom-right
-    drawCornerSpans(pos.x + r, pos.y + pos.h - r, Math.PI / 2, Math.PI);       // Bottom-left
+    drawCornerSpans(pos.x + r, pos.y + r, Math.PI, Math.PI * 3/2);           // Top-left
+    drawCornerSpans(pos.x + pos.w - r, pos.y + r, Math.PI * 3/2, Math.PI * 2); // Top-right
+    drawCornerSpans(pos.x + pos.w - r, pos.y + pos.h - r, 0, Math.PI/2);     // Bottom-right
+    drawCornerSpans(pos.x + r, pos.y + pos.h - r, Math.PI/2, Math.PI);       // Bottom-left
 
     // Finally, paint all collected stroke pixels to the screen
     strokePixels.paint();
@@ -4922,10 +5035,10 @@ class SWRendererCircle {
   drawRotatedRoundedRect(centerX, centerY, width, height, radius, rotation,
     strokeWidth, strokeR, strokeG, strokeB, strokeA,
     fillR, fillG, fillB, fillA) {
-
+    
     const cos = Math.cos(rotation);
     const sin = Math.sin(rotation);
-
+    
     const halfWidth = width / 2;
     const halfHeight = height / 2;
 
@@ -4956,11 +5069,11 @@ class SWRendererCircle {
     const strokePoints = cornerCenters.map((center, i) => {
       const prevEdge = edges[(i + 3) % 4];
       const nextEdge = edges[i];
-
+      
       // Perpendicular vectors to edges
       const prev = { x: -prevEdge.dy, y: prevEdge.dx };
       const next = { x: -nextEdge.dy, y: nextEdge.dx };
-
+      
       return {
         start: {
           x: center.x - radius * prev.x,
@@ -4985,15 +5098,15 @@ class SWRendererCircle {
       // Top rectangle
       this.swRectRenderer.fillRotatedRect(
         centerX + (-radius * sin),
-        centerY + (-height / 2 + radius / 2) * cos,
+        centerY + (-height/2 + radius/2) * cos,
         width - 2 * radius, radius,
         rotation, false, false, fillR, fillG, fillB, fillA
       );
 
       // Right rectangle 
       this.swRectRenderer.fillRotatedRect(
-        centerX + (width / 2 - radius / 2) * cos,
-        centerY + (width / 2 - radius / 2) * sin,
+        centerX + (width/2 - radius/2) * cos,
+        centerY + (width/2 - radius/2) * sin,
         radius, height - 2 * radius,
         rotation, false, false, fillR, fillG, fillB, fillA
       );
@@ -5001,15 +5114,15 @@ class SWRendererCircle {
       // Bottom rectangle
       this.swRectRenderer.fillRotatedRect(
         centerX + (radius * sin),
-        centerY + (height / 2 - radius / 2) * cos,
+        centerY + (height/2 - radius/2) * cos,
         width - 2 * radius, radius,
         rotation, false, false, fillR, fillG, fillB, fillA
       );
 
       // Left rectangle
       this.swRectRenderer.fillRotatedRect(
-        centerX + (-width / 2 + radius / 2) * cos,
-        centerY + (-width / 2 + radius / 2) * sin,
+        centerX + (-width/2 + radius/2) * cos,
+        centerY + (-width/2 + radius/2) * sin,
         radius, height - 2 * radius,
         rotation, false, false, fillR, fillG, fillB, fillA
       );
@@ -5023,10 +5136,10 @@ class SWRendererCircle {
           [0, 90],
           [90, 180]
         ][i];
-
+        
         const startAngle = (baseAngles[0] + rotationDegrees) % 360;
         const endAngle = (baseAngles[1] + rotationDegrees) % 360;
-
+        
         drawArcSWHelper(center.x, center.y, radius,
           startAngle, endAngle,
           fillR, fillG, fillB, fillA, true);
@@ -5037,7 +5150,7 @@ class SWRendererCircle {
       for (let i = 0; i < 4; i++) {
         const currentPoint = strokePoints[i];
         const nextPoint = strokePoints[(i + 1) % 4];
-
+        
         this.lineRenderer.drawLineThick(
           currentPoint.end.x, currentPoint.end.y,
           nextPoint.start.x, nextPoint.start.y,
@@ -5053,10 +5166,10 @@ class SWRendererCircle {
           [0, 90],
           [90, 180]
         ][i];
-
+        
         const startAngle = (baseAngles[0] + rotationDegrees) % 360;
         const endAngle = (baseAngles[1] + rotationDegrees) % 360;
-
+        
         drawArcSWHelper(center.x, center.y, radius,
           startAngle, endAngle,
           strokeR, strokeG, strokeB, strokeA, false, strokeWidth);
@@ -5065,34 +5178,37 @@ class SWRendererCircle {
   }
 }// Main CrispSwCanvas class
 class CrispSwCanvas {
-  static version = '1.0.2';
+    static version = '1.0.2';
 
-  constructor(width, height) {
-    // Support both (width, height) and (canvas) constructor styles
-    if (typeof width === 'object') {
-      const canvas = width;
-      this.width = canvas.width;
-      this.height = canvas.height;
-      this.title = canvas.title || '';
-    } else {
-      this.width = width;
-      this.height = height;
-      this.title = '';
+    constructor(width, height) {
+        // Support both (width, height) and (canvas) constructor styles
+        if (typeof width === 'object') {
+            const canvas = width;
+            this.width = canvas.width;
+            this.height = canvas.height;
+            this.title = canvas.title || '';
+        } else {
+            this.width = width;
+            this.height = height;
+            this.title = '';
+        }
+        
+        // Create the context immediately and store it privately
+        this._context = new CrispSwContext(this);
     }
 
-    // Create the context immediately and store it privately
-    this._context = new CrispSwContext(this);
-  }
-
-  getContext(contextType) {
-    if (contextType !== "2d") {
-      throw new Error("Only '2d' context is supported");
+    getContext(contextType) {
+        if (contextType !== "2d") {
+            throw new Error("Only '2d' context is supported");
+        }
+        return this._context;
     }
-    return this._context;
-  }
 }
 // Check for Node.js environment and load polyfills if needed
 const isNode = typeof window === 'undefined' && typeof process !== 'undefined';
+
+// Global ColorParser instance for parsing CSS color strings
+const _colorParser = new ColorParser();
 
 /**
  * Software-based Canvas 2D rendering context
@@ -5100,663 +5216,617 @@ const isNode = typeof window === 'undefined' && typeof process !== 'undefined';
  * entirely in JavaScript without requiring the HTML5 Canvas API.
  */
 class CrispSwContext {
-  constructor(canvas) {
-    // Store reference to the canvas element
-    this.canvas = canvas;
-
-    // Ensure canvas has all required properties
-    if (!canvas.title) {
-      canvas.title = '';
-    }
-
-    // Create additional compatibility properties for RenderChecks
-    // Different parts of the code base might access these properties in different ways
-    this.displayCanvas = {
-      width: canvas.width,
-      height: canvas.height,
-      title: canvas.title
-    };
-
-    // Add title directly to context for maximum compatibility
-    // Some code might expect ctx.title instead of ctx.canvas.title
-    this.title = canvas.title;
-
-    // Initialize the context state
-    this.stateStack = [new ContextState(canvas.width, canvas.height)];
-
-    // Create the frameBuffer and two views for it
-    this.frameBufferUint8ClampedView = new Uint8ClampedArray(canvas.width * canvas.height * 4).fill(0);
-    // this view show optimise for when we deal with pixel values all together rather than r,g,b,a separately
-    this.frameBufferUint32View = new Uint32Array(this.frameBufferUint8ClampedView.buffer);
-
-    this.tempClippingMask = new Uint8Array(Math.ceil(canvas.width * canvas.height / 8)).fill(0);
-
-    // Initialize renderers
-    this.pixelRenderer = new SWRendererPixel(this.frameBufferUint8ClampedView, this.frameBufferUint32View, canvas.width, canvas.height, this);
-    this.lineRenderer = new SWRendererLine(this.pixelRenderer);
-    this.rectRenderer = new SWRendererRect(this.frameBufferUint8ClampedView, this.frameBufferUint32View, canvas.width, canvas.height, this.lineRenderer, this.pixelRenderer);
-    this.roundedRectRenderer = new SWRendererRoundedRect(this.frameBufferUint8ClampedView, this.frameBufferUint32View, canvas.width, canvas.height, this.lineRenderer, this.pixelRenderer, this.rectRenderer);
-    this.circleRenderer = new SWRendererCircle(this.pixelRenderer);
-    this.arcRenderer = new SWRendererArc(this.pixelRenderer);
-  }
-
-  get currentState() {
-    return this.stateStack[this.stateStack.length - 1];
-  }
-
-  save() {
-    this.stateStack.push(this.currentState.clone());
-  }
-
-  restore() {
-    if (this.stateStack.length <= 1) {
-      throw new Error("Cannot restore() - stack is empty");
-    }
-    this.stateStack.pop();
-  }
-
-  // Transform methods
-  scale(x, y) {
-    this.currentState.transform = this.currentState.transform.scale(x, y);
-  }
-
-  rotate(angle) {
-    this.currentState.transform = this.currentState.transform.rotate(angle);
-  }
-
-  translate(x, y) {
-    this.currentState.transform = this.currentState.transform.translate(x, y);
-  }
-
-  /**
-   * Resets the current transformation matrix to the identity matrix
-   */
-  resetTransform() {
-    this.currentState.transform.reset();
-  }
-
-  // Style setters and getters
-  set fillStyle(style) {
-    // Accept string or Color instance
-    if (style instanceof Color) {
-      this.currentState.fillColor = style;
-    } else {
-      this.currentState.fillColor = parseColor(style);
-    }
-  }
-
-  get fillStyle() {
-    return colorToString(this.currentState.fillColor);
-  }
-
-  set strokeStyle(style) {
-    // Accept string or Color instance
-    if (style instanceof Color) {
-      this.currentState.strokeColor = style;
-    } else {
-      this.currentState.strokeColor = parseColor(style);
-    }
-  }
-
-  get strokeStyle() {
-    return colorToString(this.currentState.strokeColor);
-  }
-
-  set lineWidth(width) {
-    this.currentState.lineWidth = width;
-  }
-
-  // Add globalAlpha property
-  set globalAlpha(value) {
-    this.currentState.globalAlpha = Math.max(0, Math.min(1, value)); // Clamp between 0 and 1
-  }
-
-  get globalAlpha() {
-    return this.currentState.globalAlpha;
-  }
-
-  // Drawing methods
-  beginPath() {
-    this.tempClippingMask.fill(0);
-  }
-
-  fill() {
-    throw new Error("fill() is not supported - use fillRect() instead");
-  }
-
-  stroke() {
-    throw new Error("stroke() is not supported - use strokeRect() instead");
-  }
-
-  strokeLine(x1, y1, x2, y2) {
-    const state = this.currentState;
-    const scaledLineWidth = getScaledLineWidth(state.transform.elements, state.lineWidth);
-
-    // Transform points according to current transformation matrix
-    const start = transformPoint(x1, y1, state.transform.elements);
-    const end = transformPoint(x2, y2, state.transform.elements);
-
-    this.lineRenderer.drawLine({
-      start: { x: start.tx, y: start.ty },
-      end: { x: end.tx, y: end.ty },
-      thickness: scaledLineWidth,
-      color: state.strokeColor
-    });
-  }
-
-  clearRect(x, y, width, height) {
-    const state = this.currentState;
-    const center = transformPoint(x + width / 2, y + height / 2, state.transform.elements);
-    const rotation = getRotationAngle(state.transform.elements);
-    this.rectRenderer.clearRect({
-      center: { x: center.tx, y: center.ty },
-      width: width,
-      height: height,
-      rotation: rotation
-    });
-  }
-
-  // as the CrispSwCanvas does not support paths and fill() annd stroke() are not supported,
-  // rect() is used for clipping only.
-  rect(x, y, width, height) {
-    const state = this.currentState;
-    const center = transformPoint(x + width / 2, y + height / 2, state.transform.elements);
-    const rotation = getRotationAngle(state.transform.elements);
-    const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
-
-    this.rectRenderer.drawRect({
-      center: { x: center.tx, y: center.ty },
-      width: width * scaleX,
-      height: height * scaleY,
-      rotation: rotation,
-      clippingOnly: true
-    });
-  }
-
-  // The clip() function
-  // * takes the clippingMask and ANDs it with the tempClippingMask
-  // * clears the tempClippingMask to all zeroes
-  clip() {
-    // to a logical and of the current clippingMask and the tempClippingMask
-    // a little bit of bitwise magic like this:
-    // this.currentState.clippingMask = this.currentState.clippingMask && this.tempClippingMask;
-    // but we need to do it for each byte
-    for (let i = 0; i < this.currentState.clippingMask.length; i++) {
-      this.currentState.clippingMask[i] = this.currentState.clippingMask[i] & this.tempClippingMask[i];
-    }
-    // clip() does not close the path, so since we might add more rects to the paths, we cannot clear the tempClippingMask
-    // can't do this: this.tempClippingMask.fill(0);
-  }
-
-
-  fillRect(x, y, width, height) {
-    const state = this.currentState;
-    const center = transformPoint(x + width / 2, y + height / 2, state.transform.elements);
-    const rotation = getRotationAngle(state.transform.elements);
-    const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
-
-    this.rectRenderer.drawRect({
-      center: { x: center.tx, y: center.ty },
-      width: width * scaleX,
-      height: height * scaleY,
-      rotation: rotation,
-      clippingOnly: false,
-      strokeWidth: 0,
-      strokeColor: Color.transparent(),
-      fillColor: state.fillColor
-    });
-  }
-
-  strokeRect(x, y, width, height) {
-    const state = this.currentState;
-    const scaledLineWidth = getScaledLineWidth(state.transform.elements, state.lineWidth);
-
-    const center = transformPoint(x + width / 2, y + height / 2, state.transform.elements);
-    const rotation = getRotationAngle(state.transform.elements);
-    const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
-
-    this.rectRenderer.drawRect({
-      center: { x: center.tx, y: center.ty },
-      width: width * scaleX,
-      height: height * scaleY,
-      rotation: rotation,
-      clippingOnly: false,
-      strokeWidth: scaledLineWidth,
-      strokeColor: state.strokeColor,
-      fillColor: Color.transparent()
-    });
-  }
-
-  blitToCanvas(canvas) {
-    if (isNode) return;
-
-    const imageData = new ImageData(this.frameBufferUint8ClampedView, this.canvas.width, this.canvas.height);
-    const ctx = canvas.getContext('2d');
-    ctx.putImageData(imageData, 0, 0);
-  }
-
-  /**
-   * Fill a circle with the specified color
-   * @param {number} centerX - X coordinate of the circle center
-   * @param {number} centerY - Y coordinate of the circle center
-   * @param {number} radius - Radius of the circle
-   * @param {number|Color} fillROrColor - Red component (0-255) or Color instance
-   * @param {number} [fillG] - Green component of fill color (0-255)
-   * @param {number} [fillB] - Blue component of fill color (0-255)
-   * @param {number} [fillA] - Alpha component of fill color (0-255)
-   */
-  fillCircle(centerX, centerY, radius, fillROrColor, fillG, fillB, fillA) {
-    const state = this.currentState;
-
-    // Transform center point according to current transformation matrix
-    const center = transformPoint(centerX, centerY, state.transform.elements);
-
-    // Apply scale factor to radius
-    const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
-    const scaledRadius = radius * Math.max(scaleX, scaleY);
-
-    // Handle Color instance or individual r,g,b,a
-    let fillColor;
-    if (fillROrColor instanceof Color) {
-      fillColor = fillROrColor;
-    } else {
-      fillColor = new Color(fillROrColor, fillG, fillB, fillA);
-    }
-
-    // Create shape object for the circle
-    const circleShape = {
-      center: { x: center.tx, y: center.ty },
-      radius: scaledRadius,
-      strokeWidth: 0,
-      strokeColor: Color.transparent(),
-      fillColor: fillColor
-    };
-
-    // Call the circle renderer with our shape
-    this.circleRenderer.drawCircle(circleShape);
-  }
-
-  /**
-   * Stroke a circle with the specified color and width
-   * @param {number} centerX - X coordinate of the circle center
-   * @param {number} centerY - Y coordinate of the circle center
-   * @param {number} radius - Radius of the circle
-   * @param {number} strokeWidth - Width of the stroke
-   * @param {number|Color} strokeROrColor - Red component (0-255) or Color instance
-   * @param {number} [strokeG] - Green component of stroke color (0-255)
-   * @param {number} [strokeB] - Blue component of stroke color (0-255)
-   * @param {number} [strokeA] - Alpha component of stroke color (0-255)
-   */
-  strokeCircle(centerX, centerY, radius, strokeWidth, strokeROrColor, strokeG, strokeB, strokeA) {
-    const state = this.currentState;
-
-    // Transform center point according to current transformation matrix
-    const center = transformPoint(centerX, centerY, state.transform.elements);
-
-    // Apply scale factor to radius and stroke width
-    const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
-    const scaledRadius = radius * Math.max(scaleX, scaleY);
-    const scaledStrokeWidth = getScaledLineWidth(state.transform.elements, strokeWidth);
-
-    // Handle Color instance or individual r,g,b,a
-    let strokeColor;
-    if (strokeROrColor instanceof Color) {
-      strokeColor = strokeROrColor;
-    } else {
-      strokeColor = new Color(strokeROrColor, strokeG, strokeB, strokeA);
-    }
-
-    // Create shape object for the circle
-    const circleShape = {
-      center: { x: center.tx, y: center.ty },
-      radius: scaledRadius,
-      strokeWidth: scaledStrokeWidth,
-      strokeColor: strokeColor,
-      fillColor: Color.transparent()
-    };
-
-    // Call the circle renderer with our shape
-    this.circleRenderer.drawCircle(circleShape);
-  }
-
-  /**
-   * Fill and stroke a circle with specified colors and stroke width
-   * @param {number} centerX - X coordinate of the circle center
-   * @param {number} centerY - Y coordinate of the circle center
-   * @param {number} radius - Radius of the circle
-   * @param {number|Color} fillROrColor - Red component (0-255) or Color instance
-   * @param {number} fillG - Green component of fill color (0-255)
-   * @param {number} fillB - Blue component of fill color (0-255)
-   * @param {number} fillA - Alpha component of fill color (0-255)
-   * @param {number} strokeWidth - Width of the stroke
-   * @param {number|Color} strokeROrColor - Red component (0-255) or Color instance
-   * @param {number} [strokeG] - Green component of stroke color (0-255)
-   * @param {number} [strokeB] - Blue component of stroke color (0-255)
-   * @param {number} [strokeA] - Alpha component of stroke color (0-255)
-   */
-  fillAndStrokeCircle(
-    centerX, centerY, radius,
-    fillROrColor, fillG, fillB, fillA,
-    strokeWidth,
-    strokeROrColor, strokeG, strokeB, strokeA
-  ) {
-    const state = this.currentState;
-
-    // Transform center point according to current transformation matrix
-    const center = transformPoint(centerX, centerY, state.transform.elements);
-
-    // Apply scale factor to radius and stroke width
-    const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
-    const scaledRadius = radius * Math.max(scaleX, scaleY);
-    const scaledStrokeWidth = getScaledLineWidth(state.transform.elements, strokeWidth);
-
-    // Handle Color instance or individual r,g,b,a for fill
-    let fillColor;
-    if (fillROrColor instanceof Color) {
-      fillColor = fillROrColor;
-    } else {
-      fillColor = new Color(fillROrColor, fillG, fillB, fillA);
-    }
-
-    // Handle Color instance or individual r,g,b,a for stroke
-    let strokeColor;
-    if (strokeROrColor instanceof Color) {
-      strokeColor = strokeROrColor;
-    } else {
-      strokeColor = new Color(strokeROrColor, strokeG, strokeB, strokeA);
-    }
-
-    // Create shape object for the circle
-    const circleShape = {
-      center: { x: center.tx, y: center.ty },
-      radius: scaledRadius,
-      strokeWidth: scaledStrokeWidth,
-      strokeColor: strokeColor,
-      fillColor: fillColor
-    };
-
-    // Call the circle renderer with our shape
-    this.circleRenderer.drawCircle(circleShape);
-  }
-
-  /**
-   * Returns an ImageData object representing the pixel data for the specified rectangle.
-   * Compatible with HTML5 Canvas getImageData method.
-   * @param {number} sx - The x-coordinate of the top-left corner of the rectangle from which the data will be extracted
-   * @param {number} sy - The y-coordinate of the top-left corner of the rectangle from which the data will be extracted
-   * @param {number} sw - The width of the rectangle from which the data will be extracted
-   * @param {number} sh - The height of the rectangle from which the data will be extracted
-   * @returns {ImageData} An ImageData object containing the image data for the specified rectangle
-   */
-  getImageData(sx, sy, sw, sh) {
-    const canvasWidth = this.canvas.width;
-    const canvasHeight = this.canvas.height;
-
-    // Ensure parameters are within bounds
-    sx = Math.max(0, Math.min(Math.floor(sx), canvasWidth));
-    sy = Math.max(0, Math.min(Math.floor(sy), canvasHeight));
-    sw = Math.max(0, Math.min(Math.floor(sw), canvasWidth - sx));
-    sh = Math.max(0, Math.min(Math.floor(sh), canvasHeight - sy));
-
-    // Create a new buffer for the extracted data
-    const extractedData = new Uint8ClampedArray(sw * sh * 4);
-
-    // If the requested area is the entire canvas, we can just return a copy of the frameBufferUint8ClampedView
-    if (sx === 0 && sy === 0 && sw === canvasWidth && sh === canvasHeight) {
-      extractedData.set(this.frameBufferUint8ClampedView);
-    } else {
-      // Copy pixel data from the frameBufferUint8ClampedView to the new buffer
-      for (let y = 0; y < sh; y++) {
-        for (let x = 0; x < sw; x++) {
-          const srcIdx = ((sy + y) * canvasWidth + (sx + x)) * 4;
-          const destIdx = (y * sw + x) * 4;
-
-          extractedData[destIdx] = this.frameBufferUint8ClampedView[srcIdx];         // R
-          extractedData[destIdx + 1] = this.frameBufferUint8ClampedView[srcIdx + 1]; // G
-          extractedData[destIdx + 2] = this.frameBufferUint8ClampedView[srcIdx + 2]; // B
-          extractedData[destIdx + 3] = this.frameBufferUint8ClampedView[srcIdx + 3]; // A
+    constructor(canvas) {
+        // Store reference to the canvas element
+        this.canvas = canvas;
+        
+        // Ensure canvas has all required properties
+        if (!canvas.title) {
+            canvas.title = '';
         }
-      }
+        
+        // Create additional compatibility properties for RenderChecks
+        // Different parts of the code base might access these properties in different ways
+        this.displayCanvas = {
+            width: canvas.width,
+            height: canvas.height,
+            title: canvas.title
+        };
+        
+        // Add title directly to context for maximum compatibility
+        // Some code might expect ctx.title instead of ctx.canvas.title
+        this.title = canvas.title;
+        
+        // Initialize the context state
+        this.stateStack = [new ContextState(canvas.width, canvas.height)];
+        
+        // Create the frameBuffer and two views for it
+        this.frameBufferUint8ClampedView = new Uint8ClampedArray(canvas.width * canvas.height * 4).fill(0);
+        // this view show optimise for when we deal with pixel values all together rather than r,g,b,a separately
+        this.frameBufferUint32View = new Uint32Array(this.frameBufferUint8ClampedView.buffer);
+        
+        this.tempClippingMask = new Uint8Array(Math.ceil(canvas.width * canvas.height / 8)).fill(0);
+        
+        // Initialize renderers
+        this.pixelRenderer = new SWRendererPixel(this.frameBufferUint8ClampedView, this.frameBufferUint32View, canvas.width, canvas.height, this);
+        this.lineRenderer = new SWRendererLine(this.pixelRenderer);
+        this.rectRenderer = new SWRendererRect(this.frameBufferUint8ClampedView, this.frameBufferUint32View, canvas.width, canvas.height, this.lineRenderer, this.pixelRenderer);
+        this.roundedRectRenderer = new SWRendererRoundedRect(this.frameBufferUint8ClampedView, this.frameBufferUint32View, canvas.width, canvas.height, this.lineRenderer, this.pixelRenderer, this.rectRenderer);
+        this.circleRenderer = new SWRendererCircle(this.pixelRenderer);
+        this.arcRenderer = new SWRendererArc(this.pixelRenderer);
     }
 
-    // Return a new ImageData object with canvas info for RenderChecks compatibility
-    const imageData = new ImageData(extractedData, sw, sh);
-
-    // Add extra properties that some check routines might expect
-    if (typeof imageData.canvasTitle === 'undefined') {
-      Object.defineProperty(imageData, 'canvasTitle', {
-        get: () => this.canvas.title || this.title || '',
-        configurable: true
-      });
+    get currentState() {
+        return this.stateStack[this.stateStack.length - 1];
     }
 
-    return imageData;
-  }
-
-  // --- Rounded Rectangle Methods ---
-
-  /**
-   * Defines a rounded rectangle path.
-   * NOTE: In this software renderer, direct path definition for later fill/stroke is complex
-   * due to current fill()/stroke() limitations. This method currently does not build a path
-   * in the same way as native canvas. For drawing, use fillRoundRect or strokeRoundRect.
-   * It could be used for clipping if the renderer supports it.
-   * @param {number} x The x-axis coordinate of the rectangle's starting point.
-   * @param {number} y The y-axis coordinate of the rectangle's starting point.
-   * @param {number} width The rectangle's width.
-   * @param {number} height The rectangle's height.
-   * @param {number} radius The radius of the corners.
-   */
-  roundRect(x, y, width, height, radius) {
-    // TODO: Implement path definition for clipping or general path store if fill()/stroke() are enhanced.
-    // For now, this method might not do much or could be used for clipping.
-    // console.warn("CrispSwContext.roundRect() for path definition is not fully implemented for fill/stroke. Use fillRoundRect/strokeRoundRect for drawing.");
-    // Placeholder for potential clipping path definition:
-    const state = this.currentState;
-    const cx = x + width / 2;
-    const cy = y + height / 2;
-    const centerTransformed = transformPoint(cx, cy, state.transform.elements);
-    const rotation = getRotationAngle(state.transform.elements);
-    const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
-
-    // This is a guess, SWRendererRoundedRect might not support clippingOnly directly
-    // or might need a different shape structure for it.
-    /*
-    this.roundedRectRenderer.drawRoundedRect({
-        center: { x: centerTransformed.tx, y: centerTransformed.ty },
-        width: width * scaleX,
-        height: height * scaleY,
-        radius: radius * Math.min(scaleX, scaleY), // Simplistic radius scaling
-        rotation: rotation,
-        clippingOnly: true, // Hypothetical
-        strokeWidth: 0,
-        fillColor: {r:0,g:0,b:0,a:0},
-        strokeColor: {r:0,g:0,b:0,a:0}
-    });
-    */
-    // As rect() is used for clipping, this could be an extension point if SWRendererRoundedRect supports it.
-    throw new Error("CrispSwContext.roundRect() for path definition / clipping is not yet implemented.");
-  }
-
-  /**
-   * Draws a filled rounded rectangle.
-   * @param {number} x The x-axis coordinate of the rectangle's starting point.
-   * @param {number} y The y-axis coordinate of the rectangle's starting point.
-   * @param {number} width The rectangle's width.
-   * @param {number} height The rectangle's height.
-   * @param {number} radius The radius of the corners.
-   */
-  fillRoundRect(x, y, width, height, radius) {
-    const state = this.currentState;
-    const cx = x + width / 2;
-    const cy = y + height / 2;
-    const centerTransformed = transformPoint(cx, cy, state.transform.elements);
-    const rotation = getRotationAngle(state.transform.elements);
-    const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
-    const scaledRadius = radius * Math.min(Math.abs(scaleX), Math.abs(scaleY));
-
-    this.roundedRectRenderer.drawRoundedRect({
-      center: { x: centerTransformed.tx, y: centerTransformed.ty },
-      width: width * scaleX,
-      height: height * scaleY,
-      radius: scaledRadius,
-      rotation: rotation,
-      fillColor: state.fillColor,
-      strokeWidth: 0,
-      strokeColor: Color.transparent()
-    });
-  }
-
-  /**
-   * Draws the stroke of a rounded rectangle.
-   * @param {number} x The x-axis coordinate of the rectangle's starting point.
-   * @param {number} y The y-axis coordinate of the rectangle's starting point.
-   * @param {number} width The rectangle's width.
-   * @param {number} height The rectangle's height.
-   * @param {number} radius The radius of the corners.
-   */
-  strokeRoundRect(x, y, width, height, radius) {
-    const state = this.currentState;
-    const scaledLineWidth = getScaledLineWidth(state.transform.elements, state.lineWidth);
-    const cx = x + width / 2;
-    const cy = y + height / 2;
-    const centerTransformed = transformPoint(cx, cy, state.transform.elements);
-    const rotation = getRotationAngle(state.transform.elements);
-    const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
-    const scaledRadius = radius * Math.min(Math.abs(scaleX), Math.abs(scaleY));
-
-    this.roundedRectRenderer.drawRoundedRect({
-      center: { x: centerTransformed.tx, y: centerTransformed.ty },
-      width: width * scaleX,
-      height: height * scaleY,
-      radius: scaledRadius,
-      rotation: rotation,
-      fillColor: Color.transparent(),
-      strokeWidth: scaledLineWidth,
-      strokeColor: state.strokeColor
-    });
-  }
-
-  // --- End Rounded Rectangle Methods ---
-
-  // --- Arc Methods ---
-
-  /**
-   * Adds an arc to the current path (for potential clipping or future path system).
-   * Angles are in radians.
-   * NOTE: Currently, this method is a stub and does not build a persistent path for fill/stroke
-   * due to limitations in the generic fill()/stroke() methods of CrispSwContext.
-   * For drawing, use fillArc, outerStrokeArc, or fillAndOuterStrokeArc.
-   */
-  arc(x, y, radius, startAngle, endAngle, anticlockwise = false) {
-    // TODO: Implement path definition for clipping if SWRendererArc supports it,
-    // or for a general path store if fill()/stroke() are enhanced.
-    // For now, only full circles are supported for clipping.
-    const isFullCircle = Math.abs(Math.abs(endAngle - startAngle) - (2 * Math.PI)) < 1e-9; // Check for 2PI difference
-
-    if (isFullCircle) {
-      const state = this.currentState;
-      const centerTransformed = transformPoint(x, y, state.transform.elements);
-      const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
-      // For circles, radius is scaled by the max of scaleX and scaleY to maintain circularity
-      // as we don't support ellipses yet.
-      const scaledRadius = radius * Math.max(Math.abs(scaleX), Math.abs(scaleY));
-
-      this.circleRenderer.drawCircle({
-        center: { x: centerTransformed.tx, y: centerTransformed.ty },
-        radius: scaledRadius,
-        clippingOnly: true,
-        // These are not used for clippingOnly, but provided for shape consistency
-        strokeWidth: 0,
-        strokeColor: Color.transparent(),
-        fillColor: Color.transparent()
-      });
-    } else {
-      throw new Error("CrispSwContext.arc() for path definition/clipping is only implemented for full circles. Use fillArc/outerStrokeArc for drawing partial arcs.");
+    save() {
+        this.stateStack.push(this.currentState.clone());
     }
-  }
 
-  /**
-   * Draws a filled arc (pie slice).
-   * Angles are in radians.
-   */
-  fillArc(x, y, radius, startAngle, endAngle, anticlockwise = false) {
-    const state = this.currentState;
-    const centerTransformed = transformPoint(x, y, state.transform.elements);
-    const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
-    const scaledRadius = radius * Math.min(Math.abs(scaleX), Math.abs(scaleY));
+    restore() {
+        if (this.stateStack.length <= 1) {
+            throw new Error("Cannot restore() - stack is empty");
+        }
+        this.stateStack.pop();
+    }
 
-    const startAngleDeg = startAngle * 180 / Math.PI;
-    const endAngleDeg = endAngle * 180 / Math.PI;
+    // Transform methods
+    scale(x, y) {
+        this.currentState.transform = this.currentState.transform.scale(x, y);
+    }
 
-    // SWRendererArc.drawArc expects a shape with fillColor and strokeColor (alpha 0-255)
-    // It internally handles fill and/or stroke based on these colors and strokeWidth.
-    this.arcRenderer.drawArc({
-      center: { x: centerTransformed.tx, y: centerTransformed.ty },
-      radius: scaledRadius,
-      startAngle: startAngleDeg,
-      endAngle: endAngleDeg,
-      anticlockwise: anticlockwise,
-      fillColor: state.fillColor,
-      strokeWidth: 0,
-      strokeColor: Color.transparent()
-    });
-  }
+    rotate(angle) {
+        this.currentState.transform = this.currentState.transform.rotate(angle);
+    }
 
-  /**
-   * Draws the stroke of an arc.
-   * Angles are in radians.
-   */
-  outerStrokeArc(x, y, radius, startAngle, endAngle, anticlockwise = false) {
-    const state = this.currentState;
-    const scaledLineWidth = getScaledLineWidth(state.transform.elements, state.lineWidth);
-    const centerTransformed = transformPoint(x, y, state.transform.elements);
-    const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
-    const scaledRadius = radius * Math.min(Math.abs(scaleX), Math.abs(scaleY));
+    translate(x, y) {
+        this.currentState.transform = this.currentState.transform.translate(x, y);
+    }
+    
+    /**
+     * Resets the current transformation matrix to the identity matrix
+     */
+    resetTransform() {
+        this.currentState.transform = new Transform2D();
+    }
 
-    const startAngleDeg = startAngle * 180 / Math.PI;
-    const endAngleDeg = endAngle * 180 / Math.PI;
+    // Style setters and getters
+    set fillStyle(style) {
+        this.currentState.fillColor = Color.fromCSS(style, _colorParser);
+    }
 
-    this.arcRenderer.drawArc({
-      center: { x: centerTransformed.tx, y: centerTransformed.ty },
-      radius: scaledRadius,
-      startAngle: startAngleDeg,
-      endAngle: endAngleDeg,
-      anticlockwise: anticlockwise,
-      fillColor: Color.transparent(),
-      strokeWidth: scaledLineWidth,
-      strokeColor: state.strokeColor
-    });
-  }
+    get fillStyle() {
+        return this.currentState.fillColor.toCSS();
+    }
 
-  /**
-   * Draws a filled and stroked arc.
-   * Angles are in radians.
-   */
-  fillAndOuterStrokeArc(x, y, radius, startAngle, endAngle, anticlockwise = false) {
-    const state = this.currentState;
-    const scaledLineWidth = getScaledLineWidth(state.transform.elements, state.lineWidth);
-    const centerTransformed = transformPoint(x, y, state.transform.elements);
-    const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
-    const scaledRadius = radius * Math.min(Math.abs(scaleX), Math.abs(scaleY));
+    set strokeStyle(style) {
+        this.currentState.strokeColor = Color.fromCSS(style, _colorParser);
+    }
 
-    const startAngleDeg = startAngle * 180 / Math.PI;
-    const endAngleDeg = endAngle * 180 / Math.PI;
+    get strokeStyle() {
+        return this.currentState.strokeColor.toCSS();
+    }
 
-    // SWRendererArc.drawArc handles both fill and stroke if both colors are opaque and strokeWidth > 0
-    this.arcRenderer.drawArc({
-      center: { x: centerTransformed.tx, y: centerTransformed.ty },
-      radius: scaledRadius,
-      startAngle: startAngleDeg,
-      endAngle: endAngleDeg,
-      anticlockwise: anticlockwise,
-      fillColor: state.fillColor,
-      strokeWidth: scaledLineWidth,
-      strokeColor: state.strokeColor
-    });
-  }
+    set lineWidth(width) {
+        this.currentState.lineWidth = width;
+    }
 
-  // --- End Arc Methods ---
+    // Add globalAlpha property
+    set globalAlpha(value) {
+        this.currentState.globalAlpha = Math.max(0, Math.min(1, value)); // Clamp between 0 and 1
+    }
+
+    get globalAlpha() {
+        return this.currentState.globalAlpha;
+    }
+
+    // Drawing methods
+    beginPath() {
+        this.tempClippingMask.fill(0);
+    }
+
+    fill() {
+        throw new Error("fill() is not supported - use fillRect() instead");
+    }
+
+    stroke() {
+        throw new Error("stroke() is not supported - use strokeRect() instead");
+    }
+    
+    strokeLine(x1, y1, x2, y2) {
+        const state = this.currentState;
+        const scaledLineWidth = state.transform.getScaledLineWidth(state.lineWidth);
+
+        // Transform points according to current transformation matrix
+        const start = state.transform.transformPoint({x: x1, y: y1});
+        const end = state.transform.transformPoint({x: x2, y: y2});
+
+        this.lineRenderer.drawLine({
+            start: { x: start.x, y: start.y },
+            end: { x: end.x, y: end.y },
+            thickness: scaledLineWidth,
+            color: state.strokeColor
+        });
+    }
+
+    clearRect(x, y, width, height) {
+        const state = this.currentState;
+        const center = state.transform.transformPoint({x: x + width / 2, y: y + height / 2});
+        const rotation = state.transform.rotationAngle;
+        this.rectRenderer.clearRect({
+            center: { x: center.x, y: center.y },
+            width: width,
+            height: height,
+            rotation: rotation
+        });
+    }
+
+    // as the CrispSwCanvas does not support paths and fill() annd stroke() are not supported,
+    // rect() is used for clipping only.
+    rect(x, y, width, height) {
+        const state = this.currentState;
+        const center = state.transform.transformPoint({x: x + width / 2, y: y + height / 2});
+        const rotation = state.transform.rotationAngle;
+        const scaleX = state.transform.scaleX;
+        const scaleY = state.transform.scaleY;
+
+        this.rectRenderer.drawRect({
+            center: { x: center.x, y: center.y },
+            width: width * scaleX,
+            height: height * scaleY,
+            rotation: rotation,
+            clippingOnly: true
+        });
+    }
+
+    // The clip() function
+    // * takes the clippingMask and ANDs it with the tempClippingMask
+    // * clears the tempClippingMask to all zeroes
+    clip() {
+        // to a logical and of the current clippingMask and the tempClippingMask
+        // a little bit of bitwise magic like this:
+        // this.currentState.clippingMask = this.currentState.clippingMask && this.tempClippingMask;
+        // but we need to do it for each byte
+        for (let i = 0; i < this.currentState.clippingMask.length; i++) {
+            this.currentState.clippingMask[i] = this.currentState.clippingMask[i] & this.tempClippingMask[i];
+        }
+        // clip() does not close the path, so since we might add more rects to the paths, we cannot clear the tempClippingMask
+        // can't do this: this.tempClippingMask.fill(0);
+    }
+
+
+    fillRect(x, y, width, height) {
+        const state = this.currentState;
+        const center = state.transform.transformPoint({x: x + width / 2, y: y + height / 2});
+        const rotation = state.transform.rotationAngle;
+        const scaleX = state.transform.scaleX;
+        const scaleY = state.transform.scaleY;
+
+        this.rectRenderer.drawRect({
+            center: { x: center.x, y: center.y },
+            width: width * scaleX,
+            height: height * scaleY,
+            rotation: rotation,
+            clippingOnly: false,
+            strokeWidth: 0,
+            strokeColor: Color.transparent,
+            fillColor: state.fillColor
+        });
+    }
+
+    strokeRect(x, y, width, height) {
+        const state = this.currentState;
+        const scaledLineWidth = state.transform.getScaledLineWidth(state.lineWidth);
+
+        const center = state.transform.transformPoint({x: x + width / 2, y: y + height / 2});
+        const rotation = state.transform.rotationAngle;
+        const scaleX = state.transform.scaleX;
+        const scaleY = state.transform.scaleY;
+
+        this.rectRenderer.drawRect({
+            center: { x: center.x, y: center.y },
+            width: width * scaleX,
+            height: height * scaleY,
+            rotation: rotation,
+            clippingOnly: false,
+            strokeWidth: scaledLineWidth,
+            strokeColor: state.strokeColor,
+            fillColor: Color.transparent
+        });
+    }
+
+    blitToCanvas(canvas) {
+        if (isNode) return;
+
+        const imageData = new ImageData(this.frameBufferUint8ClampedView, this.canvas.width, this.canvas.height);
+        const ctx = canvas.getContext('2d');
+        ctx.putImageData(imageData, 0, 0);
+    }
+    
+    /**
+     * Fill a circle with the specified color
+     * @param {number} centerX - X coordinate of the circle center
+     * @param {number} centerY - Y coordinate of the circle center
+     * @param {number} radius - Radius of the circle
+     * @param {Color} fillColor - Fill color as a Color instance
+     */
+    fillCircle(centerX, centerY, radius, fillColor) {
+        const state = this.currentState;
+
+        // Transform center point according to current transformation matrix
+        const center = state.transform.transformPoint({x: centerX, y: centerY});
+
+        // Apply scale factor to radius
+        const scaleX = state.transform.scaleX;
+        const scaleY = state.transform.scaleY;
+        const scaledRadius = radius * Math.max(scaleX, scaleY);
+
+        // Create shape object for the circle
+        const circleShape = {
+            center: { x: center.x, y: center.y },
+            radius: scaledRadius,
+            strokeWidth: 0,
+            strokeColor: Color.transparent,
+            fillColor: fillColor
+        };
+
+        // Call the circle renderer with our shape
+        this.circleRenderer.drawCircle(circleShape);
+    }
+    
+    /**
+     * Stroke a circle with the specified color and width
+     * @param {number} centerX - X coordinate of the circle center
+     * @param {number} centerY - Y coordinate of the circle center
+     * @param {number} radius - Radius of the circle
+     * @param {number} strokeWidth - Width of the stroke
+     * @param {Color} strokeColor - Stroke color as a Color instance
+     */
+    strokeCircle(centerX, centerY, radius, strokeWidth, strokeColor) {
+        const state = this.currentState;
+
+        // Transform center point according to current transformation matrix
+        const center = state.transform.transformPoint({x: centerX, y: centerY});
+
+        // Apply scale factor to radius and stroke width
+        const scaleX = state.transform.scaleX;
+        const scaleY = state.transform.scaleY;
+        const scaledRadius = radius * Math.max(scaleX, scaleY);
+        const scaledStrokeWidth = state.transform.getScaledLineWidth(strokeWidth);
+
+        // Create shape object for the circle
+        const circleShape = {
+            center: { x: center.x, y: center.y },
+            radius: scaledRadius,
+            strokeWidth: scaledStrokeWidth,
+            strokeColor: strokeColor,
+            fillColor: Color.transparent
+        };
+
+        // Call the circle renderer with our shape
+        this.circleRenderer.drawCircle(circleShape);
+    }
+    
+    /**
+     * Fill and stroke a circle with specified colors and stroke width
+     * @param {number} centerX - X coordinate of the circle center
+     * @param {number} centerY - Y coordinate of the circle center
+     * @param {number} radius - Radius of the circle
+     * @param {Color} fillColor - Fill color as a Color instance
+     * @param {number} strokeWidth - Width of the stroke
+     * @param {Color} strokeColor - Stroke color as a Color instance
+     */
+    fillAndStrokeCircle(centerX, centerY, radius, fillColor, strokeWidth, strokeColor) {
+        const state = this.currentState;
+
+        // Transform center point according to current transformation matrix
+        const center = state.transform.transformPoint({x: centerX, y: centerY});
+
+        // Apply scale factor to radius and stroke width
+        const scaleX = state.transform.scaleX;
+        const scaleY = state.transform.scaleY;
+        const scaledRadius = radius * Math.max(scaleX, scaleY);
+        const scaledStrokeWidth = state.transform.getScaledLineWidth(strokeWidth);
+
+        // Create shape object for the circle
+        const circleShape = {
+            center: { x: center.x, y: center.y },
+            radius: scaledRadius,
+            strokeWidth: scaledStrokeWidth,
+            strokeColor: strokeColor,
+            fillColor: fillColor
+        };
+
+        // Call the circle renderer with our shape
+        this.circleRenderer.drawCircle(circleShape);
+    }
+
+    /**
+     * Returns an ImageData object representing the pixel data for the specified rectangle.
+     * Compatible with HTML5 Canvas getImageData method.
+     * @param {number} sx - The x-coordinate of the top-left corner of the rectangle from which the data will be extracted
+     * @param {number} sy - The y-coordinate of the top-left corner of the rectangle from which the data will be extracted
+     * @param {number} sw - The width of the rectangle from which the data will be extracted
+     * @param {number} sh - The height of the rectangle from which the data will be extracted
+     * @returns {ImageData} An ImageData object containing the image data for the specified rectangle
+     */
+    getImageData(sx, sy, sw, sh) {
+        const canvasWidth = this.canvas.width;
+        const canvasHeight = this.canvas.height;
+        
+        // Ensure parameters are within bounds
+        sx = Math.max(0, Math.min(Math.floor(sx), canvasWidth));
+        sy = Math.max(0, Math.min(Math.floor(sy), canvasHeight));
+        sw = Math.max(0, Math.min(Math.floor(sw), canvasWidth - sx));
+        sh = Math.max(0, Math.min(Math.floor(sh), canvasHeight - sy));
+        
+        // Create a new buffer for the extracted data
+        const extractedData = new Uint8ClampedArray(sw * sh * 4);
+        
+        // If the requested area is the entire canvas, we can just return a copy of the frameBufferUint8ClampedView
+        if (sx === 0 && sy === 0 && sw === canvasWidth && sh === canvasHeight) {
+            extractedData.set(this.frameBufferUint8ClampedView);
+        } else {
+            // Copy pixel data from the frameBufferUint8ClampedView to the new buffer
+            for (let y = 0; y < sh; y++) {
+                for (let x = 0; x < sw; x++) {
+                    const srcIdx = ((sy + y) * canvasWidth + (sx + x)) * 4;
+                    const destIdx = (y * sw + x) * 4;
+                    
+                    extractedData[destIdx] = this.frameBufferUint8ClampedView[srcIdx];         // R
+                    extractedData[destIdx + 1] = this.frameBufferUint8ClampedView[srcIdx + 1]; // G
+                    extractedData[destIdx + 2] = this.frameBufferUint8ClampedView[srcIdx + 2]; // B
+                    extractedData[destIdx + 3] = this.frameBufferUint8ClampedView[srcIdx + 3]; // A
+                }
+            }
+        }
+        
+        // Return a new ImageData object with canvas info for RenderChecks compatibility
+        const imageData = new ImageData(extractedData, sw, sh);
+        
+        // Add extra properties that some check routines might expect
+        if (typeof imageData.canvasTitle === 'undefined') {
+            Object.defineProperty(imageData, 'canvasTitle', {
+                get: () => this.canvas.title || this.title || '',
+                configurable: true
+            });
+        }
+        
+        return imageData;
+    }
+    
+    // --- Rounded Rectangle Methods ---
+
+    /**
+     * Defines a rounded rectangle path.
+     * NOTE: In this software renderer, direct path definition for later fill/stroke is complex
+     * due to current fill()/stroke() limitations. This method currently does not build a path
+     * in the same way as native canvas. For drawing, use fillRoundRect or strokeRoundRect.
+     * It could be used for clipping if the renderer supports it.
+     * @param {number} x The x-axis coordinate of the rectangle's starting point.
+     * @param {number} y The y-axis coordinate of the rectangle's starting point.
+     * @param {number} width The rectangle's width.
+     * @param {number} height The rectangle's height.
+     * @param {number} radius The radius of the corners.
+     */
+    roundRect(x, y, width, height, radius) {
+        // TODO: Implement path definition for clipping or general path store if fill()/stroke() are enhanced.
+        // For now, this method might not do much or could be used for clipping.
+        // console.warn("CrispSwContext.roundRect() for path definition is not fully implemented for fill/stroke. Use fillRoundRect/strokeRoundRect for drawing.");
+        // Placeholder for potential clipping path definition:
+        const state = this.currentState;
+        const cx = x + width / 2;
+        const cy = y + height / 2;
+        const centerTransformed = state.transform.transformPoint({x: cx, y: cy});
+        const rotation = state.transform.rotationAngle;
+        const scaleX = state.transform.scaleX;
+        const scaleY = state.transform.scaleY;
+
+        // This is a guess, SWRendererRoundedRect might not support clippingOnly directly
+        // or might need a different shape structure for it.
+        /*
+        this.roundedRectRenderer.drawRoundedRect({
+            center: { x: centerTransformed.x, y: centerTransformed.y },
+            width: width * scaleX,
+            height: height * scaleY,
+            radius: radius * Math.min(scaleX, scaleY), // Simplistic radius scaling
+            rotation: rotation,
+            clippingOnly: true, // Hypothetical
+            strokeWidth: 0,
+            fillColor: {r:0,g:0,b:0,a:0},
+            strokeColor: {r:0,g:0,b:0,a:0}
+        });
+        */
+        // As rect() is used for clipping, this could be an extension point if SWRendererRoundedRect supports it.
+         throw new Error("CrispSwContext.roundRect() for path definition / clipping is not yet implemented.");
+    }
+
+    /**
+     * Draws a filled rounded rectangle.
+     * @param {number} x The x-axis coordinate of the rectangle's starting point.
+     * @param {number} y The y-axis coordinate of the rectangle's starting point.
+     * @param {number} width The rectangle's width.
+     * @param {number} height The rectangle's height.
+     * @param {number} radius The radius of the corners.
+     */
+    fillRoundRect(x, y, width, height, radius) {
+        const state = this.currentState;
+        const cx = x + width / 2;
+        const cy = y + height / 2;
+        const centerTransformed = state.transform.transformPoint({x: cx, y: cy});
+        const rotation = state.transform.rotationAngle;
+        const scaleX = state.transform.scaleX;
+        const scaleY = state.transform.scaleY;
+        const scaledRadius = radius * Math.min(Math.abs(scaleX), Math.abs(scaleY));
+
+        this.roundedRectRenderer.drawRoundedRect({
+            center: { x: centerTransformed.x, y: centerTransformed.y },
+            width: width * scaleX,
+            height: height * scaleY,
+            radius: scaledRadius,
+            rotation: rotation,
+            fillColor: state.fillColor,
+            strokeWidth: 0,
+            strokeColor: Color.transparent
+        });
+    }
+
+    /**
+     * Draws the stroke of a rounded rectangle.
+     * @param {number} x The x-axis coordinate of the rectangle's starting point.
+     * @param {number} y The y-axis coordinate of the rectangle's starting point.
+     * @param {number} width The rectangle's width.
+     * @param {number} height The rectangle's height.
+     * @param {number} radius The radius of the corners.
+     */
+    strokeRoundRect(x, y, width, height, radius) {
+        const state = this.currentState;
+        const scaledLineWidth = state.transform.getScaledLineWidth(state.lineWidth);
+        const cx = x + width / 2;
+        const cy = y + height / 2;
+        const centerTransformed = state.transform.transformPoint({x: cx, y: cy});
+        const rotation = state.transform.rotationAngle;
+        const scaleX = state.transform.scaleX;
+        const scaleY = state.transform.scaleY;
+        const scaledRadius = radius * Math.min(Math.abs(scaleX), Math.abs(scaleY));
+
+        this.roundedRectRenderer.drawRoundedRect({
+            center: { x: centerTransformed.x, y: centerTransformed.y },
+            width: width * scaleX,
+            height: height * scaleY,
+            radius: scaledRadius,
+            rotation: rotation,
+            fillColor: Color.transparent,
+            strokeWidth: scaledLineWidth,
+            strokeColor: state.strokeColor
+        });
+    }
+
+    // --- End Rounded Rectangle Methods ---
+
+    // --- Arc Methods ---
+
+    /**
+     * Adds an arc to the current path (for potential clipping or future path system).
+     * Angles are in radians.
+     * NOTE: Currently, this method is a stub and does not build a persistent path for fill/stroke
+     * due to limitations in the generic fill()/stroke() methods of CrispSwContext.
+     * For drawing, use fillArc, outerStrokeArc, or fillAndOuterStrokeArc.
+     */
+    arc(x, y, radius, startAngle, endAngle, anticlockwise = false) {
+        // TODO: Implement path definition for clipping if SWRendererArc supports it,
+        // or for a general path store if fill()/stroke() are enhanced.
+        // For now, only full circles are supported for clipping.
+        const isFullCircle = Math.abs(Math.abs(endAngle - startAngle) - (2 * Math.PI)) < 1e-9; // Check for 2PI difference
+
+        if (isFullCircle) {
+            const state = this.currentState;
+            const centerTransformed = state.transform.transformPoint({x, y});
+            const scaleX = state.transform.scaleX;
+            const scaleY = state.transform.scaleY;
+            // For circles, radius is scaled by the max of scaleX and scaleY to maintain circularity
+            // as we don't support ellipses yet.
+            const scaledRadius = radius * Math.max(Math.abs(scaleX), Math.abs(scaleY));
+
+            this.circleRenderer.drawCircle({
+                center: { x: centerTransformed.x, y: centerTransformed.y },
+                radius: scaledRadius,
+                clippingOnly: true,
+                // These are not used for clippingOnly, but provided for shape consistency
+                strokeWidth: 0,
+                strokeColor: Color.transparent,
+                fillColor: Color.transparent
+            });
+        } else {
+            throw new Error("CrispSwContext.arc() for path definition/clipping is only implemented for full circles. Use fillArc/outerStrokeArc for drawing partial arcs.");
+        }
+    }
+
+    /**
+     * Draws a filled arc (pie slice).
+     * Angles are in radians.
+     */
+    fillArc(x, y, radius, startAngle, endAngle, anticlockwise = false) {
+        const state = this.currentState;
+        const centerTransformed = state.transform.transformPoint({x, y});
+        const scaleX = state.transform.scaleX;
+        const scaleY = state.transform.scaleY;
+        const scaledRadius = radius * Math.min(Math.abs(scaleX), Math.abs(scaleY));
+
+        const startAngleDeg = startAngle * 180 / Math.PI;
+        const endAngleDeg = endAngle * 180 / Math.PI;
+
+        // SWRendererArc.drawArc expects a shape with fillColor and strokeColor (alpha 0-255)
+        // It internally handles fill and/or stroke based on these colors and strokeWidth.
+        this.arcRenderer.drawArc({
+            center: { x: centerTransformed.x, y: centerTransformed.y },
+            radius: scaledRadius,
+            startAngle: startAngleDeg,
+            endAngle: endAngleDeg,
+            anticlockwise: anticlockwise,
+            fillColor: state.fillColor,
+            strokeWidth: 0,
+            strokeColor: Color.transparent
+        });
+    }
+
+    /**
+     * Draws the stroke of an arc.
+     * Angles are in radians.
+     */
+    outerStrokeArc(x, y, radius, startAngle, endAngle, anticlockwise = false) {
+        const state = this.currentState;
+        const scaledLineWidth = state.transform.getScaledLineWidth(state.lineWidth);
+        const centerTransformed = state.transform.transformPoint({x, y});
+        const scaleX = state.transform.scaleX;
+        const scaleY = state.transform.scaleY;
+        const scaledRadius = radius * Math.min(Math.abs(scaleX), Math.abs(scaleY));
+
+        const startAngleDeg = startAngle * 180 / Math.PI;
+        const endAngleDeg = endAngle * 180 / Math.PI;
+
+        this.arcRenderer.drawArc({
+            center: { x: centerTransformed.x, y: centerTransformed.y },
+            radius: scaledRadius,
+            startAngle: startAngleDeg,
+            endAngle: endAngleDeg,
+            anticlockwise: anticlockwise,
+            fillColor: Color.transparent,
+            strokeWidth: scaledLineWidth,
+            strokeColor: state.strokeColor
+        });
+    }
+
+    /**
+     * Draws a filled and stroked arc.
+     * Angles are in radians.
+     */
+    fillAndOuterStrokeArc(x, y, radius, startAngle, endAngle, anticlockwise = false) {
+        const state = this.currentState;
+        const scaledLineWidth = state.transform.getScaledLineWidth(state.lineWidth);
+        const centerTransformed = state.transform.transformPoint({x, y});
+        const scaleX = state.transform.scaleX;
+        const scaleY = state.transform.scaleY;
+        const scaledRadius = radius * Math.min(Math.abs(scaleX), Math.abs(scaleY));
+
+        const startAngleDeg = startAngle * 180 / Math.PI;
+        const endAngleDeg = endAngle * 180 / Math.PI;
+
+        // SWRendererArc.drawArc handles both fill and stroke if both colors are opaque and strokeWidth > 0
+        this.arcRenderer.drawArc({
+            center: { x: centerTransformed.x, y: centerTransformed.y },
+            radius: scaledRadius,
+            startAngle: startAngleDeg,
+            endAngle: endAngleDeg,
+            anticlockwise: anticlockwise,
+            fillColor: state.fillColor,
+            strokeWidth: scaledLineWidth,
+            strokeColor: state.strokeColor
+        });
+    }
+
+    // --- End Arc Methods ---
 }
 /**
  * Class for performing various checks on the rendered images
@@ -5783,21 +5853,21 @@ class RenderChecks {
     const width = canvas.width;
     const height = canvas.height;
     const title = canvas.title || (canvasCtxOfSwRender.title || 'unknown');
-
+    
     const imageData = canvasCtxOfSwRender.getImageData(0, 0, width, height);
     const data = imageData.data;
-
+    
     // Extract edges from extremes
     const { leftX, rightX, topY, bottomY } = extremes;
-
+    
     // Function to check if a pixel is transparent (alpha = 0)
     const isTransparent = (idx) => data[idx + 3] === 0;
-
+    
     // Track the pattern transitions as we scan
     let transitionPattern = [];
     let holeFound = false;
     let detailMessage = '';
-
+    
     if (!horizontalScan) {
       // Vertical scan (row by row from top to bottom)
       this.scanVertically(data, width, leftX, rightX, topY, bottomY, isTransparent, transitionPattern);
@@ -5805,7 +5875,7 @@ class RenderChecks {
       // Horizontal scan (column by column from left to right)
       this.scanHorizontally(data, width, leftX, rightX, topY, bottomY, isTransparent, transitionPattern);
     }
-
+    
     // Find any fragmented patterns that indicate holes
     for (const transition of transitionPattern) {
       if (transition.pattern === 'fragmented') {
@@ -5815,23 +5885,23 @@ class RenderChecks {
         break;
       }
     }
-
+    
     // Validate the transition pattern - should follow this sequence:
     // 1. One or more 'solid' rows/cols (cap)
     // 2. Zero or more 'sides' rows/cols (if shape is large enough)
     // 3. One or more 'solid' rows/cols (cap)
-
+    
     // The only valid patterns are:
     // - solid only (small shape)
     // - solid → sides → solid (normal shape)
-
+    
     let validTransitionSequence = true;
     let currentState = 'start';
     const directionLabel = horizontalScan ? 'column' : 'row';
-
+    
     for (let i = 0; i < transitionPattern.length; i++) {
       const { pattern, pos } = transitionPattern[i];
-
+      
       switch (currentState) {
         case 'start':
           if (pattern === 'solid') {
@@ -5846,7 +5916,7 @@ class RenderChecks {
             detailMessage = `Fragmented pattern at ${directionLabel} ${pos}`;
           }
           break;
-
+          
         case 'firstCap':
           if (pattern === 'sides') {
             currentState = 'sides';
@@ -5860,7 +5930,7 @@ class RenderChecks {
             detailMessage = `Unexpected empty ${directionLabel} at ${pos}`;
           }
           break;
-
+          
         case 'sides':
           if (pattern === 'solid') {
             currentState = 'secondCap';
@@ -5874,7 +5944,7 @@ class RenderChecks {
             detailMessage = `Unexpected empty ${directionLabel} at ${pos}`;
           }
           break;
-
+          
         case 'secondCap':
           if (pattern !== 'solid') {
             // Only solid allowed in second cap
@@ -5883,18 +5953,18 @@ class RenderChecks {
           }
           break;
       }
-
+      
       if (!validTransitionSequence) {
         break;
       }
     }
-
+    
     // Check final state - must end in firstCap (small shape) or secondCap (normal shape)
     if (validTransitionSequence && currentState !== 'firstCap' && currentState !== 'secondCap') {
       validTransitionSequence = false;
       detailMessage = 'Incomplete stroke pattern';
     }
-
+    
     if (!validTransitionSequence || holeFound) {
       const rendererName = title ? title.split('-')[0] : 'Unknown';
       const scanType = horizontalScan ? 'horizontal' : 'vertical';
@@ -5902,10 +5972,10 @@ class RenderChecks {
       this.test.showError(errorMessage);
       return false;
     }
-
+    
     return true;
   }
-
+  
   /**
    * Scan vertically (row by row) and analyze pixel patterns
    * @private
@@ -5916,12 +5986,12 @@ class RenderChecks {
       // Track contiguous pixel groups in the current row
       let contiguousGroups = [];
       let currentGroup = null;
-
+      
       // Scan this row from left to right
       for (let x = leftX; x <= rightX; x++) {
         const idx = (y * width + x) * 4;
         const isPixelTransparent = isTransparent(idx);
-
+        
         if (!isPixelTransparent) {
           // Start a new group or extend current group
           if (currentGroup === null) {
@@ -5935,12 +6005,12 @@ class RenderChecks {
           currentGroup = null;
         }
       }
-
+      
       // Add the last group if it exists
       if (currentGroup !== null) {
         contiguousGroups.push(currentGroup);
       }
-
+      
       // Categorize the pattern for this row
       let rowPattern = '';
       if (contiguousGroups.length === 0) {
@@ -5952,14 +6022,14 @@ class RenderChecks {
       } else {
         rowPattern = 'fragmented';
       }
-
+      
       // Add the pattern to our transition sequence
       if (transitionPattern.length === 0 || transitionPattern[transitionPattern.length - 1].pattern !== rowPattern) {
         transitionPattern.push({ pos: y, pattern: rowPattern, groupCount: contiguousGroups.length });
       }
     }
   }
-
+  
   /**
    * Scan horizontally (column by column) and analyze pixel patterns
    * @private
@@ -5970,12 +6040,12 @@ class RenderChecks {
       // Track contiguous pixel groups in the current column
       let contiguousGroups = [];
       let currentGroup = null;
-
+      
       // Scan this column from top to bottom
       for (let y = topY; y <= bottomY; y++) {
         const idx = (y * width + x) * 4;
         const isPixelTransparent = isTransparent(idx);
-
+        
         if (!isPixelTransparent) {
           // Start a new group or extend current group
           if (currentGroup === null) {
@@ -5989,12 +6059,12 @@ class RenderChecks {
           currentGroup = null;
         }
       }
-
+      
       // Add the last group if it exists
       if (currentGroup !== null) {
         contiguousGroups.push(currentGroup);
       }
-
+      
       // Categorize the pattern for this column
       let colPattern = '';
       if (contiguousGroups.length === 0) {
@@ -6006,7 +6076,7 @@ class RenderChecks {
       } else {
         colPattern = 'fragmented';
       }
-
+      
       // Add the pattern to our transition sequence
       if (transitionPattern.length === 0 || transitionPattern[transitionPattern.length - 1].pattern !== colPattern) {
         transitionPattern.push({ pos: x, pattern: colPattern, groupCount: contiguousGroups.length });
@@ -6027,30 +6097,30 @@ class RenderChecks {
     const width = canvas.width;
     const height = canvas.height;
     const title = canvas.title || (canvasContextOfSwRendererOrCanvasRenderer.title || 'unknown');
-
+    
     const imageData = canvasContextOfSwRendererOrCanvasRenderer.getImageData(0, 0, width, height);
-
+    
     const data = imageData.data;
     const uniqueColors = new Set();
-
+    
     if (isRow) {
       const middleY = Math.floor(height / 2);
-      for (let x = 0; x < width; x++) {
+      for(let x = 0; x < width; x++) {
         const i = (middleY * width + x) * 4;
-        if (data[i + 3] === 0) continue;
-        const colorKey = `${data[i]},${data[i + 1]},${data[i + 2]},${data[i + 3]}`;
+        if(data[i+3] === 0) continue;
+        const colorKey = `${data[i]},${data[i+1]},${data[i+2]},${data[i+3]}`;
         uniqueColors.add(colorKey);
       }
     } else {
       const middleX = Math.floor(width / 2);
-      for (let y = 0; y < height; y++) {
+      for(let y = 0; y < height; y++) {
         const i = (y * width + middleX) * 4;
-        if (data[i + 3] === 0) continue;
-        const colorKey = `${data[i]},${data[i + 1]},${data[i + 2]},${data[i + 3]}`;
+        if(data[i+3] === 0) continue;
+        const colorKey = `${data[i]},${data[i+1]},${data[i+2]},${data[i+3]}`;
         uniqueColors.add(colorKey);
       }
     }
-
+    
     const count = uniqueColors.size;
     if (expectedColors !== null && count !== expectedColors) {
       let message = `Expected ${expectedColors} colors but found ${count} colors in middle ${isRow ? 'row' : 'column'} of ${title}`;
@@ -6059,7 +6129,7 @@ class RenderChecks {
       });
       this.test.showError(message);
     }
-
+    
     return count;
   }
 
@@ -6095,21 +6165,21 @@ class RenderChecks {
     const canvas = canvasContextOfSwRendererOrCanvasRenderer.canvas;
     const width = canvas.width;
     const height = canvas.height;
-
+    
     const imageData = canvasContextOfSwRendererOrCanvasRenderer.getImageData(0, 0, width, height);
-
+    
     const data = imageData.data;
-
+    
     let minX = width;
     let maxX = -1;
     let minY = height;
     let maxY = -1;
-
+    
     // Scan all pixels
     for (let y = 0; y < height; y++) {
       for (let x = 0; x < width; x++) {
         const i = (y * width + x) * 4;
-        if (data[i + 3] / 255 > alphaTolerance) {  // If pixel is not fully transparent (or very close, depending on alphaTolerance)
+        if (data[i + 3]/255 > alphaTolerance) {  // If pixel is not fully transparent (or very close, depending on alphaTolerance)
           minX = Math.min(minX, x);
           maxX = Math.max(maxX, x);
           minY = Math.min(minY, y);
@@ -6117,15 +6187,15 @@ class RenderChecks {
         }
       }
     }
-
+    
     // If no qualifying pixels were found, return null
     if (minX === width || maxX === -1 || minY === height || maxY === -1) {
       return null;
     }
-
+    
     return { leftX: minX, rightX: maxX, topY: minY, bottomY: maxY };
   }
-
+  
   /**
    * Check if the extremes match the expected values for both renderers
    * @param {CanvasRenderingContext2D|CrispSwContext} canvasCtxOfSwRender - The software renderer context
@@ -6140,18 +6210,18 @@ class RenderChecks {
     const contexts = [
       { name: 'SW Renderer', context: canvasCtxOfSwRender }
     ];
-
+    
     // Add Canvas renderer only if it exists (handles Node environment case)
     if (canvasCtxOfCanvasRender) {
       contexts.push({ name: 'Canvas Renderer', context: canvasCtxOfCanvasRender });
     }
-
+    
     const results = [];
     const errors = [];
-
+    
     for (const { name, context } of contexts) {
       const actualExtremes = this.findExtremesWithTolerance(context, alphaTolerance);
-
+      
       // If no qualifying pixels were found
       if (!actualExtremes) {
         const message = `${name}: No non-transparent pixels found`;
@@ -6159,7 +6229,7 @@ class RenderChecks {
         this.test.showError(message);
         continue;
       }
-
+      
       // Check against expected extremes if provided
       if (expectedExtremes) {
         if (actualExtremes.leftX !== expectedExtremes.leftX) {
@@ -6187,16 +6257,16 @@ class RenderChecks {
           this.test.showError(message);
         }
       }
-
+      
       results.push(`${name}: left=${actualExtremes.leftX}, right=${actualExtremes.rightX}, top=${actualExtremes.topY}, bottom=${actualExtremes.bottomY}`);
     }
-
+    
     // For Node environment compatibility, add error count to result
     results.errors = errors.length;
-
+    
     return results.join('\n');
   }
-
+  
   /**
    * Checks for gaps in the edges of a shape
    * @param {CanvasRenderingContext2D|CrispSwContext} canvasContextOfSwRendererOrCanvasRenderer - The rendering context to analyze
@@ -6209,23 +6279,23 @@ class RenderChecks {
     const canvas = canvasContextOfSwRendererOrCanvasRenderer.canvas;
     const width = canvas.width;
     const title = canvas.title || (canvasContextOfSwRendererOrCanvasRenderer.title || 'unknown');
-
+    
     const imageData = canvasContextOfSwRendererOrCanvasRenderer.getImageData(0, 0, width, canvas.height);
-
+      
     const data = imageData.data;
-
+    
     // Extract edges from extremes
     const { leftX, rightX, topY, bottomY } = extremes;
-
+    
     // Function to check for transparent pixels - a pixel is transparent if alpha = 0
     const isTransparent = (idx) => data[idx + 3] === 0;
-
+    
     // Results for tracking gaps
     const results = { gaps: 0, details: [] };
-
+    
     // Find first and last non-transparent pixels in top row
     let topFirstFilled = null, topLastFilled = null;
-
+    
     for (let x = leftX; x <= rightX; x++) {
       const i = (topY * width + x) * 4;
       if (!isTransparent(i)) {
@@ -6233,7 +6303,7 @@ class RenderChecks {
         topLastFilled = x;
       }
     }
-
+    
     // Check for gaps in top row if we found filled pixels
     if (topFirstFilled !== null) {
       for (let x = topFirstFilled; x <= topLastFilled; x++) {
@@ -6244,10 +6314,10 @@ class RenderChecks {
         }
       }
     }
-
+    
     // Find first and last non-transparent pixels in bottom row
     let bottomFirstFilled = null, bottomLastFilled = null;
-
+    
     for (let x = leftX; x <= rightX; x++) {
       const i = (bottomY * width + x) * 4;
       if (!isTransparent(i)) {
@@ -6255,7 +6325,7 @@ class RenderChecks {
         bottomLastFilled = x;
       }
     }
-
+    
     // Check for gaps in bottom row if we found filled pixels
     if (bottomFirstFilled !== null) {
       for (let x = bottomFirstFilled; x <= bottomLastFilled; x++) {
@@ -6266,10 +6336,10 @@ class RenderChecks {
         }
       }
     }
-
+    
     // Find first and last non-transparent pixels in left column
     let leftFirstFilled = null, leftLastFilled = null;
-
+    
     for (let y = topY; y <= bottomY; y++) {
       const i = (y * width + leftX) * 4;
       if (!isTransparent(i)) {
@@ -6277,7 +6347,7 @@ class RenderChecks {
         leftLastFilled = y;
       }
     }
-
+    
     // Check for gaps in left column if we found filled pixels
     if (leftFirstFilled !== null) {
       for (let y = leftFirstFilled; y <= leftLastFilled; y++) {
@@ -6288,10 +6358,10 @@ class RenderChecks {
         }
       }
     }
-
+    
     // Find first and last non-transparent pixels in right column
     let rightFirstFilled = null, rightLastFilled = null;
-
+    
     for (let y = topY; y <= bottomY; y++) {
       const i = (y * width + rightX) * 4;
       if (!isTransparent(i)) {
@@ -6299,7 +6369,7 @@ class RenderChecks {
         rightLastFilled = y;
       }
     }
-
+    
     // Check for gaps in right column if we found filled pixels
     if (rightFirstFilled !== null) {
       for (let y = rightFirstFilled; y <= rightLastFilled; y++) {
@@ -6310,28 +6380,28 @@ class RenderChecks {
         }
       }
     }
-
+    
     // Extract renderer name from title or use a default
     const rendererName = title ? title.split('-')[0] : 'Unknown';
-
+    
     // Generate result message
     let resultMsg = `${rendererName} Renderer: `;
-
+    
     if (results.gaps === 0) {
       resultMsg += `No gaps found in ${isStroke ? 'stroke' : 'fill'} edges!`;
     } else {
       resultMsg += `Found ${results.gaps} gaps in ${isStroke ? 'stroke' : 'fill'} edges: ${results.details.join(', ')}`;
-
+      
       // Only show error for software renderer (this should always be true as we only call with SW renderer)
       this.test.showError(
         `Found ${results.gaps} gaps in SW renderer ${isStroke ? 'stroke' : 'fill'} edges. ` +
         `This indicates missing pixels at circle boundaries!`
       );
     }
-
+    
     return resultMsg;
   }
-
+  
   /**
    * Check edges of a shape for gaps. This is particularly used for circles, where some rendering
    * artefacts could happen where there would be holes in the top/bottom/left/right edges.
@@ -6344,19 +6414,19 @@ class RenderChecks {
   checkEdgesForGaps(canvasCtxOfSwRender, canvasCtxOfCanvasRender, isStroke = false) {
     // Calculate extremes for the shape by scanning the canvas
     const calculatedExtremes = this.findExtremesWithTolerance(canvasCtxOfSwRender, 0);
-
+    
     // If no non-transparent pixels were found, return error
     if (!calculatedExtremes) {
       const errorMsg = "No non-transparent pixels found, cannot check for gaps";
       this.test.showError(errorMsg);
       return errorMsg;
     }
-
+    
     // Check only the software renderer for gaps
     const swResults = this.checkEdgeGaps(canvasCtxOfSwRender, calculatedExtremes, isStroke);
     return `Edge gap check result (${isStroke ? 'stroke' : 'fill'}): ${swResults}`;
   }
-
+  
   /**
    * Check if a stroke has no holes. Note that this only works for a) shapes that have a starting cap,
    * two sides, and an ending cap (like circles, rectangles, rounded rectangles, etc), and
@@ -6370,52 +6440,52 @@ class RenderChecks {
    */
   checkStrokeForHoles(canvasCtxOfSwRender, canvasCtxOfCanvasRender, options = {}) {
     // Default options
-    const {
-      verticalScan = true,
-      horizontalScan = true
+    const { 
+      verticalScan = true, 
+      horizontalScan = true 
     } = options;
-
+    
     // Calculate extremes for the shape by scanning the canvas
     const calculatedExtremes = this.findExtremesWithTolerance(canvasCtxOfSwRender, 0);
-
+    
     // If no non-transparent pixels were found, return error
     if (!calculatedExtremes) {
       const errorMsg = "No non-transparent pixels found, cannot check for stroke holes";
       this.test.showError(errorMsg);
       return errorMsg;
     }
-
-    const rendererName = canvasCtxOfSwRender.canvas.title ?
+    
+    const rendererName = canvasCtxOfSwRender.canvas.title ? 
       canvasCtxOfSwRender.canvas.title.split('-')[0] : 'SW';
-
+    
     let isStrokeContinuous = true;
     let resultMsgs = [];
-
+    
     // Perform vertical scan if requested
     if (verticalScan) {
       const isVerticalContinuous = this.checkStrokeContinuity(canvasCtxOfSwRender, calculatedExtremes, false);
       isStrokeContinuous = isStrokeContinuous && isVerticalContinuous;
-
+      
       if (!isVerticalContinuous) {
         resultMsgs.push(`Vertical scan: Found holes`);
       }
     }
-
+    
     // Perform horizontal scan if requested
     if (horizontalScan) {
       const isHorizontalContinuous = this.checkStrokeContinuity(canvasCtxOfSwRender, calculatedExtremes, true);
       isStrokeContinuous = isStrokeContinuous && isHorizontalContinuous;
-
+      
       if (!isHorizontalContinuous) {
         resultMsgs.push(`Horizontal scan: Found holes`);
       }
     }
-
+    
     // Determine overall result message
-    const resultMsg = isStrokeContinuous ?
-      `${rendererName} Renderer: Stroke is continuous with no holes` :
+    const resultMsg = isStrokeContinuous ? 
+      `${rendererName} Renderer: Stroke is continuous with no holes` : 
       `${rendererName} Renderer: Stroke has holes or discontinuities (${resultMsgs.join(', ')})`;
-
+      
     return `Stroke continuity check result: ${resultMsg}`;
   }
 
@@ -6431,22 +6501,22 @@ class RenderChecks {
     const width = canvas.width;
     const height = canvas.height;
     const title = canvas.title || (canvasContextOfSwRendererOrCanvasRenderer.title || 'unknown');
-
+    
     const imageData = canvasContextOfSwRendererOrCanvasRenderer.getImageData(0, 0, width, height);
-
+      
     const data = imageData.data;
     const uniqueColors = new Set();
-
+    
     // Check all pixels in the image
     for (let y = 0; y < height; y++) {
       for (let x = 0; x < width; x++) {
         const i = (y * width + x) * 4;
-        if (data[i + 3] === 0) continue; // Skip transparent pixels
-        const colorKey = `${data[i]},${data[i + 1]},${data[i + 2]},${data[i + 3]}`;
+        if (data[i+3] === 0) continue; // Skip transparent pixels
+        const colorKey = `${data[i]},${data[i+1]},${data[i+2]},${data[i+3]}`;
         uniqueColors.add(colorKey);
       }
     }
-
+    
     const count = uniqueColors.size;
     if (expectedColors !== null && count !== expectedColors) {
       let message = `Expected ${expectedColors} unique colors but found ${count} unique colors in ${title}`;
@@ -6455,7 +6525,7 @@ class RenderChecks {
       });
       this.test.showError(message);
     }
-
+    
     return count;
   }
 
@@ -6470,15 +6540,15 @@ class RenderChecks {
     const width = canvas.width;
     const height = canvas.height;
     const title = canvas.title || (canvasContextOfSwRendererOrCanvasRenderer.title || 'unknown');
-
+    
     const imageData = canvasContextOfSwRendererOrCanvasRenderer.getImageData(0, 0, width, height);
-
+    
     const data = imageData.data;
-
+    
     let speckleCount = 0;
     let firstSpeckleX = -1;
     let firstSpeckleY = -1;
-
+    
     // Check each pixel (except edges)
     for (let y = 1; y < height - 1; y++) {  // Changed to skip first and last rows
       for (let x = 1; x < width - 1; x++) {
@@ -6487,37 +6557,37 @@ class RenderChecks {
         const rightIdx = (y * width + (x + 1)) * 4;
         const topIdx = ((y - 1) * width + x) * 4;     // Added top neighbor check
         const bottomIdx = ((y + 1) * width + x) * 4;  // Added bottom neighbor check
-
+                
         // Check if horizontal neighbors match
-        const horizontalMatch =
+        const horizontalMatch = 
           data[leftIdx] === data[rightIdx] &&
           data[leftIdx + 1] === data[rightIdx + 1] &&
           data[leftIdx + 2] === data[rightIdx + 2] &&
           data[leftIdx + 3] === data[rightIdx + 3];
-
+        
         // Check if vertical neighbors match
-        const verticalMatch =
+        const verticalMatch = 
           data[topIdx] === data[bottomIdx] &&
           data[topIdx + 1] === data[bottomIdx + 1] &&
           data[topIdx + 2] === data[bottomIdx + 2] &&
           data[topIdx + 3] === data[bottomIdx + 3];
-
+        
         // Check if current pixel is different from neighbors
-        const differentFromHorizontal =
+        const differentFromHorizontal = 
           data[currentIdx] !== data[leftIdx] ||
           data[currentIdx + 1] !== data[leftIdx + 1] ||
           data[currentIdx + 2] !== data[leftIdx + 2] ||
           data[currentIdx + 3] !== data[leftIdx + 3];
-
-        const differentFromVertical =
+          
+        const differentFromVertical = 
           data[currentIdx] !== data[topIdx] ||
           data[currentIdx + 1] !== data[topIdx + 1] ||
           data[currentIdx + 2] !== data[topIdx + 2] ||
           data[currentIdx + 3] !== data[topIdx + 3];
-
+        
         // Count as speckle if either horizontal or vertical neighbors match but current pixel differs
-        if ((horizontalMatch && differentFromHorizontal) ||
-          (verticalMatch && differentFromVertical)) {
+        if ((horizontalMatch && differentFromHorizontal) || 
+            (verticalMatch && differentFromVertical)) {
           speckleCount++;
           if (firstSpeckleX === -1) {
             firstSpeckleX = x;
@@ -6526,7 +6596,7 @@ class RenderChecks {
         }
       }
     }
-
+    
     if (speckleCount > 0) {
       const specklePixel = (firstSpeckleY * width + firstSpeckleX) * 4;
       this.test.showError(
@@ -6535,7 +6605,7 @@ class RenderChecks {
         `with color rgba(${data[specklePixel]}, ${data[specklePixel + 1]}, ${data[specklePixel + 2]}, ${data[specklePixel + 3]})`
       );
     }
-
+    
     return speckleCount;
   }
 
@@ -6548,37 +6618,37 @@ class RenderChecks {
    * @returns {string} Results of the test
    */
   compareWithThreshold(canvasCtxOfSwRender, canvasCtxOfCanvasRender, RGBThreshold, alphaThreshold) {
-    const swImageData = canvasCtxOfSwRender.getImageData(0, 0,
-      canvasCtxOfSwRender.canvas.width,
+    const swImageData = canvasCtxOfSwRender.getImageData(0, 0, 
+      canvasCtxOfSwRender.canvas.width, 
       canvasCtxOfSwRender.canvas.height);
-
-    const canvasImageData = canvasCtxOfCanvasRender.getImageData(0, 0,
-      canvasCtxOfCanvasRender.canvas.width,
+      
+    const canvasImageData = canvasCtxOfCanvasRender.getImageData(0, 0, 
+      canvasCtxOfCanvasRender.canvas.width, 
       canvasCtxOfCanvasRender.canvas.height);
-
+      
     const swData = swImageData.data;
     const canvasData = canvasImageData.data;
     const width = canvasCtxOfSwRender.canvas.width;
     const height = canvasCtxOfSwRender.canvas.height;
-
+    
     let differenceCount = 0;
     let firstDiffX = -1;
     let firstDiffY = -1;
-
+    
     // Compare each pixel
     for (let y = 0; y < height; y++) {
       for (let x = 0; x < width; x++) {
         const idx = (y * width + x) * 4;
-
+        
         // Check if the color components are within the threshold
         const rDiff = Math.abs(swData[idx] - canvasData[idx]);
         const gDiff = Math.abs(swData[idx + 1] - canvasData[idx + 1]);
         const bDiff = Math.abs(swData[idx + 2] - canvasData[idx + 2]);
         const aDiff = Math.abs(swData[idx + 3] - canvasData[idx + 3]);
-
+        
         if (rDiff > RGBThreshold || gDiff > RGBThreshold || bDiff > RGBThreshold || aDiff > alphaThreshold) {
           differenceCount++;
-
+          
           // Record first difference position
           if (firstDiffX === -1) {
             firstDiffX = x;
@@ -6587,7 +6657,7 @@ class RenderChecks {
         }
       }
     }
-
+    
     if (differenceCount > 0) {
       // Get the color values at the first difference point
       const idx = (firstDiffY * width + firstDiffX) * 4;
@@ -6595,34 +6665,34 @@ class RenderChecks {
       const swG = swData[idx + 1];
       const swB = swData[idx + 2];
       const swA = swData[idx + 3];
-
+      
       const canvasR = canvasData[idx];
       const canvasG = canvasData[idx + 1];
       const canvasB = canvasData[idx + 2];
       const canvasA = canvasData[idx + 3];
-
+      
       // Calculate the differences
       const rDiff = Math.abs(swR - canvasR);
       const gDiff = Math.abs(swG - canvasG);
       const bDiff = Math.abs(swB - canvasB);
       const aDiff = Math.abs(swA - canvasA);
-
+      
       // Highlight which component(s) exceeds the threshold
       const rHighlight = rDiff > RGBThreshold ? `<strong>${rDiff}</strong>` : rDiff;
       const gHighlight = gDiff > RGBThreshold ? `<strong>${gDiff}</strong>` : gDiff;
       const bHighlight = bDiff > RGBThreshold ? `<strong>${bDiff}</strong>` : bDiff;
       const aHighlight = aDiff > alphaThreshold ? `<strong>${aDiff}</strong>` : aDiff;
-
+      
       const message = `Found ${differenceCount} pixels with differences exceeding thresholds (RGB: ${RGBThreshold}, Alpha: ${alphaThreshold}). // ` +
-        `First difference at (${firstDiffX}, ${firstDiffY}): ` +
-        `SW Renderer: rgba(${swR}, ${swG}, ${swB}, ${swA}) // ` +
-        `Canvas Renderer: rgba(${canvasR}, ${canvasG}, ${canvasB}, ${canvasA}) // ` +
-        `Difference: rgba(${rHighlight}, ${gHighlight}, ${bHighlight}, ${aHighlight})`;
-
+                      `First difference at (${firstDiffX}, ${firstDiffY}): ` +
+                      `SW Renderer: rgba(${swR}, ${swG}, ${swB}, ${swA}) // ` +
+                      `Canvas Renderer: rgba(${canvasR}, ${canvasG}, ${canvasB}, ${canvasA}) // ` +
+                      `Difference: rgba(${rHighlight}, ${gHighlight}, ${bHighlight}, ${aHighlight})`;
+      
       this.test.showError(message);
       return message;
     }
-
+    
     return `All pixels are within thresholds (RGB: ${RGBThreshold}, Alpha: ${alphaThreshold})`;
   }
 }

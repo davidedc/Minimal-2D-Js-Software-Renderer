@@ -1589,117 +1589,265 @@ class ScanlineSpans {
   }
 }
 
-class TransformationMatrix {
-    constructor() {
-        this.elements = new Float64Array([
-            1, 0, 0, // first column
-            0, 1, 0, // second column
-            0, 0, 1 // third column
-        ]);
+/**
+ * Transform2D class for SWCanvas
+ * 
+ * Represents a 2D affine transformation matrix using homogeneous coordinates.
+ * Immutable value object following Joshua Bloch's effective design principles.
+ * 
+ * Transform2D format (2x3 affine transformation):
+ * | a  c  e |   | x |   | ax + cy + e |
+ * | b  d  f | × | y | = | bx + dy + f |
+ * | 0  0  1 |   | 1 |   |      1      |
+ */
+class Transform2D {
+    /**
+     * Create a Transform2D matrix
+     * @param {number[]|undefined} init - Optional [a, b, c, d, e, f] array
+     */
+    constructor(init) {
+        if (init && Array.isArray(init) && init.length === 6) {
+            // Validate input values
+            for (let i = 0; i < 6; i++) {
+                if (typeof init[i] !== 'number' || !isFinite(init[i])) {
+                    throw new Error(`Transform2D component ${i} must be a finite number`);
+                }
+            }
+            
+            this.a = init[0];
+            this.b = init[1]; 
+            this.c = init[2];
+            this.d = init[3];
+            this.e = init[4];
+            this.f = init[5];
+        } else if (init && init.length !== undefined) {
+            throw new Error('Transform2D initialization array must have exactly 6 elements');
+        } else {
+            // Identity transformation
+            this.a = 1; this.b = 0;
+            this.c = 0; this.d = 1;
+            this.e = 0; this.f = 0;
+        }
+        
+        // Make transformation immutable
+        Object.freeze(this);
     }
 
-    clone() {
-        const clonedMatrix = new TransformationMatrix();
-        clonedMatrix.elements.set(this.elements);
-        return clonedMatrix;
+    
+    /**
+     * Create translation transform
+     * @param {number} x - X translation
+     * @param {number} y - Y translation
+     * @returns {Transform2D} Translation transformation
+     */
+    static translation(x, y) {
+        return new Transform2D([1, 0, 0, 1, x, y]);
     }
     
     /**
-     * Resets the transformation matrix to the identity matrix
-     * @returns {TransformationMatrix} The identity matrix
+     * Create scaling transform
+     * @param {number} sx - X scale factor
+     * @param {number} sy - Y scale factor  
+     * @returns {Transform2D} Scaling transformation
      */
-    reset() {
-        this.elements.set([
-            1, 0, 0, // first column
-            0, 1, 0, // second column
-            0, 0, 1 // third column
-        ]);
-        return this;
+    static scaling(sx, sy) {
+        return new Transform2D([sx, 0, 0, sy, 0, 0]);
     }
-
-    get(row, col) {
-        return this.elements[col * 3 + row];
-    }
-
-    set(row, col, value) {
-        this.elements[col * 3 + row] = value;
-    }
-
-    multiply(other) {
-        const result = new TransformationMatrix();
-        for (let col = 0; col < 3; col++) {
-            for (let row = 0; row < 3; row++) {
-                let sum = 0;
-                for (let i = 0; i < 3; i++) {
-                    sum += this.get(row, i) * other.get(i, col);
-                }
-                result.set(row, col, sum);
-            }
-        }
-        return result;
-    }
-
-    translate(x, y) {
-        const translationMatrix = new TransformationMatrix();
-        translationMatrix.elements.set([
-            1, 0, 0,
-            0, 1, 0,
-            x, y, 1
-        ]);
-        return this.multiply(translationMatrix);
-    }
-
-    scale(sx, sy) {
-        const scaleMatrix = new TransformationMatrix();
-        scaleMatrix.elements.set([
-            sx, 0, 0,
-            0, sy, 0,
-            0, 0, 1
-        ]);
-        return this.multiply(scaleMatrix);
-    }
-
-    rotate(angleInRadians) {
-        const rotationMatrix = new TransformationMatrix();
+    
+    /**
+     * Create rotation transform
+     * @param {number} angleInRadians - Rotation angle in radians
+     * @returns {Transform2D} Rotation transformation
+     */
+    static rotation(angleInRadians) {
         const cos = Math.cos(angleInRadians);
         const sin = Math.sin(angleInRadians);
-        rotationMatrix.elements.set([
-            cos, sin, 0,
-            -sin, cos, 0,
-            0, 0, 1
+        return new Transform2D([cos, sin, -sin, cos, 0, 0]);
+    }
+
+    /**
+     * Multiply this transform with another (immutable)
+     * @param {Transform2D} other - Transform to multiply with
+     * @returns {Transform2D} Result of multiplication
+     */
+    multiply(other) {
+        if (!(other instanceof Transform2D)) {
+            throw new Error('Can only multiply with another Transform2D');
+        }
+        
+        return new Transform2D([
+            this.a * other.a + this.c * other.b,
+            this.b * other.a + this.d * other.b,
+            this.a * other.c + this.c * other.d,
+            this.b * other.c + this.d * other.d,
+            this.a * other.e + this.c * other.f + this.e,
+            this.b * other.e + this.d * other.f + this.f
         ]);
-        return this.multiply(rotationMatrix);
+    }
+
+    /**
+     * Apply translation to this transform (immutable)
+     * @param {number} x - X translation
+     * @param {number} y - Y translation
+     * @returns {Transform2D} New transformed matrix
+     */
+    translate(x, y) {
+        const t = Transform2D.translation(x, y);
+        return this.multiply(t);
+    }
+
+    /**
+     * Apply scaling to this transform (immutable)
+     * @param {number} sx - X scale factor
+     * @param {number} sy - Y scale factor
+     * @returns {Transform2D} New transformed matrix
+     */
+    scale(sx, sy) {
+        const s = Transform2D.scaling(sx, sy);
+        return this.multiply(s);
+    }
+
+    /**
+     * Apply rotation to this transform (immutable)
+     * @param {number} angleInRadians - Rotation angle in radians
+     * @returns {Transform2D} New transformed matrix
+     */
+    rotate(angleInRadians) {
+        const r = Transform2D.rotation(angleInRadians);
+        return this.multiply(r);
+    }
+
+    /**
+     * Calculate inverse transformation (immutable)
+     * @returns {Transform2D} Inverse transformation
+     */
+    invert() {
+        const det = this.a * this.d - this.b * this.c;
+        
+        if (Math.abs(det) < 1e-10) {
+            throw new Error('Transform2D matrix is not invertible (determinant ≈ 0)');
+        }
+        
+        return new Transform2D([
+            this.d / det,
+            -this.b / det,
+            -this.c / det,
+            this.a / det,
+            (this.c * this.f - this.d * this.e) / det,
+            (this.b * this.e - this.a * this.f) / det
+        ]);
+    }
+
+    /**
+     * Transform a point using this matrix
+     * @param {Object|Point} point - Point with x,y properties
+     * @returns {Object} Transformed point {x, y}
+     */
+    transformPoint(point) {
+        if (!point || typeof point.x !== 'number' || typeof point.y !== 'number') {
+            throw new Error('Point must have numeric x and y properties');
+        }
+        
+        return {
+            x: this.a * point.x + this.c * point.y + this.e,
+            y: this.b * point.x + this.d * point.y + this.f
+        };
+    }
+    
+    /**
+     * Transform multiple points efficiently
+     * @param {Array} points - Array of points to transform
+     * @returns {Array} Array of transformed points
+     */
+    transformPoints(points) {
+        return points.map(point => this.transformPoint(point));
+    }
+    
+    /**
+     * Get transformation as array
+     * @returns {number[]} [a, b, c, d, e, f] array
+     */
+    toArray() {
+        return [this.a, this.b, this.c, this.d, this.e, this.f];
+    }
+    
+    /**
+     * Check if this is the identity transformation
+     * @returns {boolean} True if identity
+     */
+    get isIdentity() {
+        return this.a === 1 && this.b === 0 && this.c === 0 && 
+               this.d === 1 && this.e === 0 && this.f === 0;
+    }
+    
+    /**
+     * Get transformation determinant
+     * @returns {number} Transform2D determinant
+     */
+    get determinant() {
+        return this.a * this.d - this.b * this.c;
+    }
+
+    /**
+     * Get the rotation angle from the transformation matrix
+     * @returns {number} Rotation angle in radians
+     */
+    get rotationAngle() {
+        return Math.atan2(-this.c, this.a);
+    }
+
+    /**
+     * Get the X scale factor from the transformation matrix
+     * @returns {number} Scale factor along X axis
+     */
+    get scaleX() {
+        return Math.sqrt(this.a * this.a + this.b * this.b);
+    }
+
+    /**
+     * Get the Y scale factor from the transformation matrix
+     * @returns {number} Scale factor along Y axis
+     */
+    get scaleY() {
+        return Math.sqrt(this.c * this.c + this.d * this.d);
+    }
+
+    /**
+     * Calculate the scaled line width based on the current transformation
+     * Uses the geometric mean of scale factors, clamped to avoid zero
+     * @param {number} baseWidth - The base line width before transformation
+     * @returns {number} The scaled line width
+     */
+    getScaledLineWidth(baseWidth) {
+        const scale = Math.max(Math.sqrt(this.scaleX * this.scaleY), 0.0001);
+        return baseWidth * scale;
+    }
+
+    /**
+     * Check equality with another transform
+     * @param {Transform2D} other - Transform to compare
+     * @param {number} tolerance - Floating point tolerance
+     * @returns {boolean} True if transforms are equal within tolerance
+     */
+    equals(other, tolerance = 1e-10) {
+        return other instanceof Transform2D &&
+               Math.abs(this.a - other.a) < tolerance &&
+               Math.abs(this.b - other.b) < tolerance &&
+               Math.abs(this.c - other.c) < tolerance &&
+               Math.abs(this.d - other.d) < tolerance &&
+               Math.abs(this.e - other.e) < tolerance &&
+               Math.abs(this.f - other.f) < tolerance;
+    }
+
+    /**
+     * String representation for debugging
+     * @returns {string} Transform2D description
+     */
+    toString() {
+        return `Transform2D([${this.a}, ${this.b}, ${this.c}, ${this.d}, ${this.e}, ${this.f}])`;
     }
 }
-// Helper function to get scaled line width
-function getScaledLineWidth(matrix, baseWidth) {
-    const scaleX = Math.sqrt(matrix[0] * matrix[0] + matrix[1] * matrix[1]);
-    const scaleY = Math.sqrt(matrix[3] * matrix[3] + matrix[4] * matrix[4]);
-    const scale = Math.max(Math.sqrt(scaleX * scaleY), 0.0001);
-    return baseWidth * scale;
-}
-// Helper function to transform point
-function transformPoint(x, y, matrix) {
-    const tx = matrix[0] * x + matrix[3] * y + matrix[6];
-    const ty = matrix[1] * x + matrix[4] * y + matrix[7];
-    return { tx, ty };
-}
-// Add this helper function to extract rotation angle from transformation matrix
-function getRotationAngle(matrix) {
-    // For a 2D transformation matrix [a d 0, b e 0, c f 1],
-    // the rotation angle can be extracted using atan2(-b, a)
-    // matrix[3] is b, matrix[0] is a in column-major order
-    return Math.atan2(-matrix[3], matrix[0]);
-}
-// Add this helper function to get scale factors from matrix
-function getScaleFactors(matrix) {
-    // For column-major [a d 0, b e 0, c f 1]
-    // First column (x-axis): [a, d, 0]
-    const scaleX = Math.sqrt(matrix[0] * matrix[0] + matrix[1] * matrix[1]);
-    // Second column (y-axis): [b, e, 0]
-    const scaleY = Math.sqrt(matrix[3] * matrix[3] + matrix[4] * matrix[4]);
-    return { scaleX, scaleY };
-}
+
 /**
  * Color class for SWCanvas
  * 
@@ -2199,7 +2347,7 @@ class ContextState {
         this.canvasWidth = canvasWidth;
         this.canvasHeight = canvasHeight;
         this.lineWidth = lineWidth || 1;
-        this.transform = transform || new TransformationMatrix();
+        this.transform = transform || new Transform2D();
         // Store Color instances (default: opaque black)
         this.strokeColor = strokeColor || Color.black;
         this.fillColor = fillColor || Color.black;
@@ -2212,7 +2360,7 @@ class ContextState {
         return new ContextState(
             this.canvasWidth, this.canvasHeight,
             this.lineWidth,
-            this.transform.clone(),
+            this.transform,  // Transform2D is immutable - safe to share reference
             // Color is immutable - can reuse same instance
             this.strokeColor, this.fillColor,
             this.globalAlpha,
@@ -2332,7 +2480,7 @@ class CrispSwContext {
      * Resets the current transformation matrix to the identity matrix
      */
     resetTransform() {
-        this.currentState.transform.reset();
+        this.currentState.transform = new Transform2D();
     }
 
     // Style setters and getters
@@ -2380,15 +2528,15 @@ class CrispSwContext {
     
     strokeLine(x1, y1, x2, y2) {
         const state = this.currentState;
-        const scaledLineWidth = getScaledLineWidth(state.transform.elements, state.lineWidth);
-        
+        const scaledLineWidth = state.transform.getScaledLineWidth(state.lineWidth);
+
         // Transform points according to current transformation matrix
-        const start = transformPoint(x1, y1, state.transform.elements);
-        const end = transformPoint(x2, y2, state.transform.elements);
-        
+        const start = state.transform.transformPoint({x: x1, y: y1});
+        const end = state.transform.transformPoint({x: x2, y: y2});
+
         this.lineRenderer.drawLine({
-            start: { x: start.tx, y: start.ty },
-            end: { x: end.tx, y: end.ty },
+            start: { x: start.x, y: start.y },
+            end: { x: end.x, y: end.y },
             thickness: scaledLineWidth,
             color: state.strokeColor
         });
@@ -2396,10 +2544,10 @@ class CrispSwContext {
 
     clearRect(x, y, width, height) {
         const state = this.currentState;
-        const center = transformPoint(x + width / 2, y + height / 2, state.transform.elements);
-        const rotation = getRotationAngle(state.transform.elements);
+        const center = state.transform.transformPoint({x: x + width / 2, y: y + height / 2});
+        const rotation = state.transform.rotationAngle;
         this.rectRenderer.clearRect({
-            center: { x: center.tx, y: center.ty },
+            center: { x: center.x, y: center.y },
             width: width,
             height: height,
             rotation: rotation
@@ -2410,12 +2558,13 @@ class CrispSwContext {
     // rect() is used for clipping only.
     rect(x, y, width, height) {
         const state = this.currentState;
-        const center = transformPoint(x + width / 2, y + height / 2, state.transform.elements);
-        const rotation = getRotationAngle(state.transform.elements);
-        const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
+        const center = state.transform.transformPoint({x: x + width / 2, y: y + height / 2});
+        const rotation = state.transform.rotationAngle;
+        const scaleX = state.transform.scaleX;
+        const scaleY = state.transform.scaleY;
 
         this.rectRenderer.drawRect({
-            center: { x: center.tx, y: center.ty },
+            center: { x: center.x, y: center.y },
             width: width * scaleX,
             height: height * scaleY,
             rotation: rotation,
@@ -2441,12 +2590,13 @@ class CrispSwContext {
 
     fillRect(x, y, width, height) {
         const state = this.currentState;
-        const center = transformPoint(x + width / 2, y + height / 2, state.transform.elements);
-        const rotation = getRotationAngle(state.transform.elements);
-        const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
+        const center = state.transform.transformPoint({x: x + width / 2, y: y + height / 2});
+        const rotation = state.transform.rotationAngle;
+        const scaleX = state.transform.scaleX;
+        const scaleY = state.transform.scaleY;
 
         this.rectRenderer.drawRect({
-            center: { x: center.tx, y: center.ty },
+            center: { x: center.x, y: center.y },
             width: width * scaleX,
             height: height * scaleY,
             rotation: rotation,
@@ -2459,14 +2609,15 @@ class CrispSwContext {
 
     strokeRect(x, y, width, height) {
         const state = this.currentState;
-        const scaledLineWidth = getScaledLineWidth(state.transform.elements, state.lineWidth);
+        const scaledLineWidth = state.transform.getScaledLineWidth(state.lineWidth);
 
-        const center = transformPoint(x + width / 2, y + height / 2, state.transform.elements);
-        const rotation = getRotationAngle(state.transform.elements);
-        const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
+        const center = state.transform.transformPoint({x: x + width / 2, y: y + height / 2});
+        const rotation = state.transform.rotationAngle;
+        const scaleX = state.transform.scaleX;
+        const scaleY = state.transform.scaleY;
 
         this.rectRenderer.drawRect({
-            center: { x: center.tx, y: center.ty },
+            center: { x: center.x, y: center.y },
             width: width * scaleX,
             height: height * scaleY,
             rotation: rotation,
@@ -2496,15 +2647,16 @@ class CrispSwContext {
         const state = this.currentState;
 
         // Transform center point according to current transformation matrix
-        const center = transformPoint(centerX, centerY, state.transform.elements);
+        const center = state.transform.transformPoint({x: centerX, y: centerY});
 
         // Apply scale factor to radius
-        const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
+        const scaleX = state.transform.scaleX;
+        const scaleY = state.transform.scaleY;
         const scaledRadius = radius * Math.max(scaleX, scaleY);
 
         // Create shape object for the circle
         const circleShape = {
-            center: { x: center.tx, y: center.ty },
+            center: { x: center.x, y: center.y },
             radius: scaledRadius,
             strokeWidth: 0,
             strokeColor: Color.transparent,
@@ -2527,16 +2679,17 @@ class CrispSwContext {
         const state = this.currentState;
 
         // Transform center point according to current transformation matrix
-        const center = transformPoint(centerX, centerY, state.transform.elements);
+        const center = state.transform.transformPoint({x: centerX, y: centerY});
 
         // Apply scale factor to radius and stroke width
-        const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
+        const scaleX = state.transform.scaleX;
+        const scaleY = state.transform.scaleY;
         const scaledRadius = radius * Math.max(scaleX, scaleY);
-        const scaledStrokeWidth = getScaledLineWidth(state.transform.elements, strokeWidth);
+        const scaledStrokeWidth = state.transform.getScaledLineWidth(strokeWidth);
 
         // Create shape object for the circle
         const circleShape = {
-            center: { x: center.tx, y: center.ty },
+            center: { x: center.x, y: center.y },
             radius: scaledRadius,
             strokeWidth: scaledStrokeWidth,
             strokeColor: strokeColor,
@@ -2560,16 +2713,17 @@ class CrispSwContext {
         const state = this.currentState;
 
         // Transform center point according to current transformation matrix
-        const center = transformPoint(centerX, centerY, state.transform.elements);
+        const center = state.transform.transformPoint({x: centerX, y: centerY});
 
         // Apply scale factor to radius and stroke width
-        const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
+        const scaleX = state.transform.scaleX;
+        const scaleY = state.transform.scaleY;
         const scaledRadius = radius * Math.max(scaleX, scaleY);
-        const scaledStrokeWidth = getScaledLineWidth(state.transform.elements, strokeWidth);
+        const scaledStrokeWidth = state.transform.getScaledLineWidth(strokeWidth);
 
         // Create shape object for the circle
         const circleShape = {
-            center: { x: center.tx, y: center.ty },
+            center: { x: center.x, y: center.y },
             radius: scaledRadius,
             strokeWidth: scaledStrokeWidth,
             strokeColor: strokeColor,
@@ -2656,15 +2810,16 @@ class CrispSwContext {
         const state = this.currentState;
         const cx = x + width / 2;
         const cy = y + height / 2;
-        const centerTransformed = transformPoint(cx, cy, state.transform.elements);
-        const rotation = getRotationAngle(state.transform.elements);
-        const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
+        const centerTransformed = state.transform.transformPoint({x: cx, y: cy});
+        const rotation = state.transform.rotationAngle;
+        const scaleX = state.transform.scaleX;
+        const scaleY = state.transform.scaleY;
 
         // This is a guess, SWRendererRoundedRect might not support clippingOnly directly
         // or might need a different shape structure for it.
         /*
         this.roundedRectRenderer.drawRoundedRect({
-            center: { x: centerTransformed.tx, y: centerTransformed.ty },
+            center: { x: centerTransformed.x, y: centerTransformed.y },
             width: width * scaleX,
             height: height * scaleY,
             radius: radius * Math.min(scaleX, scaleY), // Simplistic radius scaling
@@ -2691,13 +2846,14 @@ class CrispSwContext {
         const state = this.currentState;
         const cx = x + width / 2;
         const cy = y + height / 2;
-        const centerTransformed = transformPoint(cx, cy, state.transform.elements);
-        const rotation = getRotationAngle(state.transform.elements);
-        const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
+        const centerTransformed = state.transform.transformPoint({x: cx, y: cy});
+        const rotation = state.transform.rotationAngle;
+        const scaleX = state.transform.scaleX;
+        const scaleY = state.transform.scaleY;
         const scaledRadius = radius * Math.min(Math.abs(scaleX), Math.abs(scaleY));
 
         this.roundedRectRenderer.drawRoundedRect({
-            center: { x: centerTransformed.tx, y: centerTransformed.ty },
+            center: { x: centerTransformed.x, y: centerTransformed.y },
             width: width * scaleX,
             height: height * scaleY,
             radius: scaledRadius,
@@ -2718,16 +2874,17 @@ class CrispSwContext {
      */
     strokeRoundRect(x, y, width, height, radius) {
         const state = this.currentState;
-        const scaledLineWidth = getScaledLineWidth(state.transform.elements, state.lineWidth);
+        const scaledLineWidth = state.transform.getScaledLineWidth(state.lineWidth);
         const cx = x + width / 2;
         const cy = y + height / 2;
-        const centerTransformed = transformPoint(cx, cy, state.transform.elements);
-        const rotation = getRotationAngle(state.transform.elements);
-        const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
+        const centerTransformed = state.transform.transformPoint({x: cx, y: cy});
+        const rotation = state.transform.rotationAngle;
+        const scaleX = state.transform.scaleX;
+        const scaleY = state.transform.scaleY;
         const scaledRadius = radius * Math.min(Math.abs(scaleX), Math.abs(scaleY));
 
         this.roundedRectRenderer.drawRoundedRect({
-            center: { x: centerTransformed.tx, y: centerTransformed.ty },
+            center: { x: centerTransformed.x, y: centerTransformed.y },
             width: width * scaleX,
             height: height * scaleY,
             radius: scaledRadius,
@@ -2757,14 +2914,15 @@ class CrispSwContext {
 
         if (isFullCircle) {
             const state = this.currentState;
-            const centerTransformed = transformPoint(x, y, state.transform.elements);
-            const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
+            const centerTransformed = state.transform.transformPoint({x, y});
+            const scaleX = state.transform.scaleX;
+            const scaleY = state.transform.scaleY;
             // For circles, radius is scaled by the max of scaleX and scaleY to maintain circularity
             // as we don't support ellipses yet.
             const scaledRadius = radius * Math.max(Math.abs(scaleX), Math.abs(scaleY));
 
             this.circleRenderer.drawCircle({
-                center: { x: centerTransformed.tx, y: centerTransformed.ty },
+                center: { x: centerTransformed.x, y: centerTransformed.y },
                 radius: scaledRadius,
                 clippingOnly: true,
                 // These are not used for clippingOnly, but provided for shape consistency
@@ -2783,17 +2941,18 @@ class CrispSwContext {
      */
     fillArc(x, y, radius, startAngle, endAngle, anticlockwise = false) {
         const state = this.currentState;
-        const centerTransformed = transformPoint(x, y, state.transform.elements);
-        const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
-        const scaledRadius = radius * Math.min(Math.abs(scaleX), Math.abs(scaleY)); 
+        const centerTransformed = state.transform.transformPoint({x, y});
+        const scaleX = state.transform.scaleX;
+        const scaleY = state.transform.scaleY;
+        const scaledRadius = radius * Math.min(Math.abs(scaleX), Math.abs(scaleY));
 
         const startAngleDeg = startAngle * 180 / Math.PI;
         const endAngleDeg = endAngle * 180 / Math.PI;
-        
+
         // SWRendererArc.drawArc expects a shape with fillColor and strokeColor (alpha 0-255)
         // It internally handles fill and/or stroke based on these colors and strokeWidth.
         this.arcRenderer.drawArc({
-            center: { x: centerTransformed.tx, y: centerTransformed.ty },
+            center: { x: centerTransformed.x, y: centerTransformed.y },
             radius: scaledRadius,
             startAngle: startAngleDeg,
             endAngle: endAngleDeg,
@@ -2810,16 +2969,17 @@ class CrispSwContext {
      */
     outerStrokeArc(x, y, radius, startAngle, endAngle, anticlockwise = false) {
         const state = this.currentState;
-        const scaledLineWidth = getScaledLineWidth(state.transform.elements, state.lineWidth);
-        const centerTransformed = transformPoint(x, y, state.transform.elements);
-        const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
+        const scaledLineWidth = state.transform.getScaledLineWidth(state.lineWidth);
+        const centerTransformed = state.transform.transformPoint({x, y});
+        const scaleX = state.transform.scaleX;
+        const scaleY = state.transform.scaleY;
         const scaledRadius = radius * Math.min(Math.abs(scaleX), Math.abs(scaleY));
-        
+
         const startAngleDeg = startAngle * 180 / Math.PI;
         const endAngleDeg = endAngle * 180 / Math.PI;
 
         this.arcRenderer.drawArc({
-            center: { x: centerTransformed.tx, y: centerTransformed.ty },
+            center: { x: centerTransformed.x, y: centerTransformed.y },
             radius: scaledRadius,
             startAngle: startAngleDeg,
             endAngle: endAngleDeg,
@@ -2836,9 +2996,10 @@ class CrispSwContext {
      */
     fillAndOuterStrokeArc(x, y, radius, startAngle, endAngle, anticlockwise = false) {
         const state = this.currentState;
-        const scaledLineWidth = getScaledLineWidth(state.transform.elements, state.lineWidth);
-        const centerTransformed = transformPoint(x, y, state.transform.elements);
-        const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
+        const scaledLineWidth = state.transform.getScaledLineWidth(state.lineWidth);
+        const centerTransformed = state.transform.transformPoint({x, y});
+        const scaleX = state.transform.scaleX;
+        const scaleY = state.transform.scaleY;
         const scaledRadius = radius * Math.min(Math.abs(scaleX), Math.abs(scaleY));
 
         const startAngleDeg = startAngle * 180 / Math.PI;
@@ -2846,11 +3007,11 @@ class CrispSwContext {
 
         // SWRendererArc.drawArc handles both fill and stroke if both colors are opaque and strokeWidth > 0
         this.arcRenderer.drawArc({
-            center: { x: centerTransformed.tx, y: centerTransformed.ty },
+            center: { x: centerTransformed.x, y: centerTransformed.y },
             radius: scaledRadius,
             startAngle: startAngleDeg,
             endAngle: endAngleDeg,
-            anticlockwise: anticlockwise, 
+            anticlockwise: anticlockwise,
             fillColor: state.fillColor,
             strokeWidth: scaledLineWidth,
             strokeColor: state.strokeColor
