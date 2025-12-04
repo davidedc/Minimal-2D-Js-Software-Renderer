@@ -82,7 +82,7 @@ class CrispSwContext {
      * Resets the current transformation matrix to the identity matrix
      */
     resetTransform() {
-        this.currentState.transform.reset();
+        this.currentState.transform = new Transform2D();
     }
 
     // Style setters and getters
@@ -130,15 +130,15 @@ class CrispSwContext {
     
     strokeLine(x1, y1, x2, y2) {
         const state = this.currentState;
-        const scaledLineWidth = getScaledLineWidth(state.transform.elements, state.lineWidth);
-        
+        const scaledLineWidth = state.transform.getScaledLineWidth(state.lineWidth);
+
         // Transform points according to current transformation matrix
-        const start = transformPoint(x1, y1, state.transform.elements);
-        const end = transformPoint(x2, y2, state.transform.elements);
-        
+        const start = state.transform.transformPoint({x: x1, y: y1});
+        const end = state.transform.transformPoint({x: x2, y: y2});
+
         this.lineRenderer.drawLine({
-            start: { x: start.tx, y: start.ty },
-            end: { x: end.tx, y: end.ty },
+            start: { x: start.x, y: start.y },
+            end: { x: end.x, y: end.y },
             thickness: scaledLineWidth,
             color: state.strokeColor
         });
@@ -146,10 +146,10 @@ class CrispSwContext {
 
     clearRect(x, y, width, height) {
         const state = this.currentState;
-        const center = transformPoint(x + width / 2, y + height / 2, state.transform.elements);
-        const rotation = getRotationAngle(state.transform.elements);
+        const center = state.transform.transformPoint({x: x + width / 2, y: y + height / 2});
+        const rotation = state.transform.rotationAngle;
         this.rectRenderer.clearRect({
-            center: { x: center.tx, y: center.ty },
+            center: { x: center.x, y: center.y },
             width: width,
             height: height,
             rotation: rotation
@@ -160,12 +160,13 @@ class CrispSwContext {
     // rect() is used for clipping only.
     rect(x, y, width, height) {
         const state = this.currentState;
-        const center = transformPoint(x + width / 2, y + height / 2, state.transform.elements);
-        const rotation = getRotationAngle(state.transform.elements);
-        const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
+        const center = state.transform.transformPoint({x: x + width / 2, y: y + height / 2});
+        const rotation = state.transform.rotationAngle;
+        const scaleX = state.transform.scaleX;
+        const scaleY = state.transform.scaleY;
 
         this.rectRenderer.drawRect({
-            center: { x: center.tx, y: center.ty },
+            center: { x: center.x, y: center.y },
             width: width * scaleX,
             height: height * scaleY,
             rotation: rotation,
@@ -191,12 +192,13 @@ class CrispSwContext {
 
     fillRect(x, y, width, height) {
         const state = this.currentState;
-        const center = transformPoint(x + width / 2, y + height / 2, state.transform.elements);
-        const rotation = getRotationAngle(state.transform.elements);
-        const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
+        const center = state.transform.transformPoint({x: x + width / 2, y: y + height / 2});
+        const rotation = state.transform.rotationAngle;
+        const scaleX = state.transform.scaleX;
+        const scaleY = state.transform.scaleY;
 
         this.rectRenderer.drawRect({
-            center: { x: center.tx, y: center.ty },
+            center: { x: center.x, y: center.y },
             width: width * scaleX,
             height: height * scaleY,
             rotation: rotation,
@@ -209,14 +211,15 @@ class CrispSwContext {
 
     strokeRect(x, y, width, height) {
         const state = this.currentState;
-        const scaledLineWidth = getScaledLineWidth(state.transform.elements, state.lineWidth);
+        const scaledLineWidth = state.transform.getScaledLineWidth(state.lineWidth);
 
-        const center = transformPoint(x + width / 2, y + height / 2, state.transform.elements);
-        const rotation = getRotationAngle(state.transform.elements);
-        const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
+        const center = state.transform.transformPoint({x: x + width / 2, y: y + height / 2});
+        const rotation = state.transform.rotationAngle;
+        const scaleX = state.transform.scaleX;
+        const scaleY = state.transform.scaleY;
 
         this.rectRenderer.drawRect({
-            center: { x: center.tx, y: center.ty },
+            center: { x: center.x, y: center.y },
             width: width * scaleX,
             height: height * scaleY,
             rotation: rotation,
@@ -246,15 +249,16 @@ class CrispSwContext {
         const state = this.currentState;
 
         // Transform center point according to current transformation matrix
-        const center = transformPoint(centerX, centerY, state.transform.elements);
+        const center = state.transform.transformPoint({x: centerX, y: centerY});
 
         // Apply scale factor to radius
-        const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
+        const scaleX = state.transform.scaleX;
+        const scaleY = state.transform.scaleY;
         const scaledRadius = radius * Math.max(scaleX, scaleY);
 
         // Create shape object for the circle
         const circleShape = {
-            center: { x: center.tx, y: center.ty },
+            center: { x: center.x, y: center.y },
             radius: scaledRadius,
             strokeWidth: 0,
             strokeColor: Color.transparent,
@@ -277,16 +281,17 @@ class CrispSwContext {
         const state = this.currentState;
 
         // Transform center point according to current transformation matrix
-        const center = transformPoint(centerX, centerY, state.transform.elements);
+        const center = state.transform.transformPoint({x: centerX, y: centerY});
 
         // Apply scale factor to radius and stroke width
-        const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
+        const scaleX = state.transform.scaleX;
+        const scaleY = state.transform.scaleY;
         const scaledRadius = radius * Math.max(scaleX, scaleY);
-        const scaledStrokeWidth = getScaledLineWidth(state.transform.elements, strokeWidth);
+        const scaledStrokeWidth = state.transform.getScaledLineWidth(strokeWidth);
 
         // Create shape object for the circle
         const circleShape = {
-            center: { x: center.tx, y: center.ty },
+            center: { x: center.x, y: center.y },
             radius: scaledRadius,
             strokeWidth: scaledStrokeWidth,
             strokeColor: strokeColor,
@@ -310,16 +315,17 @@ class CrispSwContext {
         const state = this.currentState;
 
         // Transform center point according to current transformation matrix
-        const center = transformPoint(centerX, centerY, state.transform.elements);
+        const center = state.transform.transformPoint({x: centerX, y: centerY});
 
         // Apply scale factor to radius and stroke width
-        const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
+        const scaleX = state.transform.scaleX;
+        const scaleY = state.transform.scaleY;
         const scaledRadius = radius * Math.max(scaleX, scaleY);
-        const scaledStrokeWidth = getScaledLineWidth(state.transform.elements, strokeWidth);
+        const scaledStrokeWidth = state.transform.getScaledLineWidth(strokeWidth);
 
         // Create shape object for the circle
         const circleShape = {
-            center: { x: center.tx, y: center.ty },
+            center: { x: center.x, y: center.y },
             radius: scaledRadius,
             strokeWidth: scaledStrokeWidth,
             strokeColor: strokeColor,
@@ -406,15 +412,16 @@ class CrispSwContext {
         const state = this.currentState;
         const cx = x + width / 2;
         const cy = y + height / 2;
-        const centerTransformed = transformPoint(cx, cy, state.transform.elements);
-        const rotation = getRotationAngle(state.transform.elements);
-        const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
+        const centerTransformed = state.transform.transformPoint({x: cx, y: cy});
+        const rotation = state.transform.rotationAngle;
+        const scaleX = state.transform.scaleX;
+        const scaleY = state.transform.scaleY;
 
         // This is a guess, SWRendererRoundedRect might not support clippingOnly directly
         // or might need a different shape structure for it.
         /*
         this.roundedRectRenderer.drawRoundedRect({
-            center: { x: centerTransformed.tx, y: centerTransformed.ty },
+            center: { x: centerTransformed.x, y: centerTransformed.y },
             width: width * scaleX,
             height: height * scaleY,
             radius: radius * Math.min(scaleX, scaleY), // Simplistic radius scaling
@@ -441,13 +448,14 @@ class CrispSwContext {
         const state = this.currentState;
         const cx = x + width / 2;
         const cy = y + height / 2;
-        const centerTransformed = transformPoint(cx, cy, state.transform.elements);
-        const rotation = getRotationAngle(state.transform.elements);
-        const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
+        const centerTransformed = state.transform.transformPoint({x: cx, y: cy});
+        const rotation = state.transform.rotationAngle;
+        const scaleX = state.transform.scaleX;
+        const scaleY = state.transform.scaleY;
         const scaledRadius = radius * Math.min(Math.abs(scaleX), Math.abs(scaleY));
 
         this.roundedRectRenderer.drawRoundedRect({
-            center: { x: centerTransformed.tx, y: centerTransformed.ty },
+            center: { x: centerTransformed.x, y: centerTransformed.y },
             width: width * scaleX,
             height: height * scaleY,
             radius: scaledRadius,
@@ -468,16 +476,17 @@ class CrispSwContext {
      */
     strokeRoundRect(x, y, width, height, radius) {
         const state = this.currentState;
-        const scaledLineWidth = getScaledLineWidth(state.transform.elements, state.lineWidth);
+        const scaledLineWidth = state.transform.getScaledLineWidth(state.lineWidth);
         const cx = x + width / 2;
         const cy = y + height / 2;
-        const centerTransformed = transformPoint(cx, cy, state.transform.elements);
-        const rotation = getRotationAngle(state.transform.elements);
-        const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
+        const centerTransformed = state.transform.transformPoint({x: cx, y: cy});
+        const rotation = state.transform.rotationAngle;
+        const scaleX = state.transform.scaleX;
+        const scaleY = state.transform.scaleY;
         const scaledRadius = radius * Math.min(Math.abs(scaleX), Math.abs(scaleY));
 
         this.roundedRectRenderer.drawRoundedRect({
-            center: { x: centerTransformed.tx, y: centerTransformed.ty },
+            center: { x: centerTransformed.x, y: centerTransformed.y },
             width: width * scaleX,
             height: height * scaleY,
             radius: scaledRadius,
@@ -507,14 +516,15 @@ class CrispSwContext {
 
         if (isFullCircle) {
             const state = this.currentState;
-            const centerTransformed = transformPoint(x, y, state.transform.elements);
-            const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
+            const centerTransformed = state.transform.transformPoint({x, y});
+            const scaleX = state.transform.scaleX;
+            const scaleY = state.transform.scaleY;
             // For circles, radius is scaled by the max of scaleX and scaleY to maintain circularity
             // as we don't support ellipses yet.
             const scaledRadius = radius * Math.max(Math.abs(scaleX), Math.abs(scaleY));
 
             this.circleRenderer.drawCircle({
-                center: { x: centerTransformed.tx, y: centerTransformed.ty },
+                center: { x: centerTransformed.x, y: centerTransformed.y },
                 radius: scaledRadius,
                 clippingOnly: true,
                 // These are not used for clippingOnly, but provided for shape consistency
@@ -533,17 +543,18 @@ class CrispSwContext {
      */
     fillArc(x, y, radius, startAngle, endAngle, anticlockwise = false) {
         const state = this.currentState;
-        const centerTransformed = transformPoint(x, y, state.transform.elements);
-        const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
-        const scaledRadius = radius * Math.min(Math.abs(scaleX), Math.abs(scaleY)); 
+        const centerTransformed = state.transform.transformPoint({x, y});
+        const scaleX = state.transform.scaleX;
+        const scaleY = state.transform.scaleY;
+        const scaledRadius = radius * Math.min(Math.abs(scaleX), Math.abs(scaleY));
 
         const startAngleDeg = startAngle * 180 / Math.PI;
         const endAngleDeg = endAngle * 180 / Math.PI;
-        
+
         // SWRendererArc.drawArc expects a shape with fillColor and strokeColor (alpha 0-255)
         // It internally handles fill and/or stroke based on these colors and strokeWidth.
         this.arcRenderer.drawArc({
-            center: { x: centerTransformed.tx, y: centerTransformed.ty },
+            center: { x: centerTransformed.x, y: centerTransformed.y },
             radius: scaledRadius,
             startAngle: startAngleDeg,
             endAngle: endAngleDeg,
@@ -560,16 +571,17 @@ class CrispSwContext {
      */
     outerStrokeArc(x, y, radius, startAngle, endAngle, anticlockwise = false) {
         const state = this.currentState;
-        const scaledLineWidth = getScaledLineWidth(state.transform.elements, state.lineWidth);
-        const centerTransformed = transformPoint(x, y, state.transform.elements);
-        const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
+        const scaledLineWidth = state.transform.getScaledLineWidth(state.lineWidth);
+        const centerTransformed = state.transform.transformPoint({x, y});
+        const scaleX = state.transform.scaleX;
+        const scaleY = state.transform.scaleY;
         const scaledRadius = radius * Math.min(Math.abs(scaleX), Math.abs(scaleY));
-        
+
         const startAngleDeg = startAngle * 180 / Math.PI;
         const endAngleDeg = endAngle * 180 / Math.PI;
 
         this.arcRenderer.drawArc({
-            center: { x: centerTransformed.tx, y: centerTransformed.ty },
+            center: { x: centerTransformed.x, y: centerTransformed.y },
             radius: scaledRadius,
             startAngle: startAngleDeg,
             endAngle: endAngleDeg,
@@ -586,9 +598,10 @@ class CrispSwContext {
      */
     fillAndOuterStrokeArc(x, y, radius, startAngle, endAngle, anticlockwise = false) {
         const state = this.currentState;
-        const scaledLineWidth = getScaledLineWidth(state.transform.elements, state.lineWidth);
-        const centerTransformed = transformPoint(x, y, state.transform.elements);
-        const { scaleX, scaleY } = getScaleFactors(state.transform.elements);
+        const scaledLineWidth = state.transform.getScaledLineWidth(state.lineWidth);
+        const centerTransformed = state.transform.transformPoint({x, y});
+        const scaleX = state.transform.scaleX;
+        const scaleY = state.transform.scaleY;
         const scaledRadius = radius * Math.min(Math.abs(scaleX), Math.abs(scaleY));
 
         const startAngleDeg = startAngle * 180 / Math.PI;
@@ -596,11 +609,11 @@ class CrispSwContext {
 
         // SWRendererArc.drawArc handles both fill and stroke if both colors are opaque and strokeWidth > 0
         this.arcRenderer.drawArc({
-            center: { x: centerTransformed.tx, y: centerTransformed.ty },
+            center: { x: centerTransformed.x, y: centerTransformed.y },
             radius: scaledRadius,
             startAngle: startAngleDeg,
             endAngle: endAngleDeg,
-            anticlockwise: anticlockwise, 
+            anticlockwise: anticlockwise,
             fillColor: state.fillColor,
             strokeWidth: scaledLineWidth,
             strokeColor: state.strokeColor

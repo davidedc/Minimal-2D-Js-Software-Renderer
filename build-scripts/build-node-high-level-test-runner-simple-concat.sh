@@ -32,7 +32,7 @@ echo "[Build Script] Adding Node Polyfills..."
 cat "$PROJECT_ROOT/src/crisp-sw-canvas/node-polyfills.js" >> "$OUTPUT_FILE"
 echo "  Added: src/crisp-sw-canvas/node-polyfills.js"
 
-# 2. Core Utilities (Including geometry.js for TransformationMatrix)
+# 2. Core Utilities
 echo "[Build Script] Adding Core Utilities..."
 
 # ----- these are needed for the Scene: All Shape Types Combined test, which
@@ -95,13 +95,7 @@ echo "[Build Script] Finished Core Utilities."
 
 # 3. Crisp SW Canvas Files
 echo "[Build Script] Adding Crisp SW Canvas files..."
-## TransformationMatrix
-cat "$PROJECT_ROOT/src/crisp-sw-canvas/TransformationMatrix.js" >> "$OUTPUT_FILE"
-echo "  Added: src/crisp-sw-canvas/TransformationMatrix.js"
-## Now transform-utils.js
-cat "$PROJECT_ROOT/src/crisp-sw-canvas/transform-utils.js" >> "$OUTPUT_FILE"
-echo "  Added: src/crisp-sw-canvas/transform-utils.js"
-## Now Color primitives from SWCanvas-primitives sibling directory
+## Primitives from SWCanvas-primitives sibling directory (Transform2D, Color, ColorParser)
 get_primitive_files || exit 1
 for pfile in "${PRIMITIVE_FILES[@]}"; do
   cat "$pfile" >> "$OUTPUT_FILE"

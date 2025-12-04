@@ -7,7 +7,7 @@ class ContextState {
         this.canvasWidth = canvasWidth;
         this.canvasHeight = canvasHeight;
         this.lineWidth = lineWidth || 1;
-        this.transform = transform || new TransformationMatrix();
+        this.transform = transform || new Transform2D();
         // Store Color instances (default: opaque black)
         this.strokeColor = strokeColor || Color.black;
         this.fillColor = fillColor || Color.black;
@@ -20,7 +20,7 @@ class ContextState {
         return new ContextState(
             this.canvasWidth, this.canvasHeight,
             this.lineWidth,
-            this.transform.clone(),
+            this.transform,  // Transform2D is immutable - safe to share reference
             // Color is immutable - can reuse same instance
             this.strokeColor, this.fillColor,
             this.globalAlpha,

@@ -55,9 +55,7 @@ function get_common_core_files() {
     get_primitive_files || return 1
 
     COMMON_CORE_FILES=(
-        "$PROJECT_ROOT/src/crisp-sw-canvas/TransformationMatrix.js"
-        "$PROJECT_ROOT/src/crisp-sw-canvas/transform-utils.js"
-        # Color primitives from SWCanvas-primitives (replaces color-utils.js)
+        # Primitives from SWCanvas-primitives (Transform2D, Color, ColorParser)
         "${PRIMITIVE_FILES[@]}"
         "$PROJECT_ROOT/src/crisp-sw-canvas/ContextState.js"
         "$PROJECT_ROOT/src/utils/geometry.js"
@@ -106,6 +104,7 @@ function get_primitive_files() {
     PRIMITIVES_DIR="$(get_primitives_dir)" || return 1
 
     PRIMITIVE_FILES=(
+        "$PRIMITIVES_DIR/Transform2D.js"
         "$PRIMITIVES_DIR/Color.js"
         "$PRIMITIVES_DIR/ColorParser.js"
     )
