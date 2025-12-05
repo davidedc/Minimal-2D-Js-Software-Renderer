@@ -33,7 +33,7 @@ class SWRendererPixel {
     const bitIndex = pixelPos & 7;   // Faster than pixelPos % 8
     
     // OR the bit in the tempClippingMask
-    this.tempClippingMask[byteIndex] |= (1 << (7 - bitIndex));
+    this.tempClippingMask[byteIndex] |= (1 << bitIndex);
   }
 
   // Blending happens in sRGB space for performance reasons
@@ -69,7 +69,7 @@ class SWRendererPixel {
       if (clippingMask[clippingMaskByteIndex] === 0) return;
       
       // Bit-level check only if needed
-      if ((clippingMask[clippingMaskByteIndex] & (1 << (7 - bitIndex))) === 0) return;
+      if ((clippingMask[clippingMaskByteIndex] & (1 << bitIndex)) === 0) return;
     }
     
     // Check for fast path with opaque colors
@@ -204,7 +204,7 @@ class SWRendererPixel {
             
             // Bit-level check
             const bitIndex = pixelPos & 7;
-            if ((clippingMask[clippingMaskByteIndex] & (1 << (7 - bitIndex))) === 0) {
+            if ((clippingMask[clippingMaskByteIndex] & (1 << bitIndex)) === 0) {
               continue;
             }
           }
@@ -232,7 +232,7 @@ class SWRendererPixel {
             
             // Bit-level check
             const bitIndex = pixelPos & 7;
-            if ((clippingMask[clippingMaskByteIndex] & (1 << (7 - bitIndex))) === 0) {
+            if ((clippingMask[clippingMaskByteIndex] & (1 << bitIndex)) === 0) {
               continue;
             }
           }
@@ -477,7 +477,7 @@ class SWRendererPixel {
             // Bit-level check if the byte wasn't fully clipped
             const bitIndex = pixelPos & 7; // 0-7
             // Check if the specific bit for this pixel is 0 (clipped)
-            if ((clippingMask[clippingMaskByteIndex] & (1 << (7 - bitIndex))) === 0) {
+            if ((clippingMask[clippingMaskByteIndex] & (1 << bitIndex)) === 0) {
               continue; // Skip this pixel
             }
           }

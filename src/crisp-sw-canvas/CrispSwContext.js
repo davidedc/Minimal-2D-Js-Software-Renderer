@@ -39,7 +39,10 @@ class CrispSwContext {
         // this view show optimise for when we deal with pixel values all together rather than r,g,b,a separately
         this.frameBufferUint32View = new Uint32Array(this.frameBufferUint8ClampedView.buffer);
         
-        this.tempClippingMask = new Uint8Array(Math.ceil(canvas.width * canvas.height / 8)).fill(0);
+        // Temporary clip mask for path recording (starts clipped)
+        this.tempClipMask = new ClipMask(canvas.width, canvas.height);
+        this.tempClipMask.clipAll();
+        this.tempClippingMask = this.tempClipMask.buffer;
         
         // Initialize renderers
         this.pixelRenderer = new SWRendererPixel(this.frameBufferUint8ClampedView, this.frameBufferUint32View, canvas.width, canvas.height, this);
@@ -117,7 +120,7 @@ class CrispSwContext {
 
     // Drawing methods
     beginPath() {
-        this.tempClippingMask.fill(0);
+        this.tempClipMask.clipAll();
     }
 
     fill() {
@@ -174,19 +177,10 @@ class CrispSwContext {
         });
     }
 
-    // The clip() function
-    // * takes the clippingMask and ANDs it with the tempClippingMask
-    // * clears the tempClippingMask to all zeroes
+    // The clip() function ANDs the current clippingMask with the tempClippingMask
     clip() {
-        // to a logical and of the current clippingMask and the tempClippingMask
-        // a little bit of bitwise magic like this:
-        // this.currentState.clippingMask = this.currentState.clippingMask && this.tempClippingMask;
-        // but we need to do it for each byte
-        for (let i = 0; i < this.currentState.clippingMask.length; i++) {
-            this.currentState.clippingMask[i] = this.currentState.clippingMask[i] & this.tempClippingMask[i];
-        }
-        // clip() does not close the path, so since we might add more rects to the paths, we cannot clear the tempClippingMask
-        // can't do this: this.tempClippingMask.fill(0);
+        this.currentState.clipMask.intersectWith(this.tempClipMask);
+        // clip() does not close the path, so we cannot clear the tempClipMask
     }
 
 

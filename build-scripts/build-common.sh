@@ -104,6 +104,8 @@ function get_primitive_files() {
     PRIMITIVES_DIR="$(get_primitives_dir)" || return 1
 
     PRIMITIVE_FILES=(
+        "$PRIMITIVES_DIR/BitBuffer.js"
+        "$PRIMITIVES_DIR/ClipMask.js"
         "$PRIMITIVES_DIR/Transform2D.js"
         "$PRIMITIVES_DIR/Color.js"
         "$PRIMITIVES_DIR/ColorParser.js"

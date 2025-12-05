@@ -12,11 +12,13 @@ class ContextState {
         this.strokeColor = strokeColor || Color.black;
         this.fillColor = fillColor || Color.black;
         this.globalAlpha = globalAlpha || 1.0;
-        this.clippingMask = clippingMask || new Uint8Array(Math.ceil(canvasWidth * canvasHeight / 8)).fill(255);
+        // ClipMask (defaults to all visible)
+        this.clipMask = clippingMask || new ClipMask(canvasWidth, canvasHeight);
+        // Direct buffer access for hot loops
+        this.clippingMask = this.clipMask.buffer;
     }
 
     clone() {
-        const clippingMaskCopy = new Uint8Array(this.clippingMask);
         return new ContextState(
             this.canvasWidth, this.canvasHeight,
             this.lineWidth,
@@ -24,7 +26,7 @@ class ContextState {
             // Color is immutable - can reuse same instance
             this.strokeColor, this.fillColor,
             this.globalAlpha,
-            clippingMaskCopy
+            this.clipMask.clone()
         );
     }
 }

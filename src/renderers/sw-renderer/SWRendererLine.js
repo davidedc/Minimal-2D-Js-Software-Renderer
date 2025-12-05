@@ -183,7 +183,7 @@ class SWRendererLine {
         const bitIndex = pixelPos & 7;
         
         if (clippingMask[clippingMaskByteIndex] === 0) continue;
-        if ((clippingMask[clippingMaskByteIndex] & (1 << (7 - bitIndex))) === 0) continue;
+        if ((clippingMask[clippingMaskByteIndex] & (1 << bitIndex)) === 0) continue;
       }
       
       if (isOpaque) {
@@ -253,7 +253,7 @@ class SWRendererLine {
         const bitIndex = pixelPos & 7;
         
         if (clippingMask[clippingMaskByteIndex] === 0) continue;
-        if ((clippingMask[clippingMaskByteIndex] & (1 << (7 - bitIndex))) === 0) continue;
+        if ((clippingMask[clippingMaskByteIndex] & (1 << bitIndex)) === 0) continue;
       }
       
       if (isOpaque) {
@@ -329,7 +329,7 @@ class SWRendererLine {
           // Skip if clipping mask indicates pixel should be clipped
           if (clippingMaskByteIndex >= clippingMask.length ||
               clippingMask[clippingMaskByteIndex] === 0 || 
-              (clippingMask[clippingMaskByteIndex] & (1 << (7 - bitIndex))) === 0) {
+              (clippingMask[clippingMaskByteIndex] & (1 << bitIndex)) === 0) {
             drawPixel = false;
           }
         }
@@ -409,7 +409,7 @@ class SWRendererLine {
           
           if (clippingMaskByteIndex >= clippingMask.length ||
               clippingMask[clippingMaskByteIndex] === 0 || 
-              (clippingMask[clippingMaskByteIndex] & (1 << (7 - bitIndex))) === 0) {
+              (clippingMask[clippingMaskByteIndex] & (1 << bitIndex)) === 0) {
             drawPixel = false;
           }
         }

@@ -188,7 +188,7 @@ class SWRendererRoundedRect {
              const clippingMaskByteIndex = pixelPos >> 3;
              const bitIndex = pixelPos & 7;
              if (clippingMask[clippingMaskByteIndex] === 0) continue;
-             if ((clippingMask[clippingMaskByteIndex] & (1 << (7 - bitIndex))) === 0) continue;
+             if ((clippingMask[clippingMaskByteIndex] & (1 << bitIndex)) === 0) continue;
            }
 
            if (isOpaque) {
