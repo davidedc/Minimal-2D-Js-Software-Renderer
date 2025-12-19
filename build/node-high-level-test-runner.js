@@ -1591,13 +1591,13 @@ class ScanlineSpans {
 
 /**
  * BitBuffer class for SWCanvas
- * 
+ *
  * A utility class for managing 1-bit per pixel data structures.
  * Used as a composition component by ClipMask and SourceMask to eliminate
  * code duplication while maintaining clear separation of concerns.
- * 
+ *
  * Following Joshua Bloch's principle: "Favor composition over inheritance" (Item 18)
- * 
+ *
  * Memory Layout:
  * - Each pixel is represented by 1 bit
  * - Bits are packed into Uint8Array (8 pixels per byte)
@@ -1615,30 +1615,30 @@ class BitBuffer {
         if (typeof width !== 'number' || !Number.isInteger(width) || width <= 0) {
             throw new Error('BitBuffer width must be a positive integer');
         }
-        
+
         if (typeof height !== 'number' || !Number.isInteger(height) || height <= 0) {
             throw new Error('BitBuffer height must be a positive integer');
         }
-        
+
         if (defaultValue !== 0 && defaultValue !== 1) {
             throw new Error('BitBuffer defaultValue must be 0 or 1');
         }
-        
+
         this._width = width;
         this._height = height;
         this._numPixels = width * height;
         this._numBytes = Math.ceil(this._numPixels / 8);
         this._defaultValue = defaultValue;
-        
+
         // Create buffer and initialize to default value
         this._buffer = new Uint8Array(this._numBytes);
         this._initializeToDefault();
-        
+
         // Make dimensions immutable
         Object.defineProperty(this, 'width', { value: width, writable: false });
         Object.defineProperty(this, 'height', { value: height, writable: false });
     }
-    
+
     /**
      * Initialize buffer to default value
      * @private
@@ -1647,7 +1647,7 @@ class BitBuffer {
         if (this._defaultValue === 1) {
             // Initialize to all 1s
             this._buffer.fill(0xFF);
-            
+
             // Handle partial last byte if width*height is not divisible by 8
             const remainderBits = this._numPixels % 8;
             if (remainderBits !== 0) {
@@ -1660,7 +1660,7 @@ class BitBuffer {
             this._buffer.fill(0);
         }
     }
-    
+
     /**
      * Get bit value for a pixel
      * @param {number} x - X coordinate
@@ -1672,11 +1672,11 @@ class BitBuffer {
         if (x < 0 || x >= this._width || y < 0 || y >= this._height) {
             return false; // Out of bounds pixels return 0
         }
-        
+
         const pixelIndex = y * this._width + x;
         return this._getBit(pixelIndex) === 1;
     }
-    
+
     /**
      * Set bit value for a pixel
      * @param {number} x - X coordinate
@@ -1688,24 +1688,24 @@ class BitBuffer {
         if (x < 0 || x >= this._width || y < 0 || y >= this._height) {
             return; // Ignore out of bounds
         }
-        
+
         const pixelIndex = y * this._width + x;
         this._setBit(pixelIndex, value ? 1 : 0);
     }
-    
+
     /**
      * Clear all bits (set to 0)
      */
     clear() {
         this._buffer.fill(0);
     }
-    
+
     /**
      * Fill all bits (set to 1)
      */
     fill() {
         this._buffer.fill(0xFF);
-        
+
         // Handle partial last byte
         const remainderBits = this._numPixels % 8;
         if (remainderBits !== 0) {
@@ -1714,14 +1714,14 @@ class BitBuffer {
             this._buffer[lastByteIndex] = lastByteMask;
         }
     }
-    
+
     /**
      * Reset buffer to its default value
      */
     reset() {
         this._initializeToDefault();
     }
-    
+
     /**
      * Perform bitwise AND with another BitBuffer
      * @param {BitBuffer} other - Other BitBuffer to AND with
@@ -1730,17 +1730,17 @@ class BitBuffer {
         if (!(other instanceof BitBuffer)) {
             throw new Error('Argument must be a BitBuffer instance');
         }
-        
+
         if (other._width !== this._width || other._height !== this._height) {
             throw new Error('BitBuffer dimensions must match for AND operation');
         }
-        
+
         // Perform bitwise AND on each byte
         for (let i = 0; i < this._numBytes; i++) {
             this._buffer[i] &= other._buffer[i];
         }
     }
-    
+
     /**
      * Copy data from another BitBuffer
      * @param {BitBuffer} other - Source BitBuffer to copy from
@@ -1749,14 +1749,14 @@ class BitBuffer {
         if (!(other instanceof BitBuffer)) {
             throw new Error('Argument must be a BitBuffer instance');
         }
-        
+
         if (other._width !== this._width || other._height !== this._height) {
             throw new Error('BitBuffer dimensions must match for copy operation');
         }
-        
+
         this._buffer.set(other._buffer);
     }
-    
+
     /**
      * Check if buffer is completely filled (all 1s)
      * @returns {boolean} True if all bits are 1
@@ -1768,7 +1768,7 @@ class BitBuffer {
                 return false;
             }
         }
-        
+
         // Check last byte accounting for partial bits
         const remainderBits = this._numPixels % 8;
         if (remainderBits === 0) {
@@ -1778,7 +1778,7 @@ class BitBuffer {
             return this._buffer[this._numBytes - 1] === lastByteMask;
         }
     }
-    
+
     /**
      * Check if buffer is completely empty (all 0s)
      * @returns {boolean} True if all bits are 0
@@ -1791,7 +1791,7 @@ class BitBuffer {
         }
         return true;
     }
-    
+
     /**
      * Get memory usage in bytes
      * @returns {number} Memory usage of the buffer
@@ -1799,7 +1799,7 @@ class BitBuffer {
     getMemoryUsage() {
         return this._buffer.byteLength;
     }
-    
+
     /**
      * Get bit value at linear pixel index
      * @param {number} pixelIndex - Linear pixel index
@@ -1809,14 +1809,14 @@ class BitBuffer {
     _getBit(pixelIndex) {
         const byteIndex = Math.floor(pixelIndex / 8);
         const bitIndex = pixelIndex % 8;
-        
+
         if (byteIndex >= this._buffer.length) {
             return 0; // Out of bounds pixels return 0
         }
-        
+
         return (this._buffer[byteIndex] & (1 << bitIndex)) !== 0 ? 1 : 0;
     }
-    
+
     /**
      * Set bit value at linear pixel index
      * @param {number} pixelIndex - Linear pixel index
@@ -1826,18 +1826,18 @@ class BitBuffer {
     _setBit(pixelIndex, value) {
         const byteIndex = Math.floor(pixelIndex / 8);
         const bitIndex = pixelIndex % 8;
-        
+
         if (byteIndex >= this._buffer.length) {
             return; // Ignore out of bounds
         }
-        
+
         if (value) {
             this._buffer[byteIndex] |= (1 << bitIndex);
         } else {
             this._buffer[byteIndex] &= ~(1 << bitIndex);
         }
     }
-    
+
     /**
      * String representation for debugging
      * @returns {string} BitBuffer description
@@ -1847,7 +1847,7 @@ class BitBuffer {
         const state = this.isEmpty() ? 'empty' : this.isFull() ? 'full' : 'mixed';
         return `BitBuffer(${this._width}×${this._height}, ${memoryKB}KB, ${state})`;
     }
-    
+
     /**
      * Check equality with another BitBuffer
      * @param {BitBuffer} other - Other BitBuffer to compare
@@ -1857,27 +1857,28 @@ class BitBuffer {
         if (!(other instanceof BitBuffer)) {
             return false;
         }
-        
+
         if (other._width !== this._width || other._height !== this._height) {
             return false;
         }
-        
+
         // Compare buffer contents
         for (let i = 0; i < this._numBytes; i++) {
             if (this._buffer[i] !== other._buffer[i]) {
                 return false;
             }
         }
-        
+
         return true;
     }
-}/**
+}
+/**
  * ClipMask class for SWCanvas
- * 
+ *
  * Represents a 1-bit stencil buffer for memory-efficient clipping operations.
  * Uses composition with BitBuffer to eliminate code duplication while maintaining
  * clear separation of concerns (Joshua Bloch Item 18: Favor composition over inheritance).
- * 
+ *
  * Memory Layout:
  * - Each pixel is represented by 1 bit (1 = visible, 0 = clipped)
  * - Bits are packed into Uint8Array (8 pixels per byte)
@@ -1893,7 +1894,7 @@ class ClipMask {
         // BitBuffer validates parameters and handles bit manipulation
         // Default to 1 (no clipping by default)
         this._bitBuffer = new BitBuffer(width, height, 1);
-        
+
         // Make dimensions immutable
         Object.defineProperty(this, 'width', { value: width, writable: false });
         Object.defineProperty(this, 'height', { value: height, writable: false });
@@ -1917,7 +1918,7 @@ class ClipMask {
     getPixel(x, y) {
         return this._bitBuffer.getPixel(x, y);
     }
-    
+
     /**
      * Set clip state for a pixel
      * @param {number} x - X coordinate
@@ -1927,7 +1928,7 @@ class ClipMask {
     setPixel(x, y, visible) {
         this._bitBuffer.setPixel(x, y, visible);
     }
-    
+
     /**
      * Check if a pixel is clipped (convenience method)
      * @param {number} x - X coordinate
@@ -1937,21 +1938,21 @@ class ClipMask {
     isPixelClipped(x, y) {
         return !this.getPixel(x, y);
     }
-    
+
     /**
      * Clear all clipping (set all pixels to visible)
      */
     clear() {
         this._bitBuffer.fill(); // Fill with 1s (visible)
     }
-    
+
     /**
      * Set all pixels to clipped state
      */
     clipAll() {
         this._bitBuffer.clear(); // Clear to 0s (clipped)
     }
-    
+
     /**
      * Intersect this clip mask with another (AND operation)
      * Only pixels visible in BOTH masks will remain visible
@@ -1961,10 +1962,10 @@ class ClipMask {
         if (!(other instanceof ClipMask)) {
             throw new Error('Argument must be a ClipMask instance');
         }
-        
+
         this._bitBuffer.and(other._bitBuffer);
     }
-    
+
     /**
      * Create a deep copy of this clip mask
      * @returns {ClipMask} New ClipMask with copied data
@@ -1974,7 +1975,7 @@ class ClipMask {
         clone._bitBuffer.copyFrom(this._bitBuffer);
         return clone;
     }
-    
+
     /**
      * Create a clip pixel writer function for path rendering
      * @returns {Function} clipPixel function for coverage-based rendering
@@ -1983,13 +1984,13 @@ class ClipMask {
         return (x, y, coverage) => {
             // Bounds checking
             if (x < 0 || x >= this._width || y < 0 || y >= this._height) return;
-            
+
             // Convert coverage to binary: >0.5 means inside, <=0.5 means outside
             const isInside = coverage > 0.5;
             this.setPixel(x, y, isInside);
         };
     }
-    
+
     /**
      * Get memory usage in bytes
      * @returns {number} Memory usage of the clip mask
@@ -1997,7 +1998,7 @@ class ClipMask {
     getMemoryUsage() {
         return this._bitBuffer.getMemoryUsage();
     }
-    
+
     /**
      * Check if mask has any clipping (optimization)
      * @returns {boolean} True if any pixels are clipped
@@ -2005,7 +2006,7 @@ class ClipMask {
     hasClipping() {
         return !this._bitBuffer.isFull();
     }
-    
+
     /**
      * String representation for debugging
      * @returns {string} ClipMask description
@@ -2015,7 +2016,7 @@ class ClipMask {
         const clippingStatus = this.hasClipping() ? 'with clipping' : 'no clipping';
         return `ClipMask(${this.width}×${this.height}, ${memoryKB}KB, ${clippingStatus})`;
     }
-    
+
     /**
      * Check equality with another ClipMask
      * @param {ClipMask} other - Other ClipMask to compare
@@ -2025,15 +2026,16 @@ class ClipMask {
         if (!(other instanceof ClipMask)) {
             return false;
         }
-        
+
         return this._bitBuffer.equals(other._bitBuffer);
     }
-}/**
+}
+/**
  * Transform2D class for SWCanvas
- * 
+ *
  * Represents a 2D affine transformation matrix using homogeneous coordinates.
  * Immutable value object following Joshua Bloch's effective design principles.
- * 
+ *
  * Transform2D format (2x3 affine transformation):
  * | a  c  e |   | x |   | ax + cy + e |
  * | b  d  f | × | y | = | bx + dy + f |
@@ -2052,9 +2054,9 @@ class Transform2D {
                     throw new Error(`Transform2D component ${i} must be a finite number`);
                 }
             }
-            
+
             this.a = init[0];
-            this.b = init[1]; 
+            this.b = init[1];
             this.c = init[2];
             this.d = init[3];
             this.e = init[4];
@@ -2067,12 +2069,12 @@ class Transform2D {
             this.c = 0; this.d = 1;
             this.e = 0; this.f = 0;
         }
-        
+
         // Make transformation immutable
         Object.freeze(this);
     }
 
-    
+
     /**
      * Create translation transform
      * @param {number} x - X translation
@@ -2082,17 +2084,17 @@ class Transform2D {
     static translation(x, y) {
         return new Transform2D([1, 0, 0, 1, x, y]);
     }
-    
+
     /**
      * Create scaling transform
      * @param {number} sx - X scale factor
-     * @param {number} sy - Y scale factor  
+     * @param {number} sy - Y scale factor
      * @returns {Transform2D} Scaling transformation
      */
     static scaling(sx, sy) {
         return new Transform2D([sx, 0, 0, sy, 0, 0]);
     }
-    
+
     /**
      * Create rotation transform
      * @param {number} angleInRadians - Rotation angle in radians
@@ -2113,7 +2115,7 @@ class Transform2D {
         if (!(other instanceof Transform2D)) {
             throw new Error('Can only multiply with another Transform2D');
         }
-        
+
         return new Transform2D([
             this.a * other.a + this.c * other.b,
             this.b * other.a + this.d * other.b,
@@ -2162,11 +2164,11 @@ class Transform2D {
      */
     invert() {
         const det = this.a * this.d - this.b * this.c;
-        
+
         if (Math.abs(det) < 1e-10) {
             throw new Error('Transform2D matrix is not invertible (determinant ≈ 0)');
         }
-        
+
         return new Transform2D([
             this.d / det,
             -this.b / det,
@@ -2186,13 +2188,13 @@ class Transform2D {
         if (!point || typeof point.x !== 'number' || typeof point.y !== 'number') {
             throw new Error('Point must have numeric x and y properties');
         }
-        
+
         return {
             x: this.a * point.x + this.c * point.y + this.e,
             y: this.b * point.x + this.d * point.y + this.f
         };
     }
-    
+
     /**
      * Transform multiple points efficiently
      * @param {Array} points - Array of points to transform
@@ -2201,7 +2203,7 @@ class Transform2D {
     transformPoints(points) {
         return points.map(point => this.transformPoint(point));
     }
-    
+
     /**
      * Get transformation as array
      * @returns {number[]} [a, b, c, d, e, f] array
@@ -2209,16 +2211,16 @@ class Transform2D {
     toArray() {
         return [this.a, this.b, this.c, this.d, this.e, this.f];
     }
-    
+
     /**
      * Check if this is the identity transformation
      * @returns {boolean} True if identity
      */
     get isIdentity() {
-        return this.a === 1 && this.b === 0 && this.c === 0 && 
+        return this.a === 1 && this.b === 0 && this.c === 0 &&
                this.d === 1 && this.e === 0 && this.f === 0;
     }
-    
+
     /**
      * Get transformation determinant
      * @returns {number} Transform2D determinant
@@ -2286,13 +2288,12 @@ class Transform2D {
         return `Transform2D([${this.a}, ${this.b}, ${this.c}, ${this.d}, ${this.e}, ${this.f}])`;
     }
 }
-
 /**
  * Color class for SWCanvas
- * 
+ *
  * Encapsulates color operations, conversions, and alpha blending math.
  * Follows Joshua Bloch's principle of making classes immutable where practical.
- * 
+ *
  * Internally uses premultiplied sRGB for consistency with HTML5 Canvas behavior.
  * Provides methods for converting between premultiplied and non-premultiplied forms.
  */
@@ -2300,7 +2301,7 @@ class Color {
     /**
      * Create a Color instance
      * @param {number} r - Red component (0-255)
-     * @param {number} g - Green component (0-255)  
+     * @param {number} g - Green component (0-255)
      * @param {number} b - Blue component (0-255)
      * @param {number} a - Alpha component (0-255)
      * @param {boolean} isPremultiplied - Whether values are already premultiplied
@@ -2504,9 +2505,10 @@ Color.fromCSS = function (cssString, parser) {
     }
     const parsed = parser.parse(cssString);
     return new Color(parsed.r, parsed.g, parsed.b, parsed.a, false);
-};/**
+};
+/**
  * ColorParser for SWCanvas
- * 
+ *
  * Parses CSS color strings into RGBA values for use with Core API.
  * Supports hex, RGB/RGBA functions, and named colors.
  * Includes caching for performance optimization.
@@ -2514,7 +2516,7 @@ Color.fromCSS = function (cssString, parser) {
 class ColorParser {
     constructor() {
         this._cache = new Map();
-        
+
         // CSS Color names to RGB mapping - Complete MDN specification
         this._namedColors = {
             // CSS Level 1 colors
@@ -2534,8 +2536,8 @@ class ColorParser {
             blue: { r: 0, g: 0, b: 255 },
             teal: { r: 0, g: 128, b: 128 },
             aqua: { r: 0, g: 255, b: 255 },
-            
-            // CSS Level 2 (X11) colors  
+
+            // CSS Level 2 (X11) colors
             aliceblue: { r: 240, g: 248, b: 255 },
             antiquewhite: { r: 250, g: 235, b: 215 },
             aquamarine: { r: 127, g: 255, b: 212 },
@@ -2670,7 +2672,7 @@ class ColorParser {
             yellowgreen: { r: 154, g: 205, b: 50 }
         };
     }
-    
+
     /**
      * Parse a CSS color string to RGBA values
      * @param {string} color - CSS color string
@@ -2681,14 +2683,14 @@ class ColorParser {
         if (this._cache.has(color)) {
             return this._cache.get(color);
         }
-        
+
         let result;
-        
+
         if (typeof color !== 'string') {
             result = { r: 0, g: 0, b: 0, a: 255 };
         } else {
             const trimmed = color.trim().toLowerCase();
-            
+
             if (trimmed.startsWith('#')) {
                 result = this._parseHex(trimmed);
             } else if (trimmed.startsWith('rgb')) {
@@ -2701,12 +2703,12 @@ class ColorParser {
                 result = { r: 0, g: 0, b: 0, a: 255 };
             }
         }
-        
+
         // Cache the result
         this._cache.set(color, result);
         return result;
     }
-    
+
     /**
      * Parse hex color (#RGB, #RRGGBB, #RRGGBBAA)
      * @private
@@ -2714,12 +2716,12 @@ class ColorParser {
     _parseHex(hex) {
         // Remove the #
         hex = hex.substring(1);
-        
+
         if (hex.length === 3) {
             // #RGB -> #RRGGBB
             hex = hex.split('').map(c => c + c).join('');
         }
-        
+
         if (hex.length === 6) {
             // #RRGGBB
             const r = parseInt(hex.substring(0, 2), 16);
@@ -2734,11 +2736,11 @@ class ColorParser {
             const a = parseInt(hex.substring(6, 8), 16);
             return { r, g, b, a };
         }
-        
+
         // Invalid hex - default to black
         return { r: 0, g: 0, b: 0, a: 255 };
     }
-    
+
     /**
      * Parse RGB/RGBA function notation
      * @private
@@ -2749,17 +2751,17 @@ class ColorParser {
         if (!match) {
             return { r: 0, g: 0, b: 0, a: 255 };
         }
-        
+
         const parts = match[1].split(',').map(s => s.trim());
-        
+
         if (parts.length < 3) {
             return { r: 0, g: 0, b: 0, a: 255 };
         }
-        
+
         const r = Math.max(0, Math.min(255, parseInt(parts[0]) || 0));
         const g = Math.max(0, Math.min(255, parseInt(parts[1]) || 0));
         const b = Math.max(0, Math.min(255, parseInt(parts[2]) || 0));
-        
+
         let a = 255;
         if (parts.length >= 4) {
             const alpha = parseFloat(parts[3]);
@@ -2767,17 +2769,18 @@ class ColorParser {
                 a = Math.max(0, Math.min(255, Math.round(alpha * 255)));
             }
         }
-        
+
         return { r, g, b, a };
     }
-    
+
     /**
      * Clear the color cache
      */
     clearCache() {
         this._cache.clear();
     }
-}/**
+}
+/**
  * Represents the state of a CrispSwContext at a point in time.
  * Used for save() and restore() operations.
  */
@@ -12477,19 +12480,20 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
 
     for (let i = 0; i < numIterations; i++) {
         // getRandomPoint uses SeededRandom for reproducibility of base characteristics.
-        const start = isTrueMultiInstance ? 
+        // Use margin=0 so lines can extend to canvas edges (matching 5px/10px tests)
+        const start = isTrueMultiInstance ?
             {
                 x: Math.random() * currentCanvasWidth,
                 y: Math.random() * currentCanvasHeight
             } :
-            getRandomPoint(3, currentCanvasWidth, currentCanvasHeight);
-            
+            getRandomPoint(0, currentCanvasWidth, currentCanvasHeight, 0);
+
         const end = isTrueMultiInstance ?
             {
                 x: Math.random() * currentCanvasWidth,
                 y: Math.random() * currentCanvasHeight
             } :
-            getRandomPoint(4, currentCanvasWidth, currentCanvasHeight);
+            getRandomPoint(0, currentCanvasWidth, currentCanvasHeight, 0);
 
         // Draw the line using the canvas-like API
         if (typeof ctx.strokeLine === 'function') {
