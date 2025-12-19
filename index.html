@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>Canvas Rendering Tests & Demos</title>
     <style>
@@ -10,32 +11,40 @@
             font-family: system-ui, -apple-system, sans-serif;
             line-height: 1.5;
         }
+
         .demo-link {
             margin-bottom: 30px;
         }
+
         .demo-link h2 {
             margin-bottom: 10px;
         }
+
         .demo-link p {
             margin-top: 0;
             color: #444;
         }
+
         a {
             color: #0066cc;
             text-decoration: none;
         }
+
         a:hover {
             text-decoration: underline;
         }
     </style>
 </head>
+
 <body>
-    <h1>2D JS SW Renderer Tests & Demos</h1>
+    <h1>Minimal-2D-Js-Software-Renderer Tests & Demos</h1>
 
     <div class="demo-link">
         <h2><a href="tests/browser-tests/high-level-tests.html">High-Level Rendering Tests</a></h2>
         <p>
-            Tests comparing the custom software renderer against the native Canvas API using a higher-level, canvas-like interface for scene definition (e.g., `ctx.fillRect`, `ctx.strokeLine`). Focuses on verifying visual fidelity and correctness, particularly for crisp rendering scenarios.
+            Tests comparing the custom software renderer against the native Canvas API using a higher-level, canvas-like
+            interface for scene definition (e.g., `ctx.fillRect`, `ctx.strokeLine`). Focuses on verifying visual
+            fidelity and correctness, particularly for crisp rendering scenarios.
         </p>
     </div>
 
@@ -46,7 +55,8 @@
             Tests low-level primitives like lines, rectangles, rounded rectangles, arcs and circles,
             comparing them with the equivalent canvas rendering methods. <br>
             <br>
-            These tests only cover strokes/fills with transparency in absolute coordinates (i.e. no transformations), no clipping.
+            These tests only cover strokes/fills with transparency in absolute coordinates (i.e. no transformations), no
+            clipping.
         </p>
     </div>
 
@@ -84,36 +94,48 @@
     <div class="demo-link">
         <h2><a href="tests/browser-tests/performance-tests-legacy.html">Performance comparison tests (Legacy)</a></h2>
         <p>
-            Legacy version of the performance comparison tests. Measures and compares the rendering performance between Software Canvas and HTML5 Canvas.
+            Legacy version of the performance comparison tests. Measures and compares the rendering performance between
+            Software Canvas and HTML5 Canvas.
         </p>
     </div>
 
     <div class="demo-link">
-        <h2><a href="supporting-experiments/canvas-crispness-examples/canvas-crispness-tests.html">HTML5 Canvas Crispness examples</a></h2>
+        <h2><a href="supporting-experiments/canvas-crispness-examples/canvas-crispness-tests.html">HTML5 Canvas
+                Crispness examples</a></h2>
         <p>
             Detailed exploration of HTML5 Canvas rendering crispness, including pixel-perfect
             drawing techniques, coordinate system explanations, and various examples
             of strokes and fills. <br>
             <br>
-            This helps understanding how HTML5 Canvas drawing works in respect to the precise positioning of strokes and fills, specifically for the cases useful for GUI drawing where one wants to draw axis-aligned fills and strokes (thin or thick) crisply.
+            This helps understanding how HTML5 Canvas drawing works in respect to the precise positioning of strokes and
+            fills, specifically for the cases useful for GUI drawing where one wants to draw axis-aligned fills and
+            strokes (thin or thick) crisply.
         </p>
     </div>
 
     <div class="demo-link">
-        <h2><a href="supporting-experiments/canvas-transform-effects-on-strokes-demo.html">Canvas Transform Effects on Strokes</a></h2>
+        <h2><a href="supporting-experiments/canvas-transform-effects-on-strokes-demo.html">Canvas Transform Effects on
+                Strokes</a></h2>
         <p>
-            Demonstrates how transforms have complex effects on not only paths, but also on the exact shape of the strokes related to those paths. <br>
+            Demonstrates how transforms have complex effects on not only paths, but also on the exact shape of the
+            strokes related to those paths. <br>
             <br>
-            For example, in a stroke of a rectangle on which a "scale x" is applied, not only the rectangle is stretched, but also the strokes, so the vertical strokes become thicker than the horizontal ones. This demo helps visualize these subtle effects that must be considered when implementing a software renderer.
+            For example, in a stroke of a rectangle on which a "scale x" is applied, not only the rectangle is
+            stretched, but also the strokes, so the vertical strokes become thicker than the horizontal ones. This demo
+            helps visualize these subtle effects that must be considered when implementing a software renderer.
         </p>
     </div>
 
     <div class="demo-link">
         <h2><a href="supporting-experiments/canvas-stroke-as-clipping-demo.html">Canvas Stroke as Clipping Test</a></h2>
         <p>
-            Demonstrates that the strokes of shapes in HTML5 Canvas are NOT part of the clipping areas for subsequent drawings (only the fills are). <br>
-            I.e. when using clip() on a path, Canvas only uses the mathematical path (with no thickness) as the clipping region. The demo shows this behavior with lines and rectangles, confirming that even when a shape has a thick stroke, the clipping region only follows the path outline without including the stroke area.
+            Demonstrates that the strokes of shapes in HTML5 Canvas are NOT part of the clipping areas for subsequent
+            drawings (only the fills are). <br>
+            I.e. when using clip() on a path, Canvas only uses the mathematical path (with no thickness) as the clipping
+            region. The demo shows this behavior with lines and rectangles, confirming that even when a shape has a
+            thick stroke, the clipping region only follows the path outline without including the stroke area.
         </p>
     </div>
 </body>
+
 </html>

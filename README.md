@@ -1,4 +1,4 @@
-# Very Simple JS 2D Software Renderer
+# Minimal-2D-Js-Software-Renderer
 
 ## Description
 A very simple 2D software renderer implemented in JavaScript. It uses basic rendering techniques for lines, rectangles, circles, and arcs. To keep it simple, it does not support arbitrary paths nor anti-aliasing (which is OK for my needs, also it makes the generated render much more compressible in lossless mode, good for keeping around hundreds of reference test screenshots).
