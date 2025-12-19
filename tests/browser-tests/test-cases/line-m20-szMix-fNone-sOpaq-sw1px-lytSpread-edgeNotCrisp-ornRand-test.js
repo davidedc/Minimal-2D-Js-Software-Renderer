@@ -100,19 +100,20 @@ function drawTest(ctx, currentIterationNumber, instances = null) {
 
     for (let i = 0; i < numIterations; i++) {
         // getRandomPoint uses SeededRandom for reproducibility of base characteristics.
-        const start = isTrueMultiInstance ? 
+        // Use margin=0 so lines can extend to canvas edges (matching 5px/10px tests)
+        const start = isTrueMultiInstance ?
             {
                 x: Math.random() * currentCanvasWidth,
                 y: Math.random() * currentCanvasHeight
             } :
-            getRandomPoint(3, currentCanvasWidth, currentCanvasHeight);
-            
+            getRandomPoint(0, currentCanvasWidth, currentCanvasHeight, 0);
+
         const end = isTrueMultiInstance ?
             {
                 x: Math.random() * currentCanvasWidth,
                 y: Math.random() * currentCanvasHeight
             } :
-            getRandomPoint(4, currentCanvasWidth, currentCanvasHeight);
+            getRandomPoint(0, currentCanvasWidth, currentCanvasHeight, 0);
 
         // Draw the line using the canvas-like API
         if (typeof ctx.strokeLine === 'function') {

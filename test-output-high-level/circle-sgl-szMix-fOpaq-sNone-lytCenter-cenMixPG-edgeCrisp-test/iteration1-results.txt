@@ -1,0 +1,14 @@
+Test: Single Circle Without Stroke (Crisp, Random Center Type)
+ID: circle-sgl-szMix-fOpaq-sNone-lytCenter-cenMixPG-edgeCrisp-test
+Iteration: 1
+Errors: 0
+
+Primitives Drawn:
+SingleNoStrokeCircle: center=(300.0,300.0), r=76.0, diamAdj=152, centerType=grid
+
+
+Checks Log:
+✓ SW Renderer: left=224, right=375, top=224, bottom=375
+✓ Speckle count: SW: 0
+✓ Edge gap check result (fill): unknown Renderer: No gaps found in fill edges!
+✓ Total unique colors in SW renderer: 1
