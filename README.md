@@ -7,6 +7,14 @@ This software renderer uses direct pixel manipulation rather than a path-based a
 
 See [index page](https://davidedc.github.io/Minimal-2D-Js-Software-Renderer/) for link to browser tests/demos.
 
+## Project Status
+
+This project is a **minimal, self-contained proof of concept** and experimental implementation. It is not currently being actively developed or updated.
+
+For more refined and extended direct drawing capabilities (with bug fixes and additional features), see the [SWCanvas](https://github.com/davidedc/SWCanvas) project, which incorporates and improves upon the direct drawing primitives originally developed here.
+
+An alternative approach, rather than updating this repository to match SWCanvas improvements, would be to create a minimal build of SWCanvas itself - stripping away advanced features (anti-aliasing, shadows, arbitrary paths, blending options, text) and retaining only the core skeleton: transformations, clipping, and direct drawing primitives.
+
 ## Purpose
 Providing a sw renderer for Fizzygum, which a) would allow pixel-identical renders across browsers and platforms b) could make it possible to use Fizzygum in headless mode e.g. in Node.
 
