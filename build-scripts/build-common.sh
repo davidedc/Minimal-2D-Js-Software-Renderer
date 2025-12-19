@@ -51,11 +51,11 @@ function create_version_comment() {
 function get_common_core_files() {
     local PROJECT_ROOT="$(get_project_root)"
 
-    # Get primitive files from sibling directory
+    # Get primitive files
     get_primitive_files || return 1
 
     COMMON_CORE_FILES=(
-        # Primitives from SWCanvas-primitives (Transform2D, Color, ColorParser)
+        # Primitives (Transform2D, Color, ColorParser, BitBuffer, ClipMask)
         "${PRIMITIVE_FILES[@]}"
         "$PROJECT_ROOT/src/crisp-sw-canvas/ContextState.js"
         "$PROJECT_ROOT/src/utils/geometry.js"
@@ -84,21 +84,19 @@ function get_node_specific_files() {
 # Browser-specific files (if any)
 BROWSER_SPECIFIC_FILES=()
 
-# Function to get SWCanvas-primitives directory path
+# Function to get primitives directory path
 function get_primitives_dir() {
     local PROJECT_ROOT="$(get_project_root)"
-    # Check sibling directory (go up one level, then into SWCanvas-primitives)
-    local PRIMITIVES_DIR="$(cd "$PROJECT_ROOT/.." && pwd)/SWCanvas-primitives"
+    local PRIMITIVES_DIR="$PROJECT_ROOT/src/primitives"
 
     if [ ! -d "$PRIMITIVES_DIR" ]; then
-        echo "Error: SWCanvas-primitives directory not found at $PRIMITIVES_DIR" >&2
-        echo "Please ensure SWCanvas-primitives is a sibling directory of Minimal-2D-Js-Software-Renderer" >&2
+        echo "Error: Primitives directory not found at $PRIMITIVES_DIR" >&2
         return 1
     fi
     echo "$PRIMITIVES_DIR"
 }
 
-# Function to get primitive color files from sibling directory
+# Function to get primitive files
 function get_primitive_files() {
     local PRIMITIVES_DIR
     PRIMITIVES_DIR="$(get_primitives_dir)" || return 1
